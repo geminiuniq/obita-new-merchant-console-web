@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obita 商户操作台</title>
+    <!-- Modern Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Chart.js for Fund Flow -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <!-- Obita Logo Placeholder -->
+                <div class="logo">
+                     <i data-lucide="layers" class="logo-icon"></i>
+                     <span>Obita</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-target="overview">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Overview</span>
+                </a>
+                <a href="#" class="nav-item" data-target="asset-vaults">
+                    <i data-lucide="wallet"></i>
+                    <span>Asset Vaults</span>
+                </a>
+                <a href="#" class="nav-item" data-target="conversion">
+                    <i data-lucide="arrow-left-right"></i>
+                    <span>Conversion</span>
+                </a>
+                
+                <!-- Collapsible Menu: Collection -->
+                <div class="nav-group">
+                    <div class="nav-item has-submenu submenu-toggle">
+                        <div class="submenu-title">
+                            <i data-lucide="arrow-down-to-line"></i>
+                            <span>Collection</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="invoices">
+                            <span>Invoice Orders</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="checkouts">
+                            <span>Checkout Orders</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Collapsible Menu: Payouts -->
+                <div class="nav-group">
+                    <div class="nav-item has-submenu submenu-toggle">
+                        <div class="submenu-title">
+                            <i data-lucide="arrow-up-right"></i>
+                            <span>Payouts</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="payout-orders">
+                            <span>Payout Orders</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="payee-list">
+                            <span>Payee List</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Collapsible Menu: Approvals -->
+                <div class="nav-group">
+                    <div class="nav-item has-submenu submenu-toggle">
+                        <div class="submenu-title">
+                            <i data-lucide="check-square"></i>
+                            <span>Approvals</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="approval-list">
+                            <span>Approval List</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="approval-rules">
+                            <span>Approval Rules</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Collapsible Menu: Report Center -->
+                <div class="nav-group">
+                    <div class="nav-item has-submenu submenu-toggle">
+                        <div class="submenu-title">
+                            <i data-lucide="bar-chart-2"></i>
+                            <span>Report Center</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="order-reports">
+                            <span>Order Reports</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="settlement-reports">
+                            <span>Settlement Reports</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="fee-reports">
+                            <span>Fee Reports</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="download-task">
+                            <span>Download Task</span>
+                        </a>
+                    </div>
+                </div>
+                <a href="#" class="nav-item" data-target="settings">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1 class="page-title" id="page-title">Overview</h1>
+                
+                <div class="header-actions">
+                    <!-- Dropdown for Language -->
+                    <div class="header-dropdown" id="lang-dropdown-toggle">
+                        <i data-lucide="globe"></i>
+                        <span>EN</span>
+                        <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+                        <div class="dropdown-menu" id="lang-menu">
+                            <div class="dropdown-item active">English (EN)</div>
+                            <div class="dropdown-item">简体中文 (简)</div>
+                            <div class="dropdown-item">繁體中文 (繁)</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Bell -->
+                    <div class="notification-icon" id="inbox-toggle">
+                        <i data-lucide="bell"></i>
+                        <span class="notification-dot"></span>
+                    </div>
+                    
+                    <!-- User Profile Dropdown -->
+                    <div class="header-dropdown profile-dropdown" id="profile-dropdown-toggle">
+                        <div class="avatar bg-primary text-white">N</div>
+                        <i data-lucide="chevron-down" style="width: 14px; height: 14px;"></i>
+                        <div class="dropdown-menu dropdown-menu-right" id="profile-menu">
+                            <div class="dropdown-header">
+                                <div class="user-name">Nancy User</div>
+                                <div class="user-email">nancy@obita.demo</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item text-danger">
+                                <i data-lucide="log-out" style="width: 16px; height: 16px; margin-right: 8px;"></i>
+                                Log out
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="content-body" id="content-body">
+                <!-- Placeholder for dynamic content -->
+                <div class="welcome-card">
+                    <h2>Welcome back to Obita.</h2>
+                    <p>Here is an overview of your payment operations today.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Inbox Drawer Overlay -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    
+    <!-- Inbox Slide Drawer -->
+    <div class="inbox-drawer" id="inbox-drawer">
+        <div class="drawer-header">
+            <h3>Inbox</h3>
+            <button class="icon-btn" id="close-inbox-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body">
+            <!-- Message List -->
+            <div class="inbox-msg unread">
+                <div class="msg-indicator"></div>
+                <div class="msg-content">
+                    <div class="msg-title-row">
+                        <div class="msg-title">Action Required: Compliance</div>
+                        <span class="badge-unread">未读</span>
+                    </div>
+                    <p class="msg-preview">Please upload your latest business registration documents.</p>
+                    <span class="msg-time">2 mins ago</span>
+                </div>
+            </div>
+            
+            <div class="inbox-msg">
+                <div class="msg-indicator"></div>
+                <div class="msg-content">
+                    <div class="msg-title-row">
+                        <div class="msg-title">March Statement Available</div>
+                    </div>
+                    <p class="msg-preview">Your account statement for March is now ready to download.</p>
+                    <span class="msg-time">1 day ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
