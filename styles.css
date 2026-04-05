@@ -142,6 +142,31 @@ body {
     gap: 12px;
 }
 
+.submenu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--clr-sidebar-text);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.submenu-toggle:hover {
+    background: #E2E8F0;
+    color: var(--clr-text-main);
+}
+
+.submenu-toggle:focus-visible {
+    outline: 2px solid #BFDBFE;
+    outline-offset: 2px;
+}
+
 .chevron-icon {
     transition: transform 0.3s ease;
     width: 16px !important;
@@ -152,15 +177,17 @@ body {
     transform: rotate(180deg);
 }
 
-/* Accessible hidden text pattern but using grid transition */
 .submenu {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 
 .nav-group.expanded .submenu {
-    grid-template-rows: 1fr;
+    max-height: 240px;
+    opacity: 1;
 }
 
 .submenu > * {
@@ -199,11 +226,6 @@ body {
     bottom: 0;
     width: 1px;
     background-color: var(--clr-border);
-}
-
-/* Ensure the first and last subitem connectors don't bleed visually if preferred, but a solid vertical line often looks good in business apps */
-.submenu {
-    position: relative;
 }
 
 /* Main Content Area */
@@ -424,6 +446,99 @@ body.drawer-open .drawer-active {
     display: flex;
     flex-direction: column;
     gap: 16px;
+}
+
+.push-notification {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 320px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid #DBEAFE;
+    border-radius: 16px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+    padding: 14px;
+    z-index: 1100;
+    transform: translateX(120%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.push-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.push-notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #2563EB;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.push-notification-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #EFF6FF;
+    border: 1px solid #BFDBFE;
+}
+
+.push-notification-close {
+    background: none;
+    border: none;
+    color: #94A3B8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.push-notification-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.push-notification-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.push-notification-preview {
+    font-size: 13px;
+    line-height: 1.55;
+    color: #475569;
+}
+
+.push-notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.push-notification-action {
+    padding: 9px 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.18);
 }
 
 .bank-list-header {

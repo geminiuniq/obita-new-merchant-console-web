@@ -20,18 +20,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentBody = document.getElementById('content-body');
     
     // Submenu Toggles
+    const sidebarNav = document.querySelector('.sidebar-nav');
     const submenuToggles = document.querySelectorAll('.submenu-toggle');
     submenuToggles.forEach(toggle => {
-        toggle.addEventListener('click', () => {
-            const navGroup = toggle.closest('.nav-group');
-            // Toggle expanded class
-            navGroup.classList.toggle('expanded');
-            
-            // Optional: Close others (accordion behavior)
-            // document.querySelectorAll('.nav-group').forEach(group => {
-            //     if (group !== navGroup) group.classList.remove('expanded');
-            // });
-        });
+        const navGroup = toggle.closest('.nav-group');
+        if (navGroup) {
+            toggle.setAttribute('aria-expanded', navGroup.classList.contains('expanded') ? 'true' : 'false');
+        }
+    });
+
+    sidebarNav?.addEventListener('click', (e) => {
+        const toggle = e.target.closest('.submenu-toggle');
+        if (!toggle) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const navGroup = toggle.closest('.nav-group');
+        if (!navGroup) return;
+
+        navGroup.classList.toggle('expanded');
+        toggle.setAttribute('aria-expanded', navGroup.classList.contains('expanded') ? 'true' : 'false');
     });
     
     // Handle Navigation Selection
@@ -105,11 +114,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const inboxToggle = document.getElementById('inbox-toggle');
     const closeInboxBtn = document.getElementById('close-inbox-btn');
     const drawerOverlay = document.getElementById('drawer-overlay');
+    const inboxMessageList = document.getElementById('inbox-message-list');
+    const pushNotification = document.getElementById('push-notification');
+    const pushNotificationTitle = document.getElementById('push-notification-title');
+    const pushNotificationPreview = document.getElementById('push-notification-preview');
+    const pushNotificationAction = document.getElementById('push-notification-action');
+    const closePushNotificationBtn = document.getElementById('close-push-notification');
+    let pushNotificationTimer = null;
+    let pushNotificationActionHandler = null;
     
     function openInbox() {
         document.getElementById('inbox-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
         inboxToggle.classList.remove('has-new'); // clear red dot on bell when checked
+    }
+
+    function hidePushNotification() {
+        pushNotification.classList.remove('show');
+        if (pushNotificationTimer) {
+            clearTimeout(pushNotificationTimer);
+            pushNotificationTimer = null;
+        }
+    }
+
+    function showPushNotification(title, preview, actionLabel, actionHandler) {
+        pushNotificationTitle.textContent = title;
+        pushNotificationPreview.textContent = preview;
+        pushNotificationAction.textContent = actionLabel || 'View Inbox';
+        pushNotificationActionHandler = actionHandler || (() => openInbox());
+        pushNotification.classList.add('show');
+        if (pushNotificationTimer) clearTimeout(pushNotificationTimer);
+        pushNotificationTimer = setTimeout(() => {
+            hidePushNotification();
+        }, 5000);
+    }
+
+    function addInboxMessage(title, preview, actionLabel, actionHandler) {
+        const messageHtml = `
+            <div class="inbox-msg unread">
+                <div class="msg-indicator"></div>
+                <div class="msg-content">
+                    <div class="msg-title-row">
+                        <div class="msg-title">${title}</div>
+                        <span class="badge-unread">未读</span>
+                    </div>
+                    <p class="msg-preview">${preview}</p>
+                    <span class="msg-time">Just now</span>
+                </div>
+            </div>`;
+        inboxMessageList.insertAdjacentHTML('afterbegin', messageHtml);
+        inboxToggle.classList.add('has-new');
+        showPushNotification(title, preview, actionLabel, actionHandler);
+    }
+
+    function notifyOrderCreated(title, preview, actionLabel, actionHandler) {
+        addInboxMessage(title, preview, actionLabel, actionHandler);
+        lucide.createIcons();
     }
     
     function closeAllDrawers() {
@@ -126,6 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
     inboxToggle.addEventListener('click', openInbox);
     closeInboxBtn.addEventListener('click', closeAllDrawers);
     drawerOverlay.addEventListener('click', closeAllDrawers);
+    closePushNotificationBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hidePushNotification();
+    });
+    pushNotificationAction.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hidePushNotification();
+        if (pushNotificationActionHandler) pushNotificationActionHandler();
+    });
+    pushNotification.addEventListener('click', () => {
+        hidePushNotification();
+        openInbox();
+    });
     
     // Wallet Drawer Specific Helper
     window.openWalletDrawer = function(address, type) {
@@ -319,7 +392,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Transfer Assets Drawer Logic ---
     const TRANSFER_BALANCES = {
         USDT: 14000000.00,
-        USDC: 10050000.00
+        USDC: 10050000.00,
+        USD: 1500000.00,
+        HKD: 8200000.00,
+        EUR: 320000.00,
+        BRL: 980000.00
     };
 
     window.updateTransferAvailables = function() {
@@ -403,6 +480,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.executeTransfer = function() {
+        const coin = document.getElementById('t-coin').value;
+        const amt = parseFloat(document.getElementById('t-amount').value) || 0;
+        const walletRaw = document.getElementById('t-wallet').value;
+        const walletName = walletRaw.split('|')[0] || 'Destination wallet';
+        notifyOrderCreated(
+            'Transfer Order Created',
+            `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${coin} transfer to ${walletName} has been created.`,
+            'View Inbox',
+            () => openInbox()
+        );
         alert('Transfer executed successfully.');
         closeAllDrawers();
     };
@@ -410,7 +497,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Convert Assets Drawer Logic ---
     const MOCK_EXCHANGE_RATES = {
         'USDT': { 'USD': 1.00, 'USDC': 0.9998, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
-        'USDC': { 'USD': 1.00, 'USDT': 1.0002, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 }
+        'USDC': { 'USD': 1.00, 'USDT': 1.0002, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
+        'USD': { 'USDT': 1.0000, 'USDC': 1.0000, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
+        'HKD': { 'USD': 0.1279, 'USDT': 0.1279, 'USDC': 0.1278, 'EUR': 0.1176, 'BRL': 0.6407 },
+        'EUR': { 'USD': 1.0870, 'USDT': 1.0870, 'USDC': 1.0868, 'HKD': 8.50, 'BRL': 5.45 },
+        'BRL': { 'USD': 0.1996, 'USDT': 0.1996, 'USDC': 0.1995, 'HKD': 1.56, 'EUR': 0.1835 }
     };
 
     let currentConvRate = 1;
@@ -425,10 +516,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (MOCK_EXCHANGE_RATES[sourceCoin] && MOCK_EXCHANGE_RATES[sourceCoin][targetCoin]) {
             rate = MOCK_EXCHANGE_RATES[sourceCoin][targetCoin];
         }
-        currentConvRate = rate;
         
         // Block picking same coin ideally, but keep it simple
         if (sourceCoin === targetCoin) rate = 1;
+        currentConvRate = rate;
         
         const estAmt = amt * rate;
         
@@ -459,7 +550,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('cv-source-coin').textContent = coin;
         document.getElementById('cv-amount').value = '';
-        document.getElementById('cv-target-coin').value = (coin === 'USDT') ? 'USDC' : 'USDT';
+        const defaultTargets = {
+            USDT: 'USDC',
+            USDC: 'USDT',
+            USD: 'USDT',
+            HKD: 'USDT',
+            EUR: 'USDT',
+            BRL: 'USDT'
+        };
+        document.getElementById('cv-target-coin').value = defaultTargets[coin] || 'USDT';
         document.getElementById('cv-error').style.display = 'none';
         
         const avail = TRANSFER_BALANCES[coin] || 0;
@@ -511,6 +610,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.executeConvert = function() {
+        const sourceCoin = document.getElementById('cv-source-coin').textContent;
+        const targetCoin = document.getElementById('cv-target-coin').value;
+        const amt = parseFloat(document.getElementById('cv-amount').value) || 0;
+        notifyOrderCreated(
+            'Conversion Order Created',
+            `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${sourceCoin} to ${targetCoin} conversion order has been created.`,
+            'View Convert',
+            () => openInbox()
+        );
         alert('Asset conversion successful.');
         closeAllDrawers();
     };
@@ -744,6 +852,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fiat-topup-step3-proof').textContent = proof.name;
         document.getElementById('fiat-topup-step3-bank').textContent = FIAT_TOPUP_RECIPIENTS[currency].bank;
         document.getElementById('fiat-topup-step3-reference').textContent = FIAT_TOPUP_RECIPIENTS[currency].reference;
+        notifyOrderCreated(
+            'Fiat Top Up Order Created',
+            `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency} top up order ${orderId} is now Proceeding.`,
+            'View Order',
+            () => openInbox()
+        );
         document.getElementById('fiat-topup-step-2').style.display = 'none';
         document.getElementById('fiat-topup-step-3').style.display = 'flex';
     };
@@ -862,6 +976,838 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
         alert('Bank account added. Verification is pending after statement upload.');
         window.switchToBankAccountsListView();
+    };
+
+    const approvalRules = [
+        {
+            id: 'AR-001',
+            name: 'Large Fiat Payout Review',
+            scope: 'Payout',
+            triggerOperator: 'greater_than',
+            triggerValue: '50000',
+            approverLevel1: 'Finance Manager',
+            approverLevel2: 'Operations Director',
+            approverLevel3: '',
+            updatedAt: 'Today, 09:30',
+            status: 'enabled',
+            notes: 'Requires sequential approval for large outbound fiat payouts to reduce settlement and fraud risk.'
+        },
+        {
+            id: 'AR-002',
+            name: 'Stablecoin Withdrawal Dual Approval',
+            scope: 'Stablecoin Vault - Transfer',
+            triggerOperator: 'greater_than',
+            triggerValue: '100000',
+            approverLevel1: 'Treasury Lead',
+            approverLevel2: 'Compliance Officer',
+            approverLevel3: '',
+            updatedAt: 'Yesterday, 16:10',
+            status: 'enabled',
+            notes: 'Applies dual approval to large stablecoin withdrawals before wallet release.'
+        },
+        {
+            id: 'AR-003',
+            name: 'New Bank Account Binding Check',
+            scope: 'Fiat Vault - Bank Account',
+            triggerOperator: 'greater_than',
+            triggerValue: '0',
+            approverLevel1: 'Operations Analyst',
+            approverLevel2: '',
+            approverLevel3: '',
+            updatedAt: 'Apr 2, 2026',
+            status: 'disabled',
+            notes: 'Used for manual review of new bank account binding and statement verification.'
+        }
+    ];
+
+    const approvalRequests = [
+        {
+            id: 'APR-20260406-0012',
+            title: 'Fiat Vault Transfer Approval',
+            scope: 'Fiat Vault - Transfer',
+            orderId: 'FT-20260406-0182',
+            type: 'Transfer',
+            requester: 'Nancy User',
+            subject: 'Global Trade Holdings',
+            amount: '125000.00',
+            currency: 'USD',
+            status: 'pending',
+            levelLabel: 'Level 1 of 2',
+            submittedAt: 'Apr 6, 2026 15:42',
+            submittedAtValue: new Date('2026-04-06T15:42:00+08:00').getTime(),
+            notes: 'Urgent supplier settlement for treasury operations.'
+        },
+        {
+            id: 'APR-20260406-0011',
+            title: 'Stablecoin Vault Transfer Approval',
+            scope: 'Stablecoin Vault - Transfer',
+            orderId: 'SV-20260406-0094',
+            type: 'Transfer',
+            requester: 'Nancy User',
+            subject: 'Wintermute Treasury',
+            amount: '85000.00',
+            currency: 'USDT',
+            status: 'pending',
+            levelLabel: 'Level 2 of 2',
+            submittedAt: 'Apr 6, 2026 14:08',
+            submittedAtValue: new Date('2026-04-06T14:08:00+08:00').getTime(),
+            notes: 'Second-level approval required before wallet release.'
+        },
+        {
+            id: 'APR-20260405-0039',
+            title: 'Conversion Approval',
+            scope: 'Conversion',
+            orderId: 'CV-20260405-0067',
+            type: 'Convert',
+            requester: 'Ethan Lee',
+            subject: 'USD to USDC conversion',
+            amount: '300000.00',
+            currency: 'USD',
+            status: 'approved',
+            levelLabel: 'Completed',
+            submittedAt: 'Apr 5, 2026 18:20',
+            submittedAtValue: new Date('2026-04-05T18:20:00+08:00').getTime(),
+            notes: 'Approved by Finance Manager for end-of-day rebalancing.'
+        },
+        {
+            id: 'APR-20260405-0027',
+            title: 'Fiat Vault Bank Account Approval',
+            scope: 'Fiat Vault - Bank Account',
+            orderId: 'BA-20260405-0018',
+            type: 'Bank Account',
+            requester: 'Emily Chen',
+            subject: 'New DBS Treasury Settlement Account',
+            amount: '0.00',
+            currency: 'USD',
+            status: 'pending',
+            levelLabel: 'Level 1 of 1',
+            submittedAt: 'Apr 5, 2026 13:16',
+            submittedAtValue: new Date('2026-04-05T13:16:00+08:00').getTime(),
+            notes: 'Statement uploaded and waiting for bank account binding approval.'
+        },
+        {
+            id: 'APR-20260404-0041',
+            title: 'Collection Cancel Order Approval',
+            scope: 'Collection - Cancel Order',
+            orderId: 'CO-20260404-0146',
+            type: 'Cancel Order',
+            requester: 'Marcus Tan',
+            subject: 'Invoice INV-240406-8821',
+            amount: '4200.00',
+            currency: 'EUR',
+            status: 'rejected',
+            levelLabel: 'Completed',
+            submittedAt: 'Apr 4, 2026 19:05',
+            submittedAtValue: new Date('2026-04-04T19:05:00+08:00').getTime(),
+            notes: 'Rejected due to duplicate cancellation request.'
+        }
+    ];
+
+    let approvalRuleView = 'list';
+    let activeApprovalRuleId = null;
+    let approvalRuleFormLevels = 1;
+    let approvalListView = 'list';
+    let activeApprovalRequestId = null;
+    let expandedApprovalActionId = null;
+    let activeApprovalDecision = null;
+
+    function getApprovalRuleById(ruleId) {
+        return approvalRules.find(rule => rule.id === ruleId);
+    }
+
+    function getApprovalRequestById(requestId) {
+        return approvalRequests.find(request => request.id === requestId);
+    }
+
+    function formatApprovalRuleTrigger(rule) {
+        const operatorLabels = {
+            greater_than: 'Amount >',
+            greater_than_or_equal: 'Amount >='
+        };
+        const label = operatorLabels[rule.triggerOperator] || 'Amount >';
+        return `${label} ${rule.triggerValue || '0'}`;
+    }
+
+    function formatApprovalFlow(rule) {
+        return [rule.approverLevel1, rule.approverLevel2, rule.approverLevel3].filter(Boolean).join(' -> ') || '-';
+    }
+
+    function getApprovalRuleLevelCount(rule) {
+        if (!rule) return 1;
+        if (rule.approverLevel3) return 3;
+        if (rule.approverLevel2) return 2;
+        return 1;
+    }
+
+    function getApprovalRequestStatusPill(status) {
+        const styles = {
+            pending: { background: '#F8FAFC', color: '#64748B', label: 'Pending' },
+            approved: { background: '#F0FDF4', color: '#15803D', label: 'Approved' },
+            rejected: { background: '#FEF2F2', color: '#B91C1C', label: 'Rejected' }
+        };
+        return styles[status] || styles.pending;
+    }
+
+    function getFilteredApprovalRequests() {
+        const scopeFilter = document.getElementById('approval-list-scope-filter')?.value || 'all';
+        const statusFilter = document.getElementById('approval-list-status-filter')?.value || 'all';
+        const keyword = (document.getElementById('approval-list-search')?.value || '').trim().toLowerCase();
+
+        return approvalRequests
+            .slice()
+            .sort((a, b) => b.submittedAtValue - a.submittedAtValue)
+            .filter(request => {
+                if (scopeFilter !== 'all' && request.scope !== scopeFilter) return false;
+                if (statusFilter !== 'all' && request.status !== statusFilter) return false;
+                if (!keyword) return true;
+
+                const haystack = [
+                    request.id,
+                    request.title,
+                    request.scope,
+                    request.orderId,
+                    request.subject,
+                    request.requester,
+                    request.currency
+                ].join(' ').toLowerCase();
+
+                return haystack.includes(keyword);
+            });
+    }
+
+    function renderApprovalDecisionPanel(requestId, compact = false) {
+        const isExpanded = expandedApprovalActionId === requestId;
+        const isReject = activeApprovalDecision === 'rejected';
+        const isApprove = activeApprovalDecision === 'approved';
+
+        return `
+            <div id="approval-action-panel-${requestId}" style="display: ${isExpanded ? 'block' : 'none'}; ${compact ? '' : 'padding: 0 24px 18px 24px;'}">
+                <div style="padding: ${compact ? '0' : '16px 18px'}; border: 1px solid #E2E8F0; border-radius: 14px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); display: flex; flex-direction: column; gap: 14px;">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Submit Review</div>
+                        <div style="font-size: 12px; color: #64748B; margin-top: 4px; line-height: 1.5;">Choose your decision first. Review notes are required only when rejecting.</div>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn ${isApprove ? 'btn-primary' : 'btn-outline'}" onclick="window.selectApprovalDecision('${requestId}', 'approved'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Approve</button>
+                        <button class="btn ${isReject ? 'btn-primary' : 'btn-outline text-danger'}" onclick="window.selectApprovalDecision('${requestId}', 'rejected'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Reject</button>
+                    </div>
+                    ${isReject ? `
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="font-size: 12px; font-weight: 700; color: #475569;">Review Notes *</label>
+                            <textarea id="approval-review-notes-${requestId}" class="bank-form-control" style="min-height: ${compact ? '96px' : '84px'}; padding: 12px 14px; background: #FFFFFF;" placeholder="Explain why this request is being rejected."></textarea>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-outline" onclick="window.toggleApprovalActionMenu('${requestId}'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Cancel</button>
+                        <button class="btn btn-primary" onclick="window.submitApprovalDecision('${requestId}'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;" ${activeApprovalDecision ? '' : 'disabled'}>${isReject ? 'Submit Rejection' : 'Submit Review'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderApprovalListPage() {
+        const activeRequest = activeApprovalRequestId ? getApprovalRequestById(activeApprovalRequestId) : null;
+
+        if (approvalListView === 'detail' && activeRequest) {
+            const detailStatus = getApprovalRequestStatusPill(activeRequest.status);
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+                    <div class="card" style="padding: 24px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <button onclick="window.openApprovalListPage()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Approval List</button>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0;">${activeRequest.title}</h2>
+                                    <span style="background: ${detailStatus.background}; color: ${detailStatus.color}; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">${detailStatus.label}</span>
+                                </div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 8px;">Request ID: ${activeRequest.id} · Submitted ${activeRequest.submittedAt}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                ${activeRequest.status === 'pending' ? `
+                                    <button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${activeRequest.id}'); event.stopPropagation();" style="padding: 10px 16px; font-size: 13px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.45fr 1fr; gap: 20px;">
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Scope</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${activeRequest.scope}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Order ID</div>
+                                <div style="font-size: 14px; color: #334155; font-family: monospace;">${activeRequest.orderId}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Subject</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${activeRequest.subject}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Amount</div>
+                                <div style="font-size: 20px; font-weight: 700; color: #0F172A;">${activeRequest.amount} ${activeRequest.currency}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Notes</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${activeRequest.notes || '-'}</div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Requester</div>
+                                <div style="font-size: 14px; color: #334155;">${activeRequest.requester}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Approval Step</div>
+                                <div style="font-size: 14px; color: #334155;">${activeRequest.levelLabel}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Type</div>
+                                <div style="font-size: 14px; color: #334155;">${activeRequest.type}</div>
+                            </div>
+                            <div style="padding: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 12px; color: #64748B; line-height: 1.6;">
+                                Approval decisions are recorded immediately and reflected in the request status.
+                            </div>
+                            ${activeRequest.status === 'pending' ? `
+                                ${renderApprovalDecisionPanel(activeRequest.id, true)}
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        const requests = getFilteredApprovalRequests();
+        const scopeOptions = [
+            'Payout',
+            'Fiat Vault - Transfer',
+            'Fiat Vault - Bank Account',
+            'Stablecoin Vault - Transfer',
+            'Stablecoin Vault - Address Book',
+            'Conversion',
+            'Collection - Cancel Order'
+        ];
+        const currentScope = document.getElementById('approval-list-scope-filter')?.value || 'all';
+        const currentStatus = document.getElementById('approval-list-status-filter')?.value || 'all';
+        const currentSearch = document.getElementById('approval-list-search')?.value || '';
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Approval List</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review all approval requests in reverse chronological order and take action on pending items.</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div style="display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%); color: #1D4ED8; border: 1px solid #BFDBFE; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);">
+                                <div style="width: 28px; height: 28px; border-radius: 999px; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="bell-ring" style="width: 14px; height: 14px;"></i>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75;">Needs Attention</div>
+                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => request.status === 'pending').length} Pending</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: #FCFDFE; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px;">
+                            <div style="position: relative;">
+                                <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                                <input id="approval-list-search" type="text" value="${currentSearch}" oninput="window.renderApprovalListPage()" placeholder="Search by request ID, order ID, scope or requester" style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            </div>
+                            <select id="approval-list-scope-filter" onchange="window.renderApprovalListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                                <option value="all">All Scopes</option>
+                                ${scopeOptions.map(scope => `<option value="${scope}" ${currentScope === scope ? 'selected' : ''}>${scope}</option>`).join('')}
+                            </select>
+                            <select id="approval-list-status-filter" onchange="window.renderApprovalListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                                <option value="all" ${currentStatus === 'all' ? 'selected' : ''}>All Statuses</option>
+                                <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
+                                <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div>Request</div>
+                        <div>Scope</div>
+                        <div>Amount</div>
+                        <div>Status</div>
+                        <div style="text-align: right;">Actions</div>
+                    </div>
+                    </div>
+                    <div>
+                        ${requests.length ? requests.map(request => {
+                            const statusPill = getApprovalRequestStatusPill(request.status);
+                            return `
+                                <div style="border-bottom: 1px solid var(--clr-border);">
+                                    <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; align-items: center; cursor: pointer;">
+                                        <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${request.title}</div>
+                                            <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${request.id} · ${request.orderId} · ${request.submittedAt}</div>
+                                        </div>
+                                        <div style="font-size: 13px; color: #334155; line-height: 1.5;">${request.scope}</div>
+                                        <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${request.amount} ${request.currency}</div>
+                                        <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
+                                        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                            ${request.status === 'pending'
+                                                ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
+                                                : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
+                                            }
+                                        </div>
+                                    </div>
+                                    ${renderApprovalDecisionPanel(request.id)}
+                                </div>
+                            `;
+                        }).join('') : `
+                            <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                                No approval requests matched your current filters.
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderApprovalRulesPage() {
+        const activeRule = activeApprovalRuleId ? getApprovalRuleById(activeApprovalRuleId) : null;
+
+        if (approvalRuleView === 'detail' && activeRule) {
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+                    <div class="card" style="padding: 24px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <button onclick="window.openApprovalRulesList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Approval Rules</button>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0;">${activeRule.name}</h2>
+                                    <span style="background: ${activeRule.status === 'enabled' ? '#D1FAE5' : '#E2E8F0'}; color: ${activeRule.status === 'enabled' ? '#059669' : '#64748B'}; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">${activeRule.status}</span>
+                                </div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 8px;">Rule ID: ${activeRule.id} · Updated ${activeRule.updatedAt}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" onclick="window.editApprovalRule('${activeRule.id}')" style="padding: 10px 16px; font-size: 13px;">Edit</button>
+                                <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${activeRule.id}')" style="padding: 10px 16px; font-size: 13px;">${activeRule.status === 'enabled' ? 'Disable' : 'Enable'}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px;">
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Scope</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${activeRule.scope}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Trigger Condition</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${formatApprovalRuleTrigger(activeRule)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Approval Flow</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${formatApprovalFlow(activeRule)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Notes</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${activeRule.notes || '-'}</div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Rule Actions</div>
+                            <button class="btn btn-outline" onclick="window.editApprovalRule('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">Edit Rule</button>
+                            <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">${activeRule.status === 'enabled' ? 'Disable Rule' : 'Enable Rule'}</button>
+                            <button class="btn btn-outline text-danger" onclick="window.deleteApprovalRule('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">Delete Rule</button>
+                            <div style="margin-top: 8px; padding: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 12px; color: #64748B; line-height: 1.6;">
+                                Rule changes take effect immediately for newly created orders and approval tasks.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (approvalRuleView === 'form') {
+            const editingRule = activeRule;
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 760px; margin: 0 auto;">
+                    <div class="card" style="padding: 24px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                            <button onclick="window.openApprovalRulesList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 4px;"><i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i></button>
+                            <div>
+                                <h2 style="font-size: 22px; font-weight: 700; color: #0F172A; margin: 0;">${editingRule ? 'Edit Approval Rule' : 'Add Approval Rule'}</h2>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 4px;">Configure when approvals are triggered and who needs to approve.</div>
+                            </div>
+                        </div>
+
+                        <form id="approval-rule-form" onsubmit="event.preventDefault(); window.saveApprovalRule('${editingRule ? editingRule.id : ''}');" style="display: flex; flex-direction: column; gap: 18px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Rule Name *</label>
+                                    <input id="approval-rule-name" class="bank-form-control" type="text" value="${editingRule ? editingRule.name : ''}" placeholder="e.g. High Risk Payout Review">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Scope *</label>
+                                    <select id="approval-rule-scope" class="bank-form-control">
+                                        <option value="Payout" ${editingRule && editingRule.scope === 'Payout' ? 'selected' : ''}>Payout</option>
+                                        <option value="Fiat Vault - Transfer" ${editingRule && editingRule.scope === 'Fiat Vault - Transfer' ? 'selected' : ''}>Fiat Vault - Transfer</option>
+                                        <option value="Fiat Vault - Bank Account" ${editingRule && editingRule.scope === 'Fiat Vault - Bank Account' ? 'selected' : ''}>Fiat Vault - Bank Account</option>
+                                        <option value="Stablecoin Vault - Transfer" ${editingRule && editingRule.scope === 'Stablecoin Vault - Transfer' ? 'selected' : ''}>Stablecoin Vault - Transfer</option>
+                                        <option value="Stablecoin Vault - Address Book" ${editingRule && editingRule.scope === 'Stablecoin Vault - Address Book' ? 'selected' : ''}>Stablecoin Vault - Address Book</option>
+                                        <option value="Conversion" ${editingRule && editingRule.scope === 'Conversion' ? 'selected' : ''}>Conversion</option>
+                                        <option value="Collection - Cancel Order" ${editingRule && editingRule.scope === 'Collection - Cancel Order' ? 'selected' : ''}>Collection - Cancel Order</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Trigger Condition *</label>
+                                    <select id="approval-rule-trigger-operator" class="bank-form-control">
+                                        <option value="greater_than" ${editingRule && editingRule.triggerOperator === 'greater_than' ? 'selected' : ''}>Amount greater than</option>
+                                        <option value="greater_than_or_equal" ${editingRule && editingRule.triggerOperator === 'greater_than_or_equal' ? 'selected' : ''}>Amount greater than or equal to</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Amount *</label>
+                                    <input id="approval-rule-trigger-value" class="bank-form-control" type="number" value="${editingRule ? editingRule.triggerValue : ''}" placeholder="e.g. 50000">
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Set the rule with an amount condition and the exact threshold that should trigger approval.</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <label class="bank-form-label">Approval Flow *</label>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Start with 1 approver, then add a 2nd or 3rd level only when needed.</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">1st Approver *</label>
+                                        <select id="approval-rule-approver-1" class="bank-form-control">
+                                            <option value="">Select approver</option>
+                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel1 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
+                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel1 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
+                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel1 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
+                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel1 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
+                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel1 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                        </select>
+                                    </div>
+                                    <div id="approval-rule-level-2" style="display: ${approvalRuleFormLevels >= 2 ? 'flex' : 'none'}; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">2nd Approver</label>
+                                        <select id="approval-rule-approver-2" class="bank-form-control">
+                                            <option value="">Select approver</option>
+                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel2 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
+                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel2 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
+                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel2 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
+                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel2 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
+                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel2 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                        </select>
+                                    </div>
+                                    <div id="approval-rule-level-3" style="display: ${approvalRuleFormLevels >= 3 ? 'flex' : 'none'}; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">3rd Approver</label>
+                                        <select id="approval-rule-approver-3" class="bank-form-control">
+                                            <option value="">Select approver</option>
+                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel3 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
+                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel3 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
+                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel3 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
+                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel3 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
+                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel3 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <button id="approval-rule-add-level-btn" type="button" class="btn btn-outline" onclick="window.addApprovalFlowLevel()" style="padding: 8px 14px; font-size: 12px; display: ${approvalRuleFormLevels >= 3 ? 'none' : 'inline-flex'};">Add Next Level</button>
+                                    <button id="approval-rule-remove-level-btn" type="button" class="btn btn-outline" onclick="window.removeApprovalFlowLevel()" style="padding: 8px 14px; font-size: 12px; display: ${approvalRuleFormLevels > 1 ? 'inline-flex' : 'none'};">Remove Last Level</button>
+                                    <div style="font-size: 12px; color: #64748B;">Maximum 3 approval levels.</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Notes</label>
+                                <textarea id="approval-rule-notes" class="bank-form-control" style="min-height: 72px; padding: 12px 14px;" placeholder="Add short notes for this rule...">${editingRule ? editingRule.notes || '' : ''}</textarea>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                <button type="button" class="btn btn-outline" onclick="window.openApprovalRulesList()" style="padding: 10px 16px;">Cancel</button>
+                                <button type="submit" class="btn btn-primary" style="padding: 10px 18px;">${editingRule ? 'Save Changes' : 'Create Rule'}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Approval Rules</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage all approval rule configurations for payouts, vault operations, and risk-sensitive workflows.</div>
+                        </div>
+                        <button class="bank-add-btn" onclick="window.createApprovalRule()">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                            Add Approval Rule
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid var(--clr-border); background: #FCFDFE; display: grid; grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 1fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div>Rule</div>
+                        <div>Scope</div>
+                        <div>Approvers</div>
+                        <div>Status</div>
+                        <div style="text-align: right;">Actions</div>
+                    </div>
+                    <div>
+                        ${approvalRules.map(rule => `
+                            <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); display: grid; grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 1fr; gap: 16px; align-items: center;">
+                                <div onclick="window.openApprovalRuleDetail('${rule.id}')" style="cursor: pointer;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${rule.name}</div>
+                                    <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${formatApprovalRuleTrigger(rule)}</div>
+                                </div>
+                                <div style="font-size: 13px; color: #334155;">${rule.scope}</div>
+                                <div style="font-size: 13px; color: #334155; line-height: 1.5;">${formatApprovalFlow(rule)}</div>
+                                <div><span style="background: ${rule.status === 'enabled' ? '#D1FAE5' : '#E2E8F0'}; color: ${rule.status === 'enabled' ? '#059669' : '#64748B'}; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">${rule.status}</span></div>
+                                <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                    <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${rule.id}')" style="padding: 6px 12px; font-size: 12px;">${rule.status === 'enabled' ? 'Disable' : 'Enable'}</button>
+                                    <button class="btn btn-outline" onclick="window.editApprovalRule('${rule.id}')" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                                    <button class="btn btn-outline text-danger" onclick="window.deleteApprovalRule('${rule.id}')" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    window.openApprovalRulesList = function() {
+        approvalRuleView = 'list';
+        activeApprovalRuleId = null;
+        renderApprovalRulesPage();
+    };
+
+    window.openApprovalListPage = function() {
+        approvalListView = 'list';
+        activeApprovalRequestId = null;
+        expandedApprovalActionId = null;
+        activeApprovalDecision = null;
+        renderApprovalListPage();
+    };
+
+    window.openApprovalRequestDetail = function(requestId) {
+        approvalListView = 'detail';
+        activeApprovalRequestId = requestId;
+        expandedApprovalActionId = null;
+        activeApprovalDecision = null;
+        renderApprovalListPage();
+    };
+
+    window.renderApprovalListPage = function() {
+        approvalListView = 'list';
+        activeApprovalRequestId = null;
+        renderApprovalListPage();
+    };
+
+    window.toggleApprovalActionMenu = function(requestId) {
+        const isClosing = expandedApprovalActionId === requestId;
+        expandedApprovalActionId = isClosing ? null : requestId;
+        activeApprovalDecision = null;
+
+        if (approvalListView === 'detail' && activeApprovalRequestId === requestId) {
+            renderApprovalListPage();
+            return;
+        }
+
+        approvalListView = 'list';
+        activeApprovalRequestId = null;
+        renderApprovalListPage();
+    };
+
+    window.selectApprovalDecision = function(requestId, decision) {
+        expandedApprovalActionId = requestId;
+        activeApprovalDecision = decision;
+
+        if (approvalListView === 'detail' && activeApprovalRequestId === requestId) {
+            renderApprovalListPage();
+            return;
+        }
+
+        approvalListView = 'list';
+        activeApprovalRequestId = null;
+        renderApprovalListPage();
+    };
+
+    window.submitApprovalDecision = function(requestId) {
+        if (!activeApprovalDecision) {
+            alert('Please select Approve or Reject first.');
+            return;
+        }
+
+        window.takeApprovalAction(requestId, activeApprovalDecision);
+    };
+
+    window.takeApprovalAction = function(requestId, decision) {
+        const request = getApprovalRequestById(requestId);
+        if (!request) return;
+
+        const notesField = document.getElementById(`approval-review-notes-${requestId}`);
+        const reviewNotes = notesField ? notesField.value.trim() : '';
+
+        if (decision === 'rejected' && !reviewNotes) {
+            alert('Review notes are required when rejecting an approval request.');
+            if (notesField) notesField.focus();
+            return;
+        }
+
+        request.status = decision;
+        request.levelLabel = 'Completed';
+        request.notes = reviewNotes || (
+            decision === 'approved'
+                ? `${request.notes} Approved by current approver.`
+                : `${request.notes} Rejected by current approver.`
+        );
+        expandedApprovalActionId = null;
+        activeApprovalDecision = null;
+
+        if (approvalListView === 'detail' && activeApprovalRequestId === requestId) {
+            renderApprovalListPage();
+            return;
+        }
+
+        approvalListView = 'list';
+        activeApprovalRequestId = null;
+        renderApprovalListPage();
+    };
+
+    window.openApprovalRuleDetail = function(ruleId) {
+        approvalRuleView = 'detail';
+        activeApprovalRuleId = ruleId;
+        renderApprovalRulesPage();
+    };
+
+    window.createApprovalRule = function() {
+        approvalRuleView = 'form';
+        activeApprovalRuleId = null;
+        approvalRuleFormLevels = 1;
+        renderApprovalRulesPage();
+    };
+
+    window.editApprovalRule = function(ruleId) {
+        approvalRuleView = 'form';
+        activeApprovalRuleId = ruleId;
+        approvalRuleFormLevels = getApprovalRuleLevelCount(getApprovalRuleById(ruleId));
+        renderApprovalRulesPage();
+    };
+
+    window.addApprovalFlowLevel = function() {
+        if (approvalRuleFormLevels >= 3) return;
+        approvalRuleFormLevels += 1;
+
+        const nextLevel = document.getElementById(`approval-rule-level-${approvalRuleFormLevels}`);
+        if (nextLevel) nextLevel.style.display = 'flex';
+
+        const addButton = document.getElementById('approval-rule-add-level-btn');
+        const removeButton = document.getElementById('approval-rule-remove-level-btn');
+        if (addButton) addButton.style.display = approvalRuleFormLevels >= 3 ? 'none' : 'inline-flex';
+        if (removeButton) removeButton.style.display = approvalRuleFormLevels > 1 ? 'inline-flex' : 'none';
+    };
+
+    window.removeApprovalFlowLevel = function() {
+        if (approvalRuleFormLevels <= 1) return;
+
+        const currentSelect = document.getElementById(`approval-rule-approver-${approvalRuleFormLevels}`);
+        const currentLevel = document.getElementById(`approval-rule-level-${approvalRuleFormLevels}`);
+        if (currentSelect) currentSelect.value = '';
+        if (currentLevel) currentLevel.style.display = 'none';
+
+        approvalRuleFormLevels -= 1;
+
+        const addButton = document.getElementById('approval-rule-add-level-btn');
+        const removeButton = document.getElementById('approval-rule-remove-level-btn');
+        if (addButton) addButton.style.display = approvalRuleFormLevels >= 3 ? 'none' : 'inline-flex';
+        if (removeButton) removeButton.style.display = approvalRuleFormLevels > 1 ? 'inline-flex' : 'none';
+    };
+
+    window.toggleApprovalRuleStatus = function(ruleId) {
+        const rule = getApprovalRuleById(ruleId);
+        if (!rule) return;
+        rule.status = rule.status === 'enabled' ? 'disabled' : 'enabled';
+        rule.updatedAt = 'Just now';
+        renderApprovalRulesPage();
+    };
+
+    window.deleteApprovalRule = function(ruleId) {
+        const index = approvalRules.findIndex(rule => rule.id === ruleId);
+        if (index === -1) return;
+        if (!confirm('Are you sure you want to delete this approval rule?')) return;
+        approvalRules.splice(index, 1);
+        approvalRuleView = 'list';
+        activeApprovalRuleId = null;
+        renderApprovalRulesPage();
+    };
+
+    window.saveApprovalRule = function(ruleId) {
+        const name = document.getElementById('approval-rule-name').value.trim();
+        const scope = document.getElementById('approval-rule-scope').value;
+        const triggerOperator = document.getElementById('approval-rule-trigger-operator').value;
+        const triggerValue = document.getElementById('approval-rule-trigger-value').value.trim();
+        const approverLevel1 = document.getElementById('approval-rule-approver-1').value;
+        const approverLevel2 = document.getElementById('approval-rule-approver-2').value;
+        const approverLevel3 = document.getElementById('approval-rule-approver-3').value;
+        const notes = document.getElementById('approval-rule-notes').value.trim();
+
+        if (!name || !scope || !triggerOperator || !triggerValue || !approverLevel1) {
+            alert('Please complete all required approval rule fields.');
+            return;
+        }
+
+        if (ruleId) {
+            const rule = getApprovalRuleById(ruleId);
+            if (!rule) return;
+            rule.name = name;
+            rule.scope = scope;
+            rule.triggerOperator = triggerOperator;
+            rule.triggerValue = triggerValue;
+            rule.approverLevel1 = approverLevel1;
+            rule.approverLevel2 = approverLevel2;
+            rule.approverLevel3 = approverLevel3;
+            rule.notes = notes || 'No notes provided.';
+            rule.updatedAt = 'Just now';
+            approvalRuleView = 'detail';
+            activeApprovalRuleId = ruleId;
+        } else {
+            const newRuleId = `AR-${String(approvalRules.length + 1).padStart(3, '0')}`;
+            approvalRules.unshift({
+                id: newRuleId,
+                name,
+                scope,
+                triggerOperator,
+                triggerValue,
+                approverLevel1,
+                approverLevel2,
+                approverLevel3,
+                updatedAt: 'Just now',
+                status: 'enabled',
+                notes: notes || 'No notes provided.'
+            });
+            approvalRuleView = 'detail';
+            activeApprovalRuleId = newRuleId;
+        }
+
+        renderApprovalRulesPage();
     };
 
 
@@ -1441,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('USD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer USD')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert USD')">Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('USD')">Convert</button>
                     </div>
                 </div>
                 <!-- HKD -->
@@ -1454,7 +2400,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('HKD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer HKD')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert HKD')">Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('HKD')">Convert</button>
                     </div>
                 </div>
                 <!-- EUR -->
@@ -1467,7 +2413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('EUR')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer EUR')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert EUR')">Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('EUR')">Convert</button>
                     </div>
                 </div>
                 <!-- BRL -->
@@ -1480,7 +2426,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('BRL')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer BRL')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert BRL')">Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('BRL')">Convert</button>
                     </div>
                 </div>
             </div>
@@ -1865,6 +2811,83 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
+    const merchantProfileHTML = `
+        <div class="fade-in" style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="card" style="padding: 28px 32px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); border: 1px solid #E2E8F0;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                        <div style="width: 88px; height: 88px; border-radius: 24px; background: linear-gradient(180deg, #DCFCE7 0%, #BBF7D0 100%); border: 1px solid #86EFAC; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: #166534; font-size: 34px; font-weight: 700;">
+                            N
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <h2 style="font-size: 30px; font-weight: 700; color: #0F172A; margin: 0;">ABC Trading Pte Ltd</h2>
+                                <span style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;">
+                                    <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
+                                    Business Verification Required
+                                </span>
+                            </div>
+                            <div style="font-size: 14px; color: #64748B;">Created on: Nov 21, 2025, 10:49</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" style="padding: 10px 16px; font-size: 13px;">Edit Profile</button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
+                        <i data-lucide="badge-info" style="width: 16px; height: 16px;"></i>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Merchant Profile</h3>
+                </div>
+                <div style="padding: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Business Type</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0F172A;">Education / Training</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Country / Region</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0F172A;">Singapore (SG)</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Phone Number</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0F172A;">(+65) 88886666</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Business Address</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #0F172A; line-height: 1.6;">Marina One West Tower, #05-07, Singapore 018937</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Website</div>
+                        <div style="font-size: 15px; font-weight: 600; color: #2563EB;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 10px; background: #F8FAFC; display: flex; align-items: center; justify-content: center; color: #475569; border: 1px solid #E2E8F0;">
+                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                    </div>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Service Agreements & Policies</h3>
+                </div>
+                <div style="padding: 10px 28px 8px 28px; display: flex; flex-direction: column;">
+                    <div style="padding: 18px 0; display: grid; grid-template-columns: 1.8fr 0.9fr 110px; gap: 20px; align-items: center; border-bottom: 1px solid #F1F5F9;">
+                        <a href="#" style="font-size: 15px; font-weight: 600; color: #2563EB; text-decoration: none;">1. Obita Privacy Policy</a>
+                        <div style="font-size: 13px; color: #64748B;">Signed on: Nov 21, 2025</div>
+                        <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">View</button>
+                    </div>
+                    <div style="padding: 18px 0; display: grid; grid-template-columns: 1.8fr 0.9fr 110px; gap: 20px; align-items: center;">
+                        <a href="#" style="font-size: 15px; font-weight: 600; color: #2563EB; text-decoration: none;">2. Obita Enterprise Wallet Service Agreement</a>
+                        <div style="font-size: 13px; color: #64748B;">Signed on: Nov 21, 2025</div>
+                        <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">View</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = overviewHTML;
@@ -1887,6 +2910,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }, 0);
+        } else if (title === 'Approval List') {
+            approvalListView = 'list';
+            activeApprovalRequestId = null;
+            expandedApprovalActionId = null;
+            renderApprovalListPage();
+        } else if (title === 'Merchant Profile') {
+            contentBody.innerHTML = merchantProfileHTML;
+            lucide.createIcons();
+        } else if (title === 'Approval Rules') {
+            approvalRuleView = 'list';
+            activeApprovalRuleId = null;
+            renderApprovalRulesPage();
         } else if (title === 'Stablecoin Vault') {
             contentBody.innerHTML = stablecoinVaultHTML;
         } else if (title === 'Conversion') {
@@ -2209,6 +3244,15 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             window.pgCvExecute = function() {
+                const fromCoin = document.getElementById('pg-cv-from-coin').value;
+                const toCoin = document.getElementById('pg-cv-to-coin').value;
+                const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
+                notifyOrderCreated(
+                    'Conversion Order Created',
+                    `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${fromCoin} to ${toCoin} conversion order has been created.`,
+                    'View Convert',
+                    () => openInbox()
+                );
                 alert('Conversion executed successfully.');
                 window.pgCvBackToStep1();
                 document.getElementById('pg-cv-amount').value = '';

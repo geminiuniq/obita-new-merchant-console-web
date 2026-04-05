@@ -31,12 +31,14 @@
                 </a>
                 <!-- Collapsible Menu: Asset Vaults -->
                 <div class="nav-group">
-                    <div class="nav-item has-submenu submenu-toggle">
+                    <div class="nav-item has-submenu">
                         <div class="submenu-title">
                             <i data-lucide="wallet"></i>
                             <span>Asset Vaults</span>
                         </div>
-                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle Asset Vaults submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
                     </div>
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="stablecoin-vault">
@@ -54,12 +56,14 @@
                 
                 <!-- Collapsible Menu: Collection -->
                 <div class="nav-group">
-                    <div class="nav-item has-submenu submenu-toggle">
+                    <div class="nav-item has-submenu">
                         <div class="submenu-title">
                             <i data-lucide="arrow-down-to-line"></i>
                             <span>Collection</span>
                         </div>
-                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle Collection submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
                     </div>
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="invoices">
@@ -73,12 +77,14 @@
 
                 <!-- Collapsible Menu: Payouts -->
                 <div class="nav-group">
-                    <div class="nav-item has-submenu submenu-toggle">
+                    <div class="nav-item has-submenu">
                         <div class="submenu-title">
                             <i data-lucide="arrow-up-right"></i>
                             <span>Payouts</span>
                         </div>
-                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle Payouts submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
                     </div>
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="payout-orders">
@@ -92,12 +98,14 @@
 
                 <!-- Collapsible Menu: Approvals -->
                 <div class="nav-group">
-                    <div class="nav-item has-submenu submenu-toggle">
+                    <div class="nav-item has-submenu">
                         <div class="submenu-title">
                             <i data-lucide="check-square"></i>
                             <span>Approvals</span>
                         </div>
-                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle Approvals submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
                     </div>
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="approval-list">
@@ -111,12 +119,14 @@
                 
                 <!-- Collapsible Menu: Report Center -->
                 <div class="nav-group">
-                    <div class="nav-item has-submenu submenu-toggle">
+                    <div class="nav-item has-submenu">
                         <div class="submenu-title">
                             <i data-lucide="bar-chart-2"></i>
                             <span>Report Center</span>
                         </div>
-                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle Report Center submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
                     </div>
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="order-reports">
@@ -130,6 +140,28 @@
                         </a>
                         <a href="#" class="nav-subitem" data-target="download-task">
                             <span>Download Task</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-item has-submenu">
+                        <div class="submenu-title">
+                            <i data-lucide="building-2"></i>
+                            <span>My Merchant</span>
+                        </div>
+                        <button type="button" class="submenu-toggle" aria-label="Toggle My Merchant submenu" aria-expanded="false">
+                            <i data-lucide="chevron-down" class="chevron-icon"></i>
+                        </button>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="merchant-profile">
+                            <span>Merchant Profile</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="members">
+                            <span>Members</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="roles-permissions">
+                            <span>Roles and Permissions</span>
                         </a>
                     </div>
                 </div>
@@ -194,6 +226,27 @@
 
     <!-- Inbox Drawer Overlay -->
     <div class="drawer-overlay" id="drawer-overlay"></div>
+
+    <div class="push-notification" id="push-notification">
+        <div class="push-notification-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="push-notification-icon">
+                    <i data-lucide="bell" style="width: 14px; height: 14px;"></i>
+                </div>
+                <span>New Inbox Message</span>
+            </div>
+            <button class="push-notification-close" id="close-push-notification">
+                <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+            </button>
+        </div>
+        <div class="push-notification-body">
+            <div class="push-notification-title" id="push-notification-title">Order Update</div>
+            <div class="push-notification-preview" id="push-notification-preview">A new order message has been delivered to your inbox.</div>
+        </div>
+        <div class="push-notification-actions">
+            <button class="push-notification-action" id="push-notification-action">View Inbox</button>
+        </div>
+    </div>
     
     <!-- Inbox Slide Drawer -->
     <div class="inbox-drawer" id="inbox-drawer">
@@ -203,7 +256,7 @@
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <div class="drawer-body">
+        <div class="drawer-body" id="inbox-message-list">
             <!-- Message List -->
             <div class="inbox-msg unread">
                 <div class="msg-indicator"></div>
