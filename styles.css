@@ -378,8 +378,8 @@ body.drawer-open .drawer-overlay {
     visibility: visible;
 }
 
-body.drawer-open .inbox-drawer {
-    right: 0;
+body.drawer-open .drawer-active {
+    right: 0 !important;
 }
 
 .drawer-header {
@@ -600,6 +600,7 @@ body.drawer-open .inbox-drawer {
 .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     padding: 10px 16px;
     border-radius: 8px;
@@ -1030,3 +1031,17 @@ body.drawer-open .inbox-drawer {
 
 .font-medium { font-weight: 500; }
 .text-right { text-align: right; }
+
+/* Wallet Cards */
+.wallet-card {
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--clr-border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+.wallet-card:hover {
+    border-color: #94A3B8;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}

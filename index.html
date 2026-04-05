@@ -29,10 +29,24 @@
                     <i data-lucide="layout-dashboard"></i>
                     <span>Overview</span>
                 </a>
-                <a href="#" class="nav-item" data-target="asset-vaults">
-                    <i data-lucide="wallet"></i>
-                    <span>Asset Vaults</span>
-                </a>
+                <!-- Collapsible Menu: Asset Vaults -->
+                <div class="nav-group">
+                    <div class="nav-item has-submenu submenu-toggle">
+                        <div class="submenu-title">
+                            <i data-lucide="wallet"></i>
+                            <span>Asset Vaults</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="chevron-icon"></i>
+                    </div>
+                    <div class="submenu">
+                        <a href="#" class="nav-subitem" data-target="stablecoin-vault">
+                            <span>Stablecoin Vault</span>
+                        </a>
+                        <a href="#" class="nav-subitem" data-target="fiat-vault">
+                            <span>Fiat Vault</span>
+                        </a>
+                    </div>
+                </div>
                 <a href="#" class="nav-item" data-target="conversion">
                     <i data-lucide="arrow-left-right"></i>
                     <span>Conversion</span>
@@ -211,6 +225,461 @@
                     </div>
                     <p class="msg-preview">Your account statement for March is now ready to download.</p>
                     <span class="msg-time">1 day ago</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Slide Drawer -->
+    <div class="inbox-drawer" id="wallet-drawer">
+        <div class="drawer-header">
+            <h3>Wallet Transactions</h3>
+            <button class="icon-btn" id="close-wallet-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 0;">
+            <!-- Drawer top context -->
+            <div style="padding: 24px; background-color: #F8FAFC; border-bottom: 1px solid var(--clr-border);">
+                <div style="font-size: 13px; color: var(--clr-text-muted); margin-bottom: 8px;">Address</div>
+                <div style="font-family: monospace; color: var(--clr-text-main); font-size: 14px; font-weight: 600; word-break: break-all;" id="wallet-drawer-address">TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
+                <div style="display: flex; gap: 8px; margin-top: 16px;">
+                    <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;" id="wallet-drawer-type">Inbound Wallet</span>
+                </div>
+            </div>
+            
+            <div style="padding: 24px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; color: var(--clr-text-main);">Recent Interactions</h4>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="padding-bottom: 16px; border-bottom: 1px solid var(--clr-border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Top Up</span>
+                            <span style="font-weight: 600; font-size: 14px; color: #10B981;">+ 5,000 USDC</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--clr-text-muted);">
+                            <span>Oct 24, 2026 14:30</span>
+                            <span style="font-family: monospace;">0x8f...39c4</span>
+                        </div>
+                    </div>
+                    <div style="padding-bottom: 16px; border-bottom: 1px solid var(--clr-border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Top Up</span>
+                            <span style="font-weight: 600; font-size: 14px; color: #10B981;">+ 12,000 USDT</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--clr-text-muted);">
+                            <span>Oct 20, 2026 09:15</span>
+                            <span style="font-family: monospace;">0x2b...9a11</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Up Slide Drawer -->
+    <div class="inbox-drawer" id="topup-drawer" style="width: 420px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="arrow-down-to-line" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                </div>
+                <h3 id="topup-drawer-title">Top Up USDT</h3>
+            </div>
+            <button class="icon-btn" id="close-topup-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            <!-- Network Selector -->
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--clr-border); background-color: #F8FAFC;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Blockchain Network</label>
+                <div style="position: relative;">
+                    <select id="topup-chain-select" style="width: 100%; padding: 10px 36px 10px 14px; border: 1px solid var(--clr-border); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--clr-text-main); background: white; appearance: none; cursor: pointer; outline: none;">
+                        <option value="TRON">TRON (TRC-20)</option>
+                        <option value="ETH">Ethereum (ERC-20)</option>
+                    </select>
+                    <i data-lucide="chevron-down" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--clr-text-muted); pointer-events: none;"></i>
+                </div>
+            </div>
+            <!-- QR Code + Address -->
+            <div style="flex: 1; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; align-items: center; gap: 24px;">
+                <div style="padding: 16px; background: white; border: 1px solid var(--clr-border); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+                    <img id="topup-qr-img" src="" alt="Deposit QR Code" style="width: 180px; height: 180px; display: block;" />
+                </div>
+                <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 16px; text-align: center; width: 100%;">
+                    <p id="topup-hint" style="font-size: 13px; color: #1D4ED8; margin: 0; line-height: 1.6;"></p>
+                </div>
+                <div style="width: 100%;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--clr-text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Deposit Address</label>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px;">
+                        <span id="topup-address" style="font-family: monospace; font-size: 12px; color: var(--clr-text-main); flex: 1; word-break: break-all; line-height: 1.6;"></span>
+                        <button onclick="window.copyTopUpAddress()" style="flex-shrink: 0; background: none; border: none; cursor: pointer; padding: 4px; color: var(--clr-text-muted);" id="topup-copy-btn" title="Copy address">
+                            <i data-lucide="copy" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer OK Button -->
+            <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                <button onclick="closeAllDrawers()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify Wallet Slide Drawer -->
+    <div class="inbox-drawer" id="verify-drawer" style="width: 480px; right: -480px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                </div>
+                <h3>Wallet Verification</h3>
+            </div>
+            <button class="icon-btn" id="close-verify-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            
+            <!-- STEP 1 -->
+            <div id="verify-step-1" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px;">
+                    
+                    <!-- Form Switcher -->
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                            <input type="radio" name="ownerType" value="individual" checked onchange="window.toggleOwnerType(this.value)" /> Individual
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; cursor: pointer;">
+                            <input type="radio" name="ownerType" value="organization" onchange="window.toggleOwnerType(this.value)" /> Organization
+                        </label>
+                    </div>
+
+                    <!-- Individual Form -->
+                    <div id="form-individual" style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">First Name</label><input type="text" id="v-fname" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                            <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Middle Name</label><input type="text" id="v-mname" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Sur Name</label><input type="text" id="v-lname" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                            <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Date of Birth</label><input type="date" id="v-dob" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                        </div>
+                        <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Address</label><input type="text" id="v-iaddr" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                    </div>
+
+                    <!-- Organization Form -->
+                    <div id="form-organization" style="display: none; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+                        <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Organization Name</label><input type="text" id="v-orgname" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                        <div><label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Organization Address</label><input type="text" id="v-orgaddr" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;" /></div>
+                    </div>
+
+                    <div style="margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #E2E8F0;">
+                        <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="v-owner-checkbox" checked style="margin-top: 3px;" />
+                            <span style="font-size: 13px; color: #334155; line-height: 1.5;">I hereby declare that I am the beneficial owner of the wallet address provided below and that all funds transferred originate from a legitimate source.</span>
+                        </label>
+                    </div>
+
+                    <!-- Wallet Connection selection -->
+                    <h4 style="font-size: 14px; color: #1E293B; margin-bottom: 16px;">Wallet Verification</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('metamask')">
+                            <input type="radio" name="walletMethod" value="metamask" checked style="margin-right: 12px;" />
+                            <span style="flex: 1; font-weight: 500; font-size: 14px;">MetaMask</span>
+                        </label>
+                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('walletconnect')">
+                            <input type="radio" name="walletMethod" value="walletconnect" style="margin-right: 12px;" />
+                            <span style="flex: 1; font-weight: 500; font-size: 14px;">WalletConnect</span>
+                        </label>
+                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('custodial')">
+                            <input type="radio" name="walletMethod" value="custodial" style="margin-right: 12px;" />
+                            <span style="flex: 1; font-weight: 500; font-size: 14px;">Exchange / Custodial Wallet</span>
+                        </label>
+                    </div>
+
+                    <!-- Custodial Address Input -->
+                    <div id="verify-custodial-input" style="display: none; margin-top: 16px; padding: 16px; background: #F8FAFC; border-radius: 8px;">
+                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Wallet Address</label>
+                        <input type="text" id="v-wallet-addr" placeholder="0x..." class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-family: monospace;" />
+                    </div>
+
+                </div>
+                <!-- Footer Verify Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.goToVerifyStep2()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Verify & Proceed</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: SUMMARY -->
+            <div id="verify-step-2" style="display: none; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <div class="success-banner" style="display: flex; align-items: center; gap: 12px; padding: 16px; background-color: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px;">
+                        <i data-lucide="check-circle-2" style="color: #16A34A; width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <span style="color: #15803D; font-size: 14px; font-weight: 500;">Connection Successful. Please review your details before confirming.</span>
+                    </div>
+
+                    <!-- Profile Box -->
+                    <div>
+                        <h4 style="font-size: 12px; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px; letter-spacing: 0.5px;">Verification Profile</h4>
+                        <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC;">
+                            <div id="s2-name-box" style="margin-bottom: 8px;">
+                                <div style="font-size: 11px; color: #64748B;">Name / Entity</div>
+                                <div id="s2-name" style="font-size: 14px; font-weight: 600; color: #1E293B;">-</div>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <div style="font-size: 11px; color: #64748B;">Address / Details</div>
+                                <div id="s2-details" style="font-size: 13px; color: #1E293B;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Statement Box -->
+                    <div>
+                        <h4 style="font-size: 12px; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px; letter-spacing: 0.5px;">Beneficial Owner Statement</h4>
+                        <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC;">
+                            <p style="font-size: 13px; color: #334155; margin: 0; line-height: 1.5;"><i data-lucide="check" style="color: #10B981; width: 14px; height: 14px; display: inline-block; vertical-align: middle; margin-right: 4px;"></i> User verified as beneficial owner.</p>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Box -->
+                    <div>
+                        <h4 style="font-size: 12px; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px; letter-spacing: 0.5px;">Wallet Adddress</h4>
+                        <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; display: flex; align-items: center; justify-content: space-between;">
+                            <div id="s2-wallet" style="font-family: monospace; font-size: 13px; color: #1E293B; word-break: break-all;">-</div>
+                            <div id="s2-wallet-badge" style="display: none; align-items: center; gap: 4px; padding: 2px 8px; background: #D1FAE5; color: #059669; border-radius: 12px; font-size: 11px; font-weight: 600; flex-shrink: 0;">
+                                <i data-lucide="shield-check" style="width: 12px; height: 12px;"></i> Verified
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Footer Confirm Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.confirmVerification()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <!-- Transfer Slide Drawer -->
+    <div class="inbox-drawer" id="transfer-drawer" style="width: 480px; right: -480px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <h3>Transfer Assets</h3>
+            </div>
+            <button class="icon-btn" id="close-transfer-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            
+            <!-- STEP 1: Input -->
+            <div id="transfer-step-1" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <!-- Coin Selection -->
+                    <div>
+                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Asset</label>
+                        <select id="t-coin" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 6px; font-weight: 500; appearance: none; background: white;" onchange="window.updateTransferAvailables()">
+                            <option value="USDT">Tether (USDT)</option>
+                            <option value="USDC">USD Coin (USDC)</option>
+                        </select>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div>
+                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Amount</label>
+                        <div style="position: relative;">
+                            <input type="number" id="t-amount" placeholder="0.00" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 12px 16px; border-radius: 6px; font-size: 16px; font-weight: 600;" />
+                            <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #64748B;" id="t-coin-label">USDT</div>
+                        </div>
+                        <div id="t-error" style="display: none; color: #DC2626; font-size: 12px; margin-top: 6px; font-weight: 500;">Insufficient balance.</div>
+                        <div style="text-align: right; margin-top: 6px; font-size: 12px; color: #94A3B8;">
+                            Available: <span id="t-avail" style="font-weight: 600; color: #334155;">14,000,000.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Wallet Selector -->
+                    <div>
+                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Destination Wallet (Connected)</label>
+                        <select id="t-wallet" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 6px; font-weight: 500; background: white;">
+                            <option value="ABC Trading Pte Ltd|TRON|TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" selected>ABC Trading Pte Ltd (TRON) — TVkx...Lj6t</option>
+                            <option value="Kraken Corporate|TRON|TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>Kraken Corporate (TRON) — TR7N...Lj6t</option>
+                            <option value="Binance Institutional|ETH|0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" disabled>Binance Institutional (ETH) — 0xA0b8...eB48</option>
+                            <option value="MetaMask Trading|TRON|TVjsyZ7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>MetaMask Trading (TRON) — TVjs...Lj6t</option>
+                        </select>
+                        <div style="background: #FEF2F2; border: 1px solid #FECACA; padding: 10px 12px; border-radius: 6px; display: flex; align-items: flex-start; gap: 8px; margin-top: 10px;">
+                            <i data-lucide="info" style="width: 14px; height: 14px; color: #DC2626; flex-shrink: 0; margin-top: 2px;"></i>
+                            <p style="font-size: 11px; color: #991B1B; margin: 0; line-height: 1.5; font-weight: 500;">Note: Only merchant same-name accounts are permitted for outbound transfers. Non-compliant wallets are disabled.</p>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Footer Verify Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.goToTransferStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Review Details</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: SUMMARY -->
+            <div id="transfer-step-2" style="display: none; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <div style="text-align: center; margin-bottom: 8px;">
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Please Confirm</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #1E293B;"><span id="ts2-amount">0.00</span> <span id="ts2-coin" style="font-size: 18px; color: #64748B;">USDT</span></div>
+                    </div>
+
+                    <!-- Wallet Review Box -->
+                    <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC;">
+                        <h4 style="font-size: 11px; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px; letter-spacing: 0.5px;">Destination Identity</h4>
+                        <div style="display: grid; gap: 12px;">
+                            <div>
+                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Name</div>
+                                <div id="ts2-name" style="font-size: 14px; font-weight: 600; color: #1E293B;">-</div>
+                            </div>
+                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div>
+                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Network</div>
+                                <div style="display: inline-block; padding: 2px 8px; background: #EFF6FF; color: #2563EB; font-size: 11px; font-weight: 600; border-radius: 4px;" id="ts2-net">-</div>
+                            </div>
+                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div>
+                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Address</div>
+                                <div id="ts2-addr" style="font-size: 13px; font-family: monospace; color: #1E293B; word-break: break-all;">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Footer Confirm Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.executeTransfer()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Execute Transfer</button>
+                    <button onclick="window.resetTransferDrawer()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;">Back to Edit</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Convert Drawer -->
+    <div class="inbox-drawer" id="convert-drawer" style="width: 480px; right: -480px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="refresh-cw" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <h3>Convert Assets</h3>
+            </div>
+            <button class="icon-btn" id="close-convert-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            <!-- STEP 1: Input -->
+            <div id="convert-step-1" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <!-- From Section -->
+                    <div style="background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px;">
+                        <label style="display:block; font-size: 11px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">From</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div id="cv-source-coin" style="font-size: 20px; font-weight: 700; color: #1E293B; width: 60px;">USDT</div>
+                            <input type="number" id="cv-amount" placeholder="0.00" class="form-input" style="flex: 1; border: none; background: transparent; font-size: 24px; font-weight: 600; text-align: right; outline: none; padding: 0;" />
+                        </div>
+                        <div id="cv-error" style="display: none; color: #DC2626; font-size: 12px; margin-top: 8px; font-weight: 500; text-align: right;">Insufficient balance.</div>
+                        <div style="text-align: right; margin-top: 4px; font-size: 12px; color: #94A3B8;">
+                            Available: <span id="cv-avail" style="font-weight: 600; color: #334155;">0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Down Arrow -->
+                    <div style="display: flex; justify-content: center; margin: 0 -8px;">
+                        <div style="width: 32px; height: 32px; background: white; border: 1px solid var(--clr-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10;">
+                            <i data-lucide="arrow-down" style="width: 16px; height: 16px; color: #64748B;"></i>
+                        </div>
+                    </div>
+
+                    <!-- To Section -->
+                    <div style="background: #FFF; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px; margin-top: -36px; padding-top: 36px;">
+                        <label style="display:block; font-size: 11px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase;">To</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="cv-target-coin" style="font-size: 16px; font-weight: 600; color: #1E293B; padding: 8px; border: 1px solid var(--clr-border); border-radius: 6px; background: #F8FAFC; outline: none;">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="USDC">USDC - USD Coin</option>
+                                <option value="USDT">USDT - Tether</option>
+                                <option value="HKD">HKD - Hong Kong Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="BRL">BRL - Brazilian Real</option>
+                            </select>
+                            <div id="cv-target-amount" style="flex: 1; font-size: 24px; font-weight: 600; text-align: right; color: #0F172A;">0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Market Quote Box -->
+                    <div style="padding: 16px; border-radius: 8px; border: 1px dashed #CBD5E1; background: #F8FAFC;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                            <span style="color: #64748B;">Exchange Rate</span>
+                            <span style="font-weight: 600; color: #1E293B;" id="cv-rate-text">1 USDT = 1 USD</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+                            <span style="color: #64748B;">Conversion Fee</span>
+                            <span style="font-weight: 500; color: #10B981;">0.00 (Zero Fee)</span>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; font-size: 11px; color: #D97706; margin-top: 12px; font-weight: 600; align-items: center; gap: 4px;">
+                            <i data-lucide="timer" style="width: 12px; height: 12px;"></i> Rate guaranteed for 15s
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Footer Verify Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.goToConvertStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Review Quote</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: SUMMARY -->
+            <div id="convert-step-2" style="display: none; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <div style="text-align: center; margin-bottom: 8px; margin-top: 16px;">
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">You are converting</div>
+                        <div style="font-size: 28px; font-weight: 700; color: #1E293B;"><span id="cs2-src-amt">0.00</span> <span id="cs2-src-coin" style="font-size: 16px; color: #64748B;">USDT</span></div>
+                        <div style="margin: 12px 0;"><i data-lucide="arrow-down" style="width: 20px; height: 20px; color: #CBD5E1;"></i></div>
+                        <div style="font-size: 32px; font-weight: 700; color: #059669;"><span id="cs2-tgt-amt">0.00</span> <span id="cs2-tgt-coin" style="font-size: 18px; color: #10B981;">USD</span></div>
+                    </div>
+
+                    <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC;">
+                        <h4 style="font-size: 11px; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px; letter-spacing: 0.5px;">Transaction Details</h4>
+                        <div style="display: grid; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div style="font-size: 12px; color: #64748B;">Secured Rate</div>
+                                <div id="cs2-rate" style="font-size: 13px; font-family: monospace; font-weight: 600; color: #1E293B;">-</div>
+                            </div>
+                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <div style="font-size: 12px; color: #64748B;">Fee</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #10B981;">No Fee</div>
+                            </div>
+                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <div style="font-size: 12px; color: #64748B;">Destination Vault</div>
+                                <div id="cs2-dest-vault" style="font-size: 13px; font-weight: 600; color: #2563EB;">Fiat Vault</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- Footer Confirm Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.executeConvert()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
+                    <button onclick="window.resetConvertDrawer()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;">Back to Edit</button>
                 </div>
             </div>
         </div>
