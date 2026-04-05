@@ -326,6 +326,216 @@
         </div>
     </div>
 
+    <div class="inbox-drawer" id="fiat-topup-drawer" style="width: 540px; right: -540px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="building-2" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                </div>
+                <h3 id="fiat-topup-drawer-title">Top Up USD</h3>
+            </div>
+            <button class="icon-btn" id="close-fiat-topup-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px); gap: 0;">
+            <div id="fiat-topup-step-1" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 1: Select remitting bank account</div>
+                    <div id="fiat-topup-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Only verified, enabled, same-name bank accounts can be used for fiat top up.</div>
+                </div>
+
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px;">
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Remitting Bank Account</label>
+                        <select id="fiat-topup-source-account" class="bank-form-control">
+                            <option value="">Select a linked bank account</option>
+                        </select>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Receiving Bank Information</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Use the following details for your <span id="fiat-topup-currency-label">USD</span> remittance.</div>
+                            </div>
+                            <div style="font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 999px; padding: 4px 10px;">Obita Collection</div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Beneficiary</div>
+                                    <div id="fiat-topup-beneficiary" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">Obita Technologies Ltd.</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-beneficiary').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Bank</div>
+                                    <div id="fiat-topup-bank" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">JPMorgan Chase Bank, N.A.</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-bank').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Account Number</div>
+                                    <div id="fiat-topup-account-number" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">9876543210</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-account-number').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Routing / Local Code</div>
+                                    <div id="fiat-topup-routing" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">021000021</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-routing').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">SWIFT / BIC</div>
+                                    <div id="fiat-topup-swift" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">CHASUS33</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-swift').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #EFF6FF; border: 1px dashed #BFDBFE; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em;">Payment Reference</div>
+                                    <div id="fiat-topup-reference" style="font-size: 13px; font-weight: 700; color: #1D4ED8; margin-top: 4px;">FV-USD-OBITA</div>
+                                </div>
+                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-reference').textContent, this)" style="background: none; border: none; cursor: pointer; color: #2563EB; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button id="fiat-topup-step1-confirm" onclick="window.goToFiatTopUpStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Confirm Receiving Details</button>
+                </div>
+            </div>
+
+            <div id="fiat-topup-step-2" style="display: none; flex-direction: column; height: 100%;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 2: Submit remittance information</div>
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Enter the transfer amount, confirm the currency, and upload the bank transfer proof.</div>
+                </div>
+
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div class="bank-form-section">
+                        <div class="bank-form-field bank-form-field-full">
+                            <label class="bank-form-label">Remitting Account</label>
+                            <div id="fiat-topup-step2-source-account" class="bank-form-control" style="display: flex; align-items: center; font-weight: 600;">-</div>
+                        </div>
+
+                        <div class="bank-form-grid">
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Amount *</label>
+                                <input type="number" id="fiat-topup-amount" class="bank-form-control" placeholder="0.00">
+                            </div>
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Currency *</label>
+                                <select id="fiat-topup-step2-currency" class="bank-form-control" disabled>
+                                    <option value="USD">USD</option>
+                                    <option value="HKD">HKD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="BRL">BRL</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bank-form-section">
+                        <div class="bank-form-section-title">
+                            <div class="bank-form-section-icon">
+                                <i data-lucide="receipt" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <h5>Remittance Proof</h5>
+                                <p>Upload the payment receipt, screenshot, or bank remittance voucher.</p>
+                            </div>
+                        </div>
+
+                        <div class="bank-upload-box">
+                            <div class="bank-upload-header">
+                                <div>
+                                    <div class="bank-upload-title">Upload Proof of Payment *</div>
+                                    <div class="bank-upload-help">Accepted formats: PDF, JPG, PNG. Make sure amount and reference are visible.</div>
+                                </div>
+                                <label for="fiat-topup-proof" class="bank-upload-btn">
+                                    <i data-lucide="upload" style="width: 14px; height: 14px;"></i>
+                                    Upload Proof
+                                </label>
+                            </div>
+                            <input type="file" id="fiat-topup-proof" accept=".pdf,.jpg,.jpeg,.png" onchange="window.handleFiatTopUpProofSelected(this)" style="display: none;">
+                            <div class="bank-upload-file">
+                                <span id="fiat-topup-proof-name">No proof uploaded</span>
+                                <i data-lucide="paperclip" style="width: 14px; height: 14px; color: #64748B;"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.submitFiatTopUp()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">I Have Remitted</button>
+                </div>
+            </div>
+
+            <div id="fiat-topup-step-3" style="display: none; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; text-align: center;">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #DBEAFE; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+                            <i data-lucide="clock-3" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div style="font-size: 18px; font-weight: 700; color: #0F172A;">Fiat Top Up Submitted</div>
+                        <div style="font-size: 13px; color: #64748B; line-height: 1.6; margin-top: 8px;">We have created your fiat top up order. Our team will reconcile the transfer after receiving the bank remittance.</div>
+                    </div>
+
+                    <div class="bank-form-section">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order ID</div>
+                                <div id="fiat-topup-step3-order-id" style="font-size: 16px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div>
+                            </div>
+                            <span style="background: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px;">Proceeding</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Source Account</span>
+                                <span id="fiat-topup-step3-source-account" style="font-weight: 600; color: #0F172A; text-align: right;">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Top Up Amount</span>
+                                <span style="font-weight: 600; color: #0F172A;"><span id="fiat-topup-step3-amount">0.00</span> <span id="fiat-topup-step3-currency">USD</span></span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Receiving Bank</span>
+                                <span id="fiat-topup-step3-bank" style="font-weight: 600; color: #0F172A; text-align: right;">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Reference</span>
+                                <span id="fiat-topup-step3-reference" style="font-weight: 600; color: #0F172A; text-align: right;">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Proof Uploaded</span>
+                                <span id="fiat-topup-step3-proof" style="font-weight: 600; color: #0F172A; text-align: right;">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
+                                <span style="color: #64748B;">Status</span>
+                                <span style="font-weight: 700; color: #D97706;">Proceeding</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.closeAllDrawers()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Verify Wallet Slide Drawer -->
     <div class="inbox-drawer" id="verify-drawer" style="width: 480px; right: -480px;">
         <div class="drawer-header">
@@ -681,6 +891,416 @@
                     <button onclick="window.executeConvert()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
                     <button onclick="window.resetConvertDrawer()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;">Back to Edit</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Addresses Drawer (Width: 500px for table fit) -->
+    <div class="inbox-drawer" id="manage-addresses-drawer" style="width: 500px; right: -500px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="book-open" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <h3>Address Book</h3>
+            </div>
+            <button class="icon-btn" id="close-addr-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            <!-- VIEW A: List Addresses -->
+            <div id="addr-list-view" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="padding: 16px 24px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--clr-border);">
+                    <button onclick="window.switchToAddAddressView()" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #2563EB; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add New
+                    </button>
+                </div>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;" id="addr-list-container">
+                    
+                    <!-- Item 1: Kraken Corporate - Verified -->
+                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Kraken Corporate</div>
+                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">✓ Verified</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
+                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Item 2: Binance Institutional - Pending Verification -->
+                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Binance Institutional</div>
+                                <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">ETH</span>
+                                <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">⏳ Pending Verification</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">0xA0b86991c6218b36c1d...eB48</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
+                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Item 3: MetaMask Trading - Not Supported -->
+                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; opacity: 0.6; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">MetaMask Trading</div>
+                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
+                                <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">✕ Not Supported</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVjsyZ7lNwQxGTCi8q8ZY...Lj6t</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
+                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Item 4: ABC Trading Pte Ltd - Verified -->
+                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">ABC Trading Pte Ltd</div>
+                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">✓ Verified</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
+                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- VIEW B: ADD ADDRESS FORM -->
+            <div id="add-addr-view" style="display: none; flex-direction: column; height: 100%;">
+                <div style="padding: 16px 24px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 12px;">
+                    <button onclick="window.switchToListAddressView()" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: flex; align-items: center; justify-content: center;"><i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i></button>
+                    <div style="font-weight: 600; font-size: 14px; color: #1E293B;">Add New Address</div>
+                </div>
+                
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <div style="display: flex; gap: 20px;">
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="newAddrOwnerType" value="individual" checked onchange="window.toggleNewAddrOwnerType('individual')"> Owned by Individual
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="newAddrOwnerType" value="organization" onchange="window.toggleNewAddrOwnerType('organization')"> Owned by Organization
+                        </label>
+                    </div>
+
+                    <!-- Individual Form -->
+                    <div id="na-form-individual" style="display: flex; flex-direction: column; gap: 12px; background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">First Name *</label>
+                            <input type="text" id="na-fname" class="form-input" placeholder="e.g. John" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Middle Name <span style="font-weight: 400; text-transform: none;">(optional)</span></label>
+                            <input type="text" id="na-mname" class="form-input" placeholder="e.g. Michael" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Surname *</label>
+                            <input type="text" id="na-lname" class="form-input" placeholder="e.g. Doe" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Date of Birth *</label>
+                            <input type="date" id="na-dob" class="form-input" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; color: #334155;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Residential Address *</label>
+                            <input type="text" id="na-iaddr" class="form-input" placeholder="e.g. 10 Anson Road, Singapore 079903" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                    </div>
+
+                    <!-- Organization Form -->
+                    <div id="na-form-organization" style="display: none; flex-direction: column; gap: 12px; background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Entity / Company Name *</label>
+                            <input type="text" id="na-orgname" class="form-input" placeholder="e.g. ABC Trading Pte Ltd" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Registered Address *</label>
+                            <input type="text" id="na-orgaddr" class="form-input" placeholder="e.g. 1 Marina Boulevard, #28-00, Singapore 018989" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                        </div>
+                    </div>
+
+                    <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 12px; border-radius: 6px; cursor: pointer; margin-top: 4px;">
+                        <input type="checkbox" checked style="margin-top: 3px;">
+                        <span style="font-size: 12px; color: #475569; line-height: 1.5;">I declare that this wallet is owned by the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
+                    </label>
+
+                    <div style="height: 1px; background: var(--clr-border);"></div>
+
+                    <!-- Connect Mode -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="font-size: 13px; font-weight: 600; color: #334155;">Wallet Connection Method</div>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="newAddrMethod" value="metamask" checked onchange="window.selectNewAddrMethod('metamask')"> MetaMask
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="newAddrMethod" value="walletconnect" onchange="window.selectNewAddrMethod('walletconnect')"> WalletConnect
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="newAddrMethod" value="custodial" onchange="window.selectNewAddrMethod('custodial')"> Exchange / Custodial Wallet
+                        </label>
+                    </div>
+
+                    <div id="na-custodial-input" style="display: none; flex-direction: column; gap: 8px;">
+                        <input type="text" id="na-wallet-addr" class="form-input" placeholder="Enter Wallet Address (e.g. 0x... or TR...)" style="width: 100%; font-family: monospace;">
+                        <select class="form-input" id="na-wallet-net" style="width: 100%;">
+                            <option value="TRON">TRON</option>
+                            <option value="ETH">Ethereum (ERC-20)</option>
+                        </select>
+                    </div>
+
+                </div>
+                <!-- Footer Submit Button -->
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.submitNewAddress()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Verify & Add Address</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Manage Bank Accounts Drawer -->
+    <div class="inbox-drawer" id="manage-bank-accounts-drawer" style="width: 560px; right: -560px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="landmark" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <h3>Bank Accounts</h3>
+            </div>
+            <button class="icon-btn" id="close-bank-accounts-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            <div id="bank-list-view" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="bank-list-header">
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-bottom: 6px;">All linked bank accounts</div>
+                        <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Each account shows its verification status and can be deleted or enabled/disabled directly from this drawer.</div>
+                    </div>
+                    <button onclick="window.switchToAddBankAccountView()" class="bank-add-btn">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                        Add
+                    </button>
+                </div>
+
+                <div id="bank-list-container" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                    <div class="bank-account-item" data-bank-name="Chase Bank" data-account-name="Obita Treasury Main Account" data-verification="verified" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="padding: 10px; background-color: #EFF6FF; border-radius: 10px; border: 1px solid #BFDBFE; flex-shrink: 0;">
+                            <i data-lucide="landmark" style="color: #2563EB; width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Chase Bank — Obita Treasury Main Account</span>
+                                <span data-role="bank-currency" style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Verified</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 4821 | Routing: 021000021 | SWIFT: CHASUS33</div>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Today</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+
+                    <div class="bank-account-item" data-bank-name="HSBC Hong Kong" data-account-name="Operations Clearing Account" data-verification="pending" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="padding: 10px; background-color: #FEF2F2; border-radius: 10px; border: 1px solid #FECACA; flex-shrink: 0;">
+                            <i data-lucide="landmark" style="color: #DC2626; width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">HSBC Hong Kong — Operations Clearing Account</span>
+                                <span data-role="bank-currency" style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">HKD</span>
+                                <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 9230 | Bank Code: 004 | SWIFT: HSBCHKHHHKH</div>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Yesterday</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+
+                    <div class="bank-account-item" data-bank-name="Deutsche Bank" data-account-name="Obita Europe Treasury" data-verification="verified" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="padding: 10px; background-color: #F5F3FF; border-radius: 10px; border: 1px solid #DDD6FE; flex-shrink: 0;">
+                            <i data-lucide="landmark" style="color: #7C3AED; width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Deutsche Bank — Obita Europe Treasury</span>
+                                <span data-role="bank-currency" style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">EUR</span>
+                                <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Verified</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">IBAN: DE89 3704 0044 0532 0130 00 | SWIFT: DEUTDEDB</div>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Oct 23</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <button onclick="window.toggleBankAccountStatus(this)" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+
+                    <div class="bank-account-item" data-bank-name="Banco do Brasil" data-account-name="Treasury Reserve Account" data-verification="not-supported" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; opacity: 0.72; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="padding: 10px; background-color: #F8FAFC; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
+                            <i data-lucide="landmark" style="color: #64748B; width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Banco do Brasil — Treasury</span>
+                                <span data-role="bank-currency" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">BRL</span>
+                                <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Not Supported</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 1058 | Branch: 3321 | SWIFT: BRASBRRJRJO</div>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Transfers from this account are currently not supported.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <button onclick="window.toggleBankAccountStatus(this)" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div id="add-bank-view" style="display: none; flex-direction: column; height: 100%;">
+                <div class="bank-add-view-header">
+                    <button onclick="window.switchToBankAccountsListView()" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <div class="bank-add-view-header-copy">
+                        <h4>Add Bank Account</h4>
+                        <p>Provide bank details and upload a statement for verification.</p>
+                    </div>
+                </div>
+
+                <form id="bank-account-form" onsubmit="event.preventDefault(); window.submitNewBankAccount();" class="bank-account-form">
+                    <div class="bank-form-section">
+                        <div class="bank-form-section-title">
+                            <div class="bank-form-section-icon">
+                                <i data-lucide="landmark" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <h5>Bank Details</h5>
+                                <p>Use the exact information shown on the bank record.</p>
+                            </div>
+                        </div>
+
+                        <div class="bank-form-grid">
+                            <div class="bank-form-field bank-form-field-full">
+                                <label class="bank-form-label">Bank Name *</label>
+                                <select id="bank-name" class="bank-form-control">
+                                    <option value="">Select bank</option>
+                                    <option value="DBS Bank">DBS Bank</option>
+                                    <option value="OCBC Bank">OCBC Bank</option>
+                                    <option value="UOB">UOB</option>
+                                    <option value="HSBC Hong Kong">HSBC Hong Kong</option>
+                                    <option value="Chase Bank">Chase Bank</option>
+                                    <option value="Deutsche Bank">Deutsche Bank</option>
+                                </select>
+                            </div>
+
+                            <div class="bank-form-field bank-form-field-full">
+                                <label class="bank-form-label">Bank Account Name *</label>
+                                <input type="text" id="bank-account-name" class="bank-form-control" placeholder="e.g. Obita Treasury Main Account">
+                            </div>
+
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Currency *</label>
+                                <select id="bank-currency" class="bank-form-control">
+                                    <option value="USD">USD</option>
+                                    <option value="HKD">HKD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="BRL">BRL</option>
+                                </select>
+                            </div>
+
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Account Number *</label>
+                                <input type="text" id="bank-account-number" class="bank-form-control" placeholder="e.g. 92831058">
+                            </div>
+
+                            <div class="bank-form-field bank-form-field-full">
+                                <label class="bank-form-label">Routing / IBAN *</label>
+                                <input type="text" id="bank-routing" class="bank-form-control" placeholder="e.g. 021000021 or DE89...">
+                            </div>
+
+                            <div class="bank-form-field bank-form-field-full">
+                                <label class="bank-form-label">SWIFT / BIC *</label>
+                                <input type="text" id="bank-swift" class="bank-form-control" placeholder="e.g. CHASUS33">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bank-form-section">
+                        <div class="bank-form-section-title">
+                            <div class="bank-form-section-icon">
+                                <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <h5>Verification Document</h5>
+                                <p>Upload a recent statement so the operations team can verify ownership.</p>
+                            </div>
+                        </div>
+
+                        <div class="bank-upload-box">
+                            <div class="bank-upload-header">
+                                <div>
+                                    <div class="bank-upload-title">Upload Bank Statement *</div>
+                                    <div class="bank-upload-help">Accepted formats: PDF, JPG, PNG. Recent statement preferred.</div>
+                                </div>
+                                <label for="bank-statement" class="bank-upload-btn">
+                                    <i data-lucide="upload" style="width: 14px; height: 14px;"></i>
+                                    Choose File
+                                </label>
+                            </div>
+                            <input type="file" id="bank-statement" accept=".pdf,.jpg,.jpeg,.png" onchange="window.handleBankStatementSelected(this)" style="display: none;">
+                            <div class="bank-upload-file">
+                                <span id="bank-statement-file-name">No file selected</span>
+                                <i data-lucide="file-text" style="width: 14px; height: 14px; color: #64748B;"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <label class="bank-confirm-note">
+                        <input type="checkbox" checked style="margin-top: 3px;">
+                        <span>I confirm this bank account belongs to the registered merchant entity and the uploaded statement is current and accurate.</span>
+                    </label>
+
+                    <button type="submit" class="bank-form-submit">Add Bank Account</button>
+                </form>
             </div>
         </div>
     </div>

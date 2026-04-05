@@ -2,6 +2,18 @@
 lucide.createIcons();
 
 document.addEventListener('DOMContentLoaded', () => {
+    const ALL_DRAWER_IDS = [
+        'inbox-drawer',
+        'wallet-drawer',
+        'topup-drawer',
+        'fiat-topup-drawer',
+        'verify-drawer',
+        'transfer-drawer',
+        'convert-drawer',
+        'manage-addresses-drawer',
+        'manage-bank-accounts-drawer'
+    ];
+
     // Nav Items Selection
     const navItems = document.querySelectorAll('.nav-item:not(.has-submenu), .nav-subitem');
     const pageTitle = document.getElementById('page-title');
@@ -102,10 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function closeAllDrawers() {
         document.body.classList.remove('drawer-open');
-        const inboxD = document.getElementById('inbox-drawer');
-        if(inboxD) inboxD.classList.remove('drawer-active');
-        const walletD = document.getElementById('wallet-drawer');
-        if(walletD) walletD.classList.remove('drawer-active');
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
     }
     
     // Simulate initial unread state
@@ -177,13 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.closeAllDrawers = function() {
-        document.body.classList.remove('drawer-open');
-        ['inbox-drawer','wallet-drawer','topup-drawer','verify-drawer','transfer-drawer','convert-drawer'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('drawer-active');
-        });
-    };
+    window.closeAllDrawers = closeAllDrawers;
+
+    // Bind ALL drawer close (X) buttons in one place
+    [
+        'close-inbox-btn',
+        'close-wallet-btn',
+        'close-topup-btn',
+        'close-fiat-topup-btn',
+        'close-verify-btn',
+        'close-transfer-btn',
+        'close-convert-btn',
+        'close-addr-btn',
+        'close-bank-accounts-btn'
+    ].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', window.closeAllDrawers);
+    });
 
     // --- Notify Wallet Owner Inline Panel ---
     window.toggleNotifyPanel = function(btn) {
@@ -208,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Wallet Verification Drawer Logic ---
     window.openVerifyDrawer = function() {
-        ['inbox-drawer','wallet-drawer','topup-drawer'].forEach(id => {
+        ALL_DRAWER_IDS.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('drawer-active');
         });
@@ -229,13 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('drawer-open');
     };
 
-    // close button event listener handled globally via inline onclick or below
-    document.addEventListener('DOMContentLoaded', () => {
-        const cvb = document.getElementById('close-verify-btn');
-        if(cvb) {
-            cvb.addEventListener('click', closeAllDrawers);
-        }
-    });
 
     window.toggleOwnerType = function(type) {
         if (type === 'individual') {
@@ -332,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.openTransferDrawer = function(coin) {
         // Hide other drawers
-        ['inbox-drawer','wallet-drawer','topup-drawer','verify-drawer'].forEach(id => {
+        ALL_DRAWER_IDS.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('drawer-active');
         });
@@ -352,10 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('drawer-open');
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const ctx = document.getElementById('close-transfer-btn');
-        if(ctx) ctx.addEventListener('click', closeAllDrawers);
-    });
 
     window.goToTransferStep2 = function() {
         const coin = document.getElementById('t-coin').value;
@@ -439,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cv-target-coin').addEventListener('change', window.updateConvertQuote);
 
     window.openConvertDrawer = function(coin) {
-        ['inbox-drawer','wallet-drawer','topup-drawer','verify-drawer','transfer-drawer'].forEach(id => {
+        ALL_DRAWER_IDS.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('drawer-active');
         });
@@ -461,10 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('drawer-open');
     };
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const cb = document.getElementById('close-convert-btn');
-        if(cb) cb.addEventListener('click', closeAllDrawers);
-    });
 
     window.goToConvertStep2 = function() {
         const sourceCoin = document.getElementById('cv-source-coin').textContent;
@@ -506,6 +513,461 @@ document.addEventListener('DOMContentLoaded', () => {
     window.executeConvert = function() {
         alert('Asset conversion successful.');
         closeAllDrawers();
+    };
+
+    // --- Manage Addresses Drawer Logic ---
+    window.openManageAddressesDrawer = function() {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+        
+        window.switchToListAddressView();
+        
+        lucide.createIcons();
+        document.getElementById('manage-addresses-drawer').classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.openManageBankAccountsDrawer = function() {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        window.switchToBankAccountsListView();
+        lucide.createIcons();
+        document.getElementById('manage-bank-accounts-drawer').classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    const FIAT_TOPUP_RECIPIENTS = {
+        USD: {
+            beneficiary: 'Obita Technologies Ltd.',
+            bank: 'JPMorgan Chase Bank, N.A.',
+            accountNumber: '9876543210',
+            routing: '021000021',
+            swift: 'CHASUS33',
+            reference: 'FV-USD-OBITA'
+        },
+        HKD: {
+            beneficiary: 'Obita Technologies Ltd.',
+            bank: 'HSBC Hong Kong',
+            accountNumber: '848392301',
+            routing: '004-808-8392301',
+            swift: 'HSBCHKHHHKH',
+            reference: 'FV-HKD-OBITA'
+        },
+        EUR: {
+            beneficiary: 'Obita Technologies Ltd.',
+            bank: 'Deutsche Bank AG',
+            accountNumber: 'DE89 3704 0044 0532 0130 00',
+            routing: 'DE89370400440532013000',
+            swift: 'DEUTDEDB',
+            reference: 'FV-EUR-OBITA'
+        },
+        BRL: {
+            beneficiary: 'Obita Technologies Ltd.',
+            bank: 'Banco Itau BBA',
+            accountNumber: '302918475',
+            routing: '341 / 0001',
+            swift: 'ITAUBRSP',
+            reference: 'FV-BRL-OBITA'
+        }
+    };
+
+    let currentFiatTopUpCurrency = 'USD';
+
+    function getBoundBankAccounts() {
+        return Array.from(document.querySelectorAll('#bank-list-container .bank-account-item')).map((item, index) => {
+            const actionBtn = item.querySelector('button[data-status]');
+            const currencyTag = item.querySelector('[data-role="bank-currency"]');
+            const bankName = item.dataset.bankName || `Linked Bank ${index + 1}`;
+            const accountName = item.dataset.accountName || 'Bank Account';
+            const verification = item.dataset.verification || 'pending';
+            const enabled = actionBtn ? actionBtn.dataset.status === 'enabled' : false;
+            const sameName = accountName.toLowerCase().includes('obita');
+
+            let reason = '';
+            if (!enabled) {
+                reason = 'Disabled';
+            } else if (verification !== 'verified') {
+                reason = verification === 'pending' ? 'Pending Verification' : 'Not Supported';
+            } else if (!sameName) {
+                reason = 'Bank Account Name mismatch';
+            }
+
+            return {
+                bankName,
+                accountName,
+                verification,
+                enabled,
+                sameName,
+                selectable: enabled && verification === 'verified' && sameName,
+                reason,
+                currency: currencyTag ? currencyTag.textContent.trim() : '',
+                summary: item.querySelectorAll('div[style*="font-size: 12px; color: #64748B; line-height: 1.6;"]')[0]?.textContent || ''
+            };
+        });
+    }
+
+    function renderFiatRecipientInfo(currency) {
+        const recipient = FIAT_TOPUP_RECIPIENTS[currency];
+        if (!recipient) return;
+
+        document.getElementById('fiat-topup-currency-label').textContent = currency;
+        document.getElementById('fiat-topup-beneficiary').textContent = recipient.beneficiary;
+        document.getElementById('fiat-topup-bank').textContent = recipient.bank;
+        document.getElementById('fiat-topup-account-number').textContent = recipient.accountNumber;
+        document.getElementById('fiat-topup-routing').textContent = recipient.routing;
+        document.getElementById('fiat-topup-swift').textContent = recipient.swift;
+        document.getElementById('fiat-topup-reference').textContent = recipient.reference;
+        document.getElementById('fiat-topup-step2-currency').value = currency;
+        document.getElementById('fiat-topup-step3-currency').textContent = currency;
+    }
+
+    function populateFiatTopUpAccountOptions(currency) {
+        const select = document.getElementById('fiat-topup-source-account');
+        const note = document.getElementById('fiat-topup-account-note');
+        const confirmBtn = document.getElementById('fiat-topup-step1-confirm');
+        const accounts = getBoundBankAccounts();
+        const relevantAccounts = accounts;
+
+        const options = ['<option value="">Select a linked bank account</option>'];
+
+        relevantAccounts.forEach(account => {
+            const label = `${account.bankName} - ${account.accountName}${account.reason ? ` (${account.reason})` : ''}`;
+            options.push(`<option value="${account.bankName}||${account.accountName}" ${account.selectable ? '' : 'disabled'}>${label}</option>`);
+        });
+
+        select.innerHTML = options.join('');
+
+        const hasSelectable = relevantAccounts.some(account => account.selectable);
+        note.textContent = hasSelectable
+            ? 'Only verified, enabled, same-name bank accounts can be used for fiat top up.'
+            : 'No eligible same-name bank account is available. Please bind a verified, enabled bank account under the merchant name first.';
+        note.style.color = hasSelectable ? '#64748B' : '#DC2626';
+        confirmBtn.disabled = !hasSelectable;
+        confirmBtn.style.opacity = hasSelectable ? '1' : '0.5';
+        confirmBtn.style.cursor = hasSelectable ? 'pointer' : 'not-allowed';
+    }
+
+    function resetFiatTopUpDrawer(currency) {
+        currentFiatTopUpCurrency = currency;
+        document.getElementById('fiat-topup-drawer-title').textContent = `Top Up ${currency}`;
+        document.getElementById('fiat-topup-step-1').style.display = 'flex';
+        document.getElementById('fiat-topup-step-2').style.display = 'none';
+        document.getElementById('fiat-topup-step-3').style.display = 'none';
+        document.getElementById('fiat-topup-source-account').value = '';
+        document.getElementById('fiat-topup-amount').value = '';
+        document.getElementById('fiat-topup-proof').value = '';
+        document.getElementById('fiat-topup-proof-name').textContent = 'No proof uploaded';
+        document.getElementById('fiat-topup-step3-order-id').textContent = '-';
+        document.getElementById('fiat-topup-step3-source-account').textContent = '-';
+        document.getElementById('fiat-topup-step3-amount').textContent = '0.00';
+        document.getElementById('fiat-topup-step3-bank').textContent = '-';
+        document.getElementById('fiat-topup-step3-reference').textContent = '-';
+        renderFiatRecipientInfo(currency);
+        populateFiatTopUpAccountOptions(currency);
+    }
+
+    window.copyFiatTopUpValue = function(value, btn) {
+        navigator.clipboard.writeText(value).then(() => {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: #10B981;"></i>';
+            lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                lucide.createIcons();
+            }, 1200);
+        });
+    };
+
+    window.openFiatTopUpDrawer = function(currency) {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        resetFiatTopUpDrawer(currency);
+        lucide.createIcons();
+        document.getElementById('fiat-topup-drawer').classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.goToFiatTopUpStep2 = function() {
+        const accountRaw = document.getElementById('fiat-topup-source-account').value;
+        if (!accountRaw) {
+            alert('Please select an eligible bank account first.');
+            return;
+        }
+
+        const [bankName, accountName] = accountRaw.split('||');
+        document.getElementById('fiat-topup-step2-source-account').textContent = `${bankName} - ${accountName}`;
+        document.getElementById('fiat-topup-step-2').style.display = 'flex';
+        document.getElementById('fiat-topup-step-1').style.display = 'none';
+    };
+
+    window.handleFiatTopUpProofSelected = function(input) {
+        const file = input.files && input.files[0];
+        document.getElementById('fiat-topup-proof-name').textContent = file ? file.name : 'No proof uploaded';
+    };
+
+    window.submitFiatTopUp = function() {
+        const accountRaw = document.getElementById('fiat-topup-source-account').value;
+        const amount = parseFloat(document.getElementById('fiat-topup-amount').value);
+        const currency = document.getElementById('fiat-topup-step2-currency').value;
+        const proof = document.getElementById('fiat-topup-proof').files[0];
+
+        if (!accountRaw) {
+            alert('Please select the remitting bank account.');
+            return;
+        }
+
+        if (!amount || amount <= 0) {
+            alert('Please enter a valid top up amount.');
+            return;
+        }
+
+        if (!proof) {
+            alert('Please upload the remittance proof.');
+            return;
+        }
+
+        const [bankName, accountName] = accountRaw.split('||');
+        const orderId = `FV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        document.getElementById('fiat-topup-step3-order-id').textContent = orderId;
+        document.getElementById('fiat-topup-step3-source-account').textContent = `${bankName} - ${accountName}`;
+        document.getElementById('fiat-topup-step3-amount').textContent = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('fiat-topup-step3-proof').textContent = proof.name;
+        document.getElementById('fiat-topup-step3-bank').textContent = FIAT_TOPUP_RECIPIENTS[currency].bank;
+        document.getElementById('fiat-topup-step3-reference').textContent = FIAT_TOPUP_RECIPIENTS[currency].reference;
+        document.getElementById('fiat-topup-step-2').style.display = 'none';
+        document.getElementById('fiat-topup-step-3').style.display = 'flex';
+    };
+
+    window.switchToAddBankAccountView = function() {
+        document.getElementById('bank-list-view').style.display = 'none';
+        document.getElementById('add-bank-view').style.display = 'flex';
+        document.getElementById('bank-account-form').reset();
+        document.getElementById('bank-statement-file-name').textContent = 'No file selected';
+    };
+
+    window.switchToBankAccountsListView = function() {
+        document.getElementById('bank-list-view').style.display = 'flex';
+        document.getElementById('add-bank-view').style.display = 'none';
+    };
+
+    window.handleBankStatementSelected = function(input) {
+        const label = document.getElementById('bank-statement-file-name');
+        const file = input.files && input.files[0];
+        label.textContent = file ? file.name : 'No file selected';
+    };
+
+    window.toggleBankAccountStatus = function(btn) {
+        const card = btn.closest('.bank-account-item');
+        const currentStatus = btn.dataset.status || 'enabled';
+
+        if (currentStatus === 'enabled') {
+            btn.dataset.status = 'disabled';
+            btn.textContent = 'Disabled';
+            btn.style.background = '#F1F5F9';
+            btn.style.color = '#64748B';
+            btn.style.borderColor = '#CBD5E1';
+            card.style.opacity = card.dataset.verification === 'not-supported' ? '0.6' : '0.78';
+        } else {
+            btn.dataset.status = 'enabled';
+            btn.textContent = 'Enabled';
+            btn.style.background = '#D1FAE5';
+            btn.style.color = '#059669';
+            btn.style.borderColor = '#10B981';
+            card.style.opacity = card.dataset.verification === 'not-supported' ? '0.72' : '1';
+        }
+    };
+
+    window.deleteBankAccount = function(btn) {
+        if (confirm('Are you sure you want to delete this bank account?')) {
+            btn.closest('.bank-account-item').remove();
+        }
+    };
+
+    window.submitNewBankAccount = function() {
+        const bankName = document.getElementById('bank-name').value;
+        const accountName = document.getElementById('bank-account-name').value.trim();
+        const currency = document.getElementById('bank-currency').value;
+        const accountNumber = document.getElementById('bank-account-number').value.trim();
+        const routingOrIban = document.getElementById('bank-routing').value.trim();
+        const swift = document.getElementById('bank-swift').value.trim();
+        const statementInput = document.getElementById('bank-statement');
+        const statementFile = statementInput.files && statementInput.files[0];
+
+        if (!bankName || !accountName || !accountNumber || !routingOrIban || !swift) {
+            alert('Please complete all required bank account fields.');
+            return;
+        }
+
+        if (!statementFile) {
+            alert('Please upload the latest bank statement for verification.');
+            return;
+        }
+
+        const maskedAccount = accountNumber.length > 4 ? `•••• ${accountNumber.slice(-4)}` : accountNumber;
+        const bankIconStyle = currency === 'USD'
+            ? 'background-color: #EFF6FF; border: 1px solid #BFDBFE;'
+            : currency === 'HKD'
+                ? 'background-color: #FEF2F2; border: 1px solid #FECACA;'
+                : currency === 'EUR'
+                    ? 'background-color: #F5F3FF; border: 1px solid #DDD6FE;'
+                    : 'background-color: #F0FDF4; border: 1px solid #BBF7D0;';
+        const bankIconColor = currency === 'USD'
+            ? '#2563EB'
+            : currency === 'HKD'
+                ? '#DC2626'
+                : currency === 'EUR'
+                    ? '#7C3AED'
+                    : '#15803D';
+        const currencyBadgeStyle = currency === 'USD'
+            ? 'background: #DBEAFE; color: #1D4ED8;'
+            : currency === 'HKD'
+                ? 'background: #FEE2E2; color: #DC2626;'
+                : currency === 'EUR'
+                    ? 'background: #EDE9FE; color: #7C3AED;'
+                    : 'background: #DCFCE7; color: #15803D;';
+
+        const newHtml = `
+            <div class="bank-account-item" data-bank-name="${bankName}" data-account-name="${accountName}" data-verification="pending" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                    <div style="padding: 10px; border-radius: 10px; flex-shrink: 0; ${bankIconStyle}">
+                        <i data-lucide="landmark" style="color: ${bankIconColor}; width: 18px; height: 18px;"></i>
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                            <span style="font-weight: 600; font-size: 14px; color: #0F172A;">${bankName} — ${accountName}</span>
+                            <span data-role="bank-currency" style="${currencyBadgeStyle} font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${currency}</span>
+                            <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
+                        </div>
+                        <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: ${maskedAccount} | Routing / IBAN: ${routingOrIban} | SWIFT: ${swift}</div>
+                        <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Statement uploaded: ${statementFile.name}</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                    <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>`;
+
+        document.getElementById('bank-list-container').insertAdjacentHTML('afterbegin', newHtml);
+        lucide.createIcons();
+        alert('Bank account added. Verification is pending after statement upload.');
+        window.switchToBankAccountsListView();
+    };
+
+
+    window.switchToAddAddressView = function() {
+        // Reset forms
+        document.getElementById('na-form-individual').style.display = 'flex';
+        document.getElementById('na-form-organization').style.display = 'none';
+        const ownerRadios = document.querySelectorAll('input[name="newAddrOwnerType"]');
+        if(ownerRadios[0]) ownerRadios[0].checked = true;
+        
+        const methodRadios = document.querySelectorAll('input[name="newAddrMethod"]');
+        if(methodRadios[0]) methodRadios[0].checked = true;
+        document.getElementById('na-custodial-input').style.display = 'none';
+        
+        document.getElementById('addr-list-view').style.display = 'none';
+        document.getElementById('add-addr-view').style.display = 'flex';
+    };
+
+    window.switchToListAddressView = function() {
+        document.getElementById('addr-list-view').style.display = 'flex';
+        document.getElementById('add-addr-view').style.display = 'none';
+    };
+
+    window.toggleNewAddrOwnerType = function(type) {
+        if (type === 'individual') {
+            document.getElementById('na-form-individual').style.display = 'flex';
+            document.getElementById('na-form-organization').style.display = 'none';
+        } else {
+            document.getElementById('na-form-individual').style.display = 'none';
+            document.getElementById('na-form-organization').style.display = 'flex';
+        }
+    };
+
+    window.selectNewAddrMethod = function(method) {
+        if (method === 'custodial') {
+            document.getElementById('na-custodial-input').style.display = 'flex';
+        } else {
+            document.getElementById('na-custodial-input').style.display = 'none';
+        }
+    };
+
+    window.toggleAddressStatus = function(btn) {
+        if (btn.classList.contains('enabled')) {
+            btn.classList.remove('enabled');
+            btn.classList.add('disabled');
+            btn.textContent = 'Disabled';
+            btn.style.background = '#F1F5F9';
+            btn.style.color = '#64748B';
+            btn.style.borderColor = '#CBD5E1';
+            btn.closest('.addr-item').style.opacity = '0.6';
+        } else {
+            btn.classList.remove('disabled');
+            btn.classList.add('enabled');
+            btn.textContent = 'Enabled';
+            btn.style.background = '#D1FAE5';
+            btn.style.color = '#059669';
+            btn.style.borderColor = '#10B981';
+            btn.closest('.addr-item').style.opacity = '1';
+        }
+    };
+
+    window.deleteAddress = function(btn) {
+        if(confirm("Are you sure you want to delete this address?")) {
+            btn.closest('.addr-item').remove();
+        }
+    };
+
+    window.submitNewAddress = function() {
+        const isIndividual = document.querySelector('input[name="newAddrOwnerType"][value="individual"]').checked;
+        const method = document.querySelector('input[name="newAddrMethod"]:checked').value;
+        
+        let name = isIndividual ? 
+            ((document.getElementById('na-fname').value || 'New') + ' ' + (document.getElementById('na-lname').value || 'User')) : 
+            (document.getElementById('na-orgname').value || 'New Organization');
+            
+        let network = 'ETH';
+        let addr = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
+        
+        if (method === 'custodial') {
+            addr = document.getElementById('na-wallet-addr').value || addr;
+            network = document.getElementById('na-wallet-net').value || 'ETH';
+        } else {
+            network = (Math.random() > 0.5) ? 'ETH' : 'TRON';
+        }
+        
+        const shortAddr = addr.substring(0,21) + '...' + addr.substring(addr.length-4);
+        
+        const newHtml = `
+        <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${name}</div>
+                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${network}</span>
+                </div>
+                <div style="font-family: monospace; font-size: 12px; color: #64748B;">${shortAddr}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+            </div>
+        </div>`;
+        
+        document.getElementById('addr-list-container').insertAdjacentHTML('beforeend', newHtml);
+        lucide.createIcons();
+        alert('Address verified and added successfully.');
+        window.switchToListAddressView();
     };
 
     // Constant HTML for Overview Page
@@ -977,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">1,500,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">USD</span></div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Top Up USD')">Top Up</button>
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('USD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer USD')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert USD')">Convert</button>
                     </div>
@@ -990,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">8,200,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">HKD</span></div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Top Up HKD')">Top Up</button>
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('HKD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer HKD')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert HKD')">Convert</button>
                     </div>
@@ -1003,7 +1465,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">320,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">EUR</span></div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Top Up EUR')">Top Up</button>
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('EUR')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer EUR')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert EUR')">Convert</button>
                     </div>
@@ -1016,7 +1478,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">980,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">BRL</span></div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Top Up BRL')">Top Up</button>
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('BRL')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer BRL')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Convert BRL')">Convert</button>
                     </div>
@@ -1055,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="card">
                 <div class="card-header-flex">
                     <h2 class="card-title" style="margin-bottom: 0;">Connected Bank Accounts</h2>
-                    <a href="#" class="view-all-link">Manage Accounts</a>
+                    <a href="#" class="view-all-link" onclick="window.openManageBankAccountsDrawer(); return false;">Manage Accounts</a>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0; margin-top: 16px;">
                     <!-- Chase: USD -->
@@ -1278,8 +1740,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Wallet Management Section -->
             <div class="card">
                 <div class="card-header-flex">
-                    <h2 class="card-title" style="margin-bottom: 0;">Connected Wallets</h2>
-                    <a href="#" class="view-all-link">Manage Addresses</a>
+                    <h2 class="card-title" style="margin-bottom: 0;">Address Book</h2>
+                    <a href="#" class="view-all-link" onclick="window.openManageAddressesDrawer(); return false;">Manage Addresses</a>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0; margin-top: 16px;">
@@ -1427,6 +1889,332 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 0);
         } else if (title === 'Stablecoin Vault') {
             contentBody.innerHTML = stablecoinVaultHTML;
+        } else if (title === 'Conversion') {
+            contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
+                
+                <!-- Step 1: Input -->
+                <div id="pg-cv-step-1">
+
+                    <!-- Asset Vault Selector -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                        <label style="display:block; font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Asset Vault</label>
+                        <select id="pg-cv-vault" onchange="window.pgCvOnVaultChange()" style="width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; font-weight: 600; color: #1E293B; background: #F8FAFC;">
+                            <option value="stablecoin">Stablecoin Vault</option>
+                            <option value="fiat">Fiat Vault</option>
+                        </select>
+                    </div>
+
+                    <!-- FROM Card -->
+                    <div style="background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">FROM</div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="pg-cv-from-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 20px; font-weight: 700; color: #1E293B; border: none; background: transparent; outline: none; cursor: pointer; padding: 4px 0;">
+                                <option value="USDT">USDT</option>
+                                <option value="USDC">USDC</option>
+                            </select>
+                            <input type="number" id="pg-cv-amount" placeholder="0.00" oninput="window.pgCvUpdateQuote()" style="flex: 1; border: none; background: transparent; font-size: 28px; font-weight: 600; text-align: right; outline: none; color: #1E293B; padding: 4px 0;">
+                        </div>
+                        <div id="pg-cv-error" style="display:none; color:#DC2626; font-size:12px; font-weight:500; text-align:right; margin-top:6px;">Insufficient balance.</div>
+                        <div style="text-align: right; font-size: 12px; color: #94A3B8; margin-top: 4px;">
+                            Available: <span id="pg-cv-avail" style="font-weight: 600; color: #334155;">14,000,000.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Arrow Divider -->
+                    <div style="display: flex; justify-content: center; margin: -2px 0; position: relative; z-index: 1;">
+                        <div style="width: 36px; height: 36px; background: white; border: 1px solid var(--clr-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
+                            <i data-lucide="arrow-down" style="width: 18px; height: 18px; color: #64748B;"></i>
+                        </div>
+                    </div>
+
+                    <!-- TO Card -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; margin-top: -2px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">TO</div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="pg-cv-to-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 16px; font-weight: 600; color: #1E293B; padding: 8px 10px; border: 1px solid var(--clr-border); border-radius: 6px; background: #F8FAFC; outline: none; cursor: pointer; flex-shrink:0;">
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="USDC">USDC - USD Coin</option>
+                                <option value="HKD">HKD - Hong Kong Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="BRL">BRL - Brazilian Real</option>
+                            </select>
+                            <div id="pg-cv-est-amt" style="flex: 1; font-size: 28px; font-weight: 600; text-align: right; color: #0F172A;">0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Market Quote Box -->
+                    <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; padding: 16px 20px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Exchange Rate</span>
+                            <span id="pg-cv-rate-text" style="font-weight: 600; color: #1E293B;">1 USDT = 1 USD</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Conversion Fee</span>
+                            <span style="font-weight: 500; color: #10B981;">0.00 (Zero Fee)</span>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 11px; color: #D97706; font-weight: 600;">
+                            <i data-lucide="timer" style="width: 13px; height: 13px;"></i> Rate guaranteed for 15s
+                        </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <div style="margin-top: 24px;">
+                        <button onclick="window.pgCvGoStep2()" style="width: 100%; padding: 14px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;">Review Quote</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Confirm -->
+                <div id="pg-cv-step-2" style="display: none;">
+                    
+                    <div style="text-align: center; padding: 32px 0 24px;">
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">You are converting</div>
+                        <div style="font-size: 32px; font-weight: 700; color: #1E293B;"><span id="pg-cs2-src-amt">0.00</span> <span id="pg-cs2-src-coin" style="font-size: 18px; color: #64748B;">USDT</span></div>
+                        <div style="margin: 16px 0;"><i data-lucide="arrow-down" style="width: 24px; height: 24px; color: #CBD5E1;"></i></div>
+                        <div style="font-size: 36px; font-weight: 700; color: #059669;"><span id="pg-cs2-tgt-amt">0.00</span> <span id="pg-cs2-tgt-coin" style="font-size: 20px; color: #10B981;">USD</span></div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Transaction Details</div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: #64748B;">Source Vault</span>
+                            <span id="pg-cs2-src-vault" style="font-weight: 600; color: #1E293B;">Stablecoin Vault</span>
+                        </div>
+                        <div style="height: 1px; background: var(--clr-border);"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: #64748B;">Secured Rate</span>
+                            <span id="pg-cs2-rate" style="font-weight: 600; color: #1E293B; font-family: monospace;">-</span>
+                        </div>
+                        <div style="height: 1px; background: var(--clr-border);"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: #64748B;">Fee</span>
+                            <span style="font-weight: 600; color: #10B981;">No Fee</span>
+                        </div>
+                        <div style="height: 1px; background: var(--clr-border);"></div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: #64748B;">Destination Vault</span>
+                            <span id="pg-cs2-dest-vault" style="font-weight: 600; color: #2563EB;">Fiat Vault</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
+                        <button onclick="window.pgCvExecute()" style="width: 100%; padding: 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
+                        <button onclick="window.pgCvBackToStep1()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer;">← Back to Edit</button>
+                    </div>
+                </div>
+
+                </div>
+
+            </div>
+
+            <!-- Conversion Order List -->
+            <div class="card fade-in" style="margin-top: 32px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h2 class="card-title" style="margin: 0;">Conversion Order List</h2>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select style="padding: 6px 10px; font-size: 13px; border: 1px solid var(--clr-border); border-radius: 6px; background: #F8FAFC; color: #334155; outline: none;">
+                            <option>All Statuses</option>
+                            <option>Completed</option>
+                            <option>Processing</option>
+                            <option>Failed</option>
+                        </select>
+                        <input type="text" placeholder="Search Order ID..." style="padding: 6px 10px; font-size: 13px; border: 1px solid var(--clr-border); border-radius: 6px; background: white; color: #334155; outline: none; width: 160px;">
+                    </div>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--clr-border);">
+                                <th style="text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Order ID</th>
+                                <th style="text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Date & Time</th>
+                                <th style="text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">From</th>
+                                <th style="text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">To</th>
+                                <th style="text-align: right; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Amount (From)</th>
+                                <th style="text-align: right; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;">Amount (To)</th>
+                                <th style="text-align: center; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Rate</th>
+                                <th style="text-align: center; padding: 10px 14px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cv-order-list-body">
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261025-009</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Today, 11:30</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">500,000.00 USDT</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">3,910,000.00 HKD</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 7.82 HKD</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-007</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 15:02</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDC</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">200,000.00 USDC</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">184,000.00 EUR</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDC = 0.92 EUR</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-005</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 09:45</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">100,000.00 USD</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #64748B;">— —</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 1.00 USDT</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Processing</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261023-002</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 23, 14:11</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">BRL</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">80,000.00 USDT</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">400,800.00 BRL</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 5.01 BRL</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261022-001</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 22, 10:05</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">1,000,000.00 HKD</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">128,000.00 USD</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 HKD = 0.128 USD</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Failed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--clr-border); font-size: 13px; color: #64748B;">
+                    <div>Showing 5 of 5 orders</div>
+                    <div style="display: flex; gap: 4px;">
+                        <button style="padding: 6px 12px; border: 1px solid var(--clr-border); border-radius: 4px; background: white; color: #64748B; font-size: 12px; cursor: pointer;">← Prev</button>
+                        <button style="padding: 6px 12px; border: 1px solid #2563EB; border-radius: 4px; background: #2563EB; color: white; font-size: 12px; font-weight: 600; cursor: pointer;">1</button>
+                        <button style="padding: 6px 12px; border: 1px solid var(--clr-border); border-radius: 4px; background: white; color: #64748B; font-size: 12px; cursor: pointer;">Next →</button>
+                    </div>
+                </div>
+            </div>`;
+
+            lucide.createIcons();
+
+            const PG_CV_RATES = {
+                'USDT': { 'USD': 1.00, 'USDC': 0.9998, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
+                'USDC': { 'USD': 1.00, 'USDT': 1.0002, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
+                'USD':  { 'USDT': 1.00, 'USDC': 1.00, 'HKD': 7.82, 'EUR': 0.92, 'BRL': 5.01 },
+                'HKD':  { 'USD': 0.128, 'EUR': 0.118, 'USDT': 0.128, 'USDC': 0.128, 'BRL': 0.641 },
+                'EUR':  { 'USD': 1.09, 'HKD': 8.50, 'USDT': 1.09, 'USDC': 1.09, 'BRL': 5.45 },
+                'BRL':  { 'USD': 0.20, 'EUR': 0.183, 'USDT': 0.20, 'USDC': 0.20, 'HKD': 1.56 }
+            };
+
+            const PG_CV_VAULT_COINS = {
+                stablecoin: { coins: ['USDT','USDC'], balances: { USDT: 14000000, USDC: 10050000 } },
+                fiat:       { coins: ['USD','HKD','EUR','BRL'], balances: { USD: 2500000, HKD: 8400000, EUR: 950000, BRL: 980000 } }
+            };
+
+            window.pgCvCurrentRate = 1;
+
+            const ALL_CURRENCIES = [
+                { value: 'USDT', label: 'USDT - Tether' },
+                { value: 'USDC', label: 'USDC - USD Coin' },
+                { value: 'USD',  label: 'USD - US Dollar' },
+                { value: 'HKD',  label: 'HKD - Hong Kong Dollar' },
+                { value: 'EUR',  label: 'EUR - Euro' },
+                { value: 'BRL',  label: 'BRL - Brazilian Real' },
+            ];
+
+            function pgCvRebuildToList() {
+                const fromCoin = document.getElementById('pg-cv-from-coin').value;
+                const toSel = document.getElementById('pg-cv-to-coin');
+                const prevTo = toSel.value;
+                toSel.innerHTML = ALL_CURRENCIES
+                    .filter(c => c.value !== fromCoin)
+                    .map(c => `<option value="${c.value}"${c.value === prevTo && c.value !== fromCoin ? ' selected' : ''}>${c.label}</option>`)
+                    .join('');
+                // If previous selection is now invalid (same as from), default to first option
+                if (toSel.value === fromCoin || !toSel.value) {
+                    toSel.selectedIndex = 0;
+                }
+            }
+
+            window.pgCvOnVaultChange = function() {
+                const vault = document.getElementById('pg-cv-vault').value;
+                const vaultData = PG_CV_VAULT_COINS[vault];
+                const fromSel = document.getElementById('pg-cv-from-coin');
+                fromSel.innerHTML = vaultData.coins.map(c => `<option value="${c}">${c}</option>`).join('');
+                pgCvRebuildToList();
+                window.pgCvUpdateQuote();
+            };
+
+            window.pgCvUpdateQuote = function() {
+                pgCvRebuildToList();
+                const vault = document.getElementById('pg-cv-vault').value;
+                const fromCoin = document.getElementById('pg-cv-from-coin').value;
+                const toCoin = document.getElementById('pg-cv-to-coin').value;
+                const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
+                const balances = PG_CV_VAULT_COINS[vault].balances;
+                const avail = balances[fromCoin] || 0;
+                
+                document.getElementById('pg-cv-avail').textContent = avail.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                
+                const rate = (PG_CV_RATES[fromCoin] && PG_CV_RATES[fromCoin][toCoin]) ? PG_CV_RATES[fromCoin][toCoin] : 1;
+                window.pgCvCurrentRate = rate;
+                const estAmt = amt * rate;
+                
+                document.getElementById('pg-cv-est-amt').textContent = estAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('pg-cv-rate-text').textContent = '1 ' + fromCoin + ' = ' + rate + ' ' + toCoin;
+                
+                if (amt > avail) {
+                    document.getElementById('pg-cv-error').style.display = 'block';
+                    return false;
+                } else {
+                    document.getElementById('pg-cv-error').style.display = 'none';
+                    return true;
+                }
+            };
+
+            window.pgCvGoStep2 = function() {
+                const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
+                if (amt <= 0) { alert('Please enter a valid amount.'); return; }
+                if (!window.pgCvUpdateQuote()) return;
+
+                const fromCoin = document.getElementById('pg-cv-from-coin').value;
+                const toCoin = document.getElementById('pg-cv-to-coin').value;
+                const tgtAmt = amt * window.pgCvCurrentRate;
+                const vaultLabel = document.getElementById('pg-cv-vault').options[document.getElementById('pg-cv-vault').selectedIndex].text;
+                const destVault = (['USDT','USDC'].includes(toCoin)) ? 'Stablecoin Vault' : 'Fiat Vault';
+
+                document.getElementById('pg-cs2-src-amt').textContent = amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('pg-cs2-src-coin').textContent = fromCoin;
+                document.getElementById('pg-cs2-tgt-amt').textContent = tgtAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('pg-cs2-tgt-coin').textContent = toCoin;
+                document.getElementById('pg-cs2-rate').textContent = '1 ' + fromCoin + ' = ' + window.pgCvCurrentRate + ' ' + toCoin;
+                document.getElementById('pg-cs2-src-vault').textContent = vaultLabel;
+                document.getElementById('pg-cs2-dest-vault').textContent = destVault;
+
+                document.getElementById('pg-cv-step-1').style.display = 'none';
+                document.getElementById('pg-cv-step-2').style.display = 'block';
+                lucide.createIcons();
+            };
+
+            window.pgCvBackToStep1 = function() {
+                document.getElementById('pg-cv-step-1').style.display = 'block';
+                document.getElementById('pg-cv-step-2').style.display = 'none';
+            };
+
+            window.pgCvExecute = function() {
+                alert('Conversion executed successfully.');
+                window.pgCvBackToStep1();
+                document.getElementById('pg-cv-amount').value = '';
+                window.pgCvUpdateQuote();
+            };
+
         } else if (title === 'Fiat Vault') {
             contentBody.innerHTML = fiatVaultHTML;
         } else {
