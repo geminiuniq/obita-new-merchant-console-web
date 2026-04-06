@@ -5097,7 +5097,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <!-- Column headers -->
-                    <div style="display: grid; grid-template-columns: 1.5fr 0.7fr 1.3fr 1.3fr 1.5fr 0.8fr 0.8fr 1fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                    <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 1.1fr 1.1fr 1.5fr 0.6fr 0.7fr 1.6fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; align-items: center;">
                         <div>Contact</div>
                         <div>Profile</div>
                         <div>Wallet Summary</div>
@@ -5145,7 +5145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             scopeHtml += '</div>';
 
                             return `
-                            <div style="display: grid; grid-template-columns: 1.5fr 0.7fr 1.3fr 1.3fr 1.5fr 0.8fr 0.8fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                            <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 1.1fr 1.1fr 1.5fr 0.6fr 0.7fr 1.6fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                 <div>
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
                                     <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
@@ -5163,10 +5163,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div style="text-align: center;">
                                     <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${p.linkedPayouts || 0}</span>
                                 </div>
-                                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
-                                    <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                                    <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
-                                    <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px; color: #DC2626; border-color: #FECACA;">Delete</button>
+                                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
+                                    <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">Edit</button>
+                                    <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
+                                    <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; color: #DC2626; border-color: #FECACA; white-space: nowrap;">Delete</button>
                                 </div>
                             </div>`;
                         }).join('') : `
