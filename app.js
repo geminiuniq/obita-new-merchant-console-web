@@ -5003,6 +5003,130 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     };
 
+    function renderPayoutOrdersPage() {
+        const searchValue = document.getElementById('payout-orders-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('payout-orders-status')?.value || 'all';
+        const rows = ORDER_REPORT_DATA['payout'].filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            return matchesSearch && matchesStatus;
+        });
+
+        const summaryHTML = `
+            <div class="card payouts-summary-card">
+                <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
+                <div class="collection-card-inner">
+                    <div class="collection-header">
+                        <div class="time-selector">
+                            <span class="time-option">1d</span>
+                            <span class="time-option">1w</span>
+                            <span class="time-option active">1m</span>
+                            <span class="time-option">6m</span>
+                            <span class="time-option">1y</span>
+                        </div>
+                    </div>
+                    <div class="collection-stats-grid">
+                        <div class="c-stat-box">
+                            <span class="c-stat-label">Created Orders</span>
+                            <span class="c-stat-count">350</span>
+                            <span class="c-stat-amount">$2,550,000.00</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-label">Successful</span>
+                            <span class="c-stat-count text-success">310</span>
+                            <span class="c-stat-amount text-success">$2,400,000.00</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-label">Settled</span>
+                            <span class="c-stat-count" style="color: #3B82F6;">290</span>
+                            <span class="c-stat-amount" style="color: #3B82F6;">$2,250,000.00</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-label">In-Transit</span>
+                            <span class="c-stat-count text-warning">25</span>
+                            <span class="c-stat-amount text-warning">$100,000.00</span>
+                        </div>
+                        <div class="c-stat-box">
+                            <span class="c-stat-label">Failed</span>
+                            <span class="c-stat-count text-muted">15</span>
+                            <span class="c-stat-amount text-muted">$50,000.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const renderStatus = (status) => {
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+
+        const listHTML = rows.length ? rows.map(row => `
+            <tr onclick="alert('Viewing Payout Order...')">
+                <td class="text-muted">${row.time}</td>
+                <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td>
+                <td class="font-medium">${row.beneficiary}</td>
+                <td>${row.method}</td>
+                <td>${row.purpose}</td>
+                <td>${row.source}</td>
+                <td class="text-right font-medium">${row.amount}</td>
+                <td>${renderStatus(row.status)}</td>
+            </tr>
+        `).join('') : '<tr><td colspan="8" style="padding: 48px 24px; text-align: center; color: #64748B;">No orders matched your current filters.</td></tr>';
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                ${summaryHTML}
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">
+                        <h2 class="card-title" style="margin-bottom: 0px; font-size: 16px;">Payout Order List</h2>
+                        <button class="btn btn-primary" onclick="alert('Creating New Payout...')"><i data-lucide="plus"></i> New Payout</button>
+                    </div>
+                    
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 14px; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; gap: 14px; flex-grow: 1;">
+                            <div style="position: relative; width: 300px;">
+                                <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                                <input id="payout-orders-search" type="text" value="${searchValue}" oninput="window.renderPlaceholderContent('Payout Orders')" placeholder="Search by order ID, beneficiary..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
+                                <input id="payout-orders-start-date" type="date" value="${document.getElementById('payout-orders-start-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                                <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
+                                <input id="payout-orders-end-date" type="date" value="${document.getElementById('payout-orders-end-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                            </div>
+                            <select id="payout-orders-status" onchange="window.renderPlaceholderContent('Payout Orders')" style="width: 200px; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                                <option value="all">All Statuses</option>
+                                <option value="Pending Approval" ${statusValue === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+                                <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Order ID</th>
+                                    <th>Beneficiary</th>
+                                    <th>Payout Method</th>
+                                    <th>Purpose</th>
+                                    <th>Source Account</th>
+                                    <th class="text-right">Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${listHTML}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = overviewHTML;
@@ -5047,6 +5171,8 @@ document.addEventListener('DOMContentLoaded', () => {
             payeeListView = 'list';
             activePayeeId = null;
             renderPayeeListPage();
+        } else if (title === 'Payout Orders') {
+            renderPayoutOrdersPage();
         } else if (title === 'Approval Rules') {
             approvalRuleView = 'list';
             activeApprovalRuleId = null;
