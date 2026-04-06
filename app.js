@@ -4479,7 +4479,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1.6fr 0.8fr 0.8fr; gap: 14px; align-items: center;">
                         <div style="position: relative;">
                             <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                            <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country, purpose..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                         </div>
                         <select id="payee-type-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all"      ${typeFilter === 'all'           ? 'selected' : ''}>All Types</option>
@@ -4519,7 +4519,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div>
                                     <span style="display:inline-block; padding: 3px 8px; border-radius: 4px; background: ${p.personType === 'company' ? '#F1F5F9' : '#EFF6FF'}; color: ${p.personType === 'company' ? '#475569' : '#1D4ED8'}; font-size: 10px; font-weight: 700; text-transform: uppercase;">${p.personType === 'company' ? 'Company' : 'Individual'}</span>
                                     <div style="font-size: 11px; color: #64748B; margin-top: 5px;">${p.country}</div>
-                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${p.purpose}</div>
                                 </div>
                                 <div>
                                     ${p.type === 'Pending' || p.type === '-' ? `
@@ -4637,19 +4636,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
 
-                        <!-- Purpose -->
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label class="bank-form-label">Purpose of Payment *</label>
-                            <select id="payee-purpose" class="bank-form-control">
-                                ${['Supplier Payment','Logistics Settlement','Trade Settlement','Service Fee','Investment Disbursement','Salary & Payroll','Other'].map(opt => `<option value="${opt}">${opt}</option>`).join('')}
-                            </select>
-                        </div>
-
                         <!-- EDD note -->
                         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
                             <i data-lucide="info" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
                             <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                <strong>EDD information</strong> (date of birth, residential / registered address) is not collected here — it will be requested directly from the payee via the verification email.
+                                <strong>EDD information</strong> (date of birth, residential / registered address) is not collected this time — it will be requested via email notification if necessary.
                             </div>
                         </div>
 
@@ -4697,6 +4688,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <!-- Wallet detail inputs (shown only if 'now' selected) -->
                         <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
+                            <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; font-size: 11px; color: #92400E; line-height: 1.5; margin-bottom: 4px;">
+                                <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
+                                Even if you provide the wallet details now, an email will still be sent to the payee asking them to verify and confirm the wallet address.
+                            </div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label class="bank-form-label">Wallet Address</label>
                                 <input id="payee-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
@@ -4905,7 +4900,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.savePayee = function(existingId) {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
         const email      = document.getElementById('payee-email')?.value?.trim();
-        const purpose    = document.getElementById('payee-purpose')?.value;
 
         if (!email) { alert('Please enter the payee email address.'); return; }
 
@@ -4932,7 +4926,7 @@ document.addEventListener('DOMContentLoaded', () => {
             accountNumber: '-',
             routingInfo: '-',
             country: personType === 'company' ? (document.getElementById('payee-company-country')?.value?.trim() || '-') : '-',
-            purpose: purpose || '-',
+            purpose: '-',
             status: 'pending_collection',
             email: email,
             personType: personType,
