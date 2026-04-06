@@ -142,6 +142,24 @@ body {
     gap: 12px;
 }
 
+.sidebar-notification-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #EF4444;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+    display: none;
+    flex-shrink: 0;
+}
+
+.sidebar-notification-dot.show {
+    display: inline-flex;
+}
+
+.sidebar-notification-dot-subitem {
+    margin-left: auto;
+}
+
 .submenu-toggle {
     display: inline-flex;
     align-items: center;

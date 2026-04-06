@@ -9,9 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
         'fiat-topup-drawer',
         'verify-drawer',
         'transfer-drawer',
+        'fiat-transfer-drawer',
         'convert-drawer',
         'manage-addresses-drawer',
-        'manage-bank-accounts-drawer'
+        'manage-bank-accounts-drawer',
+        'member-form-drawer'
     ];
 
     // Nav Items Selection
@@ -97,6 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     profileMenu.addEventListener('click', (e) => e.stopPropagation());
+    profileMenu.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-profile-action]');
+        if (!item) return;
+
+        const action = item.getAttribute('data-profile-action');
+        if (action === 'my-profile') {
+            navItems.forEach(nav => nav.classList.remove('active'));
+            pageTitle.textContent = 'My Profile';
+            renderPlaceholderContent('My Profile');
+            profileMenu.classList.remove('show');
+        }
+    });
     langMenu.addEventListener('click', (e) => {
         e.stopPropagation();
         if (e.target.classList.contains('dropdown-item')) {
@@ -170,6 +184,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function notifyOrderCreated(title, preview, actionLabel, actionHandler) {
         addInboxMessage(title, preview, actionLabel, actionHandler);
         lucide.createIcons();
+    }
+
+    function updateApprovalNavIndicators() {
+        const pendingCount = approvalRequests.filter(request => request.status === 'pending').length;
+        const approvalsDot = document.getElementById('approvals-nav-dot');
+        const approvalListDot = document.getElementById('approval-list-nav-dot');
+
+        [approvalsDot, approvalListDot].forEach(dot => {
+            if (!dot) return;
+            dot.classList.toggle('show', pendingCount > 0);
+        });
+    }
+
+    function notifyApprovalRequestCreated(request) {
+        updateApprovalNavIndicators();
+        notifyOrderCreated(
+            'Approval Request Received',
+            `${request.title} for ${request.amount} ${request.currency} is waiting for your review.`,
+            'Review Request',
+            () => {
+                pageTitle.textContent = 'Approval List';
+                approvalListView = 'detail';
+                activeApprovalRequestId = request.id;
+                expandedApprovalActionId = null;
+                activeApprovalDecision = null;
+                renderApprovalListPage();
+            }
+        );
     }
     
     function closeAllDrawers() {
@@ -272,9 +314,11 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-fiat-topup-btn',
         'close-verify-btn',
         'close-transfer-btn',
+        'close-fiat-transfer-btn',
         'close-convert-btn',
         'close-addr-btn',
-        'close-bank-accounts-btn'
+        'close-bank-accounts-btn',
+        'close-member-form-btn'
     ].forEach(id => {
         const btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', window.closeAllDrawers);
@@ -685,6 +729,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let currentFiatTopUpCurrency = 'USD';
+    let currentFiatTransferCurrency = 'USD';
+
+    const FIAT_TRANSFER_FEE_CONFIG = {
+        USD: { rate: 0.0010, min: 15 },
+        HKD: { rate: 0.0010, min: 120 },
+        EUR: { rate: 0.0010, min: 12 },
+        BRL: { rate: 0.0012, min: 45 }
+    };
 
     function getBoundBankAccounts() {
         return Array.from(document.querySelectorAll('#bank-list-container .bank-account-item')).map((item, index) => {
@@ -718,6 +770,243 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
     }
+
+    function formatTransferMoney(value, currency) {
+        return `${(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+    }
+
+    function getSelectedFiatTransferAccount() {
+        const select = document.getElementById('fiat-transfer-target-account');
+        const accountName = select?.value || '';
+        return getBoundBankAccounts().find(account => account.accountName === accountName) || null;
+    }
+
+    function populateFiatTransferAccountOptions() {
+        const select = document.getElementById('fiat-transfer-target-account');
+        const note = document.getElementById('fiat-transfer-account-note');
+        if (!select || !note) return;
+
+        const accounts = getBoundBankAccounts();
+        const options = ['<option value="">Select a connected bank account</option>'];
+
+        accounts.forEach(account => {
+            const optionLabel = `${account.bankName} - ${account.accountName}${account.currency ? ` (${account.currency})` : ''}${account.reason ? ` - ${account.reason}` : ''}`;
+            options.push(`<option value="${account.accountName}" ${account.selectable ? '' : 'disabled'}>${optionLabel}</option>`);
+        });
+
+        select.innerHTML = options.join('');
+        note.textContent = accounts.some(account => account.selectable)
+            ? 'Only verified, enabled, same-name connected bank accounts can be selected.'
+            : 'No eligible same-name connected bank accounts are currently available.';
+    }
+
+    function renderFiatTransferReceivingInfo(account) {
+        document.getElementById('fiat-transfer-receiver-name').textContent = account ? account.accountName : '-';
+        document.getElementById('fiat-transfer-receiver-bank').textContent = account ? account.bankName : '-';
+        document.getElementById('fiat-transfer-receiver-summary').textContent = account ? account.summary : '-';
+    }
+
+    function populateFiatTransferCurrencyOptions(defaultCurrency) {
+        const select = document.getElementById('fiat-transfer-currency');
+        if (!select) return;
+
+        const fiatCurrencies = ['USD', 'HKD', 'EUR', 'BRL'].filter(currency => (TRANSFER_BALANCES[currency] || 0) > 0);
+        select.innerHTML = fiatCurrencies.map(currency => `<option value="${currency}" ${currency === defaultCurrency ? 'selected' : ''}>${currency}</option>`).join('');
+        currentFiatTransferCurrency = defaultCurrency;
+    }
+
+    function getFiatTransferFee(amount, currency) {
+        const config = FIAT_TRANSFER_FEE_CONFIG[currency] || { rate: 0.001, min: 10 };
+        return Math.max(amount * config.rate, config.min);
+    }
+
+    function renderFiatTransferSuccessDetails(details) {
+        const detailRows = [
+            { label: 'Target Account', value: details.accountLabel },
+            { label: 'Receiving Bank', value: details.bankName },
+            { label: 'Currency', value: details.currency },
+            { label: 'Transfer Amount', value: formatTransferMoney(details.amount, details.currency) },
+            { label: 'Fee', value: formatTransferMoney(details.fee, details.currency) },
+            { label: 'Total Deducted', value: formatTransferMoney(details.total, details.currency) },
+            { label: 'Purpose of Transfer', value: details.purpose },
+            { label: 'Notes', value: details.notes || '-' }
+        ];
+
+        document.getElementById('fiat-transfer-success-details').innerHTML = detailRows.map(row => `
+            <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;">
+                <span style="font-size: 12px; color: #64748B;">${row.label}</span>
+                <strong style="font-size: 13px; color: #0F172A; text-align: right;">${row.value}</strong>
+            </div>
+        `).join('');
+    }
+
+    window.copyFiatTransferValue = function(value, button) {
+        if (!value || value === '-') return;
+        navigator.clipboard.writeText(value).then(() => {
+            button.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: #10B981;"></i>';
+            lucide.createIcons();
+            setTimeout(() => {
+                button.innerHTML = '<i data-lucide="copy" style="width: 14px; height: 14px;"></i>';
+                lucide.createIcons();
+            }, 2000);
+        });
+    };
+
+    window.onFiatTransferAccountChange = function() {
+        renderFiatTransferReceivingInfo(getSelectedFiatTransferAccount());
+    };
+
+    window.updateFiatTransferAmounts = function() {
+        const currency = document.getElementById('fiat-transfer-currency').value;
+        const amount = parseFloat(document.getElementById('fiat-transfer-amount').value) || 0;
+        const available = TRANSFER_BALANCES[currency] || 0;
+        const fee = amount > 0 ? getFiatTransferFee(amount, currency) : 0;
+        const total = amount + fee;
+        const hasError = total > available;
+
+        currentFiatTransferCurrency = currency;
+        document.getElementById('fiat-transfer-balance-hint').textContent = `Available balance: ${formatTransferMoney(available, currency)}`;
+        document.getElementById('fiat-transfer-amount-display').textContent = formatTransferMoney(amount, currency);
+        document.getElementById('fiat-transfer-fee-display').textContent = formatTransferMoney(fee, currency);
+        document.getElementById('fiat-transfer-total-display').textContent = formatTransferMoney(total, currency);
+        document.getElementById('fiat-transfer-error').style.display = hasError ? 'block' : 'none';
+
+        return !hasError;
+    };
+
+    window.openFiatTransferDrawer = function(currency) {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        currentFiatTransferCurrency = currency;
+        document.getElementById('fiat-transfer-drawer-title').textContent = `Transfer ${currency}`;
+        document.getElementById('fiat-transfer-step-1').style.display = 'flex';
+        document.getElementById('fiat-transfer-step-2').style.display = 'none';
+        document.getElementById('fiat-transfer-step-3').style.display = 'none';
+        document.getElementById('fiat-transfer-target-account').value = '';
+        document.getElementById('fiat-transfer-amount').value = '';
+        document.getElementById('fiat-transfer-purpose').value = '';
+        document.getElementById('fiat-transfer-notes').value = '';
+        populateFiatTransferAccountOptions();
+        populateFiatTransferCurrencyOptions(currency);
+        renderFiatTransferReceivingInfo(null);
+        window.updateFiatTransferAmounts();
+        lucide.createIcons();
+        document.getElementById('fiat-transfer-drawer').classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.goToFiatTransferStep2 = function() {
+        const account = getSelectedFiatTransferAccount();
+        const currency = document.getElementById('fiat-transfer-currency').value;
+        const amount = parseFloat(document.getElementById('fiat-transfer-amount').value) || 0;
+
+        if (!account) {
+            alert('Please select a valid target bank account.');
+            return;
+        }
+
+        if (amount <= 0) {
+            alert('Please enter a valid transfer amount.');
+            return;
+        }
+
+        if (!window.updateFiatTransferAmounts()) return;
+
+        const fee = getFiatTransferFee(amount, currency);
+        const total = amount + fee;
+        document.getElementById('fiat-transfer-review-account').textContent = account.accountName;
+        document.getElementById('fiat-transfer-review-bank').textContent = account.bankName;
+        document.getElementById('fiat-transfer-review-currency').textContent = currency;
+        document.getElementById('fiat-transfer-review-amount').textContent = formatTransferMoney(amount, currency);
+        document.getElementById('fiat-transfer-review-fee').textContent = formatTransferMoney(fee, currency);
+        document.getElementById('fiat-transfer-review-total').textContent = formatTransferMoney(total, currency);
+        document.getElementById('fiat-transfer-step-1').style.display = 'none';
+        document.getElementById('fiat-transfer-step-2').style.display = 'flex';
+    };
+
+    window.backToFiatTransferStep1 = function() {
+        document.getElementById('fiat-transfer-step-1').style.display = 'flex';
+        document.getElementById('fiat-transfer-step-2').style.display = 'none';
+    };
+
+    window.executeFiatTransfer = function() {
+        const account = getSelectedFiatTransferAccount();
+        const currency = document.getElementById('fiat-transfer-currency').value;
+        const amount = parseFloat(document.getElementById('fiat-transfer-amount').value) || 0;
+        const purpose = document.getElementById('fiat-transfer-purpose').value;
+        const notes = document.getElementById('fiat-transfer-notes').value.trim();
+
+        if (!account) {
+            alert('Please select a valid target bank account.');
+            return;
+        }
+
+        if (!purpose) {
+            alert('Please select the purpose of transfer.');
+            return;
+        }
+
+        if (!window.updateFiatTransferAmounts()) return;
+
+        const fee = getFiatTransferFee(amount, currency);
+        const total = amount + fee;
+        const orderId = `FT-${new Date().getTime()}`;
+        const now = new Date();
+        const submittedAt = now.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        const approvalRequest = {
+            id: `APR-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(approvalRequests.length + 1).padStart(4, '0')}`,
+            title: 'Fiat Vault Transfer Approval',
+            scope: 'Fiat Vault - Transfer',
+            orderId,
+            type: 'Bank Transfer',
+            requester: getCurrentUser()?.name || 'Current User',
+            subject: `${account.bankName} - ${account.accountName}`,
+            amount: amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            currency,
+            status: 'pending',
+            levelLabel: 'Level 1 of 1',
+            submittedAt,
+            submittedAtValue: now.getTime(),
+            notes: notes || `${purpose} transfer pending approval.`
+        };
+
+        approvalRequests.unshift(approvalRequest);
+
+        notifyOrderCreated(
+            'Fiat Transfer Submitted',
+            `${formatTransferMoney(total, currency)} transfer to ${account.bankName} (${account.accountName}) was submitted for approval.`,
+            'View Order',
+            () => openInbox()
+        );
+        notifyApprovalRequestCreated(approvalRequest);
+
+        document.getElementById('fiat-transfer-success-order-id').textContent = orderId;
+        renderFiatTransferSuccessDetails({
+            accountLabel: account.accountName,
+            bankName: account.bankName,
+            currency,
+            amount,
+            fee,
+            total,
+            purpose,
+            notes
+        });
+
+        document.getElementById('fiat-transfer-step-2').style.display = 'none';
+        document.getElementById('fiat-transfer-step-3').style.display = 'flex';
+        lucide.createIcons();
+    };
 
     function renderFiatRecipientInfo(currency) {
         const recipient = FIAT_TOPUP_RECIPIENTS[currency];
@@ -981,42 +1270,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const approvalRules = [
         {
             id: 'AR-001',
-            name: 'Large Fiat Payout Review',
+            name: 'Payout Review Above USD 10',
             scope: 'Payout',
             triggerOperator: 'greater_than',
-            triggerValue: '50000',
-            approverLevel1: 'Finance Manager',
-            approverLevel2: 'Operations Director',
+            triggerValue: '10',
+            approverLevel1: 'Nancy Test',
+            approverLevel2: '',
             approverLevel3: '',
-            updatedAt: 'Today, 09:30',
+            updatedAt: 'Today, 10:05',
             status: 'enabled',
-            notes: 'Requires sequential approval for large outbound fiat payouts to reduce settlement and fraud risk.'
+            notes: 'All payout requests above the equivalent of USD 10 require approval from Nancy Test.'
         },
         {
             id: 'AR-002',
-            name: 'Stablecoin Withdrawal Dual Approval',
-            scope: 'Stablecoin Vault - Transfer',
+            name: 'Payout Dual Approval Above USD 100',
+            scope: 'Payout',
             triggerOperator: 'greater_than',
-            triggerValue: '100000',
-            approverLevel1: 'Treasury Lead',
-            approverLevel2: 'Compliance Officer',
+            triggerValue: '100',
+            approverLevel1: 'Nancy Test',
+            approverLevel2: 'Dayong Chang',
             approverLevel3: '',
-            updatedAt: 'Yesterday, 16:10',
+            updatedAt: 'Today, 10:05',
             status: 'enabled',
-            notes: 'Applies dual approval to large stablecoin withdrawals before wallet release.'
+            notes: 'All payout requests above the equivalent of USD 100 require Nancy Test first, then Dayong Chang as second approver.'
         },
         {
             id: 'AR-003',
-            name: 'New Bank Account Binding Check',
-            scope: 'Fiat Vault - Bank Account',
+            name: 'Stablecoin Vault Transfer Approval',
+            scope: 'Stablecoin Vault - Transfer',
             triggerOperator: 'greater_than',
             triggerValue: '0',
-            approverLevel1: 'Operations Analyst',
+            approverLevel1: 'Nancy Test',
             approverLevel2: '',
             approverLevel3: '',
-            updatedAt: 'Apr 2, 2026',
-            status: 'disabled',
-            notes: 'Used for manual review of new bank account binding and statement verification.'
+            updatedAt: 'Today, 10:06',
+            status: 'enabled',
+            notes: 'All stablecoin transfer requests require approval from Nancy Test before execution.'
+        },
+        {
+            id: 'AR-004',
+            name: 'Fiat Vault Transfer Approval',
+            scope: 'Fiat Vault - Transfer',
+            triggerOperator: 'greater_than',
+            triggerValue: '0',
+            approverLevel1: 'Nancy Test',
+            approverLevel2: '',
+            approverLevel3: '',
+            updatedAt: 'Today, 10:06',
+            status: 'enabled',
+            notes: 'All fiat transfer requests require approval from Nancy Test before execution.'
         }
     ];
 
@@ -1103,6 +1405,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
+    updateApprovalNavIndicators();
+
+    const merchantMembers = [
+        {
+            id: 'MBR-001',
+            name: 'Nancy User',
+            email: 'nancy@obita.demo',
+            role: 'Admin',
+            status: 'active',
+            lastActive: 'Today, 14:32',
+            notes: 'Primary merchant administrator with full access.'
+        },
+        {
+            id: 'MBR-002',
+            name: 'Ethan Lee',
+            email: 'ethan.lee@obita.demo',
+            role: 'Finance Manager',
+            status: 'active',
+            lastActive: 'Today, 11:18',
+            notes: 'Approves treasury and settlement related requests.'
+        },
+        {
+            id: 'MBR-003',
+            name: 'Emily Chen',
+            email: 'emily.chen@obita.demo',
+            role: 'Operations',
+            status: 'invited',
+            lastActive: 'Invitation Pending',
+            notes: 'Invitation sent for daily operations handling.'
+        },
+        {
+            id: 'MBR-004',
+            name: 'Marcus Tan',
+            email: 'marcus.tan@obita.demo',
+            role: 'Viewer',
+            status: 'inactive',
+            lastActive: 'Apr 4, 2026',
+            notes: 'Read-only access for management reporting.'
+        }
+    ];
+
+    const currentMerchantName = 'ABC Trading Pte Ltd';
+    const currentUserId = 'MBR-001';
+
+    const memberPermissionItems = [
+        { id: 'overview', label: 'Overview', level: 'primary', lockedView: true },
+        { id: 'asset-vaults', label: 'Asset Vaults', level: 'primary' },
+        { id: 'stablecoin-vault', label: 'Stablecoin Vault', level: 'secondary' },
+        { id: 'fiat-vault', label: 'Fiat Vault', level: 'secondary' },
+        { id: 'conversion', label: 'Conversion', level: 'primary' },
+        { id: 'collection', label: 'Collection', level: 'primary' },
+        { id: 'invoices', label: 'Invoice Orders', level: 'secondary' },
+        { id: 'checkouts', label: 'Checkout Orders', level: 'secondary' },
+        { id: 'payouts', label: 'Payouts', level: 'primary' },
+        { id: 'payout-orders', label: 'Payout Orders', level: 'secondary' },
+        { id: 'payee-list', label: 'Payee List', level: 'secondary' },
+        { id: 'approvals', label: 'Approvals', level: 'primary' },
+        { id: 'approval-list', label: 'Approval List', level: 'secondary' },
+        { id: 'approval-rules', label: 'Approval Rules', level: 'secondary' },
+        { id: 'report-center', label: 'Report Center', level: 'primary' },
+        { id: 'order-reports', label: 'Order Reports', level: 'secondary' },
+        { id: 'settlement-reports', label: 'Settlement Reports', level: 'secondary' },
+        { id: 'fee-reports', label: 'Fee Reports', level: 'secondary' },
+        { id: 'download-task', label: 'Download Task', level: 'secondary' },
+        { id: 'my-merchant', label: 'My Merchant', level: 'primary' },
+        { id: 'merchant-profile', label: 'Merchant Profile', level: 'secondary' },
+        { id: 'members', label: 'Members', level: 'secondary' },
+        { id: 'settings', label: 'Settings', level: 'primary' }
+    ];
+
     let approvalRuleView = 'list';
     let activeApprovalRuleId = null;
     let approvalRuleFormLevels = 1;
@@ -1110,6 +1482,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeApprovalRequestId = null;
     let expandedApprovalActionId = null;
     let activeApprovalDecision = null;
+    let membersView = 'list';
+    let activeMemberId = null;
+    let memberFormReturnView = 'list';
+    const currentUserIsAdmin = true;
 
     function getApprovalRuleById(ruleId) {
         return approvalRules.find(rule => rule.id === ruleId);
@@ -1117,6 +1493,356 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getApprovalRequestById(requestId) {
         return approvalRequests.find(request => request.id === requestId);
+    }
+
+    function getMemberStatusMeta(status) {
+        const statuses = {
+            active: { label: 'Active', background: '#F0FDF4', color: '#15803D' },
+            invited: { label: 'Invited', background: '#EFF6FF', color: '#1D4ED8' },
+            inactive: { label: 'Inactive', background: '#F8FAFC', color: '#64748B' }
+        };
+        return statuses[status] || statuses.inactive;
+    }
+
+    function getMemberById(memberId) {
+        return merchantMembers.find(member => member.id === memberId);
+    }
+
+    function getCurrentUser() {
+        return getMemberById(currentUserId);
+    }
+
+    function isAdminMember(member) {
+        return member?.role === 'Admin';
+    }
+
+    function getDefaultMemberPermissions() {
+        const permissions = {};
+        memberPermissionItems.forEach(item => {
+            permissions[item.id] = {
+                view: item.lockedView || false,
+                edit: false
+            };
+        });
+        return permissions;
+    }
+
+    function getSeedPermissionsByRole(role) {
+        const permissions = getDefaultMemberPermissions();
+
+        if (role === 'Admin') {
+            Object.keys(permissions).forEach(key => {
+                if (key === 'overview') return;
+                permissions[key] = { view: true, edit: true };
+            });
+            return permissions;
+        }
+
+        if (role === 'Finance Manager') {
+            ['asset-vaults', 'stablecoin-vault', 'fiat-vault', 'conversion', 'approvals', 'approval-list', 'report-center', 'order-reports', 'settlement-reports', 'fee-reports', 'my-merchant', 'merchant-profile', 'members'].forEach(key => {
+                if (permissions[key]) permissions[key].view = true;
+            });
+            ['fiat-vault', 'conversion', 'approval-list'].forEach(key => {
+                if (permissions[key]) {
+                    permissions[key].view = true;
+                    permissions[key].edit = true;
+                }
+            });
+            return permissions;
+        }
+
+        if (role === 'Operations') {
+            ['asset-vaults', 'stablecoin-vault', 'fiat-vault', 'collection', 'invoices', 'checkouts', 'payouts', 'payout-orders', 'payee-list', 'approvals', 'approval-list', 'my-merchant', 'merchant-profile', 'members'].forEach(key => {
+                if (permissions[key]) permissions[key].view = true;
+            });
+            ['collection', 'invoices', 'checkouts', 'payout-orders', 'approval-list', 'members'].forEach(key => {
+                if (permissions[key]) {
+                    permissions[key].view = true;
+                    permissions[key].edit = true;
+                }
+            });
+            return permissions;
+        }
+
+        return permissions;
+    }
+
+    function getMemberPermissions(member) {
+        if (!member) return getDefaultMemberPermissions();
+
+        const basePermissions = member.permissions ? getDefaultMemberPermissions() : getSeedPermissionsByRole(member.role);
+        return member.permissions ? { ...basePermissions, ...member.permissions } : basePermissions;
+    }
+
+    function getMemberPermissionSummary(member) {
+        const permissions = getMemberPermissions(member);
+        let viewCount = 0;
+        let editCount = 0;
+
+        Object.values(permissions).forEach(permission => {
+            if (permission.view) viewCount += 1;
+            if (permission.edit) editCount += 1;
+        });
+
+        return `View(${viewCount}), Edit(${editCount})`;
+    }
+
+    function getMemberAccessFilterValue(member) {
+        const permissions = getMemberPermissions(member);
+        const hasEdit = Object.values(permissions).some(permission => permission.edit);
+        return hasEdit ? 'edit_access' : 'view_only';
+    }
+
+    function renderPermissionAssignmentTable(member, isAdminMode = false) {
+        const permissions = getMemberPermissions(member);
+        return memberPermissionItems.map(item => {
+            const permission = permissions[item.id] || { view: false, edit: false };
+            const viewChecked = isAdminMode ? true : (permission.view || item.lockedView);
+            const editChecked = isAdminMode ? !item.lockedView : permission.edit;
+            const isDisabled = item.lockedView || isAdminMode;
+            return `
+                <div style="display: grid; grid-template-columns: 1.7fr 0.7fr 0.7fr; gap: 16px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #F1F5F9;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-size: ${item.level === 'primary' ? '14px' : '13px'}; font-weight: ${item.level === 'primary' ? '700' : '500'}; color: ${item.level === 'primary' ? '#0F172A' : '#475569'}; padding-left: ${item.level === 'secondary' ? '18px' : '0'};">
+                            ${item.label}
+                        </div>
+                    </div>
+                    <label style="display: flex; justify-content: center; align-items: center;">
+                        <input type="checkbox" id="perm-view-${item.id}" ${viewChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} onchange="window.syncMemberPermission('${item.id}', 'view')">
+                    </label>
+                    <label style="display: flex; justify-content: center; align-items: center;">
+                        <input type="checkbox" id="perm-edit-${item.id}" ${editChecked ? 'checked' : ''} onchange="window.syncMemberPermission('${item.id}', 'edit')" ${isDisabled ? 'disabled' : ''}>
+                    </label>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderAssignedPermissionsList(member) {
+        const permissions = getMemberPermissions(member);
+        const assigned = memberPermissionItems.filter(item => permissions[item.id]?.view || permissions[item.id]?.edit || item.lockedView);
+
+        return assigned.map(item => {
+            const permission = permissions[item.id] || { view: false, edit: false };
+            const hasView = permission.view || item.lockedView;
+            const hasEdit = isAdminMember(member) ? !item.lockedView : permission.edit;
+
+            return `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px solid #F1F5F9;">
+                    <div style="font-size: ${item.level === 'primary' ? '14px' : '13px'}; font-weight: ${item.level === 'primary' ? '700' : '500'}; color: ${item.level === 'primary' ? '#0F172A' : '#475569'}; padding-left: ${item.level === 'secondary' ? '16px' : '0'};">
+                        ${item.label}
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${hasView ? `<span style="background: #F8FAFC; color: #475569; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">View</span>` : ''}
+                        ${hasEdit ? `<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Edit</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderMyProfilePage() {
+        const currentUser = getCurrentUser();
+        if (!currentUser) return '<div class="card" style="padding: 24px;">Unable to load profile.</div>';
+
+        const statusMeta = getMemberStatusMeta(currentUser.status);
+        const isAdmin = isAdminMember(currentUser);
+
+        return `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+                <div class="card" style="padding: 28px 32px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); border: 1px solid #E2E8F0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                            <div style="width: 84px; height: 84px; border-radius: 22px; background: linear-gradient(180deg, #DBEAFE 0%, #BFDBFE 100%); border: 1px solid #93C5FD; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: #1D4ED8; font-size: 30px; font-weight: 700;">
+                                ${currentUser.name.charAt(0)}
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h2 style="font-size: 30px; font-weight: 700; color: #0F172A; margin: 0;">${currentUser.name}</h2>
+                                    <span style="background: ${statusMeta.background}; color: ${statusMeta.color}; font-size: 11px; font-weight: 700; padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusMeta.label}</span>
+                                    ${isAdmin ? `
+                                        <span style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 800;">
+                                            <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                                            Admin
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <div style="font-size: 14px; color: #64748B;">Your merchant workspace account profile and access summary.</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" onclick="window.resetMyPassword()" style="padding: 10px 16px; font-size: 13px;">Reset Password</button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;">
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
+                                <i data-lucide="id-card" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Profile Details</h3>
+                        </div>
+                        <div style="padding: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Member ID</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${currentUser.id}</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Merchant Name</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${currentMerchantName}</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Full Name</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${currentUser.name}</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Work Email</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${currentUser.email}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 34px; height: 34px; border-radius: 10px; background: #F8FAFC; display: flex; align-items: center; justify-content: center; color: #475569; border: 1px solid #E2E8F0;">
+                                <i data-lucide="lock-keyhole" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Password</h3>
+                        </div>
+                        <div style="padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Password</div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; border: 1px solid #E2E8F0; border-radius: 14px; background: #FCFDFE; padding: 14px 16px;">
+                                    <div style="font-size: 18px; letter-spacing: 0.18em; color: #475569;">••••••••••••</div>
+                                    <button class="btn btn-outline" onclick="window.resetMyPassword()" style="padding: 8px 14px; font-size: 12px;">Reset Password</button>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">A password reset link will be sent to your work email address.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
+                            <i data-lucide="badge-check" style="width: 16px; height: 16px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Assigned Permissions</h3>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 4px;">${getMemberPermissionSummary(currentUser)}</div>
+                        </div>
+                    </div>
+                    <div style="padding: 8px 28px 14px 28px; display: flex; flex-direction: column;">
+                        ${renderAssignedPermissionsList(currentUser)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function notifyMemberEvent(title, preview, memberId = null) {
+        notifyOrderCreated(
+            title,
+            preview,
+            memberId ? 'View Member' : 'View Members',
+            () => {
+                pageTitle.textContent = 'Members';
+                if (memberId && getMemberById(memberId)) {
+                    membersView = 'detail';
+                    activeMemberId = memberId;
+                } else {
+                    membersView = 'list';
+                    activeMemberId = null;
+                }
+                renderMembersPage();
+            }
+        );
+    }
+
+    function renderMemberFormContent(member) {
+        const isAdminMode = isAdminMember(member);
+
+        return `
+            <form id="add-member-form" onsubmit="event.preventDefault(); window.saveNewMember('${member ? member.id : ''}');" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0; box-shadow: none;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                        <div style="font-size: 13px; color: #64748B; margin-top: 4px;">Set the member identity, invitation email, and internal notes.</div>
+                    </div>
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Full Name *</label>
+                                <input id="member-name" class="bank-form-control" type="text" value="${member ? member.name : ''}" placeholder="e.g. Emily Chen">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Work Email *</label>
+                                <input id="member-email" class="bank-form-control" type="email" value="${member ? member.email : ''}" placeholder="e.g. emily@company.com">
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Notes</label>
+                            <textarea id="member-notes" class="bank-form-control" style="min-height: 88px; padding: 12px 14px;" placeholder="Optional notes for this member invitation...">${member ? member.notes || '' : ''}</textarea>
+                        </div>
+                        ${currentUserIsAdmin ? `
+                            <label style="display: inline-flex; align-items: center; gap: 10px; width: fit-content; font-size: 13px; font-weight: 600; color: #0F172A;">
+                                <input id="member-is-admin" type="checkbox" ${isAdminMode ? 'checked' : ''} onchange="window.toggleAdminPermissionMode()">
+                                Grant Admin Permission
+                            </label>
+                        ` : ''}
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #E2E8F0; box-shadow: none;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Permission Assignment</h3>
+                        <div style="font-size: 13px; color: #64748B; margin-top: 4px;">Assign view and edit access for each page in the merchant workspace.</div>
+                    </div>
+                    <div style="padding: 0;">
+                        <div style="display: grid; grid-template-columns: 1.7fr 0.7fr 0.7fr; gap: 16px; padding: 14px 18px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>Navigation Tab</div>
+                            <div style="text-align: center;">View</div>
+                            <div style="text-align: center;">Edit</div>
+                        </div>
+                        ${renderPermissionAssignmentTable(member, isAdminMode)}
+                        <div style="padding: 14px 18px; font-size: 12px; color: #64748B; background: #FCFDFE; border-top: 1px solid #E2E8F0;">
+                            ${isAdminMode
+                                ? 'Admin members have full read and write access to all tabs. Permission checkboxes are locked.'
+                                : 'Edit automatically enables View. Overview is always viewable and cannot be changed.'
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; padding-bottom: 4px;">
+                    <button type="button" class="btn btn-outline" onclick="window.closeMemberFormDrawer()" style="padding: 10px 16px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 10px 18px;">${member ? 'Save Changes' : 'Add Member'}</button>
+                </div>
+            </form>
+        `;
+    }
+
+    function openMemberFormDrawer(memberId = null, returnView = 'list') {
+        const member = memberId ? getMemberById(memberId) : null;
+        const drawer = document.getElementById('member-form-drawer');
+        const drawerBody = document.getElementById('member-form-drawer-body');
+        const drawerTitle = document.getElementById('member-form-drawer-title');
+        const drawerSubtitle = document.getElementById('member-form-drawer-subtitle');
+
+        if (!drawer || !drawerBody || !drawerTitle || !drawerSubtitle) return;
+
+        activeMemberId = memberId;
+        memberFormReturnView = returnView;
+        drawerTitle.textContent = member ? 'Edit Member' : 'Add Member';
+        drawerSubtitle.textContent = member
+            ? 'Update this member profile and permission assignment.'
+            : 'Invite a new merchant team member and assign their permissions.';
+        drawerBody.innerHTML = renderMemberFormContent(member);
+
+        closeAllDrawers();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        lucide.createIcons();
     }
 
     function formatApprovalRuleTrigger(rule) {
@@ -1379,6 +2105,157 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    function renderMembersPage() {
+        const activeMember = activeMemberId ? getMemberById(activeMemberId) : null;
+
+        if (membersView === 'detail' && activeMember) {
+            const statusMeta = getMemberStatusMeta(activeMember.status);
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+                    <div class="card" style="padding: 24px;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <button onclick="window.openMembersPage()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Members</button>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0;">${activeMember.name}</h2>
+                                    <span style="background: ${statusMeta.background}; color: ${statusMeta.color}; font-size: 11px; font-weight: 700; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusMeta.label}</span>
+                                </div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 8px;">${activeMember.email} · ${activeMember.id}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button class="btn btn-outline" onclick="window.editMember('${activeMember.id}')" style="padding: 10px 16px; font-size: 13px;">Edit</button>
+                                <button class="btn btn-outline" onclick="window.resetMemberPassword('${activeMember.id}')" style="padding: 10px 16px; font-size: 13px;">Reset Password</button>
+                                <button class="btn btn-outline" onclick="window.toggleMemberStatus('${activeMember.id}')" style="padding: 10px 16px; font-size: 13px;">${activeMember.status === 'inactive' ? 'Enable' : 'Disable'}</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px;">
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Permissions Summary</div>
+                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${getMemberPermissionSummary(activeMember)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Last Active</div>
+                                <div style="font-size: 14px; color: #334155;">${activeMember.lastActive}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Notes</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${activeMember.notes || '-'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Assigned Permissions</div>
+                                <div style="display: flex; flex-direction: column;">
+                                    ${renderAssignedPermissionsList(activeMember)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Member Actions</div>
+                            <button class="btn btn-outline" onclick="window.editMember('${activeMember.id}')" style="justify-content: center; padding: 10px 14px;">Edit Member</button>
+                            <button class="btn btn-outline" onclick="window.toggleMemberStatus('${activeMember.id}')" style="justify-content: center; padding: 10px 14px;">${activeMember.status === 'inactive' ? 'Enable Member' : 'Disable Member'}</button>
+                            <button class="btn btn-outline" onclick="window.resetMemberPassword('${activeMember.id}')" style="justify-content: center; padding: 10px 14px;">Reset Password</button>
+                            <button class="btn btn-outline text-danger" onclick="window.deleteMember('${activeMember.id}')" style="justify-content: center; padding: 10px 14px;">Delete Member</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (membersView === 'form') {
+            membersView = 'list';
+        }
+
+        const accessFilter = document.getElementById('members-access-filter')?.value || 'all';
+        const statusFilter = document.getElementById('members-status-filter')?.value || 'all';
+        const keyword = (document.getElementById('members-search')?.value || '').trim().toLowerCase();
+
+        const filteredMembers = merchantMembers.filter(member => {
+            if (accessFilter !== 'all' && getMemberAccessFilterValue(member) !== accessFilter) return false;
+            if (statusFilter !== 'all' && member.status !== statusFilter) return false;
+            if (!keyword) return true;
+
+            return [member.name, member.email, getMemberPermissionSummary(member), member.id].join(' ').toLowerCase().includes(keyword);
+        });
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Members</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage all merchant members, their access roles, and invitation status.</div>
+                        </div>
+                        <button class="bank-add-btn" onclick="window.openAddMemberPage()">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                            Add Member
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: #FCFDFE; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px;">
+                            <div style="position: relative;">
+                                <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                                <input id="members-search" type="text" value="${document.getElementById('members-search')?.value || ''}" oninput="window.renderMembersPage()" placeholder="Search by member name, email or permissions" style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            </div>
+                            <select id="members-access-filter" onchange="window.renderMembersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                                <option value="all" ${accessFilter === 'all' ? 'selected' : ''}>All Access</option>
+                                <option value="edit_access" ${accessFilter === 'edit_access' ? 'selected' : ''}>Edit Access</option>
+                                <option value="view_only" ${accessFilter === 'view_only' ? 'selected' : ''}>View Only</option>
+                            </select>
+                            <select id="members-status-filter" onchange="window.renderMembersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                                <option value="all" ${statusFilter === 'all' ? 'selected' : ''}>All Statuses</option>
+                                <option value="active" ${statusFilter === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="invited" ${statusFilter === 'invited' ? 'selected' : ''}>Invited</option>
+                                <option value="inactive" ${statusFilter === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.5fr 1.1fr 0.8fr 1fr 1.15fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>Member</div>
+                            <div>Permissions</div>
+                            <div>Status</div>
+                            <div>Last Active</div>
+                            <div style="text-align: right;">Actions</div>
+                        </div>
+                    </div>
+                    <div>
+                        ${filteredMembers.length ? filteredMembers.map(member => {
+                            const statusMeta = getMemberStatusMeta(member.status);
+                            return `
+                                <div onclick="window.openMemberDetail('${member.id}')" style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); display: grid; grid-template-columns: 1.5fr 1.1fr 0.8fr 1fr 1.15fr; gap: 16px; align-items: center; cursor: pointer;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${member.name}</div>
+                                        <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${member.email} · ${member.id}</div>
+                                    </div>
+                                    <div style="font-size: 13px; color: #334155;">${getMemberPermissionSummary(member)}</div>
+                                    <div><span style="background: ${statusMeta.background}; color: ${statusMeta.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusMeta.label}</span></div>
+                                    <div style="font-size: 13px; color: #334155;">${member.lastActive}</div>
+                                    <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                        <button class="btn btn-outline" onclick="window.editMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                                        <button class="btn btn-outline" onclick="window.resetMemberPassword('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Reset Password</button>
+                                        <button class="btn btn-outline" onclick="window.toggleMemberStatus('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${member.status === 'inactive' ? 'Enable' : 'Disable'}</button>
+                                        <button class="btn btn-outline text-danger" onclick="window.deleteMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('') : `
+                            <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                                No members matched your current filters.
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     function renderApprovalRulesPage() {
         const activeRule = activeApprovalRuleId ? getApprovalRuleById(activeApprovalRuleId) : null;
 
@@ -1494,33 +2371,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <label class="bank-form-label">1st Approver *</label>
                                         <select id="approval-rule-approver-1" class="bank-form-control">
                                             <option value="">Select approver</option>
-                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel1 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
-                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel1 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
-                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel1 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
-                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel1 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
-                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel1 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                            <option value="Nancy Test" ${editingRule && editingRule.approverLevel1 === 'Nancy Test' ? 'selected' : ''}>Nancy Test</option>
+                                            <option value="Dayong Chang" ${editingRule && editingRule.approverLevel1 === 'Dayong Chang' ? 'selected' : ''}>Dayong Chang</option>
                                         </select>
                                     </div>
                                     <div id="approval-rule-level-2" style="display: ${approvalRuleFormLevels >= 2 ? 'flex' : 'none'}; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">2nd Approver</label>
                                         <select id="approval-rule-approver-2" class="bank-form-control">
                                             <option value="">Select approver</option>
-                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel2 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
-                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel2 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
-                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel2 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
-                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel2 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
-                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel2 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                            <option value="Nancy Test" ${editingRule && editingRule.approverLevel2 === 'Nancy Test' ? 'selected' : ''}>Nancy Test</option>
+                                            <option value="Dayong Chang" ${editingRule && editingRule.approverLevel2 === 'Dayong Chang' ? 'selected' : ''}>Dayong Chang</option>
                                         </select>
                                     </div>
                                     <div id="approval-rule-level-3" style="display: ${approvalRuleFormLevels >= 3 ? 'flex' : 'none'}; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">3rd Approver</label>
                                         <select id="approval-rule-approver-3" class="bank-form-control">
                                             <option value="">Select approver</option>
-                                            <option value="Finance Manager" ${editingRule && editingRule.approverLevel3 === 'Finance Manager' ? 'selected' : ''}>Finance Manager</option>
-                                            <option value="Operations Director" ${editingRule && editingRule.approverLevel3 === 'Operations Director' ? 'selected' : ''}>Operations Director</option>
-                                            <option value="Treasury Lead" ${editingRule && editingRule.approverLevel3 === 'Treasury Lead' ? 'selected' : ''}>Treasury Lead</option>
-                                            <option value="Compliance Officer" ${editingRule && editingRule.approverLevel3 === 'Compliance Officer' ? 'selected' : ''}>Compliance Officer</option>
-                                            <option value="Operations Analyst" ${editingRule && editingRule.approverLevel3 === 'Operations Analyst' ? 'selected' : ''}>Operations Analyst</option>
+                                            <option value="Nancy Test" ${editingRule && editingRule.approverLevel3 === 'Nancy Test' ? 'selected' : ''}>Nancy Test</option>
+                                            <option value="Dayong Chang" ${editingRule && editingRule.approverLevel3 === 'Dayong Chang' ? 'selected' : ''}>Dayong Chang</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1599,12 +2467,227 @@ document.addEventListener('DOMContentLoaded', () => {
         renderApprovalRulesPage();
     };
 
+    window.openMembersPage = function() {
+        membersView = 'list';
+        activeMemberId = null;
+        renderMembersPage();
+    };
+
+    window.renderMembersPage = function() {
+        membersView = 'list';
+        renderMembersPage();
+    };
+
+    window.openAddMemberPage = function() {
+        openMemberFormDrawer(null, 'list');
+    };
+
+    window.closeMemberFormDrawer = function() {
+        closeAllDrawers();
+    };
+
+    window.openMemberDetail = function(memberId) {
+        membersView = 'detail';
+        activeMemberId = memberId;
+        renderMembersPage();
+    };
+
+    window.syncMemberPermission = function(permissionId, changedField) {
+        const adminCheckbox = document.getElementById('member-is-admin');
+        if (adminCheckbox?.checked) return;
+
+        const viewCheckbox = document.getElementById(`perm-view-${permissionId}`);
+        const editCheckbox = document.getElementById(`perm-edit-${permissionId}`);
+        const permissionConfig = memberPermissionItems.find(item => item.id === permissionId);
+
+        if (!viewCheckbox || !editCheckbox) return;
+        if (permissionConfig?.lockedView) {
+            viewCheckbox.checked = true;
+            editCheckbox.checked = false;
+            return;
+        }
+
+        if (changedField === 'edit' && editCheckbox.checked) {
+            viewCheckbox.checked = true;
+        }
+
+        if (changedField === 'view' && !viewCheckbox.checked) {
+            editCheckbox.checked = false;
+        }
+    };
+
+    window.toggleAdminPermissionMode = function() {
+        const adminCheckbox = document.getElementById('member-is-admin');
+        const isAdminMode = Boolean(adminCheckbox?.checked);
+
+        memberPermissionItems.forEach(item => {
+            const viewCheckbox = document.getElementById(`perm-view-${item.id}`);
+            const editCheckbox = document.getElementById(`perm-edit-${item.id}`);
+            if (!viewCheckbox || !editCheckbox) return;
+
+            if (isAdminMode) {
+                viewCheckbox.checked = true;
+                editCheckbox.checked = !item.lockedView;
+                viewCheckbox.disabled = true;
+                editCheckbox.disabled = true;
+                return;
+            }
+
+            if (item.lockedView) {
+                viewCheckbox.checked = true;
+                editCheckbox.checked = false;
+                viewCheckbox.disabled = true;
+                editCheckbox.disabled = true;
+                return;
+            }
+
+            editCheckbox.checked = false;
+            viewCheckbox.checked = false;
+            viewCheckbox.disabled = false;
+            editCheckbox.disabled = false;
+        });
+    };
+
+    window.editMember = function(memberId) {
+        openMemberFormDrawer(memberId, membersView);
+    };
+
+    window.toggleMemberStatus = function(memberId) {
+        const member = getMemberById(memberId);
+        if (!member) return;
+        member.status = member.status === 'inactive' ? 'active' : 'inactive';
+        member.lastActive = member.status === 'active' ? 'Just now' : member.lastActive;
+        notifyMemberEvent(
+            `Member ${member.status === 'active' ? 'Enabled' : 'Disabled'}`,
+            `${member.name} (${member.id}) has been ${member.status === 'active' ? 'enabled' : 'disabled'} for ${currentMerchantName}.`,
+            member.id
+        );
+        renderMembersPage();
+    };
+
+    window.resetMemberPassword = function(memberId) {
+        const member = getMemberById(memberId);
+        if (!member) return;
+        alert(`Password reset link has been sent to ${member.email}.`);
+    };
+
+    window.resetMyPassword = function() {
+        window.resetMemberPassword(currentUserId);
+    };
+
+    window.deleteMember = function(memberId) {
+        const index = merchantMembers.findIndex(member => member.id === memberId);
+        if (index === -1) return;
+        if (!confirm('Are you sure you want to delete this member?')) return;
+        const deletedMember = merchantMembers[index];
+        merchantMembers.splice(index, 1);
+        notifyMemberEvent(
+            'Member Deleted',
+            `${deletedMember.name} (${deletedMember.id}) has been removed from ${currentMerchantName}.`
+        );
+        membersView = 'list';
+        activeMemberId = null;
+        renderMembersPage();
+    };
+
+    window.saveNewMember = function(memberId) {
+        const name = document.getElementById('member-name').value.trim();
+        const email = document.getElementById('member-email').value.trim();
+        const notes = document.getElementById('member-notes').value.trim();
+        const isAdminMode = Boolean(document.getElementById('member-is-admin')?.checked);
+        const permissions = {};
+
+        const finalPermissions = isAdminMode ? getSeedPermissionsByRole('Admin') : (() => {
+            memberPermissionItems.forEach(item => {
+                const viewCheckbox = document.getElementById(`perm-view-${item.id}`);
+                const editCheckbox = document.getElementById(`perm-edit-${item.id}`);
+                permissions[item.id] = {
+                    view: item.lockedView ? true : Boolean(viewCheckbox?.checked),
+                    edit: item.lockedView ? false : Boolean(editCheckbox?.checked)
+                };
+            });
+            return permissions;
+        })();
+
+        if (!name || !email) {
+            alert('Please complete all required member fields.');
+            return;
+        }
+
+        if (memberId) {
+            const member = getMemberById(memberId);
+            if (!member) return;
+            const previousName = member.name;
+            const previousRole = member.role;
+            const previousPermissions = JSON.stringify(getMemberPermissions(member));
+            member.name = name;
+            member.email = email;
+            member.role = isAdminMode ? 'Admin' : 'Custom Access';
+            member.notes = notes;
+            member.permissions = finalPermissions;
+            const latestPermissions = JSON.stringify(getMemberPermissions(member));
+            closeAllDrawers();
+            membersView = memberFormReturnView === 'detail' ? 'detail' : 'list';
+            activeMemberId = memberId;
+            renderMembersPage();
+            if (previousRole !== member.role || previousPermissions !== latestPermissions) {
+                notifyMemberEvent(
+                    'Member Permissions Updated',
+                    `${previousName} (${member.id}) permissions were updated${member.role === 'Admin' ? ' and Admin access is now enabled' : ''}.`,
+                    member.id
+                );
+            }
+            return;
+        }
+
+        const newMember = {
+            id: `MBR-${String(merchantMembers.length + 1).padStart(3, '0')}`,
+            name,
+            email,
+            role: isAdminMode ? 'Admin' : 'Custom Access',
+            status: 'invited',
+            lastActive: 'Invitation Pending',
+            notes,
+            permissions: finalPermissions
+        };
+
+        merchantMembers.unshift(newMember);
+
+        closeAllDrawers();
+        membersView = 'list';
+        activeMemberId = null;
+        renderMembersPage();
+        notifyMemberEvent(
+            'New Member Added',
+            `${newMember.name} (${newMember.id}) was added to ${currentMerchantName}${isAdminMode ? ' with Admin access' : ''}.`,
+            newMember.id
+        );
+    };
+
     window.openApprovalListPage = function() {
         approvalListView = 'list';
         activeApprovalRequestId = null;
         expandedApprovalActionId = null;
         activeApprovalDecision = null;
         renderApprovalListPage();
+    };
+
+    window.switchOrderReportTab = function(tabId) {
+        activeOrderReportTab = tabId;
+        renderOrderReportsPage();
+    };
+
+    window.renderOrderReportsPage = function() {
+        renderOrderReportsPage();
+    };
+
+    window.switchSettlementReportTab = function(tabId) {
+        activeSettlementReportTab = tabId;
+        renderSettlementReportsPage();
+    };
+
+    window.renderSettlementReportsPage = function() {
+        renderSettlementReportsPage();
     };
 
     window.openApprovalRequestDetail = function(requestId) {
@@ -1681,6 +2764,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         expandedApprovalActionId = null;
         activeApprovalDecision = null;
+        updateApprovalNavIndicators();
 
         if (approvalListView === 'detail' && activeApprovalRequestId === requestId) {
             renderApprovalListPage();
@@ -2386,7 +3470,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">1,500,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">USD</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('USD')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer USD')">Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('USD')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('USD')">Convert</button>
                     </div>
                 </div>
@@ -2399,7 +3483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">8,200,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">HKD</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('HKD')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer HKD')">Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('HKD')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('HKD')">Convert</button>
                     </div>
                 </div>
@@ -2412,7 +3496,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">320,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">EUR</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('EUR')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer EUR')">Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('EUR')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('EUR')">Convert</button>
                     </div>
                 </div>
@@ -2425,7 +3509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">980,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">BRL</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('BRL')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="alert('Transfer BRL')">Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('BRL')">Transfer</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('BRL')">Convert</button>
                     </div>
                 </div>
@@ -2888,6 +3972,412 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
 
+    const ORDER_REPORT_TABS = [
+        { id: 'vault', label: 'Vault', tone: { color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' } },
+        { id: 'conversion', label: 'Conversion', tone: { color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' } },
+        { id: 'invoice', label: 'Collection - Invoice', tone: { color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' } },
+        { id: 'checkout', label: 'Collection - Checkout', tone: { color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' } },
+        { id: 'payout', label: 'Payout', tone: { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' } }
+    ];
+    let activeOrderReportTab = 'vault';
+    const SETTLEMENT_REPORT_TABS = [
+        { id: 'vault', label: 'Vault Settlement', tone: { color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' } },
+        { id: 'conversion', label: 'Conversion Settlement', tone: { color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' } },
+        { id: 'invoice', label: 'Invoice Settlement', tone: { color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' } },
+        { id: 'checkout', label: 'Checkout Settlement', tone: { color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' } },
+        { id: 'payout', label: 'Payout Settlement', tone: { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' } }
+    ];
+    let activeSettlementReportTab = 'vault';
+
+    const ORDER_REPORT_DATA = {
+        vault: [
+            { time: 'Today, 15:42', orderId: 'FT-20260406-0182', vault: 'Fiat Vault', type: 'Transfer', channel: 'Bank Transfer', source: 'USD Treasury Balance', destination: 'HSBC Hong Kong - Operations Clearing Account', amount: '125,000.00 USD', fee: '140.00 USD', approval: 'Level 1 / Nancy Test', status: 'Proceeding' },
+            { time: 'Today, 11:30', orderId: 'FV-20261025-0031', vault: 'Fiat Vault', type: 'Top Up', channel: 'Bank Wire', source: 'Chase Bank ••4821', destination: 'Fiat Vault USD Balance', amount: '500,000.00 USD', fee: '0.00 USD', approval: '-', status: 'Completed' },
+            { time: 'Yesterday, 16:45', orderId: 'VT-20261024-0018', vault: 'Stablecoin Vault', type: 'Transfer', channel: 'Blockchain', source: 'Stablecoin Vault Master', destination: '0xab...ef12', amount: '12,500.00 USDT', fee: '8.00 USDT', approval: 'Approved / Nancy Test', status: 'Completed' }
+        ],
+        conversion: [
+            { time: 'Today, 10:26', orderId: 'CV-20260406-0048', sellAmount: '25,000.00 USD', buyAmount: '25,000.00 USDT', fxRate: '1 USD = 1.0000 USDT', spread: '0.12%', destinationVault: 'Stablecoin Vault', initiatedBy: 'Nancy User', status: 'Completed' },
+            { time: 'Apr 5, 18:20', orderId: 'CV-20260405-0039', sellAmount: '80,000.00 EUR', buyAmount: '86,960.00 USD', fxRate: '1 EUR = 1.0870 USD', spread: '0.18%', destinationVault: 'Fiat Vault', initiatedBy: 'Nancy User', status: 'Quote Locked' }
+        ],
+        invoice: [
+            { invoiceNo: 'INV-240406-8821', issuedOn: 'Apr 6, 2026', buyer: 'Global Trade Holdings', settlementCurrency: 'USD', method: 'Bank Transfer', amount: '42,800.00 USD', collected: '42,800.00 USD', status: 'Settled' },
+            { invoiceNo: 'INV-240405-8802', issuedOn: 'Apr 5, 2026', buyer: 'Bluepeak Services', settlementCurrency: 'EUR', method: 'Card Payment', amount: '18,200.00 EUR', collected: '0.00 EUR', status: 'Pending Payment' }
+        ],
+        checkout: [
+            { checkoutId: 'CKO-20260406-0188', createdAt: 'Today, 12:04', merchantOrder: 'ORD-881928', customer: 'alex@globaltrade.co', paymentMethod: 'Wallet Pay', amount: '1,280.00 USDC', settlement: '1,277.50 USDC', status: 'Paid' },
+            { checkoutId: 'CKO-20260405-0176', createdAt: 'Apr 5, 2026', merchantOrder: 'ORD-881811', customer: 'buyer@bluepeak.io', paymentMethod: 'Bank Card', amount: '980.00 USD', settlement: '0.00 USD', status: 'Expired' }
+        ],
+        payout: [
+            { time: 'Today, 09:18', orderId: 'PO-20260406-0114', beneficiary: 'Shenzhen Apex Electronics', method: 'Bank Transfer', purpose: 'Supplier Payment', source: 'USD Treasury Balance', amount: '14,200.00 USD', approval: 'Pending / Nancy Test', status: 'Pending Approval' },
+            { time: 'Apr 5, 17:02', orderId: 'PO-20260405-0102', beneficiary: 'Nova Logistics', method: 'Wallet Transfer', purpose: 'Logistics Settlement', source: 'USDT Operations Pool', amount: '8,500.00 USDT', approval: 'Completed / Nancy Test', status: 'Completed' }
+        ]
+    };
+
+    const SETTLEMENT_REPORT_DATA = {
+        vault: [
+            { batchId: 'STL-VLT-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Outbound', orderId: 'FT-20260406-0182', businessLine: 'Fiat Vault Transfer', currency: 'USD', gross: '125,000.00', fee: '140.00', net: '124,860.00', settlementAccount: 'DBS Treasury Settlement', eta: 'Apr 7, 2026', status: 'Scheduled' },
+            { batchId: 'STL-VLT-20260406-02', settlementDate: 'Apr 6, 2026', direction: 'Inbound', orderId: 'FV-20261025-0031', businessLine: 'Fiat Vault Top Up', currency: 'USD', gross: '500,000.00', fee: '0.00', net: '500,000.00', settlementAccount: 'Chase USD Collection', eta: 'Settled Apr 6, 2026', status: 'Settled' }
+        ],
+        conversion: [
+            { batchId: 'STL-CV-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Internal', orderId: 'CV-20260406-0048', sourceAsset: 'USD', targetAsset: 'USDT', grossSource: '25,000.00', netTarget: '24,970.00', fxRate: '1.0000', settlementWallet: 'Stablecoin Vault Master', eta: 'Settled Apr 6, 2026', status: 'Settled' },
+            { batchId: 'STL-CV-20260405-03', settlementDate: 'Apr 5, 2026', direction: 'Internal', orderId: 'CV-20260405-0039', sourceAsset: 'EUR', targetAsset: 'USD', grossSource: '80,000.00', netTarget: '86,804.00', fxRate: '1.0870', settlementWallet: 'Fiat Vault EUR Pool', eta: 'Awaiting quote confirmation', status: 'Pending FX Lock' }
+        ],
+        invoice: [
+            { batchId: 'STL-INV-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Inbound', invoiceNo: 'INV-240406-8821', buyer: 'Global Trade Holdings', collectionAmount: '42,800.00 USD', fee: '128.40 USD', netSettlement: '42,671.60 USD', settlementAccount: 'Merchant USD Main', status: 'Settled' },
+            { batchId: 'STL-INV-20260405-02', settlementDate: 'Apr 5, 2026', direction: 'Inbound', invoiceNo: 'INV-240405-8802', buyer: 'Bluepeak Services', collectionAmount: '18,200.00 EUR', fee: '54.60 EUR', netSettlement: '18,145.40 EUR', settlementAccount: 'Merchant EUR Settlement', status: 'Pending Collection' }
+        ],
+        checkout: [
+            { batchId: 'STL-CKO-20260406-04', settlementDate: 'Apr 6, 2026', direction: 'Inbound', checkoutId: 'CKO-20260406-0188', merchantOrder: 'ORD-881928', paymentChannel: 'Wallet Pay', grossCollected: '1,280.00 USDC', fee: '2.50 USDC', reserve: '0.00 USDC', netSettlement: '1,277.50 USDC', status: 'Settled' },
+            { batchId: 'STL-CKO-20260405-01', settlementDate: 'Apr 5, 2026', direction: 'Inbound', checkoutId: 'CKO-20260405-0176', merchantOrder: 'ORD-881811', paymentChannel: 'Bank Card', grossCollected: '980.00 USD', fee: '29.40 USD', reserve: '49.00 USD', netSettlement: '901.60 USD', status: 'In Reserve' }
+        ],
+        payout: [
+            { batchId: 'STL-PO-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Outbound', payoutOrder: 'PO-20260406-0114', beneficiary: 'Shenzhen Apex Electronics', payoutMethod: 'Bank Transfer', grossDebit: '14,200.00 USD', networkFee: '18.00 USD', netRemitted: '14,182.00 USD', debitAccount: 'USD Treasury Balance', status: 'Awaiting Approval' },
+            { batchId: 'STL-PO-20260405-03', settlementDate: 'Apr 5, 2026', direction: 'Outbound', payoutOrder: 'PO-20260405-0102', beneficiary: 'Nova Logistics', payoutMethod: 'Wallet Transfer', grossDebit: '8,500.00 USDT', networkFee: '6.00 USDT', netRemitted: '8,494.00 USDT', debitAccount: 'USDT Operations Pool', status: 'Settled' }
+        ]
+    };
+
+    function getOrderReportStatusPill(status) {
+        const map = {
+            'Completed': { bg: '#ECFDF5', color: '#059669' },
+            'Proceeding': { bg: '#EFF6FF', color: '#1D4ED8' },
+            'Pending Approval': { bg: '#EFF6FF', color: '#1D4ED8' },
+            'Pending Payment': { bg: '#FEF3C7', color: '#D97706' },
+            'Quote Locked': { bg: '#FEF3C7', color: '#D97706' },
+            'Paid': { bg: '#ECFDF5', color: '#059669' },
+            'Settled': { bg: '#ECFDF5', color: '#059669' },
+            'Expired': { bg: '#FEF2F2', color: '#DC2626' }
+        };
+        return map[status] || { bg: '#F8FAFC', color: '#64748B' };
+    }
+
+    function renderOrderReportRows(tabId, rows) {
+        const colspans = { vault: 10, conversion: 8, invoice: 7, checkout: 7, payout: 8 };
+        if (!rows.length) {
+            return `<tr><td colspan="${colspans[tabId] || 7}" style="padding: 48px 24px; text-align: center; color: #64748B;">No orders matched your current filters.</td></tr>`;
+        }
+
+        const renderStatus = (status) => {
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+
+        if (tabId === 'vault') {
+            return rows.map(row => `<tr onclick="alert('Viewing Vault Order...')"><td class="text-muted">${row.time}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td><td class="font-medium">${row.vault}</td><td>${row.type}</td><td>${row.channel}</td><td style="font-size: 12px; color: #64748B;">${row.source}</td><td style="font-size: 12px; color: #64748B;">${row.destination}</td><td class="text-right font-medium">${row.amount}</td><td class="text-right" style="font-size: 12px; color: #475569;">${row.fee}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'conversion') {
+            return rows.map(row => `<tr onclick="alert('Viewing Conversion Order...')"><td class="text-muted">${row.time}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td><td style="font-size: 12px; color: #64748B;">${row.sellAmount}</td><td style="font-size: 12px; color: #64748B;">${row.buyAmount}</td><td>${row.fxRate}</td><td>${row.spread}</td><td>${row.destinationVault}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'invoice') {
+            return rows.map(row => `<tr onclick="alert('Viewing Invoice Order...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.invoiceNo}</td><td class="text-muted">${row.issuedOn}</td><td>${row.buyer}</td><td>${row.method}</td><td>${row.settlementCurrency}</td><td class="text-right font-medium">${row.amount}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'checkout') {
+            return rows.map(row => `<tr onclick="alert('Viewing Checkout Order...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.checkoutId}</td><td class="text-muted">${row.createdAt}</td><td>${row.merchantOrder}</td><td>${row.customer}</td><td>${row.paymentMethod}</td><td class="text-right font-medium">${row.amount}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        return rows.map(row => `<tr onclick="alert('Viewing Payout Order...')"><td class="text-muted">${row.time}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td><td>${row.beneficiary}</td><td>${row.method}</td><td>${row.purpose}</td><td>${row.source}</td><td class="text-right font-medium">${row.amount}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+    }
+
+    function renderOrderReportsPage() {
+        const activeTab = ORDER_REPORT_TABS.find(tab => tab.id === activeOrderReportTab) || ORDER_REPORT_TABS[0];
+        const searchValue = document.getElementById('order-reports-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('order-reports-status')?.value || 'all';
+        const startDateValue = document.getElementById('order-reports-start-date')?.value || '';
+        const endDateValue = document.getElementById('order-reports-end-date')?.value || '';
+        
+        const rows = ORDER_REPORT_DATA[activeTab.id].filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            
+            // For simple demo, we check if the row date/time string roughly matches a date range if provided
+            // In a real app, row.time would be a timestamp.
+            let matchesDate = true;
+            if (startDateValue || endDateValue) {
+                const rowTimeString = row.time || row.issuedOn || row.createdAt || '';
+                // Since this is a placeholder with strings like "Today" and "Apr 5", 
+                // we'll just simulate the match or use a fallback. 
+                // For a more professional look, we'll keep the logic simple:
+                // if date picked matches any part of the time string.
+                if (startDateValue) matchesDate = matchesDate && rowTimeString.toLowerCase().includes(startDateValue.split('-')[2]);
+                if (endDateValue) matchesDate = matchesDate && rowTimeString.toLowerCase().includes(endDateValue.split('-')[2]);
+            }
+            
+            return matchesSearch && matchesStatus && matchesDate;
+        });
+
+        const tableMeta = {
+            vault: {
+                description: 'Top up and transfer activity from Stablecoin Vault and Fiat Vault.',
+                headers: ['Time', 'Order ID', 'Vault', 'Type', 'Channel', 'Source', 'Destination', 'Amount', 'Fee', 'Status'],
+                statusOptions: ['Proceeding', 'Completed']
+            },
+            conversion: {
+                description: 'Asset conversion requests between fiat and stablecoin balances.',
+                headers: ['Time', 'Order ID', 'Sell Amount', 'Buy Amount', 'FX Rate', 'Spread', 'Destination Vault', 'Status'],
+                statusOptions: ['Completed', 'Quote Locked']
+            },
+            invoice: {
+                description: 'Invoice collection orders and settlement status.',
+                headers: ['Invoice No.', 'Issued On', 'Buyer', 'Method', 'Settlement Currency', 'Amount', 'Status'],
+                statusOptions: ['Settled', 'Pending Payment']
+            },
+            checkout: {
+                description: 'Hosted checkout payments and customer payment results.',
+                headers: ['Checkout ID', 'Created At', 'Merchant Order', 'Customer', 'Payment Method', 'Amount', 'Status'],
+                statusOptions: ['Paid', 'Expired']
+            },
+            payout: {
+                description: 'Outbound payout requests with beneficiary and approval progress.',
+                headers: ['Time', 'Order ID', 'Beneficiary', 'Method', 'Purpose', 'Source', 'Amount', 'Status'],
+                statusOptions: ['Pending Approval', 'Completed']
+            }
+        }[activeTab.id];
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="padding: 24px;">
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Order Reports</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Switch between report types to review only the fields that matter for each order workflow.</div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 14px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${ORDER_REPORT_TABS.map(tab => `
+                                <button onclick="window.switchOrderReportTab('${tab.id}')" style="
+                                    padding: 12px 16px;
+                                    border-radius: 14px;
+                                    border: 1px solid ${tab.id === activeOrderReportTab ? tab.tone.border : '#E2E8F0'};
+                                    background: ${tab.id === activeOrderReportTab ? `linear-gradient(180deg, ${tab.tone.bg} 0%, #FFFFFF 100%)` : '#FFFFFF'};
+                                    color: ${tab.id === activeOrderReportTab ? tab.tone.color : '#475569'};
+                                    font-size: 13px;
+                                    font-weight: ${tab.id === activeOrderReportTab ? '700' : '600'};
+                                    box-shadow: ${tab.id === activeOrderReportTab ? '0 10px 22px rgba(15, 23, 42, 0.08)' : 'none'};
+                                    cursor: pointer;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    transition: all 0.2s ease;
+                                ">
+                                    <span style="width: 8px; height: 8px; border-radius: 999px; background: ${tab.tone.color}; opacity: ${tab.id === activeOrderReportTab ? '1' : '0.35'};"></span>
+                                    ${tab.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: #FCFDFE;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">${activeTab.label} Report</h3>
+                                <span style="font-size: 11px; font-weight: 700; color: ${activeTab.tone.color}; background: ${activeTab.tone.bg}; border: 1px solid ${activeTab.tone.border}; padding: 4px 10px; border-radius: 999px;">${activeTab.label}</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">${tableMeta.description}</div>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                            Export ${activeTab.label}
+                        </button>
+                    </div>
+
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1fr 1.6fr 0.8fr; gap: 14px;">
+                        <div style="position: relative;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="order-reports-search" type="text" value="${document.getElementById('order-reports-search')?.value || ''}" oninput="window.renderOrderReportsPage()" placeholder="Search..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
+                            <input id="order-reports-start-date" type="date" value="${document.getElementById('order-reports-start-date')?.value || ''}" onchange="window.renderOrderReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                            <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
+                            <input id="order-reports-end-date" type="date" value="${document.getElementById('order-reports-end-date')?.value || ''}" onchange="window.renderOrderReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                        </div>
+                        <select id="order-reports-status" onchange="window.renderOrderReportsPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            ${tableMeta.statusOptions.map(status => `<option value="${status}" ${statusValue === status ? 'selected' : ''}>${status}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    ${tableMeta.headers.map((header) => `<th class="${['Amount', 'Received', 'Fee'].includes(header) ? 'text-right' : ''}">${header}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${renderOrderReportRows(activeTab.id, rows)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderSettlementReportRows(tabId, rows) {
+        const colspans = { vault: 11, conversion: 11, invoice: 9, checkout: 10, payout: 10 };
+        if (!rows.length) {
+            return `<tr><td colspan="${colspans[tabId] || 8}" style="padding: 48px 24px; text-align: center; color: #64748B;">No settlement records matched your current filters.</td></tr>`;
+        }
+
+        const renderStatus = (status) => {
+            const pill = getOrderReportStatusPill(status === 'Scheduled' ? 'Proceeding' : status === 'Awaiting Approval' ? 'Pending Approval' : status === 'Pending FX Lock' ? 'Quote Locked' : status === 'Pending Collection' ? 'Pending Payment' : status === 'In Reserve' ? 'Proceeding' : status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+        const renderDirection = (direction) => {
+            const map = {
+                Inbound: { bg: '#ECFDF5', color: '#059669' },
+                Outbound: { bg: '#FEF2F2', color: '#DC2626' },
+                Internal: { bg: '#EFF6FF', color: '#1D4ED8' }
+            };
+            const tone = map[direction] || { bg: '#F8FAFC', color: '#64748B' };
+            return `<span style="background: ${tone.bg}; color: ${tone.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${direction}</span>`;
+        };
+
+        if (tabId === 'vault') {
+            return rows.map(row => `<tr onclick="alert('Viewing Vault Settlement...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.batchId}</td><td class="text-muted">${row.settlementDate}</td><td>${renderDirection(row.direction)}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td><td>${row.businessLine}</td><td>${row.currency}</td><td class="text-right font-medium">${row.gross}</td><td class="text-right">${row.fee}</td><td class="text-right font-medium">${row.net}</td><td>${row.settlementAccount}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'conversion') {
+            return rows.map(row => `<tr onclick="alert('Viewing Conversion Settlement...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.batchId}</td><td class="text-muted">${row.settlementDate}</td><td>${renderDirection(row.direction)}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td><td>${row.sourceAsset}</td><td>${row.targetAsset}</td><td class="text-right font-medium">${row.grossSource}</td><td class="text-right font-medium">${row.netTarget}</td><td>${row.fxRate}</td><td>${row.settlementWallet}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'invoice') {
+            return rows.map(row => `<tr onclick="alert('Viewing Invoice Settlement...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.batchId}</td><td class="text-muted">${row.settlementDate}</td><td>${renderDirection(row.direction)}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.invoiceNo}</td><td>${row.buyer}</td><td class="text-right font-medium">${row.collectionAmount}</td><td class="text-right">${row.fee}</td><td class="text-right font-medium">${row.netSettlement}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        if (tabId === 'checkout') {
+            return rows.map(row => `<tr onclick="alert('Viewing Checkout Settlement...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.batchId}</td><td class="text-muted">${row.settlementDate}</td><td>${renderDirection(row.direction)}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.checkoutId}</td><td>${row.merchantOrder}</td><td>${row.paymentChannel}</td><td class="text-right font-medium">${row.grossCollected}</td><td class="text-right">${row.fee}</td><td class="text-right font-medium">${row.netSettlement}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+        }
+        return rows.map(row => `<tr onclick="alert('Viewing Payout Settlement...')"><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.batchId}</td><td class="text-muted">${row.settlementDate}</td><td>${renderDirection(row.direction)}</td><td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.payoutOrder}</td><td>${row.beneficiary}</td><td>${row.payoutMethod}</td><td class="text-right font-medium">${row.grossDebit}</td><td class="text-right">${row.networkFee}</td><td class="text-right font-medium">${row.netRemitted}</td><td>${renderStatus(row.status)}</td></tr>`).join('');
+    }
+
+    function renderSettlementReportsPage() {
+        const activeTab = SETTLEMENT_REPORT_TABS.find(tab => tab.id === activeSettlementReportTab) || SETTLEMENT_REPORT_TABS[0];
+        const searchValue = document.getElementById('settlement-reports-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('settlement-reports-status')?.value || 'all';
+        const startDateValue = document.getElementById('settlement-reports-start-date')?.value || '';
+        const endDateValue = document.getElementById('settlement-reports-end-date')?.value || '';
+        
+        const rows = SETTLEMENT_REPORT_DATA[activeTab.id].filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            
+            let matchesDate = true;
+            if (startDateValue || endDateValue) {
+                const rowDateString = row.settlementDate || '';
+                // Simulate range check
+                if (startDateValue) matchesDate = matchesDate && rowDateString.toLowerCase().includes(startDateValue.split('-')[2]);
+                if (endDateValue) matchesDate = matchesDate && rowDateString.toLowerCase().includes(endDateValue.split('-')[2]);
+            }
+            
+            return matchesSearch && matchesStatus && matchesDate;
+        });
+
+        const tableMeta = {
+            vault: {
+                description: 'Settlement batches for fiat and stablecoin vault orders, with gross, fee, net, and settlement account details.',
+                headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Business Line', 'Currency', 'Gross', 'Fee', 'Net', 'Settlement Account', 'Status'],
+                statusOptions: ['Scheduled', 'Settled']
+            },
+            conversion: {
+                description: 'Settlement outcomes for conversion orders, including source/target assets, applied FX rate, and destination wallet or vault.',
+                headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Source', 'Target', 'Gross Source', 'Net Target', 'FX Rate', 'Settlement Wallet', 'Status'],
+                statusOptions: ['Settled', 'Pending FX Lock']
+            },
+            invoice: {
+                description: 'Invoice collection settlement records showing collected amount, processing fee, and final settled net amount.',
+                headers: ['Batch ID', 'Settlement Date', 'Direction', 'Invoice No.', 'Buyer', 'Collected', 'Fee', 'Net Settlement', 'Status'],
+                statusOptions: ['Settled', 'Pending Collection']
+            },
+            checkout: {
+                description: 'Checkout settlement records with channel, gross collected amount, reserve/fee impact, and net settlement.',
+                headers: ['Batch ID', 'Settlement Date', 'Direction', 'Checkout ID', 'Merchant Order', 'Channel', 'Gross Collected', 'Fee', 'Net Settlement', 'Status'],
+                statusOptions: ['Settled', 'In Reserve']
+            },
+            payout: {
+                description: 'Payout settlement records focusing on gross debit, network or bank fee, and net remitted amount.',
+                headers: ['Batch ID', 'Settlement Date', 'Direction', 'Payout Order', 'Beneficiary', 'Method', 'Gross Debit', 'Network Fee', 'Net Remitted', 'Status'],
+                statusOptions: ['Awaiting Approval', 'Settled']
+            }
+        }[activeTab.id];
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="padding: 24px;">
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Settlement Reports</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review settlement batches by business line, with the net amount, fee, account, and settlement timing that matter for reconciliation.</div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 14px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${SETTLEMENT_REPORT_TABS.map(tab => `
+                                <button onclick="window.switchSettlementReportTab('${tab.id}')" style="
+                                    padding: 12px 16px;
+                                    border-radius: 14px;
+                                    border: 1px solid ${tab.id === activeSettlementReportTab ? tab.tone.border : '#E2E8F0'};
+                                    background: ${tab.id === activeSettlementReportTab ? `linear-gradient(180deg, ${tab.tone.bg} 0%, #FFFFFF 100%)` : '#FFFFFF'};
+                                    color: ${tab.id === activeSettlementReportTab ? tab.tone.color : '#475569'};
+                                    font-size: 13px;
+                                    font-weight: ${tab.id === activeSettlementReportTab ? '700' : '600'};
+                                    box-shadow: ${tab.id === activeSettlementReportTab ? '0 10px 22px rgba(15, 23, 42, 0.08)' : 'none'};
+                                    cursor: pointer;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    transition: all 0.2s ease;
+                                ">
+                                    <span style="width: 8px; height: 8px; border-radius: 999px; background: ${tab.tone.color}; opacity: ${tab.id === activeSettlementReportTab ? '1' : '0.35'};"></span>
+                                    ${tab.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: #FCFDFE;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">${activeTab.label}</h3>
+                                <span style="font-size: 11px; font-weight: 700; color: ${activeTab.tone.color}; background: ${activeTab.tone.bg}; border: 1px solid ${activeTab.tone.border}; padding: 4px 10px; border-radius: 999px;">Settlement</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">${tableMeta.description}</div>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                            Export ${activeTab.label}
+                        </button>
+                    </div>
+
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1fr 1.6fr 0.8fr; gap: 14px;">
+                        <div style="position: relative;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="settlement-reports-search" type="text" value="${document.getElementById('settlement-reports-search')?.value || ''}" oninput="window.renderSettlementReportsPage()" placeholder="Search..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
+                            <input id="settlement-reports-start-date" type="date" value="${document.getElementById('settlement-reports-start-date')?.value || ''}" onchange="window.renderSettlementReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                            <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
+                            <input id="settlement-reports-end-date" type="date" value="${document.getElementById('settlement-reports-end-date')?.value || ''}" onchange="window.renderSettlementReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                        </div>
+                        <select id="settlement-reports-status" onchange="window.renderSettlementReportsPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            ${tableMeta.statusOptions.map(status => `<option value="${status}" ${statusValue === status ? 'selected' : ''}>${status}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    ${tableMeta.headers.map((header) => `<th class="${['Gross', 'Fee', 'Net', 'Gross Source', 'Net Target', 'Collected', 'Net Settlement', 'Gross Collected', 'Gross Debit', 'Network Fee', 'Net Remitted'].includes(header) ? 'text-right' : ''}">${header}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${renderSettlementReportRows(activeTab.id, rows)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = overviewHTML;
@@ -2915,9 +4405,19 @@ document.addEventListener('DOMContentLoaded', () => {
             activeApprovalRequestId = null;
             expandedApprovalActionId = null;
             renderApprovalListPage();
+        } else if (title === 'Members') {
+            membersView = 'list';
+            renderMembersPage();
+        } else if (title === 'My Profile') {
+            contentBody.innerHTML = renderMyProfilePage();
+            lucide.createIcons();
         } else if (title === 'Merchant Profile') {
             contentBody.innerHTML = merchantProfileHTML;
             lucide.createIcons();
+        } else if (title === 'Order Reports') {
+            renderOrderReportsPage();
+        } else if (title === 'Settlement Reports') {
+            renderSettlementReportsPage();
         } else if (title === 'Approval Rules') {
             approvalRuleView = 'list';
             activeApprovalRuleId = null;

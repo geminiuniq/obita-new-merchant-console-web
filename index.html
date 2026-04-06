@@ -102,6 +102,7 @@
                         <div class="submenu-title">
                             <i data-lucide="check-square"></i>
                             <span>Approvals</span>
+                            <span class="sidebar-notification-dot" id="approvals-nav-dot"></span>
                         </div>
                         <button type="button" class="submenu-toggle" aria-label="Toggle Approvals submenu" aria-expanded="false">
                             <i data-lucide="chevron-down" class="chevron-icon"></i>
@@ -110,6 +111,7 @@
                     <div class="submenu">
                         <a href="#" class="nav-subitem" data-target="approval-list">
                             <span>Approval List</span>
+                            <span class="sidebar-notification-dot sidebar-notification-dot-subitem" id="approval-list-nav-dot"></span>
                         </a>
                         <a href="#" class="nav-subitem" data-target="approval-rules">
                             <span>Approval Rules</span>
@@ -160,9 +162,6 @@
                         <a href="#" class="nav-subitem" data-target="members">
                             <span>Members</span>
                         </a>
-                        <a href="#" class="nav-subitem" data-target="roles-permissions">
-                            <span>Roles and Permissions</span>
-                        </a>
                     </div>
                 </div>
                 <a href="#" class="nav-item" data-target="settings">
@@ -206,6 +205,10 @@
                                 <div class="user-email">nancy@obita.demo</div>
                             </div>
                             <div class="dropdown-divider"></div>
+                            <div class="dropdown-item" data-profile-action="my-profile">
+                                <i data-lucide="user-round" style="width: 16px; height: 16px; margin-right: 8px;"></i>
+                                My Profile
+                            </div>
                             <div class="dropdown-item text-danger">
                                 <i data-lucide="log-out" style="width: 16px; height: 16px; margin-right: 8px;"></i>
                                 Log out
@@ -830,6 +833,178 @@
         </div>
     </div>
 
+    <div class="inbox-drawer" id="fiat-transfer-drawer" style="width: 560px; right: -560px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="landmark" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <h3 id="fiat-transfer-drawer-title">Transfer USD</h3>
+            </div>
+            <button class="icon-btn" id="close-fiat-transfer-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
+            <div id="fiat-transfer-step-1" style="display: flex; flex-direction: column; height: 100%;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 1: Enter transfer details</div>
+                    <div id="fiat-transfer-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Only connected bank accounts under the same merchant name can be selected.</div>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div class="bank-form-section">
+                        <div class="bank-form-field bank-form-field-full">
+                            <label class="bank-form-label">Target Bank Account *</label>
+                            <select id="fiat-transfer-target-account" class="bank-form-control" onchange="window.onFiatTransferAccountChange()">
+                                <option value="">Select a connected bank account</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Receiving Bank Information</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">The selected same-name bank account will receive the transfer.</div>
+                            </div>
+                            <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 999px; padding: 4px 10px;">Same-name only</span>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Account Holder</div>
+                                    <div id="fiat-transfer-receiver-name" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">-</div>
+                                </div>
+                                <button onclick="window.copyFiatTransferValue(document.getElementById('fiat-transfer-receiver-name').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Bank</div>
+                                    <div id="fiat-transfer-receiver-bank" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px;">-</div>
+                                </div>
+                                <button onclick="window.copyFiatTransferValue(document.getElementById('fiat-transfer-receiver-bank').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Bank Details</div>
+                                    <div id="fiat-transfer-receiver-summary" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 4px; line-height: 1.6;">-</div>
+                                </div>
+                                <button onclick="window.copyFiatTransferValue(document.getElementById('fiat-transfer-receiver-summary').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bank-form-section">
+                        <div class="bank-form-grid">
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Currency *</label>
+                                <select id="fiat-transfer-currency" class="bank-form-control" onchange="window.updateFiatTransferAmounts()"></select>
+                            </div>
+                            <div class="bank-form-field">
+                                <label class="bank-form-label">Transfer Amount *</label>
+                                <input type="number" id="fiat-transfer-amount" class="bank-form-control" placeholder="0.00" oninput="window.updateFiatTransferAmounts()">
+                            </div>
+                        </div>
+                        <div id="fiat-transfer-balance-hint" style="font-size: 12px; color: #64748B; margin-top: 8px;">Available balance: -</div>
+                        <div id="fiat-transfer-error" style="display: none; color: #DC2626; font-size: 12px; margin-top: 6px; font-weight: 600;">Insufficient balance after including transfer fee.</div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #475569;">
+                            <span>Transfer Amount</span>
+                            <strong id="fiat-transfer-amount-display" style="color: #0F172A;">0.00 USD</strong>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #475569;">
+                            <span>Transfer Fee</span>
+                            <strong id="fiat-transfer-fee-display" style="color: #0F172A;">0.00 USD</strong>
+                        </div>
+                        <div style="height: 1px; background: #E2E8F0;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px;">
+                            <div>
+                                <div style="font-size: 11px; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em;">Total Required</div>
+                                <div style="font-size: 12px; color: #1D4ED8; margin-top: 4px;">Transfer amount plus fee will be deducted from your Fiat Vault.</div>
+                            </div>
+                            <div id="fiat-transfer-total-display" style="font-size: 20px; font-weight: 800; color: #1D4ED8; white-space: nowrap;">0.00 USD</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.goToFiatTransferStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Confirm</button>
+                </div>
+            </div>
+
+            <div id="fiat-transfer-step-2" style="display: none; flex-direction: column; height: 100%;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 2: Review and execute</div>
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Confirm the transfer information, then choose the transfer purpose.</div>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Transfer Summary</div>
+                        <div style="display: grid; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Target Account</span><strong id="fiat-transfer-review-account" style="font-size: 13px; color: #0F172A; text-align: right;">-</strong></div>
+                            <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Receiving Bank</span><strong id="fiat-transfer-review-bank" style="font-size: 13px; color: #0F172A; text-align: right;">-</strong></div>
+                            <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Currency</span><strong id="fiat-transfer-review-currency" style="font-size: 13px; color: #0F172A; text-align: right;">-</strong></div>
+                            <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Transfer Amount</span><strong id="fiat-transfer-review-amount" style="font-size: 13px; color: #0F172A; text-align: right;">-</strong></div>
+                            <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Fee</span><strong id="fiat-transfer-review-fee" style="font-size: 13px; color: #0F172A; text-align: right;">-</strong></div>
+                            <div style="display: flex; justify-content: space-between; gap: 16px; padding-top: 12px; border-top: 1px solid #E2E8F0;"><span style="font-size: 12px; color: #64748B;">Total Deducted</span><strong id="fiat-transfer-review-total" style="font-size: 16px; color: #1D4ED8; text-align: right;">-</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="bank-form-section">
+                        <div class="bank-form-field bank-form-field-full">
+                            <label class="bank-form-label">Purpose of Transfer *</label>
+                            <select id="fiat-transfer-purpose" class="bank-form-control">
+                                <option value="">Select purpose</option>
+                                <option value="Treasury Rebalancing">Treasury Rebalancing</option>
+                                <option value="Settlement Funding">Settlement Funding</option>
+                                <option value="Operating Expense">Operating Expense</option>
+                                <option value="Reserve Allocation">Reserve Allocation</option>
+                                <option value="Client Safeguarding">Client Safeguarding</option>
+                            </select>
+                        </div>
+                        <div class="bank-form-field bank-form-field-full">
+                            <label class="bank-form-label">Notes</label>
+                            <textarea id="fiat-transfer-notes" class="bank-form-control" style="min-height: 86px; padding: 12px 14px;" placeholder="Optional notes for the approver..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="window.executeFiatTransfer()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Execute to Transfer</button>
+                    <button onclick="window.backToFiatTransferStep1()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer;">Back</button>
+                </div>
+            </div>
+
+            <div id="fiat-transfer-step-3" style="display: none; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="width: 52px; height: 52px; border-radius: 16px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
+                            <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+                        </div>
+                        <div style="font-size: 22px; font-weight: 700; color: #0F172A;">Your transfer was submitted for approval</div>
+                        <div style="font-size: 13px; color: #64748B; line-height: 1.6;">The transfer order is now waiting for approval according to your current approval rules.</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order ID</div>
+                                <div id="fiat-transfer-success-order-id" style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 4px;">-</div>
+                            </div>
+                            <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; text-transform: uppercase;">Proceeding</span>
+                        </div>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Transfer Details</div>
+                        <div id="fiat-transfer-success-details" style="display: grid; gap: 12px;"></div>
+                    </div>
+                </div>
+                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
+                    <button onclick="window.closeAllDrawers()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Convert Drawer -->
     <div class="inbox-drawer" id="convert-drawer" style="width: 480px; right: -480px;">
         <div class="drawer-header">
@@ -1356,6 +1531,25 @@
                 </form>
             </div>
         </div>
+    </div>
+
+    <!-- Member Form Drawer -->
+    <div class="inbox-drawer" id="member-form-drawer" style="width: 680px; right: -680px;">
+        <div class="drawer-header" style="align-items: flex-start;">
+            <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="user-plus" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <div>
+                    <h3 id="member-form-drawer-title">Add Member</h3>
+                    <div id="member-form-drawer-subtitle" style="font-size: 12px; color: #64748B; margin-top: 4px;">Invite a new merchant team member and assign their permissions.</div>
+                </div>
+            </div>
+            <button class="icon-btn" id="close-member-form-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" id="member-form-drawer-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;"></div>
     </div>
 
     <script src="app.js"></script>
