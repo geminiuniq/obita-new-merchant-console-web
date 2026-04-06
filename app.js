@@ -2682,6 +2682,26 @@ document.addEventListener('DOMContentLoaded', () => {
         renderOrderReportsPage();
     };
 
+    window.switchInvoiceOrdersDuration = function(duration) {
+        activeInvoiceOrdersDuration = duration;
+        renderInvoiceOrdersPage();
+    };
+
+    window.renderInvoiceOrdersPage = function() {
+        renderInvoiceOrdersPage();
+    };
+
+    window.openRecipientManagementPage = function() {
+        pageTitle.textContent = 'Payee List';
+        payeeListView = 'list';
+        activePayeeId = null;
+        renderPayeeListPage();
+    };
+
+    window.openNewInvoicePage = function() {
+        alert('Opening New Invoice creation flow...');
+    };
+
     window.renderOrderReportsPage = function() {
         renderOrderReportsPage();
     };
@@ -2693,6 +2713,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderSettlementReportsPage = function() {
         renderSettlementReportsPage();
+    };
+
+    window.switchFeeReportTab = function(tabId) {
+        activeFeeReportTab = tabId;
+        renderFeeReportsPage();
+    };
+
+    window.renderFeeReportsPage = function() {
+        renderFeeReportsPage();
     };
 
     window.openApprovalRequestDetail = function(requestId) {
@@ -3993,6 +4022,13 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'payout', label: 'Payout Settlement', tone: { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' } }
     ];
     let activeSettlementReportTab = 'vault';
+    const FEE_REPORT_TABS = [
+        { id: 'vault', label: 'Vault Fees', tone: { color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' } },
+        { id: 'conversion', label: 'Conversion Fees', tone: { color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' } },
+        { id: 'collection', label: 'Collection Fees', tone: { color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' } },
+        { id: 'payout', label: 'Payout Fees', tone: { color: '#DC2626', bg: '#FEF2F2', border: '#FECACA' } }
+    ];
+    let activeFeeReportTab = 'vault';
 
     const ORDER_REPORT_DATA = {
         vault: [
@@ -4018,6 +4054,243 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
 
+    const INVOICE_DURATION_OPTIONS = ['1d', '1w', '1m', '6m', '1y'];
+    let activeInvoiceOrdersDuration = '1m';
+    const INVOICE_SUMMARY_BY_DURATION = {
+        '1d': {
+            createdCount: '18',
+            createdAmount: '$82,600.00',
+            paidCount: '14',
+            paidAmount: '$69,250.00',
+            transitCount: '3',
+            transitAmount: '$9,100.00',
+            failedCount: '1',
+            failedAmount: '$4,250.00'
+        },
+        '1w': {
+            createdCount: '132',
+            createdAmount: '$506,800.00',
+            paidCount: '117',
+            paidAmount: '$455,420.00',
+            transitCount: '9',
+            transitAmount: '$28,980.00',
+            failedCount: '6',
+            failedAmount: '$22,400.00'
+        },
+        '1m': {
+            createdCount: '1,240',
+            createdAmount: '$450,200.00',
+            paidCount: '1,100',
+            paidAmount: '$405,000.00',
+            transitCount: '85',
+            transitAmount: '$25,200.00',
+            failedCount: '55',
+            failedAmount: '$20,000.00'
+        },
+        '6m': {
+            createdCount: '6,420',
+            createdAmount: '$2,486,100.00',
+            paidCount: '5,980',
+            paidAmount: '$2,310,450.00',
+            transitCount: '238',
+            transitAmount: '$88,340.00',
+            failedCount: '202',
+            failedAmount: '$87,310.00'
+        },
+        '1y': {
+            createdCount: '12,880',
+            createdAmount: '$5,106,400.00',
+            paidCount: '12,015',
+            paidAmount: '$4,792,850.00',
+            transitCount: '461',
+            transitAmount: '$166,780.00',
+            failedCount: '404',
+            failedAmount: '$146,770.00'
+        }
+    };
+    const INVOICE_ORDER_LIST_DATA = [
+        { invoiceNo: 'INV-240406-8821', issuedOn: 'Apr 6, 2026', dueOn: 'Apr 12, 2026', buyer: 'Global Trade Holdings', recipient: 'Obita SG Collection Account', method: 'Bank Transfer', settlementCurrency: 'USD', amount: '42,800.00 USD', collected: '42,800.00 USD', status: 'Settled' },
+        { invoiceNo: 'INV-240406-8817', issuedOn: 'Apr 6, 2026', dueOn: 'Apr 10, 2026', buyer: 'Orchid Retail Group', recipient: 'Obita SG Collection Account', method: 'Card Payment', settlementCurrency: 'USD', amount: '8,400.00 USD', collected: '0.00 USD', status: 'Pending Payment' },
+        { invoiceNo: 'INV-240405-8802', issuedOn: 'Apr 5, 2026', dueOn: 'Apr 9, 2026', buyer: 'Bluepeak Services', recipient: 'Obita EU Collection Account', method: 'Card Payment', settlementCurrency: 'EUR', amount: '18,200.00 EUR', collected: '0.00 EUR', status: 'Pending Payment' },
+        { invoiceNo: 'INV-240403-8774', issuedOn: 'Apr 3, 2026', dueOn: 'Apr 8, 2026', buyer: 'Harbor Medical Labs', recipient: 'Obita US Collection Account', method: 'Bank Transfer', settlementCurrency: 'USD', amount: '26,450.00 USD', collected: '12,500.00 USD', status: 'Proceeding' },
+        { invoiceNo: 'INV-240329-8711', issuedOn: 'Mar 29, 2026', dueOn: 'Apr 2, 2026', buyer: 'Kairo Commerce', recipient: 'Obita SG Collection Account', method: 'Wallet Pay', settlementCurrency: 'USDC', amount: '6,500.00 USDC', collected: '6,500.00 USDC', status: 'Settled' },
+        { invoiceNo: 'INV-240221-8305', issuedOn: 'Feb 21, 2026', dueOn: 'Feb 28, 2026', buyer: 'Nordic Freight Systems', recipient: 'Obita EU Collection Account', method: 'Bank Transfer', settlementCurrency: 'EUR', amount: '31,000.00 EUR', collected: '0.00 EUR', status: 'Expired' }
+    ];
+
+    function renderInvoiceOrdersPage() {
+        const searchValue = document.getElementById('invoice-orders-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('invoice-orders-status')?.value || 'all';
+        const methodValue = document.getElementById('invoice-orders-method')?.value || 'all';
+        const summary = INVOICE_SUMMARY_BY_DURATION[activeInvoiceOrdersDuration] || INVOICE_SUMMARY_BY_DURATION['1m'];
+        const durationOrder = { '1d': 0, '1w': 1, '1m': 2, '6m': 3, '1y': 4 };
+        const filteredRows = INVOICE_ORDER_LIST_DATA.filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesMethod = methodValue === 'all' || row.method === methodValue;
+            const rowBucket = row.issuedOn.startsWith('Apr 6') ? '1d'
+                : row.issuedOn.startsWith('Apr') ? '1w'
+                : row.issuedOn.startsWith('Mar') ? '1m'
+                : row.issuedOn.startsWith('Feb') ? '6m'
+                : '1y';
+            const matchesDuration = durationOrder[rowBucket] <= durationOrder[activeInvoiceOrdersDuration];
+            return matchesSearch && matchesStatus && matchesMethod && matchesDuration;
+        });
+
+        const recipientSummary = {
+            total: 4,
+            active: 3,
+            pending: 1,
+            lastUpdated: 'Updated Apr 6, 2026'
+        };
+
+        const renderStatus = (status) => {
+            const pill = getOrderReportStatusPill(status === 'Proceeding' ? 'Proceeding' : status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                <div style="display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.95fr); gap: 20px; align-items: stretch;">
+                    <div class="card collections-summary-card" style="padding: 24px;">
+                        <div class="collection-header" style="margin-bottom: 22px;">
+                            <div>
+                                <h2 class="card-title" style="font-size: 18px; margin: 0;">Invoice Summary</h2>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Same operational summary as your overview, focused on invoice collection performance.</div>
+                            </div>
+                            <div class="time-selector">
+                                ${INVOICE_DURATION_OPTIONS.map(option => `
+                                    <span class="time-option ${option === activeInvoiceOrdersDuration ? 'active' : ''}" onclick="window.switchInvoiceOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
+                            <div class="c-stat-box" style="min-width: 160px;">
+                                <span class="c-stat-label">Created Orders</span>
+                                <span class="c-stat-count">${summary.createdCount}</span>
+                                <span class="c-stat-amount">${summary.createdAmount}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 160px;">
+                                <span class="c-stat-label">Paid Successfully</span>
+                                <span class="c-stat-count text-success">${summary.paidCount}</span>
+                                <span class="c-stat-amount text-success">${summary.paidAmount}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 160px;">
+                                <span class="c-stat-label">In-Transit (incl. Underpaid)</span>
+                                <span class="c-stat-count text-warning">${summary.transitCount}</span>
+                                <span class="c-stat-amount text-warning">${summary.transitAmount}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 160px;">
+                                <span class="c-stat-label">Failed (Expired/Cancelled)</span>
+                                <span class="c-stat-count text-muted">${summary.failedCount}</span>
+                                <span class="c-stat-amount text-muted">${summary.failedAmount}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06);">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Recipient Management</div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div style="padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Recipients</div>
+                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${recipientSummary.total}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${recipientSummary.active} active</div>
+                            </div>
+                            <div style="padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Pending Setup</div>
+                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${recipientSummary.pending}</div>
+                                </div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${recipientSummary.lastUpdated}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end;">
+                            <button class="btn btn-primary" onclick="window.openRecipientManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Recipients</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 class="card-title" style="margin: 0; font-size: 18px;">Invoice Order List</h2>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Track issued invoices, receiving entity, collection method, and payment result in one place.</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.openNewInvoicePage()" style="padding: 10px 18px; font-weight: 700;">
+                            <i data-lucide="plus"></i>
+                            New Invoice
+                        </button>
+                    </div>
+
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
+                            <div class="time-selector" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 999px; padding: 4px;">
+                                ${INVOICE_DURATION_OPTIONS.map(option => `
+                                    <span class="time-option ${option === activeInvoiceOrdersDuration ? 'active' : ''}" onclick="window.switchInvoiceOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <select id="invoice-orders-status" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            <option value="Settled" ${statusValue === 'Settled' ? 'selected' : ''}>Settled</option>
+                            <option value="Pending Payment" ${statusValue === 'Pending Payment' ? 'selected' : ''}>Pending Payment</option>
+                            <option value="Proceeding" ${statusValue === 'Proceeding' ? 'selected' : ''}>Proceeding</option>
+                            <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
+                        </select>
+                        <select id="invoice-orders-method" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Methods</option>
+                            <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+                            <option value="Card Payment" ${methodValue === 'Card Payment' ? 'selected' : ''}>Card Payment</option>
+                            <option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>
+                        </select>
+                        <div style="position: relative; min-width: 260px;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="invoice-orders-search" type="text" value="${document.getElementById('invoice-orders-search')?.value || ''}" oninput="window.renderInvoiceOrdersPage()" placeholder="Search by invoice no., buyer..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice No.</th>
+                                    <th>Issued On</th>
+                                    <th>Due On</th>
+                                    <th>Buyer</th>
+                                    <th>Recipient</th>
+                                    <th>Method</th>
+                                    <th>Settlement Currency</th>
+                                    <th class="text-right">Invoice Amount</th>
+                                    <th class="text-right">Collected</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredRows.length ? filteredRows.map(row => `
+                                    <tr onclick="alert('Viewing Invoice Order...')">
+                                        <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.invoiceNo}</td>
+                                        <td class="text-muted">${row.issuedOn}</td>
+                                        <td class="text-muted">${row.dueOn}</td>
+                                        <td class="font-medium">${row.buyer}</td>
+                                        <td style="font-size: 12px; color: #475569;">${row.recipient}</td>
+                                        <td>${row.method}</td>
+                                        <td>${row.settlementCurrency}</td>
+                                        <td class="text-right font-medium">${row.amount}</td>
+                                        <td class="text-right">${row.collected}</td>
+                                        <td>${renderStatus(row.status)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="10" style="padding: 48px 24px; text-align: center; color: #64748B;">No invoice orders matched your current filters.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     const SETTLEMENT_REPORT_DATA = {
         vault: [
             { batchId: 'STL-VLT-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Outbound', orderId: 'FT-20260406-0182', businessLine: 'Fiat Vault Transfer', currency: 'USD', gross: '125,000.00', fee: '140.00', net: '124,860.00', settlementAccount: 'DBS Treasury Settlement', eta: 'Apr 7, 2026', status: 'Scheduled' },
@@ -4038,6 +4311,25 @@ document.addEventListener('DOMContentLoaded', () => {
         payout: [
             { batchId: 'STL-PO-20260406-01', settlementDate: 'Apr 6, 2026', direction: 'Outbound', payoutOrder: 'PO-20260406-0114', beneficiary: 'Shenzhen Apex Electronics', payoutMethod: 'Bank Transfer', grossDebit: '14,200.00 USD', networkFee: '18.00 USD', netRemitted: '14,182.00 USD', debitAccount: 'USD Treasury Balance', status: 'Awaiting Approval' },
             { batchId: 'STL-PO-20260405-03', settlementDate: 'Apr 5, 2026', direction: 'Outbound', payoutOrder: 'PO-20260405-0102', beneficiary: 'Nova Logistics', payoutMethod: 'Wallet Transfer', grossDebit: '8,500.00 USDT', networkFee: '6.00 USDT', netRemitted: '8,494.00 USDT', debitAccount: 'USDT Operations Pool', status: 'Settled' }
+        ]
+    };
+
+    const FEE_REPORT_DATA = {
+        vault: [
+            { feeId: 'FEE-VLT-20260406-01', chargedOn: 'Apr 6, 2026', orderId: 'FT-20260406-0182', feeType: 'Transfer Handling Fee', currency: 'USD', baseAmount: '125,000.00 USD', rate: '0.112%', feeAmount: '140.00 USD', status: 'Accrued' },
+            { feeId: 'FEE-VLT-20260405-04', chargedOn: 'Apr 5, 2026', orderId: 'VT-20261024-0018', feeType: 'Network Fee', currency: 'USDT', baseAmount: '12,500.00 USDT', rate: 'Flat', feeAmount: '8.00 USDT', status: 'Settled' }
+        ],
+        conversion: [
+            { feeId: 'FEE-CV-20260406-01', chargedOn: 'Apr 6, 2026', orderId: 'CV-20260406-0048', feeType: 'FX Spread', currency: 'USD', baseAmount: '25,000.00 USD', rate: '0.12%', feeAmount: '30.00 USD', status: 'Settled' },
+            { feeId: 'FEE-CV-20260405-03', chargedOn: 'Apr 5, 2026', orderId: 'CV-20260405-0039', feeType: 'FX Spread', currency: 'EUR', baseAmount: '80,000.00 EUR', rate: '0.18%', feeAmount: '144.00 EUR', status: 'Pending FX Lock' }
+        ],
+        collection: [
+            { feeId: 'FEE-COL-20260406-01', chargedOn: 'Apr 6, 2026', orderId: 'INV-240406-8821', feeType: 'Invoice Collection Fee', currency: 'USD', baseAmount: '42,800.00 USD', rate: '0.30%', feeAmount: '128.40 USD', status: 'Settled' },
+            { feeId: 'FEE-COL-20260406-02', chargedOn: 'Apr 6, 2026', orderId: 'CKO-20260406-0188', feeType: 'Checkout Processing Fee', currency: 'USDC', baseAmount: '1,280.00 USDC', rate: '0.20%', feeAmount: '2.50 USDC', status: 'Settled' }
+        ],
+        payout: [
+            { feeId: 'FEE-PO-20260406-01', chargedOn: 'Apr 6, 2026', orderId: 'PO-20260406-0114', feeType: 'Payout Service Fee', currency: 'USD', baseAmount: '14,200.00 USD', rate: '0.127%', feeAmount: '18.00 USD', status: 'Awaiting Approval' },
+            { feeId: 'FEE-PO-20260405-03', chargedOn: 'Apr 5, 2026', orderId: 'PO-20260405-0102', feeType: 'Wallet Network Fee', currency: 'USDT', baseAmount: '8,500.00 USDT', rate: 'Flat', feeAmount: '6.00 USDT', status: 'Settled' }
         ]
     };
 
@@ -4383,6 +4675,160 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    function renderFeeReportRows(tabId, rows) {
+        const colspans = { vault: 8, conversion: 8, collection: 8, payout: 8 };
+        if (!rows.length) {
+            return `<tr><td colspan="${colspans[tabId] || 8}" style="padding: 48px 24px; text-align: center; color: #64748B;">No fee records matched your current filters.</td></tr>`;
+        }
+
+        const renderStatus = (status) => {
+            const pill = getOrderReportStatusPill(
+                status === 'Accrued' ? 'Proceeding' :
+                status === 'Awaiting Approval' ? 'Pending Approval' :
+                status
+            );
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+
+        return rows.map(row => `
+            <tr onclick="alert('Viewing Fee Record...')">
+                <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.feeId}</td>
+                <td class="text-muted">${row.chargedOn}</td>
+                <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td>
+                <td>${row.feeType}</td>
+                <td>${row.currency}</td>
+                <td class="text-right">${row.baseAmount}</td>
+                <td class="text-right font-medium">${row.feeAmount}</td>
+                <td>${renderStatus(row.status)}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderFeeReportsPage() {
+        const activeTab = FEE_REPORT_TABS.find(tab => tab.id === activeFeeReportTab) || FEE_REPORT_TABS[0];
+        const searchValue = document.getElementById('fee-reports-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('fee-reports-status')?.value || 'all';
+        const startDateValue = document.getElementById('fee-reports-start-date')?.value || '';
+        const endDateValue = document.getElementById('fee-reports-end-date')?.value || '';
+
+        const rows = FEE_REPORT_DATA[activeTab.id].filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            let matchesDate = true;
+            if (startDateValue || endDateValue) {
+                const rowDateString = row.chargedOn || '';
+                if (startDateValue) matchesDate = matchesDate && rowDateString.toLowerCase().includes(startDateValue.split('-')[2]);
+                if (endDateValue) matchesDate = matchesDate && rowDateString.toLowerCase().includes(endDateValue.split('-')[2]);
+            }
+            return matchesSearch && matchesStatus && matchesDate;
+        });
+
+        const tableMeta = {
+            vault: {
+                description: 'Fees charged for vault transfers and top up related processing.',
+                statusOptions: ['Accrued', 'Settled']
+            },
+            conversion: {
+                description: 'FX spread and conversion-related charges by conversion order.',
+                statusOptions: ['Settled', 'Pending FX Lock']
+            },
+            collection: {
+                description: 'Collection and checkout processing fees charged on inbound payments.',
+                statusOptions: ['Settled']
+            },
+            payout: {
+                description: 'Payout processing and network fees for outbound disbursement activity.',
+                statusOptions: ['Awaiting Approval', 'Settled']
+            }
+        }[activeTab.id];
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" style="padding: 24px;">
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Fee Reports</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review fee accruals and settled fee records by business line, with the fee basis and charge amount clearly separated.</div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 14px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${FEE_REPORT_TABS.map(tab => `
+                                <button onclick="window.switchFeeReportTab('${tab.id}')" style="
+                                    padding: 12px 16px;
+                                    border-radius: 14px;
+                                    border: 1px solid ${tab.id === activeFeeReportTab ? tab.tone.border : '#E2E8F0'};
+                                    background: ${tab.id === activeFeeReportTab ? `linear-gradient(180deg, ${tab.tone.bg} 0%, #FFFFFF 100%)` : '#FFFFFF'};
+                                    color: ${tab.id === activeFeeReportTab ? tab.tone.color : '#475569'};
+                                    font-size: 13px;
+                                    font-weight: ${tab.id === activeFeeReportTab ? '700' : '600'};
+                                    box-shadow: ${tab.id === activeFeeReportTab ? '0 10px 22px rgba(15, 23, 42, 0.08)' : 'none'};
+                                    cursor: pointer;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                ">
+                                    <span style="width: 8px; height: 8px; border-radius: 999px; background: ${tab.tone.color}; opacity: ${tab.id === activeFeeReportTab ? '1' : '0.35'};"></span>
+                                    ${tab.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; background: #FCFDFE;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">${activeTab.label}</h3>
+                                <span style="font-size: 11px; font-weight: 700; color: ${activeTab.tone.color}; background: ${activeTab.tone.bg}; border: 1px solid ${activeTab.tone.border}; padding: 4px 10px; border-radius: 999px;">Fees</span>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">${tableMeta.description}</div>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 8px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                            <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+                            Export ${activeTab.label}
+                        </button>
+                    </div>
+
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1fr 1.6fr 0.8fr; gap: 14px;">
+                        <div style="position: relative;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="fee-reports-search" type="text" value="${document.getElementById('fee-reports-search')?.value || ''}" oninput="window.renderFeeReportsPage()" placeholder="Search..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
+                            <input id="fee-reports-start-date" type="date" value="${document.getElementById('fee-reports-start-date')?.value || ''}" onchange="window.renderFeeReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                            <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
+                            <input id="fee-reports-end-date" type="date" value="${document.getElementById('fee-reports-end-date')?.value || ''}" onchange="window.renderFeeReportsPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
+                        </div>
+                        <select id="fee-reports-status" onchange="window.renderFeeReportsPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            ${tableMeta.statusOptions.map(status => `<option value="${status}" ${statusValue === status ? 'selected' : ''}>${status}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fee ID</th>
+                                    <th>Charged On</th>
+                                    <th>Order ID</th>
+                                    <th>Fee Type</th>
+                                    <th>Currency</th>
+                                    <th class="text-right">Fee Basis</th>
+                                    <th class="text-right">Fee Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${renderFeeReportRows(activeTab.id, rows)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     // ── PAYEE LIST ────────────────────────────────────────────────────────────
 
     const payeeList = [
@@ -4456,6 +4902,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const keyword      = (document.getElementById('payee-search')?.value || '').trim().toLowerCase();
 
         const filtered = payeeList.filter(p => {
+            if (p.usageScope && p.usageScope.payout === false) return false;
             if (typeFilter !== 'all'   && p.type   !== typeFilter)   return false;
             if (statusFilter !== 'all' && p.status !== statusFilter) return false;
             if (keyword && ![ p.name, p.alias, p.currency, p.bankName, p.accountNumber, p.country, p.purpose, p.id, p.email ].join(' ').toLowerCase().includes(keyword)) return false;
@@ -4561,7 +5008,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
                                 </div>
                                 <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
-                                    <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;" disabled>Edit</button>
+                                    <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Edit</button>
                                     <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
                                     <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px; color: #DC2626; border-color: #FECACA;">Delete</button>
                                 </div>
@@ -4579,6 +5026,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPayeeFormContent(inDrawer = false) {
+        const renderUseCaseToggle = (id, label, checked = false) => `
+            <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
+                <div style="font-size: 13px; font-weight: 600; color: #0F172A;">${label}</div>
+                <input id="${id}" type="checkbox" ${checked ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
+            </label>
+        `;
+
+        const renderWalletEntry = (index) => `
+            <div data-wallet-entry style="display: flex; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Wallet ${index}</div>
+                    ${index > 1 ? '<button type="button" onclick="window.removePayeeWalletEntry(this)" style="border: none; background: none; color: #DC2626; font-size: 12px; font-weight: 700; cursor: pointer;">Remove</button>' : ''}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label">Wallet Address</label>
+                    <input data-wallet-address class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Network</label>
+                        <select data-wallet-network class="bank-form-control">
+                            <option>TRON (TRC-20)</option>
+                            <option>Ethereum (ERC-20)</option>
+                            <option>BNB Chain (BEP-20)</option>
+                            <option>Solana</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Wallet Label</label>
+                        <input data-wallet-label class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const renderBankEntry = (index) => `
+            <div data-bank-entry style="display: flex; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Bank Account ${index}</div>
+                    ${index > 1 ? '<button type="button" onclick="window.removePayeeBankEntry(this)" style="border: none; background: none; color: #DC2626; font-size: 12px; font-weight: 700; cursor: pointer;">Remove</button>' : ''}
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Bank Name</label>
+                        <input data-bank-name class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Account Number / IBAN</label>
+                        <input data-bank-account class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">SWIFT / BIC Code</label>
+                        <input data-bank-swift class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Routing / FPS / Sort Code</label>
+                        <input data-bank-routing class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label">Payout Currency</label>
+                    <select data-bank-currency class="bank-form-control">
+                        ${['USD','HKD','EUR','BRL'].map(c => `<option>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+        `;
+
         return `
                 ${inDrawer ? '' : `
                 <div class="card" style="padding: 24px;">
@@ -4586,7 +5103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
                         Back to Payee List
                     </button>
-                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">Add New Payee</h2>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">External Contact</h2>
                     <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new payee. An email invitation will be sent to collect their payout details and complete identity verification before any payout can be executed.</div>
                 </div>
                 `}
@@ -4670,11 +5187,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Usage Scope</h3>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Choose which workflows can use this external contact.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        ${renderUseCaseToggle('payee-usage-payout', 'Can be used for Payout', true)}
+                        ${renderUseCaseToggle('payee-usage-collection-invoice', 'Can be used for Collection - Invoice')}
+                        ${renderUseCaseToggle('payee-usage-collection-checkout', 'Can be used for Collection - Checkout')}
+                        ${renderUseCaseToggle('payee-usage-refund', 'Can receive Refund')}
+                    </div>
+                </div>
+
                 <!-- SECTION 2: Wallet Address (collapsible) -->
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-wallet-card">
                     <button type="button" onclick="window.togglePayeeSection('wallet')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">2</div>
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">3</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Wallet Address</div>
                                 <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's crypto wallet for payout.</div>
@@ -4715,24 +5248,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
                                 Even if you provide the wallet details now, an email will still be sent to the payee asking them to verify and confirm the wallet address.
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <label class="bank-form-label">Wallet Address</label>
-                                <input id="payee-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
+                            <div id="payee-wallet-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                ${renderWalletEntry(1)}
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Network</label>
-                                    <select id="payee-wallet-net" class="bank-form-control">
-                                        <option>TRON (TRC-20)</option>
-                                        <option>Ethereum (ERC-20)</option>
-                                        <option>BNB Chain (BEP-20)</option>
-                                        <option>Solana</option>
-                                    </select>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Wallet Label</label>
-                                    <input id="payee-wallet-label" class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
-                                </div>
+                            <div style="display: flex; justify-content: flex-start;">
+                                <button type="button" class="btn btn-outline" onclick="window.addPayeeWalletEntry()" style="padding: 9px 14px; font-size: 12px; font-weight: 700;">Add Wallet Address</button>
                             </div>
                         </div>
 
@@ -4743,7 +5263,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-bank-card">
                     <button type="button" onclick="window.togglePayeeSection('bank')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">3</div>
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">4</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Bank Account</div>
                                 <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's bank account for fiat payout.</div>
@@ -4774,31 +5294,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <!-- Bank detail inputs (shown only if 'now' selected) -->
                         <div id="payee-bank-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Bank Name</label>
-                                    <input id="payee-bank-name" class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Account Number / IBAN</label>
-                                    <input id="payee-bank-acct" class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
-                                </div>
+                            <div id="payee-bank-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                ${renderBankEntry(1)}
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">SWIFT / BIC Code</label>
-                                    <input id="payee-bank-swift" class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Routing / FPS / Sort Code</label>
-                                    <input id="payee-bank-routing" class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
-                                </div>
-                            </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <label class="bank-form-label">Payout Currency</label>
-                                <select id="payee-bank-currency" class="bank-form-control">
-                                    ${['USD','HKD','EUR','BRL'].map(c => `<option>${c}</option>`).join('')}
-                                </select>
+                            <div style="display: flex; justify-content: flex-start;">
+                                <button type="button" class="btn btn-outline" onclick="window.addPayeeBankEntry()" style="padding: 9px 14px; font-size: 12px; font-weight: 700;">Add Bank Account</button>
                             </div>
                         </div>
 
@@ -4822,13 +5322,145 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('payee-bank-self')?.addEventListener('change', window.onPayeeBankFillChange);
     }
 
+    function refreshPayeeEntryLabels(selector, labelPrefix) {
+        document.querySelectorAll(selector).forEach((entry, index) => {
+            const label = entry.querySelector('[style*="text-transform: uppercase"]');
+            if (label) label.textContent = `${labelPrefix} ${index + 1}`;
+            const removeButton = entry.querySelector('button');
+            if (removeButton) {
+                removeButton.style.display = index === 0 ? 'none' : '';
+            }
+        });
+    }
+
+    function collectPayeeWalletEntries() {
+        const entries = [...document.querySelectorAll('[data-wallet-entry]')];
+        const results = [];
+        for (const entry of entries) {
+            const address = entry.querySelector('[data-wallet-address]')?.value?.trim() || '';
+            const network = entry.querySelector('[data-wallet-network]')?.value?.trim() || '';
+            const label = entry.querySelector('[data-wallet-label]')?.value?.trim() || '';
+            const hasAnyValue = Boolean(address || network || label);
+            if (!hasAnyValue) continue;
+            if (!address) {
+                alert('Please complete each wallet entry with a wallet address, or remove the empty wallet block.');
+                return null;
+            }
+            results.push({ network: network || 'TRON (TRC-20)', address, label });
+        }
+        return results;
+    }
+
+    function collectPayeeBankEntries() {
+        const entries = [...document.querySelectorAll('[data-bank-entry]')];
+        const results = [];
+        for (const entry of entries) {
+            const bankName = entry.querySelector('[data-bank-name]')?.value?.trim() || '';
+            const account = entry.querySelector('[data-bank-account]')?.value?.trim() || '';
+            const swift = entry.querySelector('[data-bank-swift]')?.value?.trim() || '';
+            const routing = entry.querySelector('[data-bank-routing]')?.value?.trim() || '';
+            const currency = entry.querySelector('[data-bank-currency]')?.value?.trim() || '';
+            const hasAnyValue = Boolean(bankName || account || swift || routing || currency);
+            if (!hasAnyValue) continue;
+            if (!bankName || !account) {
+                alert('Please complete each bank account entry with bank name and account number, or remove the incomplete bank block.');
+                return null;
+            }
+            results.push({ bankName, account, swift, routing, currency });
+        }
+        return results;
+    }
+
     function renderPayeeFormPage() {
-        contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
-                ${renderPayeeFormContent(false)}
-            </div>
-        `;
-        initPayeeFormInteractions();
+        if (!activePayeeId) {
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
+                    ${renderPayeeFormContent(false)}
+                </div>
+            `;
+            initPayeeFormInteractions();
+        } else {
+            const payee = getPayeeById(activePayeeId);
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
+                    <div class="card" style="padding: 24px;">
+                        <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                            Back to External Contacts
+                        </button>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${payee.name}</h2>
+                                <div style="font-size: 13px; color: #64748B; line-height: 1.6;">ID: ${payee.id} &bull; ${payee.personType === 'company' ? 'Company' : 'Individual'}</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" onclick="alert('Editing external contact...')" style="padding: 10px 18px; font-weight: 700;">Edit Profile</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Basic Information</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Email</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">${payee.email}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Status</div>
+                                ${payee.status === 'active' ? '<div style="font-size: 14px; font-weight: 600; color: #15803D; margin-top: 4px;">Active</div>' 
+                                : payee.status === 'disabled' ? '<div style="font-size: 14px; font-weight: 600; color: #64748B; margin-top: 4px;">Disabled</div>' 
+                                : '<div style="font-size: 14px; font-weight: 600; color: #D97706; margin-top: 4px;">Pending Info</div>'}
+                            </div>
+                            <div style="grid-column: 1 / -1; margin-top: 8px;">
+                                <div style="font-size: 12px; color: #64748B; margin-bottom: 8px;">Usage Scope</div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    ${(!payee.usageScope || payee.usageScope.payout) ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Payout</span>' : '<span style="background: #F8FAFC; color: #94A3B8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">No Payout</span>'}
+                                    ${payee.usageScope?.collectionInvoice ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Collection - Invoice</span>' : ''}
+                                    ${payee.usageScope?.collectionCheckout ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Collection - Checkout</span>' : ''}
+                                    ${payee.usageScope?.refund ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Refund</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${payee.wallets?.length ? `
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Crypto Wallets</h3>
+                        ${payee.wallets.map((w, index) => `
+                            <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${w.network}</span>
+                                    <span style="font-size: 12px; color: #64748B;">${w.label || `Wallet ${index + 1}`}</span>
+                                </div>
+                                <div style="font-size: 13px; font-family: monospace; color: #475569;">${w.address}</div>
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
+
+                    ${payee.banks?.length ? `
+                    <div class="card" style="padding: 24px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Bank Accounts</h3>
+                        ${payee.banks.map((b, index) => `
+                            <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                    <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${b.bankName}</span>
+                                    <span style="font-size: 12px; color: #64748B;">Account ${index + 1}</span>
+                                </div>
+                                <div style="font-size: 13px; font-family: monospace; color: #475569; margin-bottom: 12px;">${b.account}</div>
+                                ${(b.swift || b.routing || b.currency) ? `
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9;">
+                                    ${b.swift ? `<div><div style="font-size: 11px; color: #94A3B8;">SWIFT</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.swift}</div></div>` : ''}
+                                    ${b.routing ? `<div><div style="font-size: 11px; color: #94A3B8;">Routing</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.routing}</div></div>` : ''}
+                                    ${b.currency ? `<div><div style="font-size: 11px; color: #94A3B8;">Currency</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.currency}</div></div>` : ''}
+                                </div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
+                </div>
+            `;
+            lucide.createIcons();
+        }
     }
 
     window.renderPayeeListPage = function() {
@@ -4843,6 +5475,13 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPayeeListPage();
     };
 
+    window.editPayee = function(id) {
+        payeeFormContext = { mode: 'page', payoutRowId: null };
+        payeeListView = 'form';
+        activePayeeId = id;
+        renderPayeeListPage();
+    };
+
     function openPayeeFormDrawerForPayout(rowId) {
         const drawer = document.getElementById('payee-form-drawer');
         const drawerBody = document.getElementById('payee-form-drawer-body');
@@ -4852,7 +5491,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!drawer || !drawerBody || !drawerTitle || !drawerSubtitle) return;
 
         payeeFormContext = { mode: 'payout-batch', payoutRowId: rowId };
-        drawerTitle.textContent = 'Add New Payee';
+        drawerTitle.textContent = 'External Contact';
         drawerSubtitle.textContent = 'Create a payee and return to the current payout batch row.';
         drawerBody.innerHTML = renderPayeeFormContent(true);
         closeAllDrawers();
@@ -4956,6 +5595,94 @@ document.addEventListener('DOMContentLoaded', () => {
         if (inputs) inputs.style.display = nowSelected ? 'flex' : 'none';
     };
 
+    window.addPayeeWalletEntry = function() {
+        const list = document.getElementById('payee-wallet-list');
+        if (!list) return;
+        const nextIndex = list.querySelectorAll('[data-wallet-entry]').length + 1;
+        list.insertAdjacentHTML('beforeend', `
+            <div data-wallet-entry style="display: flex; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Wallet ${nextIndex}</div>
+                    <button type="button" onclick="window.removePayeeWalletEntry(this)" style="border: none; background: none; color: #DC2626; font-size: 12px; font-weight: 700; cursor: pointer;">Remove</button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label">Wallet Address</label>
+                    <input data-wallet-address class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Network</label>
+                        <select data-wallet-network class="bank-form-control">
+                            <option>TRON (TRC-20)</option>
+                            <option>Ethereum (ERC-20)</option>
+                            <option>BNB Chain (BEP-20)</option>
+                            <option>Solana</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Wallet Label</label>
+                        <input data-wallet-label class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
+                    </div>
+                </div>
+            </div>
+        `);
+        refreshPayeeEntryLabels('[data-wallet-entry]', 'Wallet');
+    };
+
+    window.removePayeeWalletEntry = function(button) {
+        button.closest('[data-wallet-entry]')?.remove();
+        refreshPayeeEntryLabels('[data-wallet-entry]', 'Wallet');
+    };
+
+    window.addPayeeBankEntry = function() {
+        const list = document.getElementById('payee-bank-list');
+        if (!list) return;
+        const nextIndex = list.querySelectorAll('[data-bank-entry]').length + 1;
+        list.insertAdjacentHTML('beforeend', `
+            <div data-bank-entry style="display: flex; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Bank Account ${nextIndex}</div>
+                    <button type="button" onclick="window.removePayeeBankEntry(this)" style="border: none; background: none; color: #DC2626; font-size: 12px; font-weight: 700; cursor: pointer;">Remove</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Bank Name</label>
+                        <input data-bank-name class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Account Number / IBAN</label>
+                        <input data-bank-account class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">SWIFT / BIC Code</label>
+                        <input data-bank-swift class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label class="bank-form-label">Routing / FPS / Sort Code</label>
+                        <input data-bank-routing class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label">Payout Currency</label>
+                    <select data-bank-currency class="bank-form-control">
+                        <option>USD</option>
+                        <option>HKD</option>
+                        <option>EUR</option>
+                        <option>BRL</option>
+                    </select>
+                </div>
+            </div>
+        `);
+        refreshPayeeEntryLabels('[data-bank-entry]', 'Bank Account');
+    };
+
+    window.removePayeeBankEntry = function(button) {
+        button.closest('[data-bank-entry]')?.remove();
+        refreshPayeeEntryLabels('[data-bank-entry]', 'Bank Account');
+    };
+
     window.savePayee = function(existingId) {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
         const email      = document.getElementById('payee-email')?.value?.trim();
@@ -4988,23 +5715,28 @@ document.addEventListener('DOMContentLoaded', () => {
             status: 'pending_collection',
             email: email,
             personType: personType,
+            usageScope: {
+                payout: Boolean(document.getElementById('payee-usage-payout')?.checked),
+                collectionInvoice: Boolean(document.getElementById('payee-usage-collection-invoice')?.checked),
+                collectionCheckout: Boolean(document.getElementById('payee-usage-collection-checkout')?.checked),
+                refund: Boolean(document.getElementById('payee-usage-refund')?.checked)
+            },
             createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
 
         const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
         const bankModeNow = document.getElementById('payee-bank-now')?.checked;
-        const walletAddress = document.getElementById('payee-wallet-addr')?.value?.trim();
-        const walletNetwork = document.getElementById('payee-wallet-net')?.value?.trim();
-        const bankName = document.getElementById('payee-bank-name')?.value?.trim();
-        const bankAccount = document.getElementById('payee-bank-acct')?.value?.trim();
+        const walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
+        const bankEntries = bankModeNow ? collectPayeeBankEntries() : [];
+        if (walletEntries === null || bankEntries === null) return;
 
-        if (walletModeNow && walletAddress) {
-            newPayee.wallets = [{ network: walletNetwork || 'TRON (TRC-20)', address: walletAddress }];
+        if (walletModeNow && walletEntries.length) {
+            newPayee.wallets = walletEntries;
             newPayee.type = 'Crypto Wallet';
         }
 
-        if (bankModeNow && bankName && bankAccount) {
-            newPayee.banks = [{ bankName, account: bankAccount }];
+        if (bankModeNow && bankEntries.length) {
+            newPayee.banks = bankEntries;
             if (!walletModeNow) newPayee.type = 'Bank Account';
         }
 
@@ -5480,17 +6212,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 22px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Source of Fund</div>
-                                <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Asset Vault</div>
-                            </div>
-                            <div style="padding: 14px 16px; border-radius: 16px; background: #0F172A; color: white; min-width: 260px; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);">
-                                <div style="font-size: 11px; color: rgba(255,255,255,0.72); text-transform: uppercase; letter-spacing: 0.08em;">Available Balance</div>
-                                <div style="font-size: 24px; font-weight: 900; margin-top: 6px; letter-spacing: -0.02em;">${batch.sourceCurrency ? formatTransferMoney(availableBalance, batch.sourceCurrency) : '--'}</div>
-                            </div>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Source of Fund</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Asset Vault</div>
                         </div>
-                        <div style="display: grid; grid-template-columns: minmax(280px, 360px) minmax(260px, 1fr); gap: 16px; margin-top: 18px; align-items: stretch;">
+                        <div style="display: grid; grid-template-columns: minmax(280px, 360px) minmax(320px, 1fr); gap: 16px; margin-top: 18px; align-items: stretch;">
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label class="bank-form-label" style="margin: 0;">Source Asset *</label>
                                 <select id="payout-source-currency" data-focus-key="payout-source-currency" class="bank-form-control" onchange="window.updatePayoutSourceCurrency(this.value)" style="height: 52px;">
@@ -5498,19 +6224,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                     ${sourceOptions.map(option => `<option value="${option.currency}" ${option.currency === batch.sourceCurrency ? 'selected' : ''}>${option.currency} - Available ${option.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</option>`).join('')}
                                 </select>
                             </div>
-                            <div style="border-radius: 18px; border: 1px solid ${batch.sourceCurrency ? selectedVisual.border : '#E2E8F0'}; background: ${batch.sourceCurrency ? `linear-gradient(180deg, ${selectedVisual.bg} 0%, #FFFFFF 100%)` : '#FFFFFF'}; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                            <div style="padding: 14px 18px; border-radius: 18px; background: #0F172A; color: white; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14); display: flex; align-items: center; justify-content: space-between; gap: 18px;">
                                 <div style="display: flex; align-items: center; gap: 14px;">
-                                    <div style="width: 46px; height: 46px; border-radius: 16px; background: ${batch.sourceCurrency ? selectedVisual.bg : '#F8FAFC'}; color: ${batch.sourceCurrency ? selectedVisual.color : '#94A3B8'}; border: 1px solid ${batch.sourceCurrency ? selectedVisual.border : '#E2E8F0'}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900;">
+                                    <div style="width: 46px; height: 46px; border-radius: 16px; background: ${batch.sourceCurrency ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)'}; color: white; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900;">
                                         ${batch.sourceCurrency || '--'}
                                     </div>
                                     <div>
-                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Selected Source</div>
-                                        <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 5px;">${batch.sourceCurrency || 'No asset selected'}</div>
+                                        <div style="font-size: 11px; color: rgba(255,255,255,0.62); text-transform: uppercase; letter-spacing: 0.08em;">Available Balance</div>
+                                        <div style="font-size: 16px; font-weight: 800; color: white; margin-top: 5px;">${batch.sourceCurrency || 'No asset selected'}</div>
                                     </div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Available</div>
-                                    <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 5px;">${batch.sourceCurrency ? formatTransferMoney(availableBalance, batch.sourceCurrency) : '--'}</div>
+                                    <div style="font-size: 28px; font-weight: 900; color: white; letter-spacing: -0.03em; line-height: 1;">${batch.sourceCurrency ? availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--'}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.72); margin-top: 6px;">${batch.sourceCurrency || ''}</div>
                                 </div>
                             </div>
                         </div>
@@ -6150,10 +6876,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (title === 'Merchant Profile') {
             contentBody.innerHTML = merchantProfileHTML;
             lucide.createIcons();
+        } else if (title === 'Invoice Orders') {
+            renderInvoiceOrdersPage();
         } else if (title === 'Order Reports') {
             renderOrderReportsPage();
         } else if (title === 'Settlement Reports') {
             renderSettlementReportsPage();
+        } else if (title === 'Fee Reports') {
+            renderFeeReportsPage();
         } else if (title === 'Payee List') {
             payeeListView = 'list';
             activePayeeId = null;
