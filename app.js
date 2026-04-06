@@ -4378,6 +4378,613 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    // ── PAYEE LIST ────────────────────────────────────────────────────────────
+
+    const payeeList = [
+        {
+            id: 'PAY-001',
+            name: 'Shenzhen Apex Electronics',
+            alias: 'Apex Electronics',
+            type: '-',
+            currency: '-',
+            bankName: '-',
+            accountNumber: '-',
+            routingInfo: '-',
+            country: 'China',
+            purpose: 'Supplier Payment',
+            status: 'active',
+            email: 'contact@apex.example.com',
+            personType: 'company',
+            createdAt: 'Apr 1, 2026'
+        },
+        {
+            id: 'PAY-002',
+            name: 'Nova Logistics Ltd',
+            alias: 'Nova Logistics',
+            type: '-',
+            currency: '-',
+            bankName: '-',
+            accountNumber: '-',
+            routingInfo: '-',
+            country: 'Singapore',
+            purpose: 'Logistics Settlement',
+            status: 'active',
+            email: 'accounts@nova.example.com',
+            personType: 'company',
+            createdAt: 'Mar 28, 2026'
+        }
+    ];
+
+    let payeeListView = 'list'; // 'list' | 'form'
+    let activePayeeId = null;   // null = add new, string = edit existing
+
+    function getPayeeById(id) {
+        return payeeList.find(p => p.id === id);
+    }
+
+    function getPayeeTypePill(type) {
+        if (type === 'Pending') return { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' };
+        const map = {
+            'Bank Account':   { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
+            'Crypto Wallet':  { bg: '#F5F3FF', color: '#7C3AED', border: '#DDD6FE' }
+        };
+        return map[type] || { bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0' };
+    }
+
+    function getPayeeStatusPill(status) {
+        if (status === 'pending_collection') return { label: 'Pending Info', bg: '#FEF3C7', color: '#D97706' };
+        return status === 'active'
+            ? { label: 'Active',   bg: '#F0FDF4', color: '#15803D' }
+            : { label: 'Disabled', bg: '#F8FAFC', color: '#64748B' };
+    }
+
+    function renderPayeeListPage() {
+        if (payeeListView === 'form') {
+            renderPayeeFormPage();
+            return;
+        }
+
+        const typeFilter   = document.getElementById('payee-type-filter')?.value   || 'all';
+        const statusFilter = document.getElementById('payee-status-filter')?.value || 'all';
+        const keyword      = (document.getElementById('payee-search')?.value || '').trim().toLowerCase();
+
+        const filtered = payeeList.filter(p => {
+            if (typeFilter !== 'all'   && p.type   !== typeFilter)   return false;
+            if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+            if (keyword && ![ p.name, p.alias, p.currency, p.bankName, p.accountNumber, p.country, p.purpose, p.id, p.email ].join(' ').toLowerCase().includes(keyword)) return false;
+            return true;
+        });
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+
+                <!-- Page header -->
+                <div class="card" style="padding: 24px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">Payee List</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage all registered payees for outbound payout instructions.</div>
+                        </div>
+                        <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700;">
+                            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                            Add New
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters + Table as one card -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+
+                    <!-- Filter bar -->
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1.6fr 0.8fr 0.8fr; gap: 14px; align-items: center;">
+                        <div style="position: relative;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country, purpose..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                        <select id="payee-type-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all"      ${typeFilter === 'all'           ? 'selected' : ''}>All Types</option>
+                            <option value="Bank Account"  ${typeFilter === 'Bank Account'  ? 'selected' : ''}>Bank Account</option>
+                            <option value="Crypto Wallet" ${typeFilter === 'Crypto Wallet' ? 'selected' : ''}>Crypto Wallet</option>
+                            <option value="Pending" ${typeFilter === 'Pending' ? 'selected' : ''}>Pending</option>
+                        </select>
+                        <select id="payee-status-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all"      ${statusFilter === 'all'      ? 'selected' : ''}>All Statuses</option>
+                            <option value="active"   ${statusFilter === 'active'   ? 'selected' : ''}>Active</option>
+                            <option value="disabled" ${statusFilter === 'disabled' ? 'selected' : ''}>Disabled</option>
+                            <option value="pending_collection" ${statusFilter === 'pending_collection' ? 'selected' : ''}>Pending Info</option>
+                        </select>
+                    </div>
+
+                    <!-- Column headers -->
+                    <div style="display: grid; grid-template-columns: 0.5fr 1.4fr 1fr 1fr 1.2fr 0.9fr 1.4fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div>ID</div>
+                        <div>Payee & Email</div>
+                        <div>Type</div>
+                        <div>Currency</div>
+                        <div>Account / Wallet</div>
+                        <div>Status</div>
+                        <div style="text-align: right;">Actions</div>
+                    </div>
+
+                    <!-- Rows -->
+                    <div>
+                        ${filtered.length ? filtered.map(p => {
+                            const typePill   = getPayeeTypePill(p.type);
+                            const statusMeta = getPayeeStatusPill(p.status);
+                            return `
+                            <div style="display: grid; grid-template-columns: 0.5fr 1.4fr 1fr 1fr 1.2fr 0.9fr 1.4fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                                <div style="font-family: monospace; font-size: 11px; color: #94A3B8;">${p.id}</div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
+                                    <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
+                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${p.country} · ${p.purpose}</div>
+                                </div>
+                                <div>
+                                    <span style="background: ${typePill.bg}; color: ${typePill.color}; border: 1px solid ${typePill.border}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${p.type}</span>
+                                </div>
+                                <div style="font-size: 13px; font-weight: 600; color: #334155;">${p.currency}</div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A;">${p.accountNumber}</div>
+                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${p.bankName !== '-' ? p.bankName + ' · ' : ''}${p.routingInfo}</div>
+                                </div>
+                                <div>
+                                    <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
+                                    <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;" disabled>Edit</button>
+                                    <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
+                                    <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px; color: #DC2626; border-color: #FECACA;">Delete</button>
+                                </div>
+                            </div>`;
+                        }).join('') : `
+                            <div style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                                No payees matched your current filters.
+                            </div>`
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderPayeeFormPage() {
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
+
+                <!-- Page header -->
+                <div class="card" style="padding: 24px;">
+                    <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Back to Payee List
+                    </button>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">Add New Payee</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new payee. An email invitation will be sent to collect their payout details and complete identity verification before any payout can be executed.</div>
+                </div>
+
+                <!-- SECTION 1: Basic Information (always visible) -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Payee identity and contact. EDD details will be collected later via email.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+
+                        <!-- Individual / Company toggle -->
+                        <div>
+                            <label class="bank-form-label" style="margin-bottom: 10px;">Payee Type *</label>
+                            <div style="display: flex; gap: 10px;">
+                                <label id="payee-indv-label" onclick="window.setPayeePersonType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
+                                    <input type="radio" name="payee-person-type" value="individual" checked style="accent-color: #2563EB;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #1D4ED8;">Individual</div>
+                                        <div style="font-size: 11px; color: #64748B;">Natural person</div>
+                                    </div>
+                                </label>
+                                <label id="payee-corp-label" onclick="window.setPayeePersonType('company')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="payee-person-type" value="company" style="accent-color: #2563EB;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Company</div>
+                                        <div style="font-size: 11px; color: #64748B;">Legal entity / organisation</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Email Address *</label>
+                            <input id="payee-email" class="bank-form-control" type="email" placeholder="e.g. john.doe@example.com" required>
+                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this address.</div>
+                        </div>
+
+                        <!-- Individual fields -->
+                        <div id="payee-individual-fields" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">First Name *</label>
+                                    <input id="payee-fname" class="bank-form-control" type="text" placeholder="e.g. John">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Middle Name <span style="font-weight:400; text-transform:none; font-size:10px;">(optional)</span></label>
+                                    <input id="payee-mname" class="bank-form-control" type="text" placeholder="e.g. Michael">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Surname *</label>
+                                    <input id="payee-lname" class="bank-form-control" type="text" placeholder="e.g. Doe">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Company fields -->
+                        <div id="payee-company-fields" style="display: none; flex-direction: column; gap: 16px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Company / Legal Entity Name *</label>
+                                <input id="payee-company-name" class="bank-form-control" type="text" placeholder="e.g. Shenzhen Apex Electronics Co. Ltd">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Country of Incorporation *</label>
+                                <input id="payee-company-country" class="bank-form-control" type="text" placeholder="e.g. Singapore">
+                            </div>
+                        </div>
+
+                        <!-- Purpose -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Purpose of Payment *</label>
+                            <select id="payee-purpose" class="bank-form-control">
+                                ${['Supplier Payment','Logistics Settlement','Trade Settlement','Service Fee','Investment Disbursement','Salary & Payroll','Other'].map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- EDD note -->
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
+                            <i data-lucide="info" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
+                            <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
+                                <strong>EDD information</strong> (date of birth, residential / registered address) is not collected here — it will be requested directly from the payee via the verification email.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Wallet Address (collapsible) -->
+                <div class="card" style="padding: 0; overflow: hidden;" id="payee-wallet-card">
+                    <button type="button" onclick="window.togglePayeeSection('wallet')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">2</div>
+                            <div>
+                                <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Wallet Address</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's crypto wallet for payout.</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 12px; color: #94A3B8; font-weight: 500;">Click to expand</span>
+                            <i data-lucide="chevron-down" id="payee-wallet-chevron" style="width: 16px; height: 16px; color: #94A3B8; transition: transform 0.2s;"></i>
+                        </div>
+                    </button>
+                    <div id="payee-wallet-body" style="padding: 24px; display: none; flex-direction: column; gap: 18px;">
+
+                        <!-- Claim declaration -->
+                        <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                            <input type="checkbox" id="payee-wallet-claim" style="margin-top: 3px; accent-color: #2563EB;" oninput="window.onPayeeWalletClaimChange()">
+                            <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet(s) to be registered are owned by this payee and are used solely for receiving authorised payouts from this merchant profile.</span>
+                        </label>
+
+                        <!-- Self-fill option -->
+                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-wallet-fill" value="self" id="payee-wallet-self" checked style="margin-top: 3px; accent-color: #059669;">
+                            <label for="payee-wallet-self" style="cursor:pointer;">
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit wallet details</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details needed now.</div>
+                            </label>
+                        </div>
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-wallet-fill" value="now" id="payee-wallet-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeWalletFillChange()">
+                            <label for="payee-wallet-now" style="cursor:pointer;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter wallet details now</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of the payee.</div>
+                            </label>
+                        </div>
+
+                        <!-- Wallet detail inputs (shown only if 'now' selected) -->
+                        <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Wallet Address</label>
+                                <input id="payee-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Network</label>
+                                    <select id="payee-wallet-net" class="bank-form-control">
+                                        <option>TRON (TRC-20)</option>
+                                        <option>Ethereum (ERC-20)</option>
+                                        <option>BNB Chain (BEP-20)</option>
+                                        <option>Solana</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Wallet Label</label>
+                                    <input id="payee-wallet-label" class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- SECTION 3: Bank Account (collapsible) -->
+                <div class="card" style="padding: 0; overflow: hidden;" id="payee-bank-card">
+                    <button type="button" onclick="window.togglePayeeSection('bank')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">3</div>
+                            <div>
+                                <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Bank Account</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's bank account for fiat payout.</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 12px; color: #94A3B8; font-weight: 500;">Click to expand</span>
+                            <i data-lucide="chevron-down" id="payee-bank-chevron" style="width: 16px; height: 16px; color: #94A3B8; transition: transform 0.2s;"></i>
+                        </div>
+                    </button>
+                    <div id="payee-bank-body" style="padding: 24px; display: none; flex-direction: column; gap: 18px;">
+
+                        <!-- Self-fill option -->
+                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-bank-fill" value="self" id="payee-bank-self" checked style="margin-top: 3px; accent-color: #059669;">
+                            <label for="payee-bank-self" style="cursor:pointer;">
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit bank details</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details needed now.</div>
+                            </label>
+                        </div>
+                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-bank-fill" value="now" id="payee-bank-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeBankFillChange()">
+                            <label for="payee-bank-now" style="cursor:pointer;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter bank details now</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information.</div>
+                            </label>
+                        </div>
+
+                        <!-- Bank detail inputs (shown only if 'now' selected) -->
+                        <div id="payee-bank-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Bank Name</label>
+                                    <input id="payee-bank-name" class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Account Number / IBAN</label>
+                                    <input id="payee-bank-acct" class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">SWIFT / BIC Code</label>
+                                    <input id="payee-bank-swift" class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Routing / FPS / Sort Code</label>
+                                    <input id="payee-bank-routing" class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Payout Currency</label>
+                                <select id="payee-bank-currency" class="bank-form-control">
+                                    ${['USD','HKD','EUR','BRL'].map(c => `<option>${c}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Confirm + Cancel -->
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-outline" onclick="window.backToPayeeList()" style="padding: 10px 18px;">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="window.savePayee('')" style="padding: 10px 22px; font-weight: 700;">
+                        <i data-lucide="send" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                        Send Invitation & Save
+                    </button>
+                </div>
+
+            </div>
+        `;
+        lucide.createIcons();
+
+        // Default: self radio active
+        document.getElementById('payee-wallet-self')?.addEventListener('change', window.onPayeeWalletFillChange);
+        document.getElementById('payee-bank-self')?.addEventListener('change', window.onPayeeBankFillChange);
+    }
+
+    window.renderPayeeListPage = function() {
+        payeeListView = 'list';
+        renderPayeeListPage();
+    };
+
+    window.openAddPayeePage = function() {
+        payeeListView = 'form';
+        activePayeeId = null;
+        renderPayeeListPage();
+    };
+
+    window.backToPayeeList = function() {
+        payeeListView = 'list';
+        activePayeeId = null;
+        renderPayeeListPage();
+    };
+
+    window.editPayee = function(id) {
+        payeeListView = 'form';
+        activePayeeId = id;
+        renderPayeeListPage();
+    };
+
+    window.togglePayeeStatus = function(id) {
+        const p = getPayeeById(id);
+        if (!p) return;
+        if (p.status === 'active' || p.status === 'pending_collection') {
+            p.status = 'disabled';
+        } else {
+            p.status = 'active'; // Assume back to active on enable, or pending depending on state. For mock it's fine.
+        }
+        renderPayeeListPage();
+    };
+
+    window.deletePayee = function(id) {
+        if (!confirm('Are you sure you want to delete this payee? This action cannot be undone.')) return;
+        const idx = payeeList.findIndex(p => p.id === id);
+        if (idx !== -1) payeeList.splice(idx, 1);
+        renderPayeeListPage();
+    };
+
+    window.setPayeePersonType = function(type) {
+        const indvLabel  = document.getElementById('payee-indv-label');
+        const corpLabel  = document.getElementById('payee-corp-label');
+        const indvFields = document.getElementById('payee-individual-fields');
+        const corpFields = document.getElementById('payee-company-fields');
+        if (!indvLabel) return;
+        if (type === 'individual') {
+            indvLabel.style.border = '2px solid #2563EB';
+            indvLabel.style.background = '#EFF6FF';
+            corpLabel.style.border = '2px solid #E2E8F0';
+            corpLabel.style.background = 'white';
+            indvFields.style.display = 'flex';
+            corpFields.style.display = 'none';
+        } else {
+            corpLabel.style.border = '2px solid #2563EB';
+            corpLabel.style.background = '#EFF6FF';
+            indvLabel.style.border = '2px solid #E2E8F0';
+            indvLabel.style.background = 'white';
+            corpFields.style.display = 'flex';
+            indvFields.style.display = 'none';
+        }
+    };
+
+    window.togglePayeeSection = function(section) {
+        const bodyId   = section === 'wallet' ? 'payee-wallet-body'    : 'payee-bank-body';
+        const chevId   = section === 'wallet' ? 'payee-wallet-chevron' : 'payee-bank-chevron';
+        const numId    = section === 'wallet' ? 'payee-wallet-num'     : 'payee-bank-num';
+        const body  = document.getElementById(bodyId);
+        const chev  = document.getElementById(chevId);
+        const num   = document.getElementById(numId);
+        if (!body) return;
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'flex';
+        if (chev) chev.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+        if (num) {
+            num.style.background = isOpen ? '#F1F5F9' : '#2563EB';
+            num.style.color = isOpen ? '#64748B' : 'white';
+        }
+    };
+
+    window.onPayeeWalletClaimChange = function() {
+        const claimed = document.getElementById('payee-wallet-claim')?.checked;
+    };
+
+    window.onPayeeWalletFillChange = function() {
+        const nowSelected = document.getElementById('payee-wallet-now')?.checked;
+        const inputs = document.getElementById('payee-wallet-inputs');
+        if (inputs) inputs.style.display = nowSelected ? 'flex' : 'none';
+    };
+
+    window.onPayeeBankFillChange = function() {
+        const nowSelected = document.getElementById('payee-bank-now')?.checked;
+        const inputs = document.getElementById('payee-bank-inputs');
+        if (inputs) inputs.style.display = nowSelected ? 'flex' : 'none';
+    };
+
+    window.savePayee = function(existingId) {
+        const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
+        const email      = document.getElementById('payee-email')?.value?.trim();
+        const purpose    = document.getElementById('payee-purpose')?.value;
+
+        if (!email) { alert('Please enter the payee email address.'); return; }
+
+        let displayName = '';
+        if (personType === 'individual') {
+            const fname = document.getElementById('payee-fname')?.value?.trim();
+            const lname = document.getElementById('payee-lname')?.value?.trim();
+            if (!fname || !lname) { alert('Please enter the payee First Name and Surname.'); return; }
+            const mname = document.getElementById('payee-mname')?.value?.trim();
+            displayName = [fname, mname, lname].filter(Boolean).join(' ');
+        } else {
+            const cname = document.getElementById('payee-company-name')?.value?.trim();
+            if (!cname) { alert('Please enter the Company Name.'); return; }
+            displayName = cname;
+        }
+
+        const newPayee = {
+            id: `PAY-${String(payeeList.length + 1).padStart(3, '0')}`,
+            name: displayName,
+            alias: displayName,
+            type: 'Pending',
+            currency: '-',
+            bankName: '-',
+            accountNumber: '-',
+            routingInfo: '-',
+            country: personType === 'company' ? (document.getElementById('payee-company-country')?.value?.trim() || '-') : '-',
+            purpose: purpose || '-',
+            status: 'pending_collection',
+            email: email,
+            personType: personType,
+            createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        };
+        payeeList.unshift(newPayee);
+
+        // Show confirmation page
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 640px; margin: 60px auto; display: flex; flex-direction: column; align-items: center; gap: 0;">
+                <div class="card" style="padding: 0; overflow: hidden; width: 100%;">
+                    <!-- Success banner -->
+                    <div style="padding: 40px 40px 32px; background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%); border-bottom: 1px solid #E2E8F0; text-align: center;">
+                        <div style="width: 64px; height: 64px; border-radius: 999px; background: linear-gradient(135deg, #2563EB, #059669); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(37,99,235,0.25);">
+                            <i data-lucide="send" style="width: 28px; height: 28px; color: white;"></i>
+                        </div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invite Sent!</h2>
+                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">Payee <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.</div>
+                    </div>
+
+                    <!-- Details -->
+                    <div style="padding: 28px 40px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PAYEE</span>
+                                <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${displayName}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">EMAIL</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #2563EB;">${email}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">STATUS</span>
+                                <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PAYEE ID</span>
+                                <span style="font-size: 12px; font-weight: 600; color: #94A3B8; font-family: monospace;">${newPayee.id}</span>
+                            </div>
+                        </div>
+
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
+                            <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
+                            <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
+                                Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="window.backToPayeeList()" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 700;">
+                            Back to Payee List
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    };
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = overviewHTML;
@@ -4418,6 +5025,10 @@ document.addEventListener('DOMContentLoaded', () => {
             renderOrderReportsPage();
         } else if (title === 'Settlement Reports') {
             renderSettlementReportsPage();
+        } else if (title === 'Payee List') {
+            payeeListView = 'list';
+            activePayeeId = null;
+            renderPayeeListPage();
         } else if (title === 'Approval Rules') {
             approvalRuleView = 'list';
             activeApprovalRuleId = null;
