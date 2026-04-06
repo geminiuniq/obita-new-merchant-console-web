@@ -17,6 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
         'member-form-drawer'
     ];
 
+    function formatWalletListAddress(address = '', network = '') {
+        const raw = String(address).trim();
+        if (!raw) return '-';
+        if (raw.length <= 12) return network ? `${raw}（${network}）` : raw;
+        const short = `${raw.slice(0, 6)}...${raw.slice(-6)}`;
+        return network ? `${short}（${network}）` : short;
+    }
+
     // Nav Items Selection
     const navItems = document.querySelectorAll('.nav-item:not(.has-submenu), .nav-subitem');
     const pageTitle = document.getElementById('page-title');
@@ -1488,6 +1496,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeMemberId = null;
     let memberFormReturnView = 'list';
     let payoutOrdersView = 'list';
+    let activePayoutOrderId = null;
     let payoutBatchDraft = null;
     let activePayoutNewPayeeRowId = null;
     const currentUserIsAdmin = true;
@@ -2691,10 +2700,44 @@ document.addEventListener('DOMContentLoaded', () => {
         renderInvoiceOrdersPage();
     };
 
+    window.openInvoiceOrderDetail = function(invoiceNo) {
+        invoiceOrdersView = 'detail';
+        activeInvoiceOrderId = invoiceNo;
+        renderInvoiceOrdersPage();
+    };
+
+    window.backToInvoiceOrdersList = function() {
+        invoiceOrdersView = 'list';
+        activeInvoiceOrderId = null;
+        renderInvoiceOrdersPage();
+    };
+
+    window.switchCheckoutOrdersDuration = function(duration) {
+        activeCheckoutOrdersDuration = duration;
+        renderCheckoutOrdersPage();
+    };
+
+    window.openCheckoutOrderDetail = function(checkoutId) {
+        checkoutOrdersView = 'detail';
+        activeCheckoutOrderId = checkoutId;
+        renderCheckoutOrdersPage();
+    };
+
+    window.backToCheckoutOrdersList = function() {
+        checkoutOrdersView = 'list';
+        activeCheckoutOrderId = null;
+        renderCheckoutOrdersPage();
+    };
+
+    window.renderCheckoutOrdersPage = function() {
+        renderCheckoutOrdersPage();
+    };
+
     window.openRecipientManagementPage = function() {
         pageTitle.textContent = 'External Contacts';
         payeeListView = 'list';
         activePayeeId = null;
+        activeExternalContactsUsageFilter = 'collectionInvoice';
         renderPayeeListPage();
     };
 
@@ -2722,6 +2765,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderFeeReportsPage = function() {
         renderFeeReportsPage();
+    };
+
+    window.openPayoutOrderDetail = function(orderId) {
+        payoutOrdersView = 'detail';
+        activePayoutOrderId = orderId;
+        renderPayoutOrdersPage();
+    };
+
+    window.backToPayoutOrdersList = function() {
+        payoutOrdersView = 'list';
+        activePayoutOrderId = null;
+        renderPayoutOrdersPage();
     };
 
     window.openApprovalRequestDetail = function(requestId) {
@@ -3011,7 +3066,7 @@ document.addEventListener('DOMContentLoaded', () => {
             network = (Math.random() > 0.5) ? 'ETH' : 'TRON';
         }
         
-        const shortAddr = addr.substring(0,21) + '...' + addr.substring(addr.length-4);
+        const shortAddr = formatWalletListAddress(addr, network);
         
         const newHtml = `
         <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
@@ -3822,7 +3877,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
                                     <span style="background-color: #EFF6FF; color: #2563EB; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">TRC-20</span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
+                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</div>
                             </div>
                             <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Today</div>
                         </div>
@@ -3840,7 +3895,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Transfer</span>
                                     <span style="background-color: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">ERC-20</span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">0xabcdef1234567890abcdef1234567890abcdef12</div>
+                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</div>
                             </div>
                             <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Yesterday</div>
                         </div>
@@ -3858,7 +3913,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
                                     <span style="background-color: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">ERC-20</span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">0x1234567890abcdef1234567890abcdef12345678</div>
+                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</div>
                             </div>
                             <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Oct 23</div>
                         </div>
@@ -3898,7 +3953,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-muted">Today, 09:12</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261025-0031</td>
                                 <td class="font-medium">Top Up</td>
-                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">0x12...5678</td>
+                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</td>
                                 <td style="font-size: 12px; color: var(--clr-text-muted);">Stablecoin Vault</td>
                                 <td class="text-right font-medium text-success">+ 5,000.00 <span class="currency">USDC</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
@@ -3908,7 +3963,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261024-0018</td>
                                 <td class="font-medium">Transfer</td>
                                 <td style="font-size: 12px; color: var(--clr-text-muted);">Stablecoin Vault</td>
-                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">0xab...ef12</td>
+                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</td>
                                 <td class="text-right font-medium">- 12,500.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
@@ -3916,7 +3971,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-muted">Oct 23, 11:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261023-0004</td>
                                 <td class="font-medium">Top Up</td>
-                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">TR7N...jLj6t</td>
+                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</td>
                                 <td style="font-size: 12px; color: var(--clr-text-muted);">Stablecoin Vault</td>
                                 <td class="text-right font-medium text-success">+ 100,000.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-warning" style="background-color: #FEF3C7; color: #D97706;">Confirming</span></td>
@@ -4050,12 +4105,81 @@ document.addEventListener('DOMContentLoaded', () => {
         ],
         payout: [
             { time: 'Today, 09:18', orderId: 'PO-20260406-0114', beneficiary: 'Shenzhen Apex Electronics', method: 'Bank Transfer', purpose: 'Supplier Payment', source: 'USD Treasury Balance', amount: '14,200.00 USD', approval: 'Pending / Nancy Test', status: 'Pending Approval' },
-            { time: 'Apr 5, 17:02', orderId: 'PO-20260405-0102', beneficiary: 'Nova Logistics', method: 'Wallet Transfer', purpose: 'Logistics Settlement', source: 'USDT Operations Pool', amount: '8,500.00 USDT', approval: 'Completed / Nancy Test', status: 'Completed' }
+            { time: 'Today, 08:36', orderId: 'PB-20260406-0008', beneficiary: '3 Payees', method: 'Payout Batch', purpose: 'Supplier Settlement Batch', source: 'USD Treasury Balance', amount: '48,620.00 USD', approval: 'Pending / Nancy Test', status: 'Pending Approval', payoutCount: 3 },
+            { time: 'Apr 5, 17:02', orderId: 'PO-20260405-0102', beneficiary: 'Nova Logistics', method: 'Wallet Transfer', purpose: 'Logistics Settlement', source: 'USDT Operations Pool', amount: '8,500.00 USDT', approval: 'Completed / Nancy Test', status: 'Completed' },
+            { time: 'Apr 4, 14:18', orderId: 'PB-20260404-0005', beneficiary: '5 Payees', method: 'Payout Batch', purpose: 'Weekly Treasury Disbursement', source: 'USDC Operations Pool', amount: '126,400.00 USDC', approval: 'Completed / Nancy Test', status: 'Completed', payoutCount: 5 }
         ]
+    };
+
+    const PAYOUT_ORDER_DETAILS = {
+        'PO-20260406-0114': {
+            timeline: [
+                { time: 'Apr 6, 2026 09:18', status: 'Created', note: 'Payout order created by Nancy User.' },
+                { time: 'Apr 6, 2026 09:19', status: 'Pending Approval', note: 'Submitted into approval workflow.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Pending', actedAt: '-' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong ••••XXXX', currency: 'USD', amount: '14,200.00 USD', fee: '18.00 USD', net: '14,182.00 USD', status: 'Pending Approval', note: 'Supplier Payment' }
+            ]
+        },
+        'PO-20260405-0102': {
+            timeline: [
+                { time: 'Apr 5, 2026 17:02', status: 'Created', note: 'Payout order created by Nancy User.' },
+                { time: 'Apr 5, 2026 17:08', status: 'Approved', note: 'Approved by Nancy Test.' },
+                { time: 'Apr 5, 2026 17:16', status: 'Completed', note: 'Wallet transfer completed successfully.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 5, 2026 17:08' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', currency: 'USDT', amount: '8,500.00 USDT', fee: '6.00 USDT', net: '8,494.00 USDT', status: 'Completed', note: 'Logistics Settlement' }
+            ]
+        },
+        'PB-20260406-0008': {
+            timeline: [
+                { time: 'Apr 6, 2026 08:36', status: 'Created', note: 'Payout batch created with 3 payout requests.' },
+                { time: 'Apr 6, 2026 08:38', status: 'Pending Approval', note: 'Batch routed to Nancy Test for approval.' },
+                { time: 'Apr 6, 2026 08:40', status: 'Under Review', note: 'Compliance review in progress before release.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Pending', actedAt: '-' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong ••••4488', currency: 'USD', amount: '14,200.00 USD', fee: '18.00 USD', net: '14,182.00 USD', status: 'Pending Approval', note: 'Supplier Payment - April cycle' },
+                { sequence: '02', payee: 'Michael Chen', destination: 'DBS Bank Singapore ••••7890', currency: 'USD', amount: '9,420.00 USD', fee: '15.00 USD', net: '9,405.00 USD', status: 'Pending Approval', note: 'Consulting fee settlement' },
+                { sequence: '03', payee: 'Global Supply Co.', destination: 'JPMorgan Chase ••••4321', currency: 'USD', amount: '25,000.00 USD', fee: '20.00 USD', net: '24,980.00 USD', status: 'Pending Approval', note: 'Inventory replenishment' }
+            ]
+        },
+        'PB-20260404-0005': {
+            timeline: [
+                { time: 'Apr 4, 2026 14:18', status: 'Created', note: 'Weekly treasury payout batch created with 5 payout requests.' },
+                { time: 'Apr 4, 2026 14:26', status: 'Approved', note: 'Approved by Nancy Test.' },
+                { time: 'Apr 4, 2026 14:40', status: 'Released', note: 'Batch released to payout engine.' },
+                { time: 'Apr 4, 2026 15:12', status: 'Completed', note: 'All payout requests settled successfully.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 4, 2026 14:26' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', currency: 'USDC', amount: '18,600.00 USDC', fee: '5.00 USDC', net: '18,595.00 USDC', status: 'Completed', note: 'Regional logistics settlement' },
+                { sequence: '02', payee: 'Harbor Medical Labs', destination: 'Citibank NA ••••8102', currency: 'USDC', amount: '24,000.00 USDC', fee: '8.00 USDC', net: '23,992.00 USDC', status: 'Completed', note: 'Clinical supply rebate' },
+                { sequence: '03', payee: 'Kairo Commerce', destination: 'Ethereum wallet', currency: 'USDC', amount: '31,500.00 USDC', fee: '7.00 USDC', net: '31,493.00 USDC', status: 'Completed', note: 'Marketplace settlement' },
+                { sequence: '04', payee: 'Nordic Freight Systems', destination: 'HSBC UK ••••2210', currency: 'USDC', amount: '22,100.00 USDC', fee: '9.00 USDC', net: '22,091.00 USDC', status: 'Completed', note: 'Freight service fee' },
+                { sequence: '05', payee: 'Bluepeak Services', destination: 'TRON wallet', currency: 'USDC', amount: '30,200.00 USDC', fee: '11.00 USDC', net: '30,189.00 USDC', status: 'Completed', note: 'Technology service retainer' }
+            ]
+        }
     };
 
     const INVOICE_DURATION_OPTIONS = ['1d', '1w', '1m', '6m', '1y'];
     let activeInvoiceOrdersDuration = '1m';
+    let invoiceOrdersView = 'list';
+    let activeInvoiceOrderId = null;
+    const CHECKOUT_DURATION_OPTIONS = ['1d', '1w', '1m', '6m', '1y'];
+    let activeCheckoutOrdersDuration = '1m';
+    let checkoutOrdersView = 'list';
+    let activeCheckoutOrderId = null;
     const INVOICE_SUMMARY_BY_DURATION = {
         '1d': {
             createdCount: '18',
@@ -4116,8 +4240,442 @@ document.addEventListener('DOMContentLoaded', () => {
         { invoiceNo: 'INV-240329-8711', issuedOn: 'Mar 29, 2026', dueOn: 'Apr 2, 2026', buyer: 'Kairo Commerce', recipient: 'Obita SG Collection Account', method: 'Wallet Pay', settlementCurrency: 'USDC', amount: '6,500.00 USDC', collected: '6,500.00 USDC', status: 'Settled' },
         { invoiceNo: 'INV-240221-8305', issuedOn: 'Feb 21, 2026', dueOn: 'Feb 28, 2026', buyer: 'Nordic Freight Systems', recipient: 'Obita EU Collection Account', method: 'Bank Transfer', settlementCurrency: 'EUR', amount: '31,000.00 EUR', collected: '0.00 EUR', status: 'Expired' }
     ];
+    const INVOICE_ORDER_DETAILS = {
+        'INV-240406-8821': {
+            externalInvoiceId: 'ERP-INV-992881',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240406-8821',
+            collectionChannel: 'Hosted Invoice',
+            recipientEntity: 'Obita SG Collection Account',
+            settlementDestination: 'Merchant USD Main Account',
+            settlementTerms: 'T+0 after reconciliation',
+            lineItems: [
+                { item: 'Treasury Settlement Retainer', quantity: '1', unitPrice: '38,000.00 USD', amount: '38,000.00 USD' },
+                { item: 'Compliance Review Service', quantity: '1', unitPrice: '4,800.00 USD', amount: '4,800.00 USD' }
+            ],
+            paymentRecords: [
+                { time: 'Apr 6, 2026 11:42', txId: 'TX-INV-8821-01', channel: 'Bank Transfer', payerReference: 'GTH treasury remittance', gross: '42,800.00 USD', fee: '128.40 USD', net: '42,671.60 USD', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Passed', actedAt: 'Apr 6, 2026 10:12' }
+            ],
+            timeline: [
+                { time: 'Apr 6, 2026 10:12', status: 'Issued', note: 'Invoice created and delivered to buyer.' },
+                { time: 'Apr 6, 2026 11:42', status: 'Paid', note: 'Inbound remittance received in full and matched successfully.' },
+                { time: 'Apr 6, 2026 11:48', status: 'Settling', note: 'Net collected amount prepared for merchant settlement.' },
+                { time: 'Apr 6, 2026 11:52', status: 'Settled', note: 'Invoice collection settled to merchant account.' }
+            ]
+        },
+        'INV-240406-8817': {
+            externalInvoiceId: 'ERP-INV-992873',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240406-8817',
+            collectionChannel: 'Hosted Invoice',
+            recipientEntity: 'Obita SG Collection Account',
+            settlementDestination: 'Merchant USD Main Account',
+            settlementTerms: 'T+1 after payment confirmation',
+            lineItems: [
+                { item: 'Wholesale Electronics Deposit', quantity: '1', unitPrice: '8,400.00 USD', amount: '8,400.00 USD' }
+            ],
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 6, 2026 09:18', status: 'Issued', note: 'Invoice issued to payer and awaiting remittance.' },
+                { time: 'Apr 6, 2026 12:00', status: 'Pending Payment', note: 'No inbound payment has been matched yet.' }
+            ]
+        },
+        'INV-240405-8802': {
+            externalInvoiceId: 'ERP-INV-992815',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240405-8802',
+            collectionChannel: 'API Invoice',
+            recipientEntity: 'Obita EU Collection Account',
+            settlementDestination: 'Merchant EUR Settlement Account',
+            settlementTerms: 'T+1 after payment confirmation',
+            lineItems: [
+                { item: 'Software License Renewal', quantity: '1', unitPrice: '12,000.00 EUR', amount: '12,000.00 EUR' },
+                { item: 'Implementation Support', quantity: '1', unitPrice: '6,200.00 EUR', amount: '6,200.00 EUR' }
+            ],
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 5, 2026 14:26', status: 'Issued', note: 'Invoice created from merchant ERP integration.' },
+                { time: 'Apr 5, 2026 18:10', status: 'Pending Payment', note: 'Awaiting card payment completion by buyer.' }
+            ]
+        },
+        'INV-240403-8774': {
+            externalInvoiceId: 'ERP-INV-992704',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240403-8774',
+            collectionChannel: 'API Invoice',
+            recipientEntity: 'Obita US Collection Account',
+            settlementDestination: 'Merchant USD Main Account',
+            settlementTerms: 'T+1 after remaining funds received',
+            lineItems: [
+                { item: 'Laboratory Equipment Purchase', quantity: '1', unitPrice: '24,950.00 USD', amount: '24,950.00 USD' },
+                { item: 'Delivery and Insurance', quantity: '1', unitPrice: '1,500.00 USD', amount: '1,500.00 USD' }
+            ],
+            paymentRecords: [
+                { time: 'Apr 4, 2026 09:42', txId: 'TX-INV-8774-01', channel: 'Bank Transfer', payerReference: 'First partial remittance', gross: '12,500.00 USD', fee: '37.50 USD', net: '12,462.50 USD', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Manual Review Required', actedAt: 'Apr 4, 2026 09:46' },
+                { step: 'Manual Review', approver: 'Nancy Test', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 3, 2026 16:02', status: 'Issued', note: 'Invoice created from merchant billing system.' },
+                { time: 'Apr 4, 2026 09:42', status: 'Partially Paid', note: 'Partial remittance matched to the invoice.' },
+                { time: 'Apr 4, 2026 09:46', status: 'Proceeding', note: 'Still waiting for the remaining balance before settlement.' },
+                { time: 'Apr 4, 2026 09:47', status: 'Under Review', note: 'Flagged for manual review because payment remains incomplete.' }
+            ]
+        },
+        'INV-240329-8711': {
+            externalInvoiceId: 'ERP-INV-992440',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240329-8711',
+            collectionChannel: 'Hosted Invoice',
+            recipientEntity: 'Obita SG Collection Account',
+            settlementDestination: 'Merchant USDC Settlement Wallet',
+            settlementTerms: 'Real-time wallet settlement',
+            lineItems: [
+                { item: 'Marketplace Service Fee', quantity: '1', unitPrice: '6,500.00 USDC', amount: '6,500.00 USDC' }
+            ],
+            paymentRecords: [
+                { time: 'Mar 29, 2026 11:35', txId: 'TX-INV-8711-01', channel: 'Wallet Pay', payerReference: 'TRON transfer', gross: '6,500.00 USDC', fee: '13.00 USDC', net: '6,487.00 USDC', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Passed', actedAt: 'Mar 29, 2026 11:20' }
+            ],
+            timeline: [
+                { time: 'Mar 29, 2026 11:20', status: 'Issued', note: 'Invoice link generated and shared with buyer.' },
+                { time: 'Mar 29, 2026 11:35', status: 'Paid', note: 'Wallet payment received and matched in full.' },
+                { time: 'Mar 29, 2026 11:36', status: 'Settled', note: 'Net proceeds delivered to merchant settlement wallet.' }
+            ]
+        },
+        'INV-240221-8305': {
+            externalInvoiceId: 'ERP-INV-991905',
+            invoiceLink: 'https://invoice.obita.com/i/INV-240221-8305',
+            collectionChannel: 'API Invoice',
+            recipientEntity: 'Obita EU Collection Account',
+            settlementDestination: 'Merchant EUR Settlement Account',
+            settlementTerms: 'No settlement after expiry',
+            lineItems: [
+                { item: 'Freight Forwarding Services', quantity: '1', unitPrice: '31,000.00 EUR', amount: '31,000.00 EUR' }
+            ],
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Not Triggered', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Feb 21, 2026 09:10', status: 'Issued', note: 'Invoice issued to payer.' },
+                { time: 'Feb 28, 2026 23:59', status: 'Expired', note: 'Invoice expired without any matched inbound payment.' }
+            ]
+        }
+    };
+    const CHECKOUT_SUMMARY_BY_DURATION = {
+        '1d': { createdCount: '96', createdAmount: '$24,800.00', paidCount: '88', paidAmount: '$22,650.00', transitCount: '5', transitAmount: '$1,080.00', failedCount: '3', failedAmount: '$1,070.00' },
+        '1w': { createdCount: '624', createdAmount: '$168,400.00', paidCount: '581', paidAmount: '$156,280.00', transitCount: '22', transitAmount: '$5,420.00', failedCount: '21', failedAmount: '$6,700.00' },
+        '1m': { createdCount: '8,520', createdAmount: '$1,205,500.00', paidCount: '7,800', paidAmount: '$1,080,000.00', transitCount: '420', transitAmount: '$80,500.00', failedCount: '300', failedAmount: '$45,000.00' },
+        '6m': { createdCount: '46,200', createdAmount: '$6,842,400.00', paidCount: '42,780', paidAmount: '$6,211,150.00', transitCount: '1,940', transitAmount: '$371,900.00', failedCount: '1,480', failedAmount: '$259,350.00' },
+        '1y': { createdCount: '91,880', createdAmount: '$13,506,200.00', paidCount: '85,140', paidAmount: '$12,412,640.00', transitCount: '3,790', transitAmount: '$681,420.00', failedCount: '2,950', failedAmount: '$412,140.00' }
+    };
+    const CHECKOUT_ORDER_LIST_DATA = [
+        { checkoutId: 'CKO-20260406-0188', createdAt: 'Apr 6, 2026 12:04', externalOrderId: 'EXT-881928', storefront: 'APAC B2B Store', paymentMethod: 'Wallet Pay', settlementAsset: 'USDC', amount: '1,280.00 USDC', paidAmount: '1,277.50 USDC', expiresAt: 'Apr 6, 2026 12:34', status: 'Paid' },
+        { checkoutId: 'CKO-20260406-0182', createdAt: 'Apr 6, 2026 09:26', externalOrderId: 'EXT-881901', storefront: 'Retail Checkout', paymentMethod: 'Bank Transfer', settlementAsset: 'USD', amount: '5,420.00 USD', paidAmount: '0.00 USD', expiresAt: 'Apr 6, 2026 10:26', status: 'Pending Payment' },
+        { checkoutId: 'CKO-20260406-0179', createdAt: 'Apr 6, 2026 08:42', externalOrderId: 'EXT-881897', storefront: 'APAC B2B Store', paymentMethod: 'Wallet Pay', settlementAsset: 'USDT', amount: '2,400.00 USDT', paidAmount: '2,120.00 USDT', expiresAt: 'Apr 6, 2026 09:12', status: 'Underpaid' },
+        { checkoutId: 'CKO-20260405-0176', createdAt: 'Apr 5, 2026 18:41', externalOrderId: 'EXT-881811', storefront: 'Global B2B Portal', paymentMethod: 'Bank Card', settlementAsset: 'USD', amount: '980.00 USD', paidAmount: '0.00 USD', expiresAt: 'Apr 5, 2026 19:11', status: 'Expired' },
+        { checkoutId: 'CKO-20260403-0161', createdAt: 'Apr 3, 2026 15:08', externalOrderId: 'EXT-881635', storefront: 'Enterprise Portal', paymentMethod: 'Wallet Pay', settlementAsset: 'USDT', amount: '3,800.00 USDT', paidAmount: '3,792.40 USDT', expiresAt: 'Apr 3, 2026 15:38', status: 'Paid' },
+        { checkoutId: 'CKO-20260329-0144', createdAt: 'Mar 29, 2026 11:20', externalOrderId: 'EXT-881102', storefront: 'Healthcare Checkout', paymentMethod: 'Bank Transfer', settlementAsset: 'EUR', amount: '12,450.00 EUR', paidAmount: '6,000.00 EUR', expiresAt: 'Mar 29, 2026 12:20', status: 'Proceeding' },
+        { checkoutId: 'CKO-20260327-0138', createdAt: 'Mar 27, 2026 16:05', externalOrderId: 'EXT-880944', storefront: 'Global B2B Portal', paymentMethod: 'Bank Transfer', settlementAsset: 'USD', amount: '9,650.00 USD', paidAmount: '9,100.00 USD', expiresAt: 'Mar 27, 2026 16:35', status: 'Underpaid' }
+    ];
+
+    const CHECKOUT_ORDER_DETAILS = {
+        'CKO-20260406-0188': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260406-0188',
+            channel: 'Hosted Checkout',
+            settlementWallet: 'Merchant USDC Settlement Wallet',
+            paymentRecords: [
+                { time: 'Apr 6, 2026 12:08', txId: 'TX-CKO-188-01', channel: 'Wallet Pay', payerReference: 'TRON transfer', gross: '1,280.00 USDC', fee: '2.50 USDC', net: '1,277.50 USDC', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Passed', actedAt: 'Apr 6, 2026 12:04' }
+            ],
+            timeline: [
+                { time: 'Apr 6, 2026 12:04', status: 'Created', note: 'Checkout session created and payment link issued.' },
+                { time: 'Apr 6, 2026 12:08', status: 'Paid', note: 'Wallet payment received and matched in full.' },
+                { time: 'Apr 6, 2026 12:09', status: 'Settling', note: 'Net amount forwarded to merchant settlement wallet.' },
+                { time: 'Apr 6, 2026 12:10', status: 'Completed', note: 'Checkout order completed successfully.' }
+            ]
+        },
+        'CKO-20260406-0182': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260406-0182',
+            channel: 'Embedded Checkout',
+            settlementWallet: 'Merchant USD Settlement Account',
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 6, 2026 09:26', status: 'Created', note: 'Checkout session created and waiting for payer remittance.' },
+                { time: 'Apr 6, 2026 09:56', status: 'Pending Payment', note: 'No inbound payment has been matched yet.' }
+            ]
+        },
+        'CKO-20260406-0179': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260406-0179',
+            channel: 'Hosted Checkout',
+            settlementWallet: 'Merchant USDT Settlement Wallet',
+            paymentRecords: [
+                { time: 'Apr 6, 2026 08:50', txId: 'TX-CKO-179-01', channel: 'Wallet Pay', payerReference: 'TRON transfer', gross: '1,500.00 USDT', fee: '1.80 USDT', net: '1,498.20 USDT', status: 'Confirmed' },
+                { time: 'Apr 6, 2026 08:58', txId: 'TX-CKO-179-02', channel: 'Wallet Pay', payerReference: 'TRON transfer', gross: '620.00 USDT', fee: '0.80 USDT', net: '619.20 USDT', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Manual Review Required', actedAt: 'Apr 6, 2026 08:59' },
+                { step: 'Manual Review', approver: 'Nancy Test', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 6, 2026 08:42', status: 'Created', note: 'Checkout session created and payment link issued.' },
+                { time: 'Apr 6, 2026 08:50', status: 'Partially Paid', note: 'First inbound transfer matched.' },
+                { time: 'Apr 6, 2026 08:58', status: 'Underpaid', note: 'Second inbound transfer received, but total remains below required amount.' },
+                { time: 'Apr 6, 2026 08:59', status: 'Under Review', note: 'Marked for manual review due to underpayment.' }
+            ]
+        },
+        'CKO-20260405-0176': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260405-0176',
+            channel: 'Embedded Checkout',
+            settlementWallet: 'Merchant USD Settlement Account',
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Not Triggered', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Apr 5, 2026 18:41', status: 'Created', note: 'Checkout session created.' },
+                { time: 'Apr 5, 2026 19:11', status: 'Expired', note: 'Checkout session expired without payment.' }
+            ]
+        },
+        'CKO-20260403-0161': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260403-0161',
+            channel: 'Hosted Checkout',
+            settlementWallet: 'Merchant USDT Settlement Wallet',
+            paymentRecords: [
+                { time: 'Apr 3, 2026 15:15', txId: 'TX-CKO-161-01', channel: 'Wallet Pay', payerReference: 'TRON transfer', gross: '3,800.00 USDT', fee: '7.60 USDT', net: '3,792.40 USDT', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Passed', actedAt: 'Apr 3, 2026 15:08' }
+            ],
+            timeline: [
+                { time: 'Apr 3, 2026 15:08', status: 'Created', note: 'Checkout session created.' },
+                { time: 'Apr 3, 2026 15:15', status: 'Paid', note: 'Wallet payment received and matched in full.' },
+                { time: 'Apr 3, 2026 15:16', status: 'Completed', note: 'Checkout order completed successfully.' }
+            ]
+        },
+        'CKO-20260329-0144': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260329-0144',
+            channel: 'API Checkout',
+            settlementWallet: 'Merchant EUR Settlement Account',
+            paymentRecords: [
+                { time: 'Mar 29, 2026 11:28', txId: 'TX-CKO-144-01', channel: 'Bank Transfer', payerReference: 'FPS / IBAN partial remittance', gross: '6,000.00 EUR', fee: '18.00 EUR', net: '5,982.00 EUR', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Mar 29, 2026 11:20', status: 'Created', note: 'Checkout order created from merchant API.' },
+                { time: 'Mar 29, 2026 11:28', status: 'Partially Paid', note: 'Partial inbound remittance matched.' },
+                { time: 'Mar 29, 2026 11:32', status: 'Proceeding', note: 'Still waiting for remaining remittance before settlement.' }
+            ]
+        },
+        'CKO-20260327-0138': {
+            checkoutLink: 'https://checkout.obita.com/c/CKO-20260327-0138',
+            channel: 'API Checkout',
+            settlementWallet: 'Merchant USD Settlement Account',
+            paymentRecords: [
+                { time: 'Mar 27, 2026 16:12', txId: 'TX-CKO-138-01', channel: 'Bank Transfer', payerReference: 'SWIFT remittance', gross: '4,500.00 USD', fee: '13.50 USD', net: '4,486.50 USD', status: 'Confirmed' },
+                { time: 'Mar 27, 2026 16:21', txId: 'TX-CKO-138-02', channel: 'Bank Transfer', payerReference: 'SWIFT remittance', gross: '4,600.00 USD', fee: '13.80 USD', net: '4,586.20 USD', status: 'Confirmed' }
+            ],
+            approvers: [
+                { step: 'Auto Review', approver: 'Checkout Risk Engine', decision: 'Manual Review Required', actedAt: 'Mar 27, 2026 16:22' },
+                { step: 'Manual Review', approver: 'Nancy Test', decision: 'Pending', actedAt: '-' }
+            ],
+            timeline: [
+                { time: 'Mar 27, 2026 16:05', status: 'Created', note: 'Checkout order created from merchant API.' },
+                { time: 'Mar 27, 2026 16:12', status: 'Partially Paid', note: 'First inbound remittance matched.' },
+                { time: 'Mar 27, 2026 16:21', status: 'Underpaid', note: 'Multiple remittances received, but total still below required amount.' },
+                { time: 'Mar 27, 2026 16:22', status: 'Under Review', note: 'Escalated to manual review due to underpayment.' }
+            ]
+        }
+    };
+
+    function getCheckoutOrderById(checkoutId) {
+        return CHECKOUT_ORDER_LIST_DATA.find(order => order.checkoutId === checkoutId);
+    }
+
+    function getInvoiceOrderById(invoiceNo) {
+        return INVOICE_ORDER_LIST_DATA.find(order => order.invoiceNo === invoiceNo);
+    }
 
     function renderInvoiceOrdersPage() {
+        if (invoiceOrdersView === 'detail' && activeInvoiceOrderId) {
+            const order = getInvoiceOrderById(activeInvoiceOrderId);
+            const detail = INVOICE_ORDER_DETAILS[activeInvoiceOrderId];
+            if (!order) {
+                invoiceOrdersView = 'list';
+                activeInvoiceOrderId = null;
+                renderInvoiceOrdersPage();
+                return;
+            }
+
+            const renderStatus = (status) => {
+                const pill = getOrderReportStatusPill(status === 'Proceeding' ? 'Proceeding' : status);
+                return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            };
+
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 24px 28px;">
+                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Invoice Orders</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invoice Order Detail</h2>
+                                <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.invoiceNo}</div>
+                            </div>
+                            ${renderStatus(order.status)}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Invoice ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.externalInvoiceId || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Buyer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.buyer}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Issued On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.issuedOn}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.dueOn}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Collection Channel</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.collectionChannel || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.method}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Link</div><div style="font-size: 14px; font-weight: 700; color: #2563EB; margin-top: 6px; word-break: break-all;">${detail?.invoiceLink || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Recipient Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.recipientEntity || order.recipient}</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Collection and Settlement Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Amount</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.amount}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Collected Amount</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.collected}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Currency</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.settlementCurrency}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Destination</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.settlementDestination || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Terms</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.settlementTerms || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;">${renderStatus(order.status)}</div></div>
+                        </div>
+                    </div>
+
+                    ${detail ? `
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Invoice Line Items</h3>
+                        </div>
+                        <div style="padding: 0 24px 18px 24px;">
+                            <div style="display: grid; grid-template-columns: 1.5fr 0.5fr 0.8fr 0.8fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                <div>Item</div>
+                                <div>Qty</div>
+                                <div class="text-right">Unit Price</div>
+                                <div class="text-right">Amount</div>
+                            </div>
+                            ${detail.lineItems.map(item => `
+                                <div style="display: grid; grid-template-columns: 1.5fr 0.5fr 0.8fr 0.8fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${item.item}</div>
+                                    <div style="font-size: 13px; color: #475569;">${item.quantity}</div>
+                                    <div class="text-right" style="font-size: 13px; color: #475569; font-weight: 700;">${item.unitPrice}</div>
+                                    <div class="text-right" style="font-size: 13px; color: #0F172A; font-weight: 700;">${item.amount}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Inbound Payment Records</h3>
+                        </div>
+                        <div style="padding: 0 24px 18px 24px;">
+                            <div style="display: grid; grid-template-columns: 160px 160px 1.1fr 0.8fr 0.9fr 0.9fr 0.9fr 0.9fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                <div>Received At</div>
+                                <div>Transaction ID</div>
+                                <div>Payer Reference</div>
+                                <div>Channel</div>
+                                <div class="text-right">Gross</div>
+                                <div class="text-right">Fee</div>
+                                <div class="text-right">Net</div>
+                                <div>Status</div>
+                            </div>
+                            ${detail.paymentRecords.length ? detail.paymentRecords.map(record => `
+                                <div style="display: grid; grid-template-columns: 160px 160px 1.1fr 0.8fr 0.9fr 0.9fr 0.9fr 0.9fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; color: #475569;">${record.time}</div>
+                                    <div style="font-family: monospace; font-size: 12px; color: #2563EB;">${record.txId}</div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${record.payerReference}</div>
+                                    <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${record.channel}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.gross}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${record.fee}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.net}</div>
+                                    <div><span style="background: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).bg}; color: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${record.status}</span></div>
+                                </div>
+                            `).join('') : '<div style="padding: 32px 0; font-size: 13px; color: #64748B;">No inbound payment has been matched to this invoice order yet.</div>'}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Approval Flow</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 12px;">
+                            ${detail.approvers.map(step => `
+                                <div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.step}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approver</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.approver}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.decision}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.actedAt}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
+                            ${detail.timeline.map((event, index) => `
+                                <div style="display: grid; grid-template-columns: 18px 180px 140px 1fr; gap: 16px; align-items: start;">
+                                    <div style="display: flex; justify-content: center; padding-top: 2px;">
+                                        <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
         const searchValue = document.getElementById('invoice-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('invoice-orders-status')?.value || 'all';
         const methodValue = document.getElementById('invoice-orders-method')?.value || 'all';
@@ -4269,7 +4827,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </thead>
                             <tbody>
                                 ${filteredRows.length ? filteredRows.map(row => `
-                                    <tr onclick="alert('Viewing Invoice Order...')">
+                                    <tr onclick="window.openInvoiceOrderDetail('${row.invoiceNo}')">
                                         <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.invoiceNo}</td>
                                         <td class="text-muted">${row.issuedOn}</td>
                                         <td class="text-muted">${row.dueOn}</td>
@@ -4282,6 +4840,299 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <td>${renderStatus(row.status)}</td>
                                     </tr>
                                 `).join('') : '<tr><td colspan="10" style="padding: 48px 24px; text-align: center; color: #64748B;">No invoice orders matched your current filters.</td></tr>'}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderCheckoutOrdersPage() {
+        if (checkoutOrdersView === 'detail' && activeCheckoutOrderId) {
+            const order = getCheckoutOrderById(activeCheckoutOrderId);
+            const detail = CHECKOUT_ORDER_DETAILS[activeCheckoutOrderId];
+            if (!order) {
+                checkoutOrdersView = 'list';
+                activeCheckoutOrderId = null;
+                renderCheckoutOrdersPage();
+                return;
+            }
+
+            const renderStatus = (status) => {
+                const mapped = status === 'Pending Payment'
+                    ? 'Pending Payment'
+                    : status === 'Underpaid'
+                        ? 'Pending Payment'
+                        : status === 'Proceeding'
+                            ? 'Proceeding'
+                            : status;
+                const pill = getOrderReportStatusPill(mapped);
+                return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            };
+
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 24px 28px;">
+                        <button onclick="window.backToCheckoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Checkout Orders</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Checkout Order Detail</h2>
+                                <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.checkoutId}</div>
+                            </div>
+                            ${renderStatus(order.status)}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Order ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.externalOrderId}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Storefront</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.storefront}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Checkout Channel</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.channel || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Checkout Link</div><div style="font-size: 14px; font-weight: 700; color: #2563EB; margin-top: 6px; word-break: break-all;">${detail?.checkoutLink || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.paymentMethod}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Created At</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.createdAt}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Expires At</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.expiresAt}</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Payment Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Asset</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.settlementAsset}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.amount}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Paid Amount</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.paidAmount}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Destination</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.settlementWallet || '-'}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;">${renderStatus(order.status)}</div></div>
+                        </div>
+                    </div>
+
+                    ${detail ? `
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Inbound Payment Records</h3>
+                        </div>
+                        <div style="padding: 0 24px 18px 24px;">
+                            <div style="display: grid; grid-template-columns: 160px 160px 1.1fr 0.8fr 0.9fr 0.9fr 0.9fr 0.9fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                <div>Received At</div>
+                                <div>Transaction ID</div>
+                                <div>Payer Reference</div>
+                                <div>Channel</div>
+                                <div class="text-right">Gross</div>
+                                <div class="text-right">Fee</div>
+                                <div class="text-right">Net</div>
+                                <div>Status</div>
+                            </div>
+                            ${detail.paymentRecords.length ? detail.paymentRecords.map(record => `
+                                <div style="display: grid; grid-template-columns: 160px 160px 1.1fr 0.8fr 0.9fr 0.9fr 0.9fr 0.9fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; color: #475569;">${record.time}</div>
+                                    <div style="font-family: monospace; font-size: 12px; color: #2563EB;">${record.txId}</div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${record.payerReference}</div>
+                                    <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${record.channel}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.gross}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${record.fee}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.net}</div>
+                                    <div><span style="background: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).bg}; color: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${record.status}</span></div>
+                                </div>
+                            `).join('') : '<div style="padding: 32px 0; font-size: 13px; color: #64748B;">No inbound payment has been matched to this checkout order yet.</div>'}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Approval Flow</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 12px;">
+                            ${detail.approvers.map(step => `
+                                <div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.step}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approver</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.approver}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.decision}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.actedAt}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
+                            ${detail.timeline.map((event, index) => `
+                                <div style="display: grid; grid-template-columns: 18px 180px 140px 1fr; gap: 16px; align-items: start;">
+                                    <div style="display: flex; justify-content: center; padding-top: 2px;">
+                                        <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        const searchValue = document.getElementById('checkout-orders-search')?.value?.trim().toLowerCase() || '';
+        const statusValue = document.getElementById('checkout-orders-status')?.value || 'all';
+        const methodValue = document.getElementById('checkout-orders-method')?.value || 'all';
+        const summary = CHECKOUT_SUMMARY_BY_DURATION[activeCheckoutOrdersDuration] || CHECKOUT_SUMMARY_BY_DURATION['1m'];
+        const durationOrder = { '1d': 0, '1w': 1, '1m': 2, '6m': 3, '1y': 4 };
+
+        const filteredRows = CHECKOUT_ORDER_LIST_DATA.filter(row => {
+            const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesMethod = methodValue === 'all' || row.paymentMethod === methodValue;
+            const rowBucket = row.createdAt.startsWith('Apr 6') ? '1d'
+                : row.createdAt.startsWith('Apr') ? '1w'
+                : row.createdAt.startsWith('Mar') ? '1m'
+                : row.createdAt.startsWith('Feb') ? '6m'
+                : '1y';
+            const matchesDuration = durationOrder[rowBucket] <= durationOrder[activeCheckoutOrdersDuration];
+            return matchesSearch && matchesStatus && matchesMethod && matchesDuration;
+        });
+
+        const renderStatus = (status) => {
+            const mapped = status === 'Pending Payment'
+                ? 'Pending Payment'
+                : status === 'Underpaid'
+                    ? 'Pending Payment'
+                    : status === 'Proceeding'
+                        ? 'Proceeding'
+                        : status;
+            const pill = getOrderReportStatusPill(mapped);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+        };
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                <div class="card collections-summary-card" style="padding: 24px;">
+                    <div class="collection-header" style="margin-bottom: 22px;">
+                        <div>
+                            <h2 class="card-title" style="font-size: 18px; margin: 0;">Checkout Summary</h2>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance aligned with the overview dashboard summary.</div>
+                        </div>
+                        <div class="time-selector">
+                            ${CHECKOUT_DURATION_OPTIONS.map(option => `
+                                <span class="time-option ${option === activeCheckoutOrdersDuration ? 'active' : ''}" onclick="window.switchCheckoutOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
+                        <div class="c-stat-box" style="min-width: 160px;">
+                            <span class="c-stat-label">Created Orders</span>
+                            <span class="c-stat-count">${summary.createdCount}</span>
+                            <span class="c-stat-amount">${summary.createdAmount}</span>
+                        </div>
+                        <div class="c-stat-box" style="min-width: 160px;">
+                            <span class="c-stat-label">Paid Successfully</span>
+                            <span class="c-stat-count text-success">${summary.paidCount}</span>
+                            <span class="c-stat-amount text-success">${summary.paidAmount}</span>
+                        </div>
+                        <div class="c-stat-box" style="min-width: 160px;">
+                            <span class="c-stat-label">In-Transit</span>
+                            <span class="c-stat-count text-warning">${summary.transitCount}</span>
+                            <span class="c-stat-amount text-warning">${summary.transitAmount}</span>
+                        </div>
+                        <div class="c-stat-box" style="min-width: 160px;">
+                            <span class="c-stat-label">Failed (Expired/Cancelled)</span>
+                            <span class="c-stat-count text-muted">${summary.failedCount}</span>
+                            <span class="c-stat-amount text-muted">${summary.failedAmount}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h2 class="card-title" style="margin: 0; font-size: 18px;">Checkout Order List</h2>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Track hosted checkout orders by merchant order, customer, storefront, payment method, expiry, and settlement result.</div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) auto; gap: 14px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
+                            <div class="time-selector" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 999px; padding: 4px;">
+                                ${CHECKOUT_DURATION_OPTIONS.map(option => `
+                                    <span class="time-option ${option === activeCheckoutOrdersDuration ? 'active' : ''}" onclick="window.switchCheckoutOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <select id="checkout-orders-status" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            <option value="Paid" ${statusValue === 'Paid' ? 'selected' : ''}>Paid</option>
+                            <option value="Pending Payment" ${statusValue === 'Pending Payment' ? 'selected' : ''}>Pending Payment</option>
+                            <option value="Underpaid" ${statusValue === 'Underpaid' ? 'selected' : ''}>Underpaid</option>
+                            <option value="Proceeding" ${statusValue === 'Proceeding' ? 'selected' : ''}>Proceeding</option>
+                            <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
+                        </select>
+                        <select id="checkout-orders-method" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Payment Methods</option>
+                            <option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>
+                            <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+                            <option value="Bank Card" ${methodValue === 'Bank Card' ? 'selected' : ''}>Bank Card</option>
+                        </select>
+                        <div style="position: relative; min-width: 260px;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="checkout-orders-search" type="text" value="${document.getElementById('checkout-orders-search')?.value || ''}" oninput="window.renderCheckoutOrdersPage()" placeholder="Search by checkout ID, merchant order, customer..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Checkout ID</th>
+                                    <th>Created At</th>
+                                    <th>External Order ID</th>
+                                    <th>Storefront</th>
+                                    <th>Payment Method</th>
+                                    <th>Settlement Asset</th>
+                                    <th class="text-right">Order Amount</th>
+                                    <th class="text-right">Paid Amount</th>
+                                    <th>Expires At</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${filteredRows.length ? filteredRows.map(row => `
+                                    <tr onclick="window.openCheckoutOrderDetail('${row.checkoutId}')">
+                                        <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.checkoutId}</td>
+                                        <td class="text-muted">${row.createdAt}</td>
+                                        <td>${row.externalOrderId}</td>
+                                        <td>${row.storefront}</td>
+                                        <td>${row.paymentMethod}</td>
+                                        <td>${row.settlementAsset}</td>
+                                        <td class="text-right font-medium">${row.amount}</td>
+                                        <td class="text-right">${row.paidAmount}</td>
+                                        <td class="text-muted">${row.expiresAt}</td>
+                                        <td>${renderStatus(row.status)}</td>
+                                    </tr>
+                                `).join('') : '<tr><td colspan="10" style="padding: 48px 24px; text-align: center; color: #64748B;">No checkout orders matched your current filters.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -4986,6 +5837,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let payeeListView = 'list'; // 'list' | 'form'
     let activePayeeId = null;   // null = add new, string = edit existing
     let payeeFormContext = { mode: 'page', payoutRowId: null };
+    let activeExternalContactsUsageFilter = 'payout';
     let detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
 
     function getPayeeById(id) {
@@ -5016,9 +5868,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const typeFilter   = document.getElementById('payee-type-filter')?.value   || 'all';
         const statusFilter = document.getElementById('payee-status-filter')?.value || 'all';
+        const usageFilter  = document.getElementById('payee-usage-filter')?.value || activeExternalContactsUsageFilter || 'payout';
         const keyword      = (document.getElementById('payee-search')?.value || '').trim().toLowerCase();
+        activeExternalContactsUsageFilter = usageFilter;
 
-        const filtered = payeeList.filter(p => {
+        const usageFilterPredicate = (payee) => {
+            if (usageFilter === 'all') return true;
+            if (usageFilter === 'payout') return Boolean(payee.usageScope?.payout);
+            if (usageFilter === 'collectionInvoice') return Boolean(payee.usageScope?.collectionInvoice);
+            if (usageFilter === 'collectionCheckout') return Boolean(payee.usageScope?.collectionCheckout);
+            if (usageFilter === 'refund') return Boolean(payee.usageScope?.refund);
+            return true;
+        };
+
+        const scopedContacts = payeeList.filter(usageFilterPredicate);
+        const filtered = scopedContacts.filter(p => {
             if (typeFilter !== 'all'   && p.type   !== typeFilter)   return false;
             if (statusFilter !== 'all' && p.status !== statusFilter) return false;
             if (keyword && ![ p.name, p.alias, p.currency, p.bankName, p.accountNumber, p.country, p.purpose, p.id, p.email ].join(' ').toLowerCase().includes(keyword)) return false;
@@ -5026,11 +5890,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Summary Calculations
-        const totalContacts = payeeList.length;
-        const totalPayout = payeeList.filter(p => !p.usageScope || p.usageScope.payout !== false).length;
-        const totalInvoice = payeeList.filter(p => p.usageScope?.collectionInvoice).length;
-        const totalCheckout = payeeList.filter(p => p.usageScope?.collectionCheckout).length;
-        const totalRefund = payeeList.filter(p => p.usageScope?.refund).length;
+        const totalContacts = scopedContacts.length;
+        const totalPayout = scopedContacts.filter(p => p.usageScope?.payout).length;
+        const totalInvoice = scopedContacts.filter(p => p.usageScope?.collectionInvoice).length;
+        const totalCheckout = scopedContacts.filter(p => p.usageScope?.collectionCheckout).length;
+        const totalRefund = scopedContacts.filter(p => p.usageScope?.refund).length;
 
         contentBody.innerHTML = `
             <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
@@ -5077,7 +5941,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 0; overflow: hidden;">
 
                     <!-- Filter bar -->
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1.6fr 0.8fr 0.8fr; gap: 14px; align-items: center;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1.6fr 0.8fr 0.9fr 0.8fr; gap: 14px; align-items: center;">
                         <div style="position: relative;">
                             <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
                             <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -5088,6 +5952,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Crypto Wallet" ${typeFilter === 'Crypto Wallet' ? 'selected' : ''}>Crypto Wallet</option>
                             <option value="Pending" ${typeFilter === 'Pending' ? 'selected' : ''}>Pending</option>
                         </select>
+                        <select id="payee-usage-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="payout" ${usageFilter === 'payout' ? 'selected' : ''}>Usage: Payout</option>
+                            <option value="collectionInvoice" ${usageFilter === 'collectionInvoice' ? 'selected' : ''}>Usage: Collection - Invoice</option>
+                            <option value="collectionCheckout" ${usageFilter === 'collectionCheckout' ? 'selected' : ''}>Usage: Collection - Checkout</option>
+                            <option value="refund" ${usageFilter === 'refund' ? 'selected' : ''}>Usage: Refund</option>
+                            <option value="all" ${usageFilter === 'all' ? 'selected' : ''}>Usage: All</option>
+                        </select>
                         <select id="payee-status-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all"      ${statusFilter === 'all'      ? 'selected' : ''}>All Statuses</option>
                             <option value="active"   ${statusFilter === 'active'   ? 'selected' : ''}>Active</option>
@@ -5096,20 +5967,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         </select>
                     </div>
 
-                    <!-- Column headers -->
-                    <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 1.1fr 1.1fr 1.5fr 0.6fr 0.7fr 1.6fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; align-items: center;">
-                        <div>Contact</div>
-                        <div>Profile</div>
-                        <div>Wallet Summary</div>
-                        <div>Bank Summary</div>
-                        <div>Usage Scope</div>
-                        <div>Status</div>
-                        <div style="text-align: center;">Linked Orders</div>
-                        <div style="text-align: right;">Actions</div>
-                    </div>
-
-                    <!-- Rows -->
-                    <div>
+                    <div class="table-responsive">
+                        <table class="data-table" style="table-layout: fixed;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 19%;">Contact</th>
+                                    <th style="width: 9%;">Profile</th>
+                                    <th style="width: 15%;">Wallet Summary</th>
+                                    <th style="width: 15%;">Bank Summary</th>
+                                    <th style="width: 16%;">Usage Scope</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th class="text-center" style="width: 8%;">Linked Orders</th>
+                                    <th class="text-right" style="width: 18%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                         ${filtered.length ? filtered.map(p => {
                             const statusMeta = getPayeeStatusPill(p.status);
                             
@@ -5119,7 +5991,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 const more = p.wallets.length > 1 ? `<span style="background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; margin-left: 6px;">+${p.wallets.length - 1}</span>` : '';
                                 walletHtml = `
                                     <div style="font-size: 12px; font-weight: 600; color: #0F172A; display: flex; align-items: center; white-space: nowrap;">${w.network} ${more}</div>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 3px; font-family: monospace;">${w.address}</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 3px; font-family: monospace;">${formatWalletListAddress(w.address, w.network)}</div>
                                 `;
                             } else if (p.status === 'pending_collection') {
                                 walletHtml = '<div style="font-size: 11px; color: #D97706; background: #FFFBEB; padding: 4px 8px; border-radius: 4px; display: inline-block;">Pending</div>';
@@ -5145,35 +6017,37 @@ document.addEventListener('DOMContentLoaded', () => {
                             scopeHtml += '</div>';
 
                             return `
-                            <div style="display: grid; grid-template-columns: 1.4fr 0.6fr 1.1fr 1.1fr 1.5fr 0.6fr 0.7fr 1.6fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
-                                <div>
+                            <tr onclick="window.editPayee('${p.id}')" style="cursor: pointer; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                                <td>
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
                                     <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
                                     <div style="font-family: monospace; font-size: 10px; color: #94A3B8; margin-top: 4px;">ID: ${p.id}</div>
-                                </div>
-                                <div>
+                                </td>
+                                <td>
                                     <span style="display:inline-block; padding: 3px 8px; border-radius: 4px; background: ${p.personType === 'company' ? '#F1F5F9' : '#EFF6FF'}; color: ${p.personType === 'company' ? '#475569' : '#1D4ED8'}; font-size: 10px; font-weight: 700; text-transform: uppercase;">${p.personType === 'company' ? 'Company' : 'Individual'}</span>
-                                </div>
-                                <div>${walletHtml}</div>
-                                <div>${bankHtml}</div>
-                                <div>${scopeHtml}</div>
-                                <div>
+                                </td>
+                                <td style="vertical-align: top;">${walletHtml}</td>
+                                <td style="vertical-align: top;">${bankHtml}</td>
+                                <td style="vertical-align: top;">${scopeHtml}</td>
+                                <td>
                                     <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
-                                </div>
-                                <div style="text-align: center;">
+                                </td>
+                                <td class="text-center">
                                     <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${p.linkedPayouts || 0}</span>
-                                </div>
-                                <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
+                                </td>
+                                <td>
+                                    <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
                                     <button class="btn btn-outline" onclick="window.editPayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">Edit</button>
                                     <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
                                     <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; color: #DC2626; border-color: #FECACA; white-space: nowrap;">Delete</button>
-                                </div>
-                            </div>`;
+                                    </div>
+                                </td>
+                            </tr>`;
                         }).join('') : `
-                            <div style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">
-                                No payees matched your current filters.
-                            </div>`
+                            <tr><td colspan="8" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">No external contacts matched your current filters.</td></tr>`
                         }
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -6822,6 +7696,136 @@ document.addEventListener('DOMContentLoaded', () => {
             renderPayoutSuccessPage();
             return;
         }
+        if (payoutOrdersView === 'detail' && activePayoutOrderId) {
+            const order = ORDER_REPORT_DATA['payout'].find(row => row.orderId === activePayoutOrderId);
+            const detail = PAYOUT_ORDER_DETAILS[activePayoutOrderId];
+            if (!order) {
+                payoutOrdersView = 'list';
+                activePayoutOrderId = null;
+                renderPayoutOrdersPage();
+                return;
+            }
+
+            const pill = getOrderReportStatusPill(order.status);
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 24px 28px;">
+                        <button onclick="window.backToPayoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Payout Orders</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Payout Order Detail</h2>
+                                <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.orderId}</div>
+                            </div>
+                            <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${order.status}</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Created Time</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.time}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Beneficiary</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.beneficiary}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.method}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Purpose</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.purpose}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source Account</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.source}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approval Progress</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.approval}</div></div>
+                            ${order.payoutCount ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Requests</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.payoutCount}</div></div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Amount Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div><div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 6px;">${order.amount}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;"><span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${order.status}</span></div></div>
+                        </div>
+                    </div>
+
+                    ${detail ? `
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Payout Requests</h3>
+                        </div>
+                        <div style="padding: 0 24px 18px 24px;">
+                            <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                <div>No.</div>
+                                <div>Payee</div>
+                                <div>Destination</div>
+                                <div>Currency</div>
+                                <div class="text-right">Amount</div>
+                                <div class="text-right">Fee</div>
+                                <div class="text-right">Net</div>
+                                <div>Status</div>
+                            </div>
+                            ${detail.payouts.map(item => `
+                                <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; font-weight: 700; color: #64748B;">${item.sequence}</div>
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${item.payee}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${item.note}</div>
+                                    </div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${item.destination}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.currency}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.amount}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${item.fee}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.net}</div>
+                                    <div><span style="background: ${getOrderReportStatusPill(item.status).bg}; color: ${getOrderReportStatusPill(item.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${item.status}</span></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Approval Information</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 12px;">
+                            ${detail.approvers.map(approver => `
+                                <div style="display: flex; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; flex-wrap: wrap;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${approver.level}</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${approver.name}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${approver.status}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${approver.actedAt}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        </div>
+                        <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
+                            ${detail.timeline.map((event, index) => `
+                                <div style="display: grid; grid-template-columns: 18px 180px 150px 1fr; gap: 16px; align-items: start;">
+                                    <div style="display: flex; justify-content: center; padding-top: 2px;">
+                                        <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
 
         const searchValue = document.getElementById('payout-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('payout-orders-status')?.value || 'all';
@@ -6881,7 +7885,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const listHTML = rows.length ? rows.map(row => `
-            <tr onclick="alert('Viewing Payout Order...')">
+            <tr onclick="window.openPayoutOrderDetail('${row.orderId}')">
                 <td class="text-muted">${row.time}</td>
                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td>
                 <td class="font-medium">${row.beneficiary}</td>
@@ -7248,7 +8252,13 @@ document.addEventListener('DOMContentLoaded', () => {
             contentBody.innerHTML = merchantProfileHTML;
             lucide.createIcons();
         } else if (title === 'Invoice Orders') {
+            invoiceOrdersView = 'list';
+            activeInvoiceOrderId = null;
             renderInvoiceOrdersPage();
+        } else if (title === 'Checkout Orders') {
+            checkoutOrdersView = 'list';
+            activeCheckoutOrderId = null;
+            renderCheckoutOrdersPage();
         } else if (title === 'Order Reports') {
             renderOrderReportsPage();
         } else if (title === 'Settlement Reports') {
@@ -7258,9 +8268,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (title === 'External Contacts') {
             payeeListView = 'list';
             activePayeeId = null;
+            activeExternalContactsUsageFilter = 'payout';
             renderPayeeListPage();
         } else if (title === 'Payout Orders') {
             payoutOrdersView = 'list';
+            activePayoutOrderId = null;
             activePayoutNewPayeeRowId = null;
             renderPayoutOrdersPage();
         } else if (title === 'Approval Rules') {
