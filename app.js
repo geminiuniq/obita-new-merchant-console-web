@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'convert-drawer',
         'manage-addresses-drawer',
         'manage-bank-accounts-drawer',
+        'payee-form-drawer',
         'member-form-drawer'
     ];
 
@@ -318,6 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-convert-btn',
         'close-addr-btn',
         'close-bank-accounts-btn',
+        'close-payee-form-btn',
         'close-member-form-btn'
     ].forEach(id => {
         const btn = document.getElementById(id);
@@ -1485,6 +1487,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let membersView = 'list';
     let activeMemberId = null;
     let memberFormReturnView = 'list';
+    let payoutOrdersView = 'list';
+    let payoutBatchDraft = null;
+    let activePayoutNewPayeeRowId = null;
     const currentUserIsAdmin = true;
 
     function getApprovalRuleById(ruleId) {
@@ -4418,6 +4423,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let payeeListView = 'list'; // 'list' | 'form'
     let activePayeeId = null;   // null = add new, string = edit existing
+    let payeeFormContext = { mode: 'page', payoutRowId: null };
 
     function getPayeeById(id) {
         return payeeList.find(p => p.id === id);
@@ -4572,11 +4578,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
-    function renderPayeeFormPage() {
-        contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
-
-                <!-- Page header -->
+    function renderPayeeFormContent(inDrawer = false) {
+        return `
+                ${inDrawer ? '' : `
                 <div class="card" style="padding: 24px;">
                     <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
@@ -4585,8 +4589,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">Add New Payee</h2>
                     <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new payee. An email invitation will be sent to collect their payout details and complete identity verification before any payout can be executed.</div>
                 </div>
+                `}
 
-                <!-- SECTION 1: Basic Information (always visible) -->
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
                         <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">1</div>
@@ -4803,20 +4807,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" class="btn btn-outline" onclick="window.backToPayeeList()" style="padding: 10px 18px;">Cancel</button>
+                    <button type="button" class="btn btn-outline" onclick="${inDrawer ? 'window.closePayeeFormDrawer()' : 'window.backToPayeeList()'}" style="padding: 10px 18px;">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="window.savePayee('')" style="padding: 10px 22px; font-weight: 700;">
                         <i data-lucide="send" style="width: 14px; height: 14px; margin-right: 6px;"></i>
                         Send Invitation & Save
                     </button>
                 </div>
-
-            </div>
         `;
-        lucide.createIcons();
+    }
 
-        // Default: self radio active
+    function initPayeeFormInteractions() {
+        lucide.createIcons();
         document.getElementById('payee-wallet-self')?.addEventListener('change', window.onPayeeWalletFillChange);
         document.getElementById('payee-bank-self')?.addEventListener('change', window.onPayeeBankFillChange);
+    }
+
+    function renderPayeeFormPage() {
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
+                ${renderPayeeFormContent(false)}
+            </div>
+        `;
+        initPayeeFormInteractions();
     }
 
     window.renderPayeeListPage = function() {
@@ -4825,14 +4837,42 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openAddPayeePage = function() {
+        payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
         activePayeeId = null;
         renderPayeeListPage();
     };
 
+    function openPayeeFormDrawerForPayout(rowId) {
+        const drawer = document.getElementById('payee-form-drawer');
+        const drawerBody = document.getElementById('payee-form-drawer-body');
+        const drawerTitle = document.getElementById('payee-form-drawer-title');
+        const drawerSubtitle = document.getElementById('payee-form-drawer-subtitle');
+
+        if (!drawer || !drawerBody || !drawerTitle || !drawerSubtitle) return;
+
+        payeeFormContext = { mode: 'payout-batch', payoutRowId: rowId };
+        drawerTitle.textContent = 'Add New Payee';
+        drawerSubtitle.textContent = 'Create a payee and return to the current payout batch row.';
+        drawerBody.innerHTML = renderPayeeFormContent(true);
+        closeAllDrawers();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        initPayeeFormInteractions();
+    }
+
+    window.closePayeeFormDrawer = function() {
+        const drawer = document.getElementById('payee-form-drawer');
+        if (drawer) drawer.classList.remove('drawer-active');
+        document.body.classList.remove('drawer-open');
+        activePayoutNewPayeeRowId = null;
+        payeeFormContext = { mode: 'page', payoutRowId: null };
+    };
+
     window.backToPayeeList = function() {
         payeeListView = 'list';
         activePayeeId = null;
+        payeeFormContext = { mode: 'page', payoutRowId: null };
         renderPayeeListPage();
     };
 
@@ -4950,7 +4990,51 @@ document.addEventListener('DOMContentLoaded', () => {
             personType: personType,
             createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
+
+        const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
+        const bankModeNow = document.getElementById('payee-bank-now')?.checked;
+        const walletAddress = document.getElementById('payee-wallet-addr')?.value?.trim();
+        const walletNetwork = document.getElementById('payee-wallet-net')?.value?.trim();
+        const bankName = document.getElementById('payee-bank-name')?.value?.trim();
+        const bankAccount = document.getElementById('payee-bank-acct')?.value?.trim();
+
+        if (walletModeNow && walletAddress) {
+            newPayee.wallets = [{ network: walletNetwork || 'TRON (TRC-20)', address: walletAddress }];
+            newPayee.type = 'Crypto Wallet';
+        }
+
+        if (bankModeNow && bankName && bankAccount) {
+            newPayee.banks = [{ bankName, account: bankAccount }];
+            if (!walletModeNow) newPayee.type = 'Bank Account';
+        }
+
         payeeList.unshift(newPayee);
+
+        if (payeeFormContext.mode === 'payout-batch' && payeeFormContext.payoutRowId) {
+            const batch = ensurePayoutBatchDraft();
+            const row = batch.requests.find(item => item.id === payeeFormContext.payoutRowId);
+            if (row) {
+                row.payeeId = newPayee.id;
+                if (isStablecoinCurrency(row.payoutCurrency)) {
+                    row.destinationKey = newPayee.wallets.length ? 'wallet-0' : '';
+                } else {
+                    row.destinationKey = newPayee.banks.length ? 'bank-0' : '';
+                }
+            }
+            window.closePayeeFormDrawer();
+            renderPayoutOrdersPage();
+            notifyOrderCreated(
+                'Payee Created',
+                `${displayName} was added and selected for the current payout request.`,
+                'View Payout',
+                () => {
+                    pageTitle.textContent = 'Payout Orders';
+                    payoutOrdersView = 'create';
+                    renderPayoutOrdersPage();
+                }
+            );
+            return;
+        }
 
         // Show confirmation page
         contentBody.innerHTML = `
@@ -5003,7 +5087,645 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     };
 
+    const PAYOUT_FEE_CONFIG = {
+        USDT: { rate: 0.0012, min: 6 },
+        USDC: { rate: 0.0012, min: 6 },
+        USD: { rate: 0.0015, min: 12 },
+        HKD: { rate: 0.0015, min: 90 },
+        EUR: { rate: 0.0015, min: 10 },
+        BRL: { rate: 0.0018, min: 40 }
+    };
+
+    function getPayoutSourceOptions() {
+        return Object.entries(TRANSFER_BALANCES)
+            .filter(([, balance]) => balance > 0)
+            .map(([currency, balance]) => ({ currency, balance }));
+    }
+
+    function isStablecoinCurrency(currency) {
+        return ['USDT', 'USDC'].includes(currency);
+    }
+
+    function getAssetConversionRate(sourceCurrency, targetCurrency) {
+        if (!sourceCurrency || !targetCurrency) return 1;
+        if (sourceCurrency === targetCurrency) return 1;
+        if (MOCK_EXCHANGE_RATES[sourceCurrency]?.[targetCurrency]) {
+            return MOCK_EXCHANGE_RATES[sourceCurrency][targetCurrency];
+        }
+        if (MOCK_EXCHANGE_RATES[targetCurrency]?.[sourceCurrency]) {
+            return 1 / MOCK_EXCHANGE_RATES[targetCurrency][sourceCurrency];
+        }
+        return 1;
+    }
+
+    function getEquivalentUsdAmount(amount, currency) {
+        return amount * getAssetConversionRate(currency, 'USD');
+    }
+
+    function createEmptyPayoutRequest(sourceCurrency = '') {
+        return {
+            id: `PO-ROW-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+            payeeId: '',
+            payoutCurrency: sourceCurrency,
+            amount: '',
+            destinationKey: '',
+            note: ''
+        };
+    }
+
+    function ensurePayoutBatchDraft(sourceCurrency = '') {
+        if (payoutBatchDraft) return payoutBatchDraft;
+        payoutBatchDraft = {
+            sourceCurrency,
+            requests: [createEmptyPayoutRequest(sourceCurrency)],
+            batchId: '',
+            createdAt: ''
+        };
+        return payoutBatchDraft;
+    }
+
+    function getPayeeDestinationOptions(payee, payoutCurrency) {
+        if (!payee || !payoutCurrency) return [];
+
+        if (isStablecoinCurrency(payoutCurrency)) {
+            return (payee.wallets || []).map((wallet, index) => ({
+                key: `wallet-${index}`,
+                label: `${wallet.network} - ${wallet.address}`,
+                value: wallet.address,
+                meta: wallet.network,
+                kind: 'wallet'
+            }));
+        }
+
+        return (payee.banks || []).map((bank, index) => ({
+            key: `bank-${index}`,
+            label: `${bank.bankName} - ${bank.account}`,
+            value: bank.account,
+            meta: bank.bankName,
+            kind: 'bank'
+        }));
+    }
+
+    function getPayoutRequestCalculation(row, sourceCurrency) {
+        const payoutCurrency = row.payoutCurrency || sourceCurrency;
+        const amount = parseFloat(row.amount) || 0;
+        const rate = getAssetConversionRate(sourceCurrency, payoutCurrency);
+        const sourceAmount = rate ? amount / rate : amount;
+        const feeConfig = PAYOUT_FEE_CONFIG[payoutCurrency] || { rate: 0.0015, min: 10 };
+        const feeInPayoutCurrency = amount > 0 ? Math.max(amount * feeConfig.rate, feeConfig.min) : 0;
+        const feeInSourceCurrency = rate ? feeInPayoutCurrency / rate : feeInPayoutCurrency;
+
+        return {
+            payoutCurrency,
+            amount,
+            rate,
+            sourceAmount,
+            feeInSourceCurrency,
+            feeInPayoutCurrency
+        };
+    }
+
+    function getPayoutBatchTotals() {
+        const batch = ensurePayoutBatchDraft();
+        return batch.requests.reduce((acc, row) => {
+            const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
+            acc.netSource += calculation.sourceAmount;
+            acc.fee += calculation.feeInSourceCurrency;
+            acc.total += calculation.sourceAmount + calculation.feeInSourceCurrency;
+            return acc;
+        }, { netSource: 0, fee: 0, total: 0 });
+    }
+
+    function getPayoutPurposeLabel(row) {
+        return isStablecoinCurrency(row.payoutCurrency) ? 'Wallet Transfer' : 'Bank Transfer';
+    }
+
+    function getPayoutCurrencyVisual(currency) {
+        const map = {
+            USDT: { bg: '#DCFCE7', color: '#15803D', border: '#BBF7D0' },
+            USDC: { bg: '#DBEAFE', color: '#1D4ED8', border: '#BFDBFE' },
+            USD: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
+            HKD: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
+            EUR: { bg: '#F5F3FF', color: '#7C3AED', border: '#DDD6FE' },
+            BRL: { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' }
+        };
+        return map[currency] || { bg: '#F8FAFC', color: '#475569', border: '#E2E8F0' };
+    }
+
+    function getPayoutFocusSnapshot() {
+        const activeElement = document.activeElement;
+        if (!activeElement) return null;
+
+        const focusKey = activeElement.dataset?.focusKey || activeElement.id;
+        if (!focusKey) return null;
+
+        return {
+            key: focusKey,
+            tag: activeElement.tagName,
+            selectionStart: typeof activeElement.selectionStart === 'number' ? activeElement.selectionStart : null,
+            selectionEnd: typeof activeElement.selectionEnd === 'number' ? activeElement.selectionEnd : null
+        };
+    }
+
+    function restorePayoutFocus(snapshot) {
+        if (!snapshot) return;
+
+        const selector = `[data-focus-key="${snapshot.key}"], #${snapshot.key}`;
+        const nextElement = document.querySelector(selector);
+        if (!nextElement) return;
+
+        nextElement.focus();
+        if (snapshot.tag === 'INPUT' || snapshot.tag === 'TEXTAREA') {
+            try {
+                if (snapshot.selectionStart !== null && snapshot.selectionEnd !== null) {
+                    nextElement.setSelectionRange(snapshot.selectionStart, snapshot.selectionEnd);
+                }
+            } catch (error) {
+                // ignore selection restore failures for non-text inputs
+            }
+        }
+    }
+
+    function rerenderPayoutOrdersPreservingFocus() {
+        const snapshot = payoutOrdersView === 'create' ? getPayoutFocusSnapshot() : null;
+        renderPayoutOrdersPage();
+        if (snapshot) restorePayoutFocus(snapshot);
+    }
+
+    function renderPayoutBatchRow(row, batch) {
+        const payeeOptions = [
+            '<option value="">Select payee</option>',
+            '<option value="__new__">+ New Payee</option>',
+            ...payeeList.map(payee => `<option value="${payee.id}" ${row.payeeId === payee.id ? 'selected' : ''} ${payee.status === 'disabled' ? 'disabled' : ''}>${payee.name}${payee.status === 'pending_collection' ? ' - Pending Info' : ''}</option>`)
+        ].join('');
+
+        const currencyOptions = getPayoutSourceOptions().map(option => `
+            <option value="${option.currency}" ${row.payoutCurrency === option.currency ? 'selected' : ''}>${option.currency}</option>
+        `).join('');
+
+        const payee = getPayeeById(row.payeeId);
+        const destinationOptions = getPayeeDestinationOptions(payee, row.payoutCurrency || batch.sourceCurrency);
+        const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
+        const destinationTypeLabel = isStablecoinCurrency(row.payoutCurrency) ? 'Wallet Address / Chain' : 'Bank Account';
+
+        return `
+            <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.95fr 52px; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #F1F5F9; align-items: start;">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">Payee</label>
+                    <select data-focus-key="payout-payee-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payeeId', this.value)">
+                        ${payeeOptions}
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">Currency</label>
+                    <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)">
+                        ${currencyOptions}
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">Amount</label>
+                    <input data-focus-key="payout-amount-${row.id}" class="bank-form-control" type="number" min="0" step="0.01" value="${row.amount}" placeholder="0.00" oninput="window.updatePayoutRequestField('${row.id}', 'amount', this.value)">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">Required from Source</label>
+                    <div class="bank-form-control" data-role="source-amount" style="display: flex; align-items: center; justify-content: space-between; font-weight: 800; color: #0F172A; background: #F8FAFC;">
+                        <span>${batch.sourceCurrency ? formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency) : '0.00'}</span>
+                        <span style="font-size: 11px; color: #94A3B8;">Source</span>
+                    </div>
+                    <div data-role="fx-rate" style="font-size: 11px; color: #64748B;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : 'Select source of fund first'}</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">${destinationTypeLabel}</label>
+                    <select data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)">
+                        <option value="">Select destination</option>
+                        ${destinationOptions.length
+                            ? destinationOptions.map(option => `<option value="${option.key}" ${row.destinationKey === option.key ? 'selected' : ''}>${option.label}</option>`).join('')
+                            : `<option value="" disabled>${payee ? `No ${isStablecoinCurrency(row.payoutCurrency) ? 'wallet address' : 'bank account'} available` : 'Select payee first'}</option>`
+                        }
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label class="bank-form-label" style="margin: 0;">Note</label>
+                    <input data-focus-key="payout-note-${row.id}" class="bank-form-control" type="text" value="${row.note || ''}" placeholder="Optional" oninput="window.updatePayoutRequestField('${row.id}', 'note', this.value)">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                    <label class="bank-form-label" style="margin: 0; visibility: hidden;">Action</label>
+                    <button class="btn btn-outline" onclick="window.addPayoutRequestRow('${row.id}')" style="width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                    </button>
+                    ${batch.requests.length > 1 ? `
+                        <button class="btn btn-outline" onclick="window.removePayoutRequestRow('${row.id}')" style="width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #DC2626; border-color: #FECACA;">
+                            <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function refreshPayoutBatchTotalsPanel() {
+        const batch = ensurePayoutBatchDraft();
+        const totals = getPayoutBatchTotals();
+        const availableBalance = TRANSFER_BALANCES[batch.sourceCurrency] || 0;
+        const insufficient = Boolean(batch.sourceCurrency) && totals.total > availableBalance;
+
+        const netEl = document.getElementById('payout-batch-net-total');
+        const feeEl = document.getElementById('payout-batch-fee-total');
+        const totalEl = document.getElementById('payout-batch-grand-total');
+        const totalCurrencyEl = document.getElementById('payout-batch-grand-total-currency');
+        const warningEl = document.getElementById('payout-batch-balance-warning');
+
+        if (netEl) netEl.textContent = batch.sourceCurrency ? formatTransferMoney(totals.netSource, batch.sourceCurrency) : '0.00';
+        if (feeEl) feeEl.textContent = batch.sourceCurrency ? formatTransferMoney(totals.fee, batch.sourceCurrency) : '0.00';
+        if (totalEl) totalEl.textContent = totals.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (totalCurrencyEl) totalCurrencyEl.textContent = batch.sourceCurrency || '--';
+        if (warningEl) {
+            warningEl.style.display = insufficient ? 'block' : 'none';
+            warningEl.textContent = insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : '';
+        }
+    }
+
+    function refreshPayoutRow(rowId, preserveFocus = false) {
+        const batch = ensurePayoutBatchDraft();
+        const row = batch.requests.find(item => item.id === rowId);
+        const currentRow = document.querySelector(`[data-payout-row-id="${rowId}"]`);
+        if (!row || !currentRow) return;
+
+        const snapshot = preserveFocus ? getPayoutFocusSnapshot() : null;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = renderPayoutBatchRow(row, batch);
+        currentRow.replaceWith(wrapper.firstElementChild);
+        lucide.createIcons();
+        refreshPayoutBatchTotalsPanel();
+        if (snapshot) restorePayoutFocus(snapshot);
+    }
+
+    function refreshPayoutRowDerivedValues(rowId) {
+        const batch = ensurePayoutBatchDraft();
+        const row = batch.requests.find(item => item.id === rowId);
+        const currentRow = document.querySelector(`[data-payout-row-id="${rowId}"]`);
+        if (!row || !currentRow) return;
+
+        const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
+        const sourceAmountEl = currentRow.querySelector('[data-role="source-amount"] span');
+        const fxRateEl = currentRow.querySelector('[data-role="fx-rate"]');
+
+        if (sourceAmountEl) {
+            sourceAmountEl.textContent = batch.sourceCurrency
+                ? formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency)
+                : '0.00';
+        }
+
+        if (fxRateEl) {
+            fxRateEl.textContent = batch.sourceCurrency
+                ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}`
+                : 'Select source of fund first';
+        }
+
+        refreshPayoutBatchTotalsPanel();
+    }
+
+    function renderPayoutNewPayeeForm() {
+        const row = ensurePayoutBatchDraft().requests.find(item => item.id === activePayoutNewPayeeRowId);
+        if (!row) return '';
+
+        const currency = row.payoutCurrency || payoutBatchDraft.sourceCurrency;
+        const stablecoin = isStablecoinCurrency(currency);
+
+        return `
+            <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #BFDBFE; box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);">
+                <div style="padding: 18px 22px; border-bottom: 1px solid #DBEAFE; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div>
+                        <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Create New Payee</div>
+                        <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Create a payee for this payout row and pre-fill the receiving ${stablecoin ? 'wallet address' : 'bank account'}.</div>
+                    </div>
+                    <button class="btn btn-outline" onclick="window.cancelNewPayoutPayee()" style="padding: 8px 12px; font-size: 12px;">Close</button>
+                </div>
+                <div style="padding: 22px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Payee Full Name *</label>
+                            <input id="payout-new-payee-name" class="bank-form-control" type="text" placeholder="e.g. Shenzhen Apex Electronics">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Work Email *</label>
+                            <input id="payout-new-payee-email" class="bank-form-control" type="email" placeholder="e.g. treasury@counterparty.com">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        ${stablecoin ? `
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Wallet Network *</label>
+                                <select id="payout-new-payee-network" class="bank-form-control">
+                                    <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                    <option value="Ethereum">Ethereum</option>
+                                    <option value="Polygon">Polygon</option>
+                                    <option value="Solana">Solana</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Wallet Address *</label>
+                                <input id="payout-new-payee-destination" class="bank-form-control" type="text" placeholder="Enter wallet address" style="font-family: monospace;">
+                            </div>
+                        ` : `
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Bank Name *</label>
+                                <input id="payout-new-payee-bank-name" class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label">Bank Account *</label>
+                                <input id="payout-new-payee-destination" class="bank-form-control" type="text" placeholder="Enter receiving bank account">
+                            </div>
+                        `}
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-outline" onclick="window.cancelNewPayoutPayee()" style="padding: 10px 16px;">Cancel</button>
+                        <button class="btn btn-primary" onclick="window.savePayoutNewPayee()" style="padding: 10px 18px;">Save Payee</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPayoutBatchRows(batch) {
+        return batch.requests.map(row => renderPayoutBatchRow(row, batch)).join('');
+    }
+
+    function renderPayoutCreatePage() {
+        const batch = ensurePayoutBatchDraft();
+        const sourceOptions = getPayoutSourceOptions();
+        const availableBalance = TRANSFER_BALANCES[batch.sourceCurrency] || 0;
+        const totals = getPayoutBatchTotals();
+        const insufficient = Boolean(batch.sourceCurrency) && totals.total > availableBalance;
+        const selectedVisual = getPayoutCurrencyVisual(batch.sourceCurrency);
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 36px;">
+                <div class="card" style="padding: 24px 28px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div>
+                            <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">New Payout Batch</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6; max-width: 760px;">Select the source of fund first, then add one or more payout requests. The batch will calculate the required source amount, FX rate, fees, and submit the whole batch into review after execution.</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Batch Status</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 4px;">Draft</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 22px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Source of Fund</div>
+                                <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Asset Vault</div>
+                            </div>
+                            <div style="padding: 14px 16px; border-radius: 16px; background: #0F172A; color: white; min-width: 260px; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);">
+                                <div style="font-size: 11px; color: rgba(255,255,255,0.72); text-transform: uppercase; letter-spacing: 0.08em;">Available Balance</div>
+                                <div style="font-size: 24px; font-weight: 900; margin-top: 6px; letter-spacing: -0.02em;">${batch.sourceCurrency ? formatTransferMoney(availableBalance, batch.sourceCurrency) : '--'}</div>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: minmax(280px, 360px) minmax(260px, 1fr); gap: 16px; margin-top: 18px; align-items: stretch;">
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <label class="bank-form-label" style="margin: 0;">Source Asset *</label>
+                                <select id="payout-source-currency" data-focus-key="payout-source-currency" class="bank-form-control" onchange="window.updatePayoutSourceCurrency(this.value)" style="height: 52px;">
+                                    <option value="">Select source asset</option>
+                                    ${sourceOptions.map(option => `<option value="${option.currency}" ${option.currency === batch.sourceCurrency ? 'selected' : ''}>${option.currency} - Available ${option.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div style="border-radius: 18px; border: 1px solid ${batch.sourceCurrency ? selectedVisual.border : '#E2E8F0'}; background: ${batch.sourceCurrency ? `linear-gradient(180deg, ${selectedVisual.bg} 0%, #FFFFFF 100%)` : '#FFFFFF'}; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <div style="width: 46px; height: 46px; border-radius: 16px; background: ${batch.sourceCurrency ? selectedVisual.bg : '#F8FAFC'}; color: ${batch.sourceCurrency ? selectedVisual.color : '#94A3B8'}; border: 1px solid ${batch.sourceCurrency ? selectedVisual.border : '#E2E8F0'}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900;">
+                                        ${batch.sourceCurrency || '--'}
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Selected Source</div>
+                                        <div style="font-size: 16px; font-weight: 800; color: #0F172A; margin-top: 5px;">${batch.sourceCurrency || 'No asset selected'}</div>
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Available</div>
+                                    <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 5px;">${batch.sourceCurrency ? formatTransferMoney(availableBalance, batch.sourceCurrency) : '--'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.95fr 52px; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div>Payee</div>
+                        <div>Currency</div>
+                        <div>Amount</div>
+                        <div>Source Amount</div>
+                        <div>Destination</div>
+                        <div>Notes</div>
+                        <div></div>
+                    </div>
+
+                    <div>
+                        ${renderPayoutBatchRows(batch)}
+                    </div>
+
+                    <div style="padding: 24px; border-top: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;">
+                        <div style="min-width: 360px; flex: 1; max-width: 520px; border-radius: 20px; border: 1px solid #CBD5E1; background: #FFFFFF; box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06); overflow: hidden;">
+                            <div style="padding: 16px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                                <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Batch Totals</div>
+                            </div>
+                            <div style="padding: 18px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
+                                    <span style="font-size: 13px; color: #64748B;">Net Payout</span>
+                                    <strong id="payout-batch-net-total" style="font-size: 19px; color: #0F172A; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.netSource, batch.sourceCurrency) : '0.00'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <span style="font-size: 13px; color: #64748B;">Fee</span>
+                                    <strong id="payout-batch-fee-total" style="font-size: 18px; color: #B45309; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.fee, batch.sourceCurrency) : '0.00'}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-top: 16px;">
+                                    <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Required</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Amount to be reserved from the source vault.</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div id="payout-batch-grand-total" style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1;">${totals.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div id="payout-batch-grand-total-currency" style="font-size: 13px; font-weight: 800; color: #1D4ED8; margin-top: 6px;">${batch.sourceCurrency || '--'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px;">
+                            <div id="payout-batch-balance-warning" style="font-size: 12px; color: #DC2626; font-weight: 700; display: ${insufficient ? 'block' : 'none'};">${insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : ''}</div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
+                                <button class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px;">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderPayoutConfirmPage() {
+        const batch = ensurePayoutBatchDraft();
+        const totals = getPayoutBatchTotals();
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 36px;">
+                <div class="card" style="padding: 24px 28px;">
+                    <button onclick="window.backToPayoutBatchEdit()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 700; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        Back to Edit
+                    </button>
+                    <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Confirm Payout Batch</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review the batch details below before execution. The batch will be submitted into review immediately after execution.</div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                        <div style="display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source of Fund</div>
+                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${batch.sourceCurrency} Asset Vault</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Net Payout</div>
+                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${formatTransferMoney(totals.netSource, batch.sourceCurrency)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Fee</div>
+                                <div style="font-size: 18px; font-weight: 800; color: #C2410C; margin-top: 4px;">${formatTransferMoney(totals.fee, batch.sourceCurrency)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Required</div>
+                                <div style="font-size: 20px; font-weight: 900; color: #1D4ED8; margin-top: 4px;">${formatTransferMoney(totals.total, batch.sourceCurrency)}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 20px 24px 10px 24px; border-bottom: 1px solid #E2E8F0; background: #FFFFFF;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Payout Requests</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Review the batch rows below before submitting this payout batch for approval.</div>
+                            </div>
+                            <div style="font-size: 12px; font-weight: 700; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px 10px; border-radius: 999px;">
+                                ${batch.requests.length} Request${batch.requests.length > 1 ? 's' : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 0 24px 18px 24px; background: #FFFFFF;">
+                        <div style="display: grid; grid-template-columns: 52px 1.2fr 0.7fr 1fr 1.8fr 0.9fr 0.9fr; gap: 18px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>No.</div>
+                            <div>Payee</div>
+                            <div>Currency</div>
+                            <div class="text-right">Payout Amount</div>
+                            <div>Destination</div>
+                            <div class="text-right">Source Amount</div>
+                            <div class="text-right">Fee</div>
+                        </div>
+                        ${batch.requests.map((row, index) => {
+                            const payee = getPayeeById(row.payeeId);
+                            const destination = getPayeeDestinationOptions(payee, row.payoutCurrency).find(item => item.key === row.destinationKey);
+                            const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
+                            return `
+                                <div style="display: grid; grid-template-columns: 52px 1.2fr 0.7fr 1fr 1.8fr 0.9fr 0.9fr; gap: 18px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; font-weight: 700; color: #64748B;">${String(index + 1).padStart(2, '0')}</div>
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 600; color: #0F172A;">${payee?.name || '-'}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${getPayoutPurposeLabel(row)}</div>
+                                    </div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; padding-top: 1px;">${row.payoutCurrency}</div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${formatTransferMoney(parseFloat(row.amount) || 0, row.payoutCurrency)}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${row.payoutCurrency}</div>
+                                    </div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${destination ? `${destination.meta} - ${destination.value}` : '-'}</div>
+                                    <div style="text-align: right; font-size: 14px; font-weight: 700; color: #0F172A;">${formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency)}</div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 14px; font-weight: 700; color: #B45309;">${formatTransferMoney(calculation.feeInSourceCurrency, batch.sourceCurrency)}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${row.note || '-'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; background: #FFFFFF; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
+                        <button class="btn btn-primary" onclick="window.executePayoutBatch()" style="padding: 10px 18px;">Execute to Payout</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    function renderPayoutSuccessPage() {
+        const batch = ensurePayoutBatchDraft();
+        const totals = getPayoutBatchTotals();
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 36px;">
+                <div class="card" style="padding: 30px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="width: 56px; height: 56px; border-radius: 18px; background: #EFF6FF; color: #2563EB; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="shield-check" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 28px; font-weight: 800; color: #0F172A;">Payout Batch Submitted</div>
+                        <div style="font-size: 14px; color: #64748B; line-height: 1.7; margin-top: 8px;">Your payout batch has been created successfully. It has now entered review according to your current approval rules.</div>
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid #BFDBFE; background: #EFF6FF; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 11px; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em;">Payout Batch ID</div>
+                            <div style="font-size: 18px; font-weight: 800; color: #1D4ED8; margin-top: 4px;">${batch.batchId}</div>
+                        </div>
+                        <span style="background: #FFFFFF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase;">In Review</span>
+                    </div>
+                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Your transfer was submitted for approval.</div>
+                </div>
+
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                        <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Payout Batch Details</h3>
+                    </div>
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Source of Fund</span><strong style="font-size: 14px; color: #0F172A;">${batch.sourceCurrency} Asset Vault</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Created At</span><strong style="font-size: 14px; color: #0F172A;">${batch.createdAt}</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Payout Requests</span><strong style="font-size: 14px; color: #0F172A;">${batch.requests.length}</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Net Payout</span><strong style="font-size: 14px; color: #0F172A;">${formatTransferMoney(totals.netSource, batch.sourceCurrency)}</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Fee</span><strong style="font-size: 14px; color: #C2410C;">${formatTransferMoney(totals.fee, batch.sourceCurrency)}</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px;"><span style="font-size: 12px; color: #64748B;">Total Required</span><strong style="font-size: 16px; color: #1D4ED8;">${formatTransferMoney(totals.total, batch.sourceCurrency)}</strong></div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" onclick="window.finishPayoutBatchSuccess()" style="padding: 10px 18px;">OK</button>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     function renderPayoutOrdersPage() {
+        if (payoutOrdersView === 'create') {
+            renderPayoutCreatePage();
+            return;
+        }
+        if (payoutOrdersView === 'confirm') {
+            renderPayoutConfirmPage();
+            return;
+        }
+        if (payoutOrdersView === 'success') {
+            renderPayoutSuccessPage();
+            return;
+        }
+
         const searchValue = document.getElementById('payout-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('payout-orders-status')?.value || 'all';
         const rows = ORDER_REPORT_DATA['payout'].filter(row => {
@@ -5080,7 +5802,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">
                         <h2 class="card-title" style="margin-bottom: 0px; font-size: 16px;">Payout Order List</h2>
-                        <button class="btn btn-primary" onclick="alert('Creating New Payout...')"><i data-lucide="plus"></i> New Payout</button>
+                        <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()"><i data-lucide="plus"></i> New Payout</button>
                     </div>
                     
                     <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 14px; align-items: center; justify-content: space-between;">
@@ -5127,6 +5849,271 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    window.openNewPayoutBatchPage = function() {
+        payoutBatchDraft = {
+            sourceCurrency: '',
+            requests: [createEmptyPayoutRequest('')],
+            batchId: '',
+            createdAt: ''
+        };
+        payoutOrdersView = 'create';
+        activePayoutNewPayeeRowId = null;
+        renderPayoutOrdersPage();
+    };
+
+    window.updatePayoutSourceCurrency = function(currency) {
+        const batch = ensurePayoutBatchDraft(currency);
+        batch.sourceCurrency = currency;
+        batch.requests = batch.requests.map(row => ({
+            ...row,
+            payoutCurrency: currency ? (row.payoutCurrency || currency) : '',
+            destinationKey: currency ? row.destinationKey : ''
+        }));
+        rerenderPayoutOrdersPreservingFocus();
+    };
+
+    window.updatePayoutRequestField = function(rowId, field, value) {
+        const batch = ensurePayoutBatchDraft();
+        const row = batch.requests.find(item => item.id === rowId);
+        if (!row) return;
+
+        if (field === 'payeeId' && value === '__new__') {
+            activePayoutNewPayeeRowId = rowId;
+            openPayeeFormDrawerForPayout(rowId);
+            return;
+        }
+
+        row[field] = value;
+
+        if (field === 'payeeId' || field === 'payoutCurrency') {
+            row.destinationKey = '';
+        }
+
+        if (field === 'payoutCurrency') {
+            const payee = getPayeeById(row.payeeId);
+            if (payee && !getPayeeDestinationOptions(payee, value).length) {
+                row.destinationKey = '';
+            }
+        }
+        if (field === 'amount') {
+            refreshPayoutRowDerivedValues(rowId);
+            return;
+        }
+
+        if (field === 'note') {
+            return;
+        }
+
+        if (['destinationKey', 'payeeId', 'payoutCurrency'].includes(field)) {
+            refreshPayoutRow(rowId, false);
+            return;
+        }
+
+        rerenderPayoutOrdersPreservingFocus();
+    };
+
+    window.addPayoutRequestRow = function(rowId) {
+        const batch = ensurePayoutBatchDraft();
+        const currentRow = batch.requests.find(item => item.id === rowId);
+        const insertIndex = batch.requests.findIndex(item => item.id === rowId);
+        const newRow = createEmptyPayoutRequest(batch.sourceCurrency);
+        if (currentRow?.payoutCurrency) newRow.payoutCurrency = currentRow.payoutCurrency;
+        batch.requests.splice(insertIndex + 1, 0, newRow);
+        renderPayoutOrdersPage();
+    };
+
+    window.removePayoutRequestRow = function(rowId) {
+        const batch = ensurePayoutBatchDraft();
+        batch.requests = batch.requests.filter(row => row.id !== rowId);
+        if (!batch.requests.length) {
+            batch.requests = [createEmptyPayoutRequest(batch.sourceCurrency)];
+        }
+        if (activePayoutNewPayeeRowId === rowId) activePayoutNewPayeeRowId = null;
+        renderPayoutOrdersPage();
+    };
+
+    window.cancelNewPayoutPayee = function() {
+        const batch = ensurePayoutBatchDraft();
+        const row = batch.requests.find(item => item.id === activePayoutNewPayeeRowId);
+        if (row) row.payeeId = '';
+        activePayoutNewPayeeRowId = null;
+        renderPayoutOrdersPage();
+    };
+
+    window.savePayoutNewPayee = function() {
+        const rowId = activePayoutNewPayeeRowId;
+        const batch = ensurePayoutBatchDraft();
+        const row = batch.requests.find(item => item.id === rowId);
+        if (!row) return;
+
+        const name = document.getElementById('payout-new-payee-name')?.value?.trim();
+        const email = document.getElementById('payout-new-payee-email')?.value?.trim();
+        const payoutCurrency = row.payoutCurrency || batch.sourceCurrency;
+        const stablecoin = isStablecoinCurrency(payoutCurrency);
+        const destination = document.getElementById('payout-new-payee-destination')?.value?.trim();
+        const network = document.getElementById('payout-new-payee-network')?.value?.trim();
+        const bankName = document.getElementById('payout-new-payee-bank-name')?.value?.trim();
+
+        if (!name || !email || !destination || (stablecoin && !network) || (!stablecoin && !bankName)) {
+            alert(`Please complete the new payee information for the ${stablecoin ? 'wallet' : 'bank account'} destination.`);
+            return;
+        }
+
+        const newPayee = {
+            id: `PAY-${String(payeeList.length + 1).padStart(3, '0')}`,
+            name,
+            alias: name,
+            type: stablecoin ? 'Crypto Wallet' : 'Bank Account',
+            wallets: stablecoin ? [{ network, address: destination }] : [],
+            banks: stablecoin ? [] : [{ bankName, account: destination }],
+            linkedPayouts: 0,
+            status: 'active',
+            email,
+            personType: 'company',
+            createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        };
+
+        payeeList.unshift(newPayee);
+        row.payeeId = newPayee.id;
+        row.destinationKey = stablecoin ? 'wallet-0' : 'bank-0';
+        activePayoutNewPayeeRowId = null;
+        notifyOrderCreated(
+            'Payee Created',
+            `${name} was created and added to your payout payee list.`,
+            'View Payee',
+            () => {
+                pageTitle.textContent = 'Payee List';
+                payeeListView = 'list';
+                renderPayeeListPage();
+            }
+        );
+        renderPayoutOrdersPage();
+    };
+
+    window.cancelPayoutBatch = function() {
+        payoutOrdersView = 'list';
+        payoutBatchDraft = null;
+        activePayoutNewPayeeRowId = null;
+        renderPayoutOrdersPage();
+    };
+
+    window.goToPayoutBatchConfirm = function() {
+        const batch = ensurePayoutBatchDraft();
+        const availableBalance = TRANSFER_BALANCES[batch.sourceCurrency] || 0;
+        const totals = getPayoutBatchTotals();
+
+        if (!batch.sourceCurrency) {
+            alert('Please select the source of fund first.');
+            return;
+        }
+
+        if (!batch.requests.length) {
+            alert('Please add at least one payout request.');
+            return;
+        }
+
+        for (const row of batch.requests) {
+            const payee = getPayeeById(row.payeeId);
+            if (!payee) {
+                alert('Please select a payee for every payout request.');
+                return;
+            }
+            if (!(parseFloat(row.amount) > 0)) {
+                alert('Please enter a valid payout amount for every payout request.');
+                return;
+            }
+            if (!row.destinationKey) {
+                alert('Please select the destination address or bank account for every payout request.');
+                return;
+            }
+        }
+
+        if (totals.total > availableBalance) {
+            alert(`Insufficient ${batch.sourceCurrency} balance for this payout batch.`);
+            return;
+        }
+
+        payoutOrdersView = 'confirm';
+        renderPayoutOrdersPage();
+    };
+
+    window.backToPayoutBatchEdit = function() {
+        payoutOrdersView = 'create';
+        renderPayoutOrdersPage();
+    };
+
+    window.executePayoutBatch = function() {
+        const batch = ensurePayoutBatchDraft();
+        const totals = getPayoutBatchTotals();
+        const usdEquivalent = getEquivalentUsdAmount(totals.total, batch.sourceCurrency);
+        const now = new Date();
+        const batchId = `PB-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(ORDER_REPORT_DATA.payout.length + 1).padStart(4, '0')}`;
+        const submittedAt = now.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        batch.batchId = batchId;
+        batch.createdAt = submittedAt;
+
+        const secondApproverRequired = usdEquivalent > 100;
+        const approvalRequest = {
+            id: `APR-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${String(approvalRequests.length + 1).padStart(4, '0')}`,
+            title: 'Payout Batch Approval',
+            scope: 'Payout',
+            orderId: batchId,
+            type: 'Payout Batch',
+            requester: getCurrentUser()?.name || 'Current User',
+            subject: `${batch.requests.length} payout request${batch.requests.length > 1 ? 's' : ''}`,
+            amount: totals.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+            currency: batch.sourceCurrency,
+            status: 'pending',
+            levelLabel: secondApproverRequired ? 'Level 1 of 2' : 'Level 1 of 1',
+            submittedAt,
+            submittedAtValue: now.getTime(),
+            notes: `Payout batch ${batchId} requires review before execution.`
+        };
+        approvalRequests.unshift(approvalRequest);
+
+        ORDER_REPORT_DATA.payout.unshift({
+            time: 'Today, ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+            orderId: batchId,
+            beneficiary: batch.requests.length === 1 ? (getPayeeById(batch.requests[0].payeeId)?.name || '-') : `${batch.requests.length} payees`,
+            method: batch.requests.length === 1 ? getPayoutPurposeLabel(batch.requests[0]) : 'Mixed Batch',
+            purpose: 'Payout Batch',
+            source: `${batch.sourceCurrency} Asset Vault`,
+            amount: formatTransferMoney(totals.total, batch.sourceCurrency),
+            approval: secondApproverRequired ? 'Pending / Nancy Test -> Dayong Chang' : 'Pending / Nancy Test',
+            status: 'Pending Approval'
+        });
+
+        notifyOrderCreated(
+            'Payout Batch Submitted',
+            `${batchId} for ${formatTransferMoney(totals.total, batch.sourceCurrency)} was submitted for review.`,
+            'View Order',
+            () => {
+                pageTitle.textContent = 'Payout Orders';
+                payoutOrdersView = 'success';
+                renderPayoutOrdersPage();
+            }
+        );
+        notifyApprovalRequestCreated(approvalRequest);
+
+        payoutOrdersView = 'success';
+        renderPayoutOrdersPage();
+    };
+
+    window.finishPayoutBatchSuccess = function() {
+        payoutOrdersView = 'list';
+        payoutBatchDraft = null;
+        activePayoutNewPayeeRowId = null;
+        renderPayoutOrdersPage();
+    };
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = overviewHTML;
@@ -5172,6 +6159,8 @@ document.addEventListener('DOMContentLoaded', () => {
             activePayeeId = null;
             renderPayeeListPage();
         } else if (title === 'Payout Orders') {
+            payoutOrdersView = 'list';
+            activePayoutNewPayeeRowId = null;
             renderPayoutOrdersPage();
         } else if (title === 'Approval Rules') {
             approvalRuleView = 'list';
