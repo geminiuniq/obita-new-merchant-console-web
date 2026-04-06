@@ -4385,13 +4385,15 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'PAY-001',
             name: 'Shenzhen Apex Electronics',
             alias: 'Apex Electronics',
-            type: '-',
-            currency: '-',
-            bankName: '-',
-            accountNumber: '-',
-            routingInfo: '-',
-            country: 'China',
-            purpose: 'Supplier Payment',
+            type: 'Bank Account',
+            wallets: [
+                { network: 'TRON (TRC-20)', address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t' },
+                { network: 'Ethereum', address: '0x12..cf' }
+            ],
+            banks: [
+                { bankName: 'HSBC Hong Kong', account: '448-XXXX-XXXX' }
+            ],
+            linkedPayouts: 12,
             status: 'active',
             email: 'contact@apex.example.com',
             personType: 'company',
@@ -4401,13 +4403,12 @@ document.addEventListener('DOMContentLoaded', () => {
             id: 'PAY-002',
             name: 'Nova Logistics Ltd',
             alias: 'Nova Logistics',
-            type: '-',
-            currency: '-',
-            bankName: '-',
-            accountNumber: '-',
-            routingInfo: '-',
-            country: 'Singapore',
-            purpose: 'Logistics Settlement',
+            type: 'Crypto Wallet',
+            wallets: [
+                { network: 'Polygon', address: '0x43..9a' }
+            ],
+            banks: [],
+            linkedPayouts: 5,
             status: 'active',
             email: 'accounts@nova.example.com',
             personType: 'company',
@@ -4496,10 +4497,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <!-- Column headers -->
-                    <div style="display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1.2fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                    <div style="display: grid; grid-template-columns: 1.6fr 0.7fr 1.3fr 1.3fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 12px 24px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
                         <div>Payee</div>
                         <div>Profile</div>
-                        <div>Payout Details</div>
+                        <div>Wallet Summary</div>
+                        <div>Bank Account Summary</div>
+                        <div>Linked Payout</div>
                         <div>Status</div>
                         <div style="text-align: right;">Actions</div>
                     </div>
@@ -4507,10 +4510,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     <!-- Rows -->
                     <div>
                         ${filtered.length ? filtered.map(p => {
-                            const typePill   = getPayeeTypePill(p.type);
                             const statusMeta = getPayeeStatusPill(p.status);
+                            
+                            let walletHtml = '<div style="font-size: 11px; color: #94A3B8; font-style: italic;">No wallet</div>';
+                            if (p.wallets && p.wallets.length > 0) {
+                                const w = p.wallets[0];
+                                const more = p.wallets.length > 1 ? `<span style="background: #F1F5F9; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; margin-left: 6px;">+${p.wallets.length - 1}</span>` : '';
+                                walletHtml = `
+                                    <div style="font-size: 12px; font-weight: 600; color: #0F172A; display: flex; align-items: center; white-space: nowrap;">${w.network} ${more}</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 3px; font-family: monospace;">${w.address}</div>
+                                `;
+                            } else if (p.status === 'pending_collection') {
+                                walletHtml = '<div style="font-size: 11px; color: #D97706; background: #FFFBEB; padding: 4px 8px; border-radius: 4px; display: inline-block;">Pending</div>';
+                            }
+
+                            let bankHtml = '<div style="font-size: 11px; color: #94A3B8; font-style: italic;">No bank account</div>';
+                            if (p.banks && p.banks.length > 0) {
+                                const b = p.banks[0];
+                                const more = p.banks.length > 1 ? `<span style="background: #E0E7FF; color: #4338CA; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700; margin-left: 6px;">+${p.banks.length - 1}</span>` : '';
+                                bankHtml = `
+                                    <div style="font-size: 12px; font-weight: 600; color: #0F172A; display: flex; align-items: center; white-space: nowrap;">${b.bankName} ${more}</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 3px; font-family: monospace;">${b.account}</div>
+                                `;
+                            } else if (p.status === 'pending_collection') {
+                                bankHtml = '<div style="font-size: 11px; color: #D97706; background: #FFFBEB; padding: 4px 8px; border-radius: 4px; display: inline-block;">Pending</div>';
+                            }
+
                             return `
-                            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1.2fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                            <div style="display: grid; grid-template-columns: 1.6fr 0.7fr 1.3fr 1.3fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #F1F5F9; align-items: center; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                 <div>
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
                                     <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
@@ -4518,19 +4545,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div>
                                     <span style="display:inline-block; padding: 3px 8px; border-radius: 4px; background: ${p.personType === 'company' ? '#F1F5F9' : '#EFF6FF'}; color: ${p.personType === 'company' ? '#475569' : '#1D4ED8'}; font-size: 10px; font-weight: 700; text-transform: uppercase;">${p.personType === 'company' ? 'Company' : 'Individual'}</span>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 5px;">${p.country}</div>
                                 </div>
+                                <div>${walletHtml}</div>
+                                <div>${bankHtml}</div>
                                 <div>
-                                    ${p.type === 'Pending' || p.type === '-' ? `
-                                        <div style="font-size: 12px; color: #D97706; font-style: italic; background: #FFFBEB; padding: 4px 8px; border-radius: 6px; display: inline-block;">Awaiting details</div>
-                                    ` : `
-                                        <div style="display: flex; align-items: center; gap: 6px;">
-                                            <span style="background: ${typePill.bg}; color: ${typePill.color}; border: 1px solid ${typePill.border}; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;">${p.type}</span>
-                                            <span style="font-size: 12px; font-weight: 700; color: #334155;">${p.currency}</span>
-                                        </div>
-                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 6px;">${p.accountNumber}</div>
-                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${p.bankName !== '-' ? p.bankName + ' · ' : ''}${p.routingInfo}</div>
-                                    `}
+                                    <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${p.linkedPayouts || 0}</span>
                                 </div>
                                 <div>
                                     <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
@@ -4921,10 +4940,9 @@ document.addEventListener('DOMContentLoaded', () => {
             name: displayName,
             alias: displayName,
             type: 'Pending',
-            currency: '-',
-            bankName: '-',
-            accountNumber: '-',
-            routingInfo: '-',
+            wallets: [],
+            banks: [],
+            linkedPayouts: 0,
             country: personType === 'company' ? (document.getElementById('payee-company-country')?.value?.trim() || '-') : '-',
             purpose: '-',
             status: 'pending_collection',
