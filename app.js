@@ -4841,13 +4841,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 { network: 'TRON (TRC-20)', address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', verified: true },
                 { network: 'Ethereum', address: '0x12..cf' }
             ],
-            banks: [
-                { bankName: 'HSBC Hong Kong', account: '448-XXXX-XXXX', verified: true }
-            ],
+            banks: [{ bankName: 'HSBC Hong Kong', account: '448-XXXX-XXXX', verified: true }],
             linkedPayouts: 12,
             status: 'active',
             email: 'contact@apex.example.com',
             personType: 'company',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: true, refund: true },
             createdAt: 'Apr 1, 2026'
         },
         {
@@ -4855,15 +4854,132 @@ document.addEventListener('DOMContentLoaded', () => {
             name: 'Nova Logistics Ltd',
             alias: 'Nova Logistics',
             type: 'Crypto Wallet',
-            wallets: [
-                { network: 'Polygon', address: '0x43..9a', verified: false }
-            ],
+            wallets: [{ network: 'Polygon(ERC-20)', address: '0x43..9a', verified: false }],
             banks: [],
             linkedPayouts: 5,
             status: 'active',
             email: 'accounts@nova.example.com',
             personType: 'company',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: true, refund: true },
             createdAt: 'Mar 28, 2026'
+        },
+        {
+            id: 'PAY-003',
+            name: 'Michael Chen',
+            alias: 'Michael',
+            type: 'Bank Account',
+            wallets: [],
+            banks: [{ bankName: 'DBS Bank Singapore', account: '123-456-7890', verified: true }],
+            linkedPayouts: 2,
+            status: 'active',
+            email: 'm.chen@example.com',
+            personType: 'individual',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: true, refund: true },
+            createdAt: 'Apr 2, 2026'
+        },
+        {
+            id: 'PAY-004',
+            name: 'Global Supply Co.',
+            alias: 'GSC',
+            type: 'Crypto Wallet',
+            wallets: [
+                { network: 'Ethereum', address: '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B', verified: true },
+                { network: 'BNB Chain', address: '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B', verified: true }
+            ],
+            banks: [{ bankName: 'JPMorgan Chase', account: '987654321', verified: false }],
+            linkedPayouts: 45,
+            status: 'active',
+            email: 'treasury@globalsupply.com',
+            personType: 'company',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: true, refund: true },
+            createdAt: 'Jan 15, 2026'
+        },
+        {
+            id: 'PAY-005',
+            name: 'Pioneer Digital Services',
+            alias: 'Pioneer Digital',
+            type: 'Bank Account',
+            wallets: [],
+            banks: [{ bankName: 'Standard Chartered', account: '4455667788', verified: true }],
+            linkedPayouts: 8,
+            status: 'disabled',
+            email: 'billing@pioneerdigital.io',
+            personType: 'company',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: true, refund: true },
+            createdAt: 'Dec 10, 2025'
+        },
+        {
+            id: 'PAY-006',
+            name: 'Sarah Jenkins',
+            alias: 'Sarah J.',
+            type: 'Crypto Wallet',
+            wallets: [{ network: 'Solana', label: 'Phantom Wallet', address: 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH', verified: true }],
+            banks: [],
+            linkedPayouts: 0,
+            status: 'pending_collection',
+            email: 'sarah.j@freelance.email',
+            personType: 'individual',
+            usageScope: { payout: true, collectionInvoice: false, collectionCheckout: false, refund: false },
+            createdAt: 'Apr 4, 2026'
+        },
+        {
+            id: 'PAY-007',
+            name: 'TechFlow Solutions Limited',
+            alias: 'TechFlow',
+            type: 'Crypto Wallet',
+            wallets: [{ network: 'TRON (TRC-20)', label: 'Corporate TRON', address: 'TVkQxGTCi8q8ZY4pL8otSzgjLj6t7lNw', verified: true }],
+            banks: [
+                { bankName: 'Citibank NA', account: '1092837465', verified: true },
+                { bankName: 'Wells Fargo', account: '5647382910', verified: true }
+            ],
+            linkedPayouts: 32,
+            status: 'active',
+            email: 'finance@techflow.net',
+            personType: 'company',
+            usageScope: { payout: true, collectionInvoice: true, collectionCheckout: false, refund: false },
+            createdAt: 'Feb 20, 2026'
+        },
+        {
+            id: 'PAY-008',
+            name: 'David Silva',
+            alias: 'David',
+            type: 'Bank Account',
+            wallets: [],
+            banks: [{ bankName: 'Banco do Brasil', account: '11223344-5', verified: true }],
+            linkedPayouts: 1,
+            status: 'active',
+            email: 'david.silva@contractors.br',
+            personType: 'individual',
+            usageScope: { payout: false, collectionInvoice: false, collectionCheckout: false, refund: true },
+            createdAt: 'Mar 12, 2026'
+        },
+        {
+            id: 'PAY-009',
+            name: 'Nexus Cloud Hosting',
+            alias: 'Nexus Cloud',
+            type: 'Bank Account',
+            wallets: [{ network: 'Ethereum', label: 'Nexus Main', address: '0x2b...9a11', verified: true }],
+            banks: [{ bankName: 'Barclays Bank', account: '20-30-40 12345678', verified: true }],
+            linkedPayouts: 15,
+            status: 'active',
+            email: 'ap@nexuscloud.example.com',
+            personType: 'company',
+            usageScope: { payout: true, collectionInvoice: false, collectionCheckout: false, refund: false },
+            createdAt: 'Mar 5, 2026'
+        },
+        {
+            id: 'PAY-010',
+            name: 'OmniTrade Partners',
+            alias: 'OmniTrade',
+            type: 'Crypto Wallet',
+            wallets: [{ network: 'TRON (TRC-20)', label: 'Settlement TRON', address: 'TGX9yWv7jZt4p...sP9mDz', verified: false }],
+            banks: [],
+            linkedPayouts: 0,
+            status: 'pending_collection',
+            email: 'vendors@omnitrade.com',
+            personType: 'company',
+            usageScope: { payout: false, collectionInvoice: true, collectionCheckout: true, refund: false },
+            createdAt: 'Apr 6, 2026'
         }
     ];
 
