@@ -5406,17 +5406,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: flex; flex-direction: column; gap: 16px;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Type</label>
-                                        <select class="bank-form-control"><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
+                                        <label class="bank-form-label" style="color: #94A3B8;">Type</label>
+                                        <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">Email</label>
-                                        <input class="bank-form-control" type="text" value="${payee.email}">
+                                        <input id="detail-edit-email" class="bank-form-control" type="text" value="${payee.email}">
                                     </div>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">Entity Name</label>
-                                    <input class="bank-form-control" type="text" value="${payee.name}">
+                                    <label class="bank-form-label" style="color: #94A3B8;">Entity Name</label>
+                                    <input class="bank-form-control" type="text" value="${payee.name}" style="background: #F8FAFC; color: #64748B;" disabled>
                                 </div>
                             </div>
                         ` : `
@@ -5444,19 +5444,19 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
                                     <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Payout</div>
-                                    <input type="checkbox" ${(!payee.usageScope || payee.usageScope.payout) ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
+                                    <input id="detail-edit-usage-payout" type="checkbox" ${(!payee.usageScope || payee.usageScope.payout) ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
                                 </label>
                                 <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
                                     <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Collection - Invoice</div>
-                                    <input type="checkbox" ${payee.usageScope?.collectionInvoice ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
+                                    <input id="detail-edit-usage-invoice" type="checkbox" ${payee.usageScope?.collectionInvoice ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
                                 </label>
                                 <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
                                     <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Collection - Checkout</div>
-                                    <input type="checkbox" ${payee.usageScope?.collectionCheckout ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
+                                    <input id="detail-edit-usage-checkout" type="checkbox" ${payee.usageScope?.collectionCheckout ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
                                 </label>
                                 <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
                                     <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can receive Refund</div>
-                                    <input type="checkbox" ${payee.usageScope?.refund ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
+                                    <input id="detail-edit-usage-refund" type="checkbox" ${payee.usageScope?.refund ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
                                 </label>
                             </div>
                         ` : `
@@ -5486,9 +5486,60 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div style="font-size: 13px; font-family: monospace; color: #475569;">${w.address}</div>
                             </div>
                         `).join('') : '<div style="font-size: 13px; color: #94A3B8; margin-bottom: 12px;">No crypto wallets.</div>'}
+                        ${detailEditState.addWallet ? `
+                            <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px; margin-top: 12px;">
+                                <h4 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0;">Add New Wallet</h4>
+                                <label style="display: flex; align-items: flex-start; gap: 10px; background: #FFFFFF; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                                    <input type="checkbox" style="margin-top: 3px; accent-color: #2563EB;" oninput="document.getElementById('detail-wallet-options').style.display = this.checked ? 'flex' : 'none'">
+                                    <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet(s) to be registered are owned by this payee and are used solely for receiving authorised payouts from this merchant profile.</span>
+                                </label>
+                                <div id="detail-wallet-options" style="display: none; flex-direction: column; gap: 12px;">
+                                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                                        <input type="radio" name="detail-wallet-fill" value="self" id="detail-wallet-self" checked style="margin-top: 3px; accent-color: #059669;" onchange="document.getElementById('detail-wallet-inputs').style.display = 'none'">
+                                        <label for="detail-wallet-self" style="cursor:pointer; width: 100%;">
+                                            <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit wallet details</div>
+                                            <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details needed now.</div>
+                                        </label>
+                                    </div>
+                                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                                        <input type="radio" name="detail-wallet-fill" value="now" id="detail-wallet-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="document.getElementById('detail-wallet-inputs').style.display = 'flex'">
+                                        <label for="detail-wallet-now" style="cursor:pointer; width: 100%;">
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter wallet details now</div>
+                                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of the payee.</div>
+                                        </label>
+                                    </div>
+                                    <div id="detail-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;">
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Wallet Address</label>
+                                            <input id="detail-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHq..." style="font-family: monospace;">
+                                        </div>
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Network</label>
+                                                <select id="detail-wallet-net" class="bank-form-control">
+                                                    <option>TRON (TRC-20)</option>
+                                                    <option>Ethereum (ERC-20)</option>
+                                                    <option>BNB Chain (BEP-20)</option>
+                                                    <option>Solana</option>
+                                                </select>
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Wallet Label</label>
+                                                <input id="detail-wallet-label" class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                    <button class="btn" onclick="window.toggleDetailEdit('addWallet')" style="padding: 8px 16px; font-size: 13px; font-weight: 600; background: transparent; color: #64748B;">Cancel</button>
+                                    <button class="btn btn-primary" onclick="window.saveDetailEdit('addWallet')" style="padding: 8px 16px; font-size: 13px; font-weight: 700;">Submit Wallet</button>
+                                </div>
+                            </div>
+                        ` : `
                         <div style="margin-top: 12px;">
-                            <button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="alert('Add New Wallet functionality')">+ Add New Wallet</button>
+                            <button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit('addWallet')">+ Add New Wallet</button>
                         </div>
+                        `}
                     </div>
 
                     <div class="card" style="padding: 24px;">
@@ -5535,7 +5586,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.saveDetailEdit = function(section) {
-        // mock save logic
+        if (!activePayeeId) return;
+        const payee = getPayeeById(activePayeeId);
+        
+        if (section === 'profile') {
+            const emailInput = document.getElementById('detail-edit-email');
+            if (emailInput) payee.email = emailInput.value.trim() || payee.email;
+        } else if (section === 'usage') {
+            if (!payee.usageScope) payee.usageScope = {};
+            payee.usageScope.payout = document.getElementById('detail-edit-usage-payout')?.checked;
+            payee.usageScope.collectionInvoice = document.getElementById('detail-edit-usage-invoice')?.checked;
+            payee.usageScope.collectionCheckout = document.getElementById('detail-edit-usage-checkout')?.checked;
+            payee.usageScope.refund = document.getElementById('detail-edit-usage-refund')?.checked;
+        } else if (section === 'addWallet') {
+            const isNow = document.getElementById('detail-wallet-now')?.checked;
+            if (isNow) {
+                const addr = document.getElementById('detail-wallet-addr')?.value.trim();
+                const net = document.getElementById('detail-wallet-net')?.value;
+                const label = document.getElementById('detail-wallet-label')?.value.trim();
+                if (addr && net) {
+                    if (!payee.wallets) payee.wallets = [];
+                    payee.wallets.push({ network: net, address: addr, label: label, verified: false });
+                }
+            } else {
+                alert('A secure wallet registration link will be sent to the payee.');
+            }
+        }
+        
         detailEditState[section] = false;
         renderPayeeFormPage();
     };
