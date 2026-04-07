@@ -2891,9 +2891,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openRecipientManagementPage = function() {
-        pageTitle.textContent = 'External Contacts';
+        pageTitle.textContent = 'Payer List for Invoice';
         payeeListView = 'list';
         activePayeeId = null;
+        payeeDirectoryMode = 'invoicePayerList';
         activeExternalContactsUsageFilter = 'collectionInvoice';
         renderPayeeListPage();
     };
@@ -5503,7 +5504,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return matchesSearch && matchesStatus && matchesMethod && matchesDateRange;
         });
 
-        const recipientSummary = {
+        const payerSummary = {
             total: 4,
             active: 3,
             pending: 1,
@@ -5519,10 +5520,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
                 <div style="display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.95fr); gap: 20px; align-items: stretch;">
                     <div class="card collections-summary-card" style="padding: 24px;">
-                        <div class="collection-header" style="margin-bottom: 22px;">
-                            <div>
+                        <div class="collection-header" style="margin-bottom: 22px; min-height: 42px; align-items: flex-start;">
+                            <div style="min-height: 42px; display: flex; align-items: center;">
                                 <h2 class="card-title" style="font-size: 18px; margin: 0;">Invoice Summary</h2>
-                                <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Same operational summary as your overview, focused on invoice collection performance.</div>
                             </div>
                             <div class="time-selector">
                                 ${INVOICE_DURATION_OPTIONS.map(option => `
@@ -5555,25 +5555,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
 
                     <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06);">
-                        <div>
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Recipient Management</div>
+                        <div style="min-height: 42px; display: flex; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Payer List</div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div style="padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);">
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Recipients</div>
-                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${recipientSummary.total}</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${recipientSummary.active} active</div>
+                            <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; justify-content: space-between;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Payers</div>
+                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${payerSummary.total}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${payerSummary.active} active</div>
                             </div>
-                            <div style="padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
                                 <div>
                                     <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Pending Setup</div>
-                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${recipientSummary.pending}</div>
+                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${payerSummary.pending}</div>
                                 </div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${recipientSummary.lastUpdated}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${payerSummary.lastUpdated}</div>
                             </div>
                         </div>
                         <div style="display: flex; justify-content: flex-end;">
-                            <button class="btn btn-primary" onclick="window.openRecipientManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Recipients</button>
+                            <button class="btn btn-primary" onclick="window.openRecipientManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Payers</button>
                         </div>
                     </div>
                 </div>
@@ -6558,9 +6558,11 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <i data-lucide="${card.icon}" style="width: 38px; height: 38px; color: ${card.iconColor};"></i>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 14px;">
-                                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.02em;">${card.title}</h2>
-                                        <span style="padding: 6px 10px; border-radius: 8px; background: #EDE9FE; color: #4F46E5; font-size: 12px; font-weight: 800;">${card.badge}</span>
+                                        ${card.badge.split(',').map(tag => `
+                                            <span style="padding: 6px 10px; border-radius: 8px; background: #EDE9FE; color: #4F46E5; font-size: 12px; font-weight: 800;">${tag.trim()}</span>
+                                        `).join('')}
                                     </div>
                                     <div style="font-size: 14px; color: #0F172A; line-height: 1.7;">${card.description}</div>
                                 </div>
@@ -6666,6 +6668,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             banks: [{ bankName: 'HSBC Hong Kong', account: '448-XXXX-XXXX', verified: true }],
             linkedPayouts: 12,
+            linkedInvoices: 18,
             status: 'active',
             email: 'contact@apex.example.com',
             personType: 'company',
@@ -6680,6 +6683,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [{ network: 'Polygon(ERC-20)', address: '0x43..9a', verified: false }],
             banks: [],
             linkedPayouts: 5,
+            linkedInvoices: 7,
             status: 'active',
             email: 'accounts@nova.example.com',
             personType: 'company',
@@ -6694,6 +6698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [],
             banks: [{ bankName: 'DBS Bank Singapore', account: '123-456-7890', verified: true }],
             linkedPayouts: 2,
+            linkedInvoices: 3,
             status: 'active',
             email: 'm.chen@example.com',
             personType: 'individual',
@@ -6711,6 +6716,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ],
             banks: [{ bankName: 'JPMorgan Chase', account: '987654321', verified: false }],
             linkedPayouts: 45,
+            linkedInvoices: 29,
             status: 'active',
             email: 'treasury@globalsupply.com',
             personType: 'company',
@@ -6725,6 +6731,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [],
             banks: [{ bankName: 'Standard Chartered', account: '4455667788', verified: true }],
             linkedPayouts: 8,
+            linkedInvoices: 11,
             status: 'disabled',
             email: 'billing@pioneerdigital.io',
             personType: 'company',
@@ -6739,6 +6746,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [{ network: 'Solana', label: 'Phantom Wallet', address: 'HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH', verified: true }],
             banks: [],
             linkedPayouts: 0,
+            linkedInvoices: 0,
             status: 'pending_collection',
             email: 'sarah.j@freelance.email',
             personType: 'individual',
@@ -6756,6 +6764,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { bankName: 'Wells Fargo', account: '5647382910', verified: true }
             ],
             linkedPayouts: 32,
+            linkedInvoices: 21,
             status: 'active',
             email: 'finance@techflow.net',
             personType: 'company',
@@ -6770,6 +6779,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [],
             banks: [{ bankName: 'Banco do Brasil', account: '11223344-5', verified: true }],
             linkedPayouts: 1,
+            linkedInvoices: 0,
             status: 'active',
             email: 'david.silva@contractors.br',
             personType: 'individual',
@@ -6784,6 +6794,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [{ network: 'Ethereum', label: 'Nexus Main', address: '0x2b...9a11', verified: true }],
             banks: [{ bankName: 'Barclays Bank', account: '20-30-40 12345678', verified: true }],
             linkedPayouts: 15,
+            linkedInvoices: 0,
             status: 'active',
             email: 'ap@nexuscloud.example.com',
             personType: 'company',
@@ -6798,6 +6809,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [{ network: 'TRON (TRC-20)', label: 'Settlement TRON', address: 'TGX9yWv7jZt4p...sP9mDz', verified: false }],
             banks: [],
             linkedPayouts: 0,
+            linkedInvoices: 4,
             status: 'pending_collection',
             email: 'vendors@omnitrade.com',
             personType: 'company',
@@ -6808,8 +6820,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let payeeListView = 'list'; // 'list' | 'form'
     let activePayeeId = null;   // null = add new, string = edit existing
+    let activePayeeDetailType = null;
     let payeeFormContext = { mode: 'page', payoutRowId: null };
     let activeExternalContactsUsageFilter = 'payout';
+    let payeeDirectoryMode = 'externalContacts';
     let detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
 
     function getPayeeById(id) {
@@ -6838,9 +6852,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const isPayoutPayeeMode = payeeDirectoryMode === 'payeeList';
+        const isInvoicePayerMode = payeeDirectoryMode === 'invoicePayerList';
+        const isContactManagementMode = payeeDirectoryMode === 'externalContacts' && activeExternalContactsUsageFilter === 'all';
+        const isCompactDirectoryMode = isPayoutPayeeMode || isInvoicePayerMode || isContactManagementMode;
         const typeFilter   = document.getElementById('payee-type-filter')?.value   || 'all';
         const statusFilter = document.getElementById('payee-status-filter')?.value || 'all';
-        const usageFilter  = document.getElementById('payee-usage-filter')?.value || activeExternalContactsUsageFilter || 'payout';
+        const usageFilter  = isPayoutPayeeMode
+            ? 'payout'
+            : isInvoicePayerMode
+                ? 'collectionInvoice'
+                : (document.getElementById('payee-usage-filter')?.value || activeExternalContactsUsageFilter || 'payout');
         const keyword      = (document.getElementById('payee-search')?.value || '').trim().toLowerCase();
         activeExternalContactsUsageFilter = usageFilter;
 
@@ -6853,7 +6875,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         };
 
-        const scopedContacts = payeeList.filter(usageFilterPredicate);
+        const scopedContacts = isContactManagementMode
+            ? payeeList
+                .filter(payee => Boolean(payee.usageScope?.payout) || Boolean(payee.usageScope?.collectionInvoice))
+                .flatMap(payee => {
+                    const rows = [];
+                    if (payee.usageScope?.payout) {
+                        rows.push({ ...payee, directoryType: 'payee' });
+                    }
+                    if (payee.usageScope?.collectionInvoice) {
+                        rows.push({ ...payee, directoryType: 'invoicePayer' });
+                    }
+                    return rows;
+                })
+            : payeeList.filter(usageFilterPredicate);
         const filtered = scopedContacts.filter(p => {
             if (typeFilter !== 'all'   && p.type   !== typeFilter)   return false;
             if (statusFilter !== 'all' && p.status !== statusFilter) return false;
@@ -6867,6 +6902,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalInvoice = scopedContacts.filter(p => p.usageScope?.collectionInvoice).length;
         const totalCheckout = scopedContacts.filter(p => p.usageScope?.collectionCheckout).length;
         const totalRefund = scopedContacts.filter(p => p.usageScope?.refund).length;
+        const activeCount = scopedContacts.filter(p => p.status === 'active').length;
+        const pendingCount = scopedContacts.filter(p => p.status === 'pending_collection').length;
+        const disabledCount = scopedContacts.filter(p => p.status === 'disabled').length;
 
         contentBody.innerHTML = `
             <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
@@ -6875,45 +6913,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 24px;">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                         <div>
-                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">External Contacts</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage all registered external contacts for payouts, collections, and refunds.</div>
+                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${isPayoutPayeeMode ? 'Payee List' : isInvoicePayerMode ? 'Payer List for Invoice' : isContactManagementMode ? 'Contact Management' : 'External Contacts'}</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${isPayoutPayeeMode ? 'Manage payout-ready payees and their saved wallet or bank destinations.' : isInvoicePayerMode ? 'Manage invoice payers and their saved wallet or bank destinations.' : isContactManagementMode ? 'View the combined directory of payout payees and invoice payers in one place.' : 'Manage all registered external contacts for payouts, collections, and refunds.'}</div>
                         </div>
                         <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700;">
                             <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                            Add New
+                            ${isPayoutPayeeMode ? 'Add New Payee' : isInvoicePayerMode ? 'Add New Payer' : 'Add New'}
                         </button>
                     </div>
                 </div>
 
                 <!-- Summary Block -->
-                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
-                    <div class="card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Contacts</div>
-                        <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
+                ${isPayoutPayeeMode ? `
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Payees</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${activeCount}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Pending Info</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${pendingCount}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Disabled</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${disabledCount}</div>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payout</div>
-                        <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalPayout}</div>
+                ` : isInvoicePayerMode ? `
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Payers</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${activeCount}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Pending Info</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${pendingCount}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Disabled</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${disabledCount}</div>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Collection - Invoice</div>
-                        <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalInvoice}</div>
+                ` : `
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Contacts</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payout</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalPayout}</div>
+                        </div>
+                        <div class="card" style="padding: 20px; text-align: center;">
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Collection - Invoice</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalInvoice}</div>
+                        </div>
                     </div>
-                    <div class="card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Collection - Checkout</div>
-                        <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalCheckout}</div>
-                    </div>
-                    <div class="card" style="padding: 20px; text-align: center;">
-                        <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Refund</div>
-                        <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalRefund}</div>
-                    </div>
-                </div>
+                `}
 
                 <!-- Filters + Table as one card -->
                 <div class="card" style="padding: 0; overflow: hidden;">
 
                     <!-- Filter bar -->
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: 1.6fr 0.8fr 0.9fr 0.8fr; gap: 14px; align-items: center;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: ${isCompactDirectoryMode ? '1.8fr 0.9fr 0.8fr' : '1.6fr 0.8fr 0.9fr 0.8fr'}; gap: 14px; align-items: center;">
                         <div style="position: relative;">
                             <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
                             <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -6924,6 +6994,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="Crypto Wallet" ${typeFilter === 'Crypto Wallet' ? 'selected' : ''}>Crypto Wallet</option>
                             <option value="Pending" ${typeFilter === 'Pending' ? 'selected' : ''}>Pending</option>
                         </select>
+                        ${isCompactDirectoryMode ? '' : `
                         <select id="payee-usage-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="payout" ${usageFilter === 'payout' ? 'selected' : ''}>Usage: Payout</option>
                             <option value="collectionInvoice" ${usageFilter === 'collectionInvoice' ? 'selected' : ''}>Usage: Collection - Invoice</option>
@@ -6931,6 +7002,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <option value="refund" ${usageFilter === 'refund' ? 'selected' : ''}>Usage: Refund</option>
                             <option value="all" ${usageFilter === 'all' ? 'selected' : ''}>Usage: All</option>
                         </select>
+                        `}
                         <select id="payee-status-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all"      ${statusFilter === 'all'      ? 'selected' : ''}>All Statuses</option>
                             <option value="active"   ${statusFilter === 'active'   ? 'selected' : ''}>Active</option>
@@ -6942,6 +7014,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="table-responsive">
                         <table class="data-table" style="table-layout: fixed;">
                             <thead>
+                                ${isCompactDirectoryMode ? `
+                                <tr>
+                                    <th style="width: 24%;">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
+                                    ${isContactManagementMode ? '<th style="width: 16%;">Type</th>' : ''}
+                                    <th style="width: ${isContactManagementMode ? '24%' : '30%'};">Saved Destinations</th>
+                                    <th style="width: 12%;">Status</th>
+                                    <th class="text-center" style="width: 10%;">Linked Orders</th>
+                                    <th class="text-right" style="width: ${isContactManagementMode ? '14%' : '18%'};">Actions</th>
+                                </tr>
+                                ` : `
                                 <tr>
                                     <th style="width: 19%;">Contact</th>
                                     <th style="width: 9%;">Profile</th>
@@ -6952,6 +7034,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <th class="text-center" style="width: 8%;">Linked Orders</th>
                                     <th class="text-right" style="width: 18%;">Actions</th>
                                 </tr>
+                                `}
                             </thead>
                             <tbody>
                         ${filtered.length ? filtered.map(p => {
@@ -6988,6 +7071,67 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (p.usageScope?.refund) scopeHtml += '<span style="background: #DCFCE7; color: #15803D; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;">Refund</span>';
                             scopeHtml += '</div>';
 
+                            const destinationSummary = `
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; min-height: 18px;">
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; font-size: 10px; font-weight: 700;">Wallet</span>
+                                        <span style="font-size: 12px; color: ${p.wallets?.length ? '#334155' : '#94A3B8'}; font-weight: ${p.wallets?.length ? '600' : '500'};">
+                                            ${p.wallets?.length ? `${p.wallets.length} saved` : 'Not added'}
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; min-height: 18px;">
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px; border-radius: 999px; background: #F8FAFC; color: #475569; font-size: 10px; font-weight: 700;">Bank</span>
+                                        <span style="font-size: 12px; color: ${p.banks?.length ? '#334155' : '#94A3B8'}; font-weight: ${p.banks?.length ? '600' : '500'};">
+                                            ${p.banks?.length ? `${p.banks.length} saved` : 'Not added'}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+
+                            const contactTypeBadge = p.directoryType === 'invoicePayer' ? 'Payer for Invoice' : 'Payee';
+                            const contactTypeBadgeStyle = p.directoryType === 'invoicePayer'
+                                ? 'background: #FCE7F3; color: #BE185D;'
+                                : 'background: #EFF6FF; color: #1D4ED8;';
+
+                            const detailTypeArg = isContactManagementMode
+                                ? p.directoryType
+                                : isInvoicePayerMode
+                                    ? 'invoicePayer'
+                                    : 'payee';
+                            const linkedOrderCount = detailTypeArg === 'invoicePayer'
+                                ? (p.linkedInvoices || 0)
+                                : (p.linkedPayouts || 0);
+
+                            if (isCompactDirectoryMode) {
+                                return `
+                                <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" style="cursor: pointer; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                                    <td>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
+                                        <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>
+                                    </td>
+                                    ${isContactManagementMode ? `
+                                    <td>
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>
+                                    </td>
+                                    ` : ''}
+                                    <td style="vertical-align: top;">${destinationSummary}</td>
+                                    <td>
+                                        <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${linkedOrderCount}</span>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
+                                        <button class="btn btn-outline" onclick="window.editPayee('${p.id}', '${detailTypeArg}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">Edit</button>
+                                        <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
+                                        <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; color: #DC2626; border-color: #FECACA; white-space: nowrap;">Delete</button>
+                                        </div>
+                                    </td>
+                                </tr>`;
+                            }
+
                             return `
                             <tr onclick="window.editPayee('${p.id}')" style="cursor: pointer; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                 <td>
@@ -7016,7 +7160,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </td>
                             </tr>`;
                         }).join('') : `
-                            <tr><td colspan="8" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">No external contacts matched your current filters.</td></tr>`
+                            <tr><td colspan="${isContactManagementMode ? 6 : isCompactDirectoryMode ? 5 : 8}" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">${isPayoutPayeeMode ? 'No payees matched your current filters.' : isInvoicePayerMode ? 'No payers matched your current filters.' : isContactManagementMode ? 'No contacts matched your current filters.' : 'No external contacts matched your current filters.'}</td></tr>`
                         }
                             </tbody>
                         </table>
@@ -7028,6 +7172,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPayeeFormContent(inDrawer = false) {
+        const isPayoutForm = !inDrawer && payeeDirectoryMode === 'payeeList';
+        const isInvoicePayerForm = !inDrawer && payeeDirectoryMode === 'invoicePayerList';
+        const isRestrictedUsageForm = isPayoutForm || isInvoicePayerForm;
+        const pageTitle = isPayoutForm ? 'New Payee' : isInvoicePayerForm ? 'New Payer for Invoice' : 'New Contact';
+        const backLabel = isPayoutForm ? 'Back to Payee List' : isInvoicePayerForm ? 'Back to Payer List for Invoice' : 'Back to External Contacts';
+        const pageDescription = isPayoutForm
+            ? 'Register a new payee. An email invitation will be sent to collect basic information and complete identity verification before this payee can be used in any payout order or transaction.'
+            : isInvoicePayerForm
+                ? 'Register a new payer for invoice. An email invitation will be sent to collect basic information and complete identity verification before this payer can be used in any invoice order or transaction.'
+            : 'Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.';
+        const basicInfoDescription = isRestrictedUsageForm
+            ? ''
+            : 'Contact identity and details. Additional due diligence information will be collected later by email when needed.';
+        const typeLabel = isPayoutForm ? 'Payee Type *' : isInvoicePayerForm ? 'Payer Type *' : 'Contact Type *';
+        const emailLabel = isPayoutForm ? 'Payee Email Address *' : isInvoicePayerForm ? 'Payer Email Address *' : 'Email Address *';
+        const walletSectionNumber = isRestrictedUsageForm ? '2' : '3';
+        const bankSectionNumber = isRestrictedUsageForm ? '3' : '4';
+        const walletDescription = isRestrictedUsageForm
+            ? ''
+            : "Optionally register this external contact's crypto wallet for supported orders and transactions.";
+        const bankDescription = isRestrictedUsageForm
+            ? ''
+            : "Optionally register this external contact's bank account for supported orders and transactions.";
+        const walletClaimText = isPayoutForm
+            ? 'I declare that the wallet address(es) to be registered belong to this payee and may be used in authorised payout orders and transactions.'
+            : isInvoicePayerForm
+                ? 'I declare that the wallet address(es) to be registered belong to this payer and may be used in authorised invoice orders and transactions.'
+            : 'I declare that the wallet address(es) to be registered belong to this external contact and may be used in authorised Obita orders and transactions.';
+        const walletSelfTitle = isPayoutForm ? 'Let payee submit wallet details' : isInvoicePayerForm ? 'Let payer submit wallet details' : 'Let contact submit wallet details';
+        const walletSelfBody = isRestrictedUsageForm
+            ? 'The information-collection email will include a secure wallet registration link. No wallet details are needed now.'
+            : 'The information-collection email will include a secure wallet registration link. No wallet details are needed now.';
+        const walletNowBody = isPayoutForm
+            ? 'Manually register the wallet address and network on behalf of this payee.'
+            : isInvoicePayerForm
+                ? 'Manually register the wallet address and network on behalf of this payer.'
+            : 'Manually register the wallet address and network on behalf of this external contact.';
+        const bankSelfTitle = isPayoutForm ? 'Let payee submit bank details' : isInvoicePayerForm ? 'Let payer submit bank details' : 'Let contact submit bank details';
+        const bankSelfBody = isRestrictedUsageForm
+            ? 'The information-collection email will include a secure bank account registration link. No details are needed now.'
+            : 'The information-collection email will include a secure bank account registration link. No details are needed now.';
+        const bankNowBody = isPayoutForm
+            ? 'Manually provide the receiving bank and account information for this payee.'
+            : isInvoicePayerForm
+                ? 'Manually provide the receiving bank and account information for this payer.'
+            : 'Manually provide the receiving bank and account information for this external contact.';
         const renderUseCaseToggle = (id, label, checked = false) => `
             <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
                 <div style="font-size: 13px; font-weight: 600; color: #0F172A;">${label}</div>
@@ -7103,10 +7293,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 24px;">
                     <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                        Back to External Contacts
+                        ${backLabel}
                     </button>
-                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">New Contact</h2>
-                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.</div>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${pageTitle}</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${pageDescription}</div>
                 </div>
                 `}
 
@@ -7115,14 +7305,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">1</div>
                         <div>
                             <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
-                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Payee identity and contact. EDD details will be collected later via email.</div>
+                            ${basicInfoDescription ? `<div style="font-size: 12px; color: #64748B; margin-top: 2px;">${basicInfoDescription}</div>` : ''}
                         </div>
                     </div>
                     <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
 
                         <!-- Individual / Company toggle -->
                         <div>
-                            <label class="bank-form-label" style="margin-bottom: 10px;">Contact Type *</label>
+                            <label class="bank-form-label" style="margin-bottom: 10px;">${typeLabel}</label>
                             <div style="display: flex; gap: 10px;">
                                 <label id="payee-indv-label" onclick="window.setPayeePersonType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
                                     <input type="radio" name="payee-person-type" value="individual" checked style="accent-color: #2563EB;">
@@ -7143,9 +7333,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <!-- Email -->
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label class="bank-form-label">Email Address *</label>
+                            <label class="bank-form-label">${emailLabel}</label>
                             <input id="payee-email" class="bank-form-control" type="email" placeholder="e.g. john.doe@example.com" required>
-                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this contact.</div>
+                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'}.</div>
                         </div>
 
                         <!-- Individual fields -->
@@ -7182,13 +7372,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
                             <i data-lucide="info" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
                             <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                <strong>EDD information</strong> (date of birth, residential / registered address) is not collected this time — it will be requested via email notification if necessary.
+                                <strong>Additional due diligence information</strong> (for example date of birth or residential / registered address) is not collected at this stage and will be requested by email if needed.
                             </div>
                         </div>
 
                     </div>
                 </div>
 
+                ${isRestrictedUsageForm ? '' : `
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
                         <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">2</div>
@@ -7204,15 +7395,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${renderUseCaseToggle('payee-usage-refund', 'Can receive Refund')}
                     </div>
                 </div>
+                `}
 
                 <!-- SECTION 2: Wallet Address (collapsible) -->
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-wallet-card">
                     <button type="button" onclick="window.togglePayeeSection('wallet')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">3</div>
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">${walletSectionNumber}</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Wallet Address</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register this external contact's crypto wallet for supported orders and transactions.</div>
+                                ${walletDescription ? `<div style="font-size: 12px; color: #64748B; margin-top: 2px;">${walletDescription}</div>` : ''}
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -7225,7 +7417,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <!-- Claim declaration -->
                         <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
                             <input type="checkbox" id="payee-wallet-claim" style="margin-top: 3px; accent-color: #2563EB;" oninput="window.onPayeeWalletClaimChange()">
-                            <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet address(es) to be registered belong to this external contact and may be used in authorised Obita orders and transactions.</span>
+                            <span style="font-size: 13px; color: #334155; line-height: 1.6;">${walletClaimText}</span>
                         </label>
                         <div id="payee-wallet-claim-hint" style="display: block; font-size: 12px; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px 14px; line-height: 1.6;">
                             Please confirm the declaration first. Until then, wallet information collection remains unavailable.
@@ -7235,15 +7427,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div id="payee-wallet-self-card" style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-wallet-fill" value="self" id="payee-wallet-self" checked disabled style="margin-top: 3px; accent-color: #059669;">
                             <label for="payee-wallet-self" style="cursor:pointer;">
-                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit wallet details</div>
-                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details are needed now.</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">${walletSelfTitle}</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">${walletSelfBody}</div>
                             </label>
                         </div>
                         <div id="payee-wallet-now-card" style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-wallet-fill" value="now" id="payee-wallet-now" disabled style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeWalletFillChange()">
                             <label for="payee-wallet-now" style="cursor:pointer;">
                                 <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter wallet details now</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of this external contact.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${walletNowBody}</div>
                             </label>
                         </div>
 
@@ -7251,7 +7443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
                             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; font-size: 11px; color: #92400E; line-height: 1.5; margin-bottom: 4px;">
                                 <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
-                                Even if you provide the wallet details now, an email will still be sent to the contact asking them to verify and confirm the wallet address.
+                                Even if you provide the wallet details now, an email will still be sent to the ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'} asking them to verify and confirm the wallet address.
                             </div>
                             <div id="payee-wallet-list" style="display: flex; flex-direction: column; gap: 12px;">
                                 ${renderWalletEntry(1)}
@@ -7268,10 +7460,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-bank-card">
                     <button type="button" onclick="window.togglePayeeSection('bank')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">4</div>
+                            <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">${bankSectionNumber}</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Bank Account</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register this external contact's bank account for supported orders and transactions.</div>
+                                ${bankDescription ? `<div style="font-size: 12px; color: #64748B; margin-top: 2px;">${bankDescription}</div>` : ''}
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -7285,15 +7477,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-bank-fill" value="self" id="payee-bank-self" checked style="margin-top: 3px; accent-color: #059669;">
                             <label for="payee-bank-self" style="cursor:pointer;">
-                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit bank details</div>
-                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details are needed now.</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">${bankSelfTitle}</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">${bankSelfBody}</div>
                             </label>
                         </div>
                         <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-bank-fill" value="now" id="payee-bank-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeBankFillChange()">
                             <label for="payee-bank-now" style="cursor:pointer;">
                                 <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter bank details now</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information for this external contact.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${bankNowBody}</div>
                             </label>
                         </div>
 
@@ -7389,18 +7581,24 @@ document.addEventListener('DOMContentLoaded', () => {
             initPayeeFormInteractions();
         } else {
             const payee = getPayeeById(activePayeeId);
+            const isDetailPayer = activePayeeDetailType === 'invoicePayer' || payeeDirectoryMode === 'invoicePayerList';
+            const detailEntityLabel = isDetailPayer ? 'Payer' : 'Payee';
+            const detailBackLabel = isDetailPayer ? 'Back to Payer List for Invoice' : payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : 'Back to Contact Management';
+            const detailIdentityLabel = isDetailPayer ? 'Payer Type' : 'Payee Type';
+            const detailEmailLabel = isDetailPayer ? 'Payer Email' : 'Payee Email';
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
                     <div class="card" style="padding: 24px;">
                         <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
                             <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                            Back to External Contacts
+                            ${detailBackLabel}
                         </button>
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
                             <div>
                                 <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${payee.name}</h2>
                                 <div style="font-size: 13px; color: #64748B; line-height: 1.6;">ID: ${payee.id} &bull; ${payee.personType === 'company' ? 'Company' : 'Individual'}</div>
                             </div>
+                            <span style="display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; ${isDetailPayer ? 'background: #FCE7F3; color: #BE185D;' : 'background: #EFF6FF; color: #1D4ED8;'}">${isDetailPayer ? 'Payer for Invoice' : 'Payee'}</span>
                         </div>
                     </div>
                     
@@ -7413,11 +7611,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="display: flex; flex-direction: column; gap: 16px;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label" style="color: #94A3B8;">Type</label>
+                                        <label class="bank-form-label" style="color: #94A3B8;">${detailIdentityLabel}</label>
                                         <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Email</label>
+                                        <label class="bank-form-label">${detailEmailLabel}</label>
                                         <input id="detail-edit-email" class="bank-form-control" type="text" value="${payee.email}">
                                     </div>
                                 </div>
@@ -7429,7 +7627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ` : `
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                 <div>
-                                    <div style="font-size: 12px; color: #64748B;">Email</div>
+                                    <div style="font-size: 12px; color: #64748B;">${detailEmailLabel}</div>
                                     <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">${payee.email}</div>
                                 </div>
                                 <div>
@@ -7438,40 +7636,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                     : payee.status === 'disabled' ? '<div style="font-size: 14px; font-weight: 600; color: #64748B; margin-top: 4px;">Disabled</div>' 
                                     : '<div style="font-size: 14px; font-weight: 600; color: #D97706; margin-top: 4px;">Pending Info</div>'}
                                 </div>
-                            </div>
-                        `}
-                    </div>
-
-                    <div class="card" style="padding: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Usage Scope</h3>
-                            ${!detailEditState.usage ? `<button class="btn btn-outline" onclick="window.toggleDetailEdit('usage')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;">Edit</button>` : `<div style="display:flex; gap:8px;"><button class="btn" onclick="window.toggleDetailEdit('usage')" style="padding: 6px 12px; font-size: 12px; background: transparent; color: #64748B;">Cancel</button><button class="btn btn-primary" onclick="window.saveDetailEdit('usage')" style="padding: 6px 12px; font-size: 12px;">Save</button></div>`}
-                        </div>
-                        ${detailEditState.usage ? `
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Payout</div>
-                                    <input id="detail-edit-usage-payout" type="checkbox" ${(!payee.usageScope || payee.usageScope.payout) ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
-                                </label>
-                                <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Collection - Invoice</div>
-                                    <input id="detail-edit-usage-invoice" type="checkbox" ${payee.usageScope?.collectionInvoice ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
-                                </label>
-                                <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can be used for Collection - Checkout</div>
-                                    <input id="detail-edit-usage-checkout" type="checkbox" ${payee.usageScope?.collectionCheckout ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
-                                </label>
-                                <label style="display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border: 1px solid #E2E8F0; border-radius: 12px; background: #FFFFFF; cursor: pointer;">
-                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A;">Can receive Refund</div>
-                                    <input id="detail-edit-usage-refund" type="checkbox" ${payee.usageScope?.refund ? 'checked' : ''} style="width: 18px; height: 18px; accent-color: #2563EB;">
-                                </label>
-                            </div>
-                        ` : `
-                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                ${(!payee.usageScope || payee.usageScope.payout) ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Payout</span>' : '<span style="background: #F8FAFC; color: #94A3B8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">No Payout</span>'}
-                                ${payee.usageScope?.collectionInvoice ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Collection - Invoice</span>' : ''}
-                                ${payee.usageScope?.collectionCheckout ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Collection - Checkout</span>' : ''}
-                                ${payee.usageScope?.refund ? '<span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Refund</span>' : ''}
                             </div>
                         `}
                     </div>
@@ -7695,13 +7859,15 @@ document.addEventListener('DOMContentLoaded', () => {
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
         activePayeeId = null;
+        activePayeeDetailType = null;
         renderPayeeListPage();
     };
 
-    window.editPayee = function(id) {
+    window.editPayee = function(id, detailType = null) {
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
         activePayeeId = id;
+        activePayeeDetailType = detailType;
         renderPayeeListPage();
     };
 
@@ -7734,13 +7900,15 @@ document.addEventListener('DOMContentLoaded', () => {
     window.backToPayeeList = function() {
         payeeListView = 'list';
         activePayeeId = null;
+        activePayeeDetailType = null;
         payeeFormContext = { mode: 'page', payoutRowId: null };
         renderPayeeListPage();
     };
 
-    window.editPayee = function(id) {
+    window.editPayee = function(id, detailType = null) {
         payeeListView = 'form';
         activePayeeId = id;
+        activePayeeDetailType = detailType;
         renderPayeeListPage();
     };
 
@@ -7935,14 +8103,16 @@ document.addEventListener('DOMContentLoaded', () => {
     window.savePayee = function(existingId) {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
         const email      = document.getElementById('payee-email')?.value?.trim();
+        const entityLabel = payeeDirectoryMode === 'payeeList' ? 'payee' : payeeDirectoryMode === 'invoicePayerList' ? 'payer' : 'contact';
+        const entityLabelUpper = payeeDirectoryMode === 'payeeList' ? 'PAYEE' : payeeDirectoryMode === 'invoicePayerList' ? 'PAYER' : 'CONTACT';
 
-        if (!email) { alert('Please enter the contact email address.'); return; }
+        if (!email) { alert(`Please enter the ${entityLabel} email address.`); return; }
 
         let displayName = '';
         if (personType === 'individual') {
             const fname = document.getElementById('payee-fname')?.value?.trim();
             const lname = document.getElementById('payee-lname')?.value?.trim();
-            if (!fname || !lname) { alert('Please enter the contact First Name and Surname.'); return; }
+            if (!fname || !lname) { alert(`Please enter the ${entityLabel} First Name and Surname.`); return; }
             const mname = document.getElementById('payee-mname')?.value?.trim();
             displayName = [fname, mname, lname].filter(Boolean).join(' ');
         } else {
@@ -7950,6 +8120,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!cname) { alert('Please enter the Company Name.'); return; }
             displayName = cname;
         }
+
+        const usageScope = payeeDirectoryMode === 'payeeList'
+            ? {
+                payout: true,
+                collectionInvoice: false,
+                collectionCheckout: false,
+                refund: false
+            }
+            : payeeDirectoryMode === 'invoicePayerList'
+            ? {
+                payout: false,
+                collectionInvoice: true,
+                collectionCheckout: false,
+                refund: false
+            }
+            : {
+                payout: Boolean(document.getElementById('payee-usage-payout')?.checked),
+                collectionInvoice: Boolean(document.getElementById('payee-usage-collection-invoice')?.checked),
+                collectionCheckout: Boolean(document.getElementById('payee-usage-collection-checkout')?.checked),
+                refund: Boolean(document.getElementById('payee-usage-refund')?.checked)
+            };
 
         const newPayee = {
             id: `PAY-${String(payeeList.length + 1).padStart(3, '0')}`,
@@ -7959,17 +8150,13 @@ document.addEventListener('DOMContentLoaded', () => {
             wallets: [],
             banks: [],
             linkedPayouts: 0,
+            linkedInvoices: 0,
             country: personType === 'company' ? (document.getElementById('payee-company-country')?.value?.trim() || '-') : '-',
             purpose: '-',
             status: 'pending_collection',
             email: email,
             personType: personType,
-            usageScope: {
-                payout: Boolean(document.getElementById('payee-usage-payout')?.checked),
-                collectionInvoice: Boolean(document.getElementById('payee-usage-collection-invoice')?.checked),
-                collectionCheckout: Boolean(document.getElementById('payee-usage-collection-checkout')?.checked),
-                refund: Boolean(document.getElementById('payee-usage-refund')?.checked)
-            },
+            usageScope,
             createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
 
@@ -8033,14 +8220,14 @@ document.addEventListener('DOMContentLoaded', () => {
                             <i data-lucide="send" style="width: 28px; height: 28px; color: white;"></i>
                         </div>
                         <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invite Sent!</h2>
-                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">Payee <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.</div>
+                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.</div>
                     </div>
 
                     <!-- Details -->
                     <div style="padding: 28px 40px; display: flex; flex-direction: column; gap: 18px;">
                         <div style="display: flex; flex-direction: column; gap: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
-                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PAYEE</span>
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper}</span>
                                 <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${displayName}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
@@ -8052,7 +8239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
-                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PAYEE ID</span>
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper} ID</span>
                                 <span style="font-size: 12px; font-weight: 600; color: #94A3B8; font-family: monospace;">${newPayee.id}</span>
                             </div>
                         </div>
@@ -8060,12 +8247,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
                             <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
                             <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.
+                                ${payeeDirectoryMode === 'invoicePayerList'
+                                    ? 'Invoice workflows <strong>cannot proceed</strong> until the payer completes the information collection process and their identity / account details are verified by the compliance team.'
+                                    : 'Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.'}
                             </div>
                         </div>
 
                         <button class="btn btn-primary" onclick="window.backToPayeeList()" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 700;">
-                            Back to External Contacts
+                            ${payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : payeeDirectoryMode === 'invoicePayerList' ? 'Back to Payer List for Invoice' : 'Back to External Contacts'}
                         </button>
                     </div>
                 </div>
@@ -9283,6 +9472,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (title === 'External Contacts') {
             payeeListView = 'list';
             activePayeeId = null;
+            payeeDirectoryMode = 'externalContacts';
+            activeExternalContactsUsageFilter = 'payout';
+            renderPayeeListPage();
+        } else if (title === 'Contact Management') {
+            payeeListView = 'list';
+            activePayeeId = null;
+            payeeDirectoryMode = 'externalContacts';
+            activeExternalContactsUsageFilter = 'all';
+            renderPayeeListPage();
+        } else if (title === 'Payee List') {
+            payeeListView = 'list';
+            activePayeeId = null;
+            payeeDirectoryMode = 'payeeList';
             activeExternalContactsUsageFilter = 'payout';
             renderPayeeListPage();
         } else if (title === 'Payout Orders') {
