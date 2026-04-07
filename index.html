@@ -366,6 +366,16 @@
                     </select>
                     <i data-lucide="chevron-down" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--clr-text-muted); pointer-events: none;"></i>
                 </div>
+                <div id="topup-network-asset-card" style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 10px 0 10px; border-top: 1px solid #E2E8F0;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div id="topup-network-asset-icon" style="width: 40px; height: 40px; border-radius: 999px; background: linear-gradient(180deg, #34D399 0%, #059669 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 800; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28); flex-shrink: 0;">T</div>
+                        <div id="topup-network-asset-label" style="font-size: 18px; font-weight: 500; color: #0F172A; letter-spacing: -0.01em;">USDT (TRC-20)</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: #64748B;">
+                        <span style="font-size: 16px; font-weight: 500;">About 1 minute</span>
+                        <i data-lucide="chevron-right" style="width: 18px; height: 18px;"></i>
+                    </div>
+                </div>
             </div>
             <!-- QR Code + Address -->
             <div style="flex: 1; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; align-items: center; gap: 24px;">
@@ -409,7 +419,7 @@
             <div id="fiat-topup-step-1" style="display: flex; flex-direction: column; height: 100%;">
                 <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
                     <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 1: Select remitting bank account</div>
-                    <div id="fiat-topup-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Only verified, enabled, same-name bank accounts can be used for fiat top up.</div>
+                    <div id="fiat-topup-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Only enabled, same-name bank accounts that have completed verification can be used for fiat top up.</div>
                 </div>
 
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
@@ -563,7 +573,7 @@
                                 <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order ID</div>
                                 <div id="fiat-topup-step3-order-id" style="font-size: 16px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div>
                             </div>
-                            <span style="background: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px;">Proceeding</span>
+                            <span style="background: #EFF6FF; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px;">In Progress</span>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -589,7 +599,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 13px;">
                                 <span style="color: #64748B;">Status</span>
-                                <span style="font-weight: 700; color: #D97706;">Proceeding</span>
+                                <span style="font-weight: 700; color: #1D4ED8;">In Progress</span>
                             </div>
                         </div>
                     </div>
@@ -999,7 +1009,7 @@
                                 <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order ID</div>
                                 <div id="fiat-transfer-success-order-id" style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 4px;">-</div>
                             </div>
-                            <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; text-transform: uppercase;">Proceeding</span>
+                            <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; text-transform: uppercase;">In Progress</span>
                         </div>
                     </div>
 
@@ -1159,65 +1169,65 @@
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;" id="addr-list-container">
                     
                     <!-- Item 1: Kraken Corporate - Verified -->
-                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="addr-item" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                                 <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Kraken Corporate</div>
                                 <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">✓ Verified</span>
+                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Enabled</span>
                             </div>
                             <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                             <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                         </div>
                     </div>
 
                     <!-- Item 2: Binance Institutional - Pending Verification -->
-                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="addr-item" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                                 <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Binance Institutional</div>
                                 <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">ETH</span>
-                                <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">⏳ Pending Verification</span>
+                                <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Pending Verification</span>
                             </div>
                             <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">0xA0b86991c6218b36c1d...eB48</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                             <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                         </div>
                     </div>
 
                     <!-- Item 3: MetaMask Trading - Not Supported -->
-                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; opacity: 0.6; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="addr-item" data-verification="not-supported" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; opacity: 0.6; display: flex; align-items: center; justify-content: space-between;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                                 <div style="font-weight: 600; font-size: 14px; color: #0F172A;">MetaMask Trading</div>
                                 <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">✕ Not Supported</span>
+                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Disabled</span>
                             </div>
                             <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVjsyZ7lNwQxGTCi8q8ZY...Lj6t</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="disabled" class="addr-toggle disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
                             <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                         </div>
                     </div>
 
                     <!-- Item 4: ABC Trading Pte Ltd - Verified -->
-                    <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+                    <div class="addr-item" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                                 <div style="font-weight: 600; font-size: 14px; color: #0F172A;">ABC Trading Pte Ltd</div>
                                 <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">✓ Verified</span>
+                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Enabled</span>
                             </div>
                             <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                             <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                         </div>
                     </div>
@@ -1346,7 +1356,7 @@
                 </div>
 
                 <div id="bank-list-container" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                    <div class="bank-account-item" data-bank-name="Chase Bank" data-account-name="Obita Treasury Main Account" data-verification="verified" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div class="bank-account-item" data-bank-name="Chase Bank" data-account-name="Obita Treasury Main Account" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
                     <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
                         <div style="padding: 10px; background-color: #EFF6FF; border-radius: 10px; border: 1px solid #BFDBFE; flex-shrink: 0;">
                             <i data-lucide="landmark" style="color: #2563EB; width: 18px; height: 18px;"></i>
@@ -1355,19 +1365,19 @@
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
                                 <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Chase Bank — Obita Treasury Main Account</span>
                                 <span data-role="bank-currency" style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Verified</span>
+                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Enabled</span>
                             </div>
                             <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 4821 | Routing: 021000021 | SWIFT: CHASUS33</div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Today</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                         <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                     </div>
                 </div>
 
-                    <div class="bank-account-item" data-bank-name="HSBC Hong Kong" data-account-name="Operations Clearing Account" data-verification="pending" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div class="bank-account-item" data-bank-name="HSBC Hong Kong" data-account-name="Operations Clearing Account" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
                     <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
                         <div style="padding: 10px; background-color: #FEF2F2; border-radius: 10px; border: 1px solid #FECACA; flex-shrink: 0;">
                             <i data-lucide="landmark" style="color: #DC2626; width: 18px; height: 18px;"></i>
@@ -1376,19 +1386,19 @@
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
                                 <span style="font-weight: 600; font-size: 14px; color: #0F172A;">HSBC Hong Kong — Operations Clearing Account</span>
                                 <span data-role="bank-currency" style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">HKD</span>
-                                <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
+                                <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
                             </div>
                             <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 9230 | Bank Code: 004 | SWIFT: HSBCHKHHHKH</div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Yesterday</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                         <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                     </div>
                 </div>
 
-                    <div class="bank-account-item" data-bank-name="Deutsche Bank" data-account-name="Obita Europe Treasury" data-verification="verified" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div class="bank-account-item" data-bank-name="Deutsche Bank" data-account-name="Obita Europe Treasury" data-verification="verified" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
                     <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
                         <div style="padding: 10px; background-color: #F5F3FF; border-radius: 10px; border: 1px solid #DDD6FE; flex-shrink: 0;">
                             <i data-lucide="landmark" style="color: #7C3AED; width: 18px; height: 18px;"></i>
@@ -1398,19 +1408,19 @@
                                 <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Deutsche Bank — Obita Europe Treasury</span>
                                 <span data-role="bank-currency" style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">EUR</span>
                                 <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Verified</span>
+                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
                             </div>
                             <div style="font-size: 12px; color: #64748B; line-height: 1.6;">IBAN: DE89 3704 0044 0532 0130 00 | SWIFT: DEUTDEDB</div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Oct 23</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
                         <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                     </div>
                 </div>
 
-                    <div class="bank-account-item" data-bank-name="Banco do Brasil" data-account-name="Treasury Reserve Account" data-verification="not-supported" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; opacity: 0.72; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                    <div class="bank-account-item" data-bank-name="Banco do Brasil" data-account-name="Treasury Reserve Account" data-verification="not-supported" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; opacity: 0.72; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
                     <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
                         <div style="padding: 10px; background-color: #F8FAFC; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
                             <i data-lucide="landmark" style="color: #64748B; width: 18px; height: 18px;"></i>
@@ -1419,14 +1429,14 @@
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
                                 <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Banco do Brasil — Treasury</span>
                                 <span data-role="bank-currency" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">BRL</span>
-                                <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Not Supported</span>
+                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
                             </div>
                             <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 1058 | Branch: 3321 | SWIFT: BRASBRRJRJO</div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Transfers from this account are currently not supported.</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #F1F5F9; color: #64748B; cursor: pointer;">Disabled</button>
+                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
                         <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                     </div>
                 </div>
@@ -1543,7 +1553,25 @@
         </div>
     </div>
 
-    <!-- Member Form Drawer -->
+    <div class="inbox-drawer" id="activities-drawer" style="width: 520px; right: -520px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="history" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0;">Recent Activities</h3>
+                    <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Last 7 days</div>
+                </div>
+            </div>
+            <button class="icon-btn" id="close-activities-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" id="activities-drawer-list" style="padding: 20px; display: flex; flex-direction: column; gap: 14px; height: calc(100% - 65px); overflow-y: auto;"></div>
+    </div>
+
+    <!-- Contact Form Drawer -->
     <div class="inbox-drawer" id="payee-form-drawer" style="width: 760px; right: -760px;">
         <div class="drawer-header" style="align-items: flex-start;">
             <div style="display: flex; align-items: flex-start; gap: 10px;">

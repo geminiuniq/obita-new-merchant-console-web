@@ -13,8 +13,19 @@ document.addEventListener('DOMContentLoaded', () => {
         'convert-drawer',
         'manage-addresses-drawer',
         'manage-bank-accounts-drawer',
+        'activities-drawer',
         'payee-form-drawer',
         'member-form-drawer'
+    ];
+
+    const RECENT_ACTIVITY_ITEMS = [
+        { icon: 'clock', iconClass: 'bg-warning', title: 'Stablecoin withdrawal pending', time: 'Just now', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Checking Approval Tasks...' },
+        { icon: 'arrow-down', iconClass: 'bg-success', title: 'Received Checkout payment', time: '2 hours ago', meta: '+1,000 USDT', metaClass: 'text-success', action: 'View Tx', actionHint: 'Navigating to Order Details...' },
+        { icon: 'user-plus', iconClass: 'bg-info', title: 'New member Alex joined', time: 'Yesterday', meta: 'Member Update', metaClass: 'text-info', action: 'Manage', actionHint: 'Manage User Roles...' },
+        { icon: 'arrow-up-right', iconClass: 'bg-slate', title: 'Payment to supplier successful', time: 'Feb 14, 2026', meta: '-20,000 HKD', action: 'Receipt', actionHint: 'Downloading Receipt...' },
+        { icon: 'landmark', iconClass: 'bg-info', title: 'Fiat top up submitted', time: 'Apr 6, 2026', meta: 'In Progress', metaClass: 'text-info', action: 'View', actionHint: 'Opening Fiat Top Up Order...' },
+        { icon: 'refresh-cw', iconClass: 'bg-success', title: 'USD to USDC conversion completed', time: 'Apr 5, 2026', meta: 'Completed', metaClass: 'text-success', action: 'Details', actionHint: 'Opening Conversion Order...' },
+        { icon: 'shield-check', iconClass: 'bg-warning', title: 'Approval request assigned to you', time: 'Apr 4, 2026', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Opening Approval Request...' }
     ];
 
     function formatWalletListAddress(address = '', network = '') {
@@ -278,7 +289,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         );
     }
-    
+
+    function renderActivitiesDrawer() {
+        const container = document.getElementById('activities-drawer-list');
+        if (!container) return;
+
+        container.innerHTML = RECENT_ACTIVITY_ITEMS.map(item => `
+            <div style="border: 1px solid #E2E8F0; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #FCFDFE 100%); padding: 16px 18px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 14px; align-items: start;">
+                <div class="activity-icon ${item.iconClass}" style="width: 36px; height: 36px;">
+                    <i data-lucide="${item.icon}" style="width: 16px; height: 16px;"></i>
+                </div>
+                <div style="min-width: 0;">
+                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; line-height: 1.45;">${item.title}</div>
+                    <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${item.time}</div>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
+                    <div class="activity-amount ${item.metaClass || ''}" style="min-width: 0;">${item.meta}</div>
+                    <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('${item.actionHint}')">${item.action}</button>
+                </div>
+            </div>
+        `).join('');
+        lucide.createIcons();
+    }
+
     function closeAllDrawers() {
         document.body.classList.remove('drawer-open');
         ALL_DRAWER_IDS.forEach(id => {
@@ -321,6 +354,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-wallet-btn').addEventListener('click', closeAllDrawers);
     document.getElementById('close-topup-btn').addEventListener('click', closeAllDrawers);
 
+    window.openActivitiesDrawer = function() {
+        renderActivitiesDrawer();
+        closeAllDrawers();
+        const drawer = document.getElementById('activities-drawer');
+        if (!drawer) return;
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
     // Top Up Drawer
     const TOPUP_ADDRESSES = {
         USDT: { TRON: 'TQrY5xMKMc2NnLgwSgFRqrRBJBEJBKQ1CZ', ETH: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F' },
@@ -332,12 +374,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const chain = document.getElementById('topup-chain-select').value;
         const addr  = TOPUP_ADDRESSES[_topupCoin][chain];
         const label = chain === 'TRON' ? 'TRON (TRC-20)' : 'Ethereum (ERC-20)';
+        const assetLabel = chain === 'TRON'
+            ? `${_topupCoin} (TRC-20)`
+            : `${_topupCoin} (ERC-20)`;
+        const iconEl = document.getElementById('topup-network-asset-icon');
+        const assetLabelEl = document.getElementById('topup-network-asset-label');
         document.getElementById('topup-address').textContent = addr;
         document.getElementById('topup-qr-img').src =
             'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(addr);
         document.getElementById('topup-hint').textContent =
             'This QR code and address accept ' + _topupCoin + ' deposits on the ' + label +
             ' network only. Sending other assets or using a different network may result in permanent loss of funds.';
+        if (assetLabelEl) assetLabelEl.textContent = assetLabel;
+        if (iconEl) {
+            iconEl.textContent = _topupCoin === 'USDC' ? 'C' : 'T';
+            iconEl.style.background = _topupCoin === 'USDC'
+                ? 'linear-gradient(180deg, #60A5FA 0%, #2563EB 100%)'
+                : 'linear-gradient(180deg, #34D399 0%, #059669 100%)';
+        }
     }
 
     window.openTopUpDrawer = function(coin) {
@@ -383,6 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-convert-btn',
         'close-addr-btn',
         'close-bank-accounts-btn',
+        'close-activities-btn',
         'close-payee-form-btn',
         'close-member-form-btn'
     ].forEach(id => {
@@ -804,6 +859,58 @@ document.addEventListener('DOMContentLoaded', () => {
         BRL: { rate: 0.0012, min: 45 }
     };
 
+    function getManagedEntityStatusMeta(status) {
+        const map = {
+            'Draft': { label: 'Draft', bg: '#F8FAFC', color: '#64748B' },
+            'Pending Verification': { label: 'Pending Verification', bg: '#FEF3C7', color: '#B45309' },
+            'Verified': { label: 'Verified', bg: '#DBEAFE', color: '#1D4ED8' },
+            'Enabled': { label: 'Enabled', bg: '#DCFCE7', color: '#15803D' },
+            'Disabled': { label: 'Disabled', bg: '#F1F5F9', color: '#64748B' }
+        };
+        return map[status] || map.Disabled;
+    }
+
+    function resolveManagedEntityStatus(verification = 'pending', enabled = false) {
+        if (!enabled || verification === 'not-supported') return 'Disabled';
+        if (verification === 'draft') return 'Draft';
+        if (verification === 'pending') return 'Pending Verification';
+        if (verification === 'verified') return 'Enabled';
+        return 'Disabled';
+    }
+
+    function applyManagedEntityCardState(card) {
+        if (!card) return;
+        const statusPill = card.querySelector('[data-role="entity-status"]');
+        const actionBtn = card.querySelector('[data-role="entity-toggle"]');
+        const verification = card.dataset.verification || 'pending';
+        const enabled = (card.dataset.status || 'enabled') === 'enabled';
+        const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
+        const meta = getManagedEntityStatusMeta(lifecycleStatus);
+
+        if (statusPill) {
+            statusPill.textContent = meta.label;
+            statusPill.style.background = meta.bg;
+            statusPill.style.color = meta.color;
+        }
+
+        if (actionBtn) {
+            actionBtn.dataset.status = enabled ? 'enabled' : 'disabled';
+            actionBtn.classList.toggle('enabled', enabled);
+            actionBtn.classList.toggle('disabled', !enabled);
+            const actionLabel = enabled ? 'Disable' : 'Enable';
+            actionBtn.textContent = actionLabel;
+            actionBtn.style.background = enabled ? '#FFFFFF' : '#EFF6FF';
+            actionBtn.style.color = enabled ? '#475569' : '#1D4ED8';
+            actionBtn.style.borderColor = enabled ? '#CBD5E1' : '#BFDBFE';
+        }
+
+        card.style.opacity = enabled ? '1' : '0.68';
+    }
+
+    function syncManagedEntityStatuses() {
+        document.querySelectorAll('.addr-item, .bank-account-item').forEach(applyManagedEntityCardState);
+    }
+
     function getBoundBankAccounts() {
         return Array.from(document.querySelectorAll('#bank-list-container .bank-account-item')).map((item, index) => {
             const actionBtn = item.querySelector('button[data-status]');
@@ -811,14 +918,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const bankName = item.dataset.bankName || `Linked Bank ${index + 1}`;
             const accountName = item.dataset.accountName || 'Bank Account';
             const verification = item.dataset.verification || 'pending';
-            const enabled = actionBtn ? actionBtn.dataset.status === 'enabled' : false;
+            const enabled = (item.dataset.status || actionBtn?.dataset.status || 'enabled') === 'enabled';
             const sameName = accountName.toLowerCase().includes('obita');
+            const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
 
             let reason = '';
-            if (!enabled) {
-                reason = 'Disabled';
-            } else if (verification !== 'verified') {
-                reason = verification === 'pending' ? 'Pending Verification' : 'Not Supported';
+            if (lifecycleStatus !== 'Enabled') {
+                reason = lifecycleStatus;
             } else if (!sameName) {
                 reason = 'Bank Account Name mismatch';
             }
@@ -828,8 +934,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 accountName,
                 verification,
                 enabled,
+                lifecycleStatus,
                 sameName,
-                selectable: enabled && verification === 'verified' && sameName,
+                selectable: lifecycleStatus === 'Enabled' && sameName,
                 reason,
                 currency: currencyTag ? currencyTag.textContent.trim() : '',
                 summary: item.querySelectorAll('div[style*="font-size: 12px; color: #64748B; line-height: 1.6;"]')[0]?.textContent || ''
@@ -862,7 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         select.innerHTML = options.join('');
         note.textContent = accounts.some(account => account.selectable)
-            ? 'Only verified, enabled, same-name connected bank accounts can be selected.'
+            ? 'Only enabled, same-name connected bank accounts that have completed verification can be selected.'
             : 'No eligible same-name connected bank accounts are currently available.';
     }
 
@@ -1107,8 +1214,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasSelectable = relevantAccounts.some(account => account.selectable);
         note.textContent = hasSelectable
-            ? 'Only verified, enabled, same-name bank accounts can be used for fiat top up.'
-            : 'No eligible same-name bank account is available. Please bind a verified, enabled bank account under the merchant name first.';
+            ? 'Only enabled, same-name bank accounts that have completed verification can be used for fiat top up.'
+            : 'No eligible same-name bank account is available. Please bind and enable a bank account under the merchant name after verification is completed.';
         note.style.color = hasSelectable ? '#64748B' : '#DC2626';
         confirmBtn.disabled = !hasSelectable;
         confirmBtn.style.opacity = hasSelectable ? '1' : '0.5';
@@ -1209,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fiat-topup-step3-reference').textContent = FIAT_TOPUP_RECIPIENTS[currency].reference;
         notifyOrderCreated(
             'Fiat Top Up Order Created',
-            `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency} top up order ${orderId} is now Proceeding.`,
+            `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency} top up order ${orderId} is now In Progress.`,
             'View Order',
             () => openInbox()
         );
@@ -1237,23 +1344,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.toggleBankAccountStatus = function(btn) {
         const card = btn.closest('.bank-account-item');
-        const currentStatus = btn.dataset.status || 'enabled';
+        const currentStatus = card?.dataset.status || btn.dataset.status || 'enabled';
+        if (!card) return;
 
         if (currentStatus === 'enabled') {
+            card.dataset.status = 'disabled';
             btn.dataset.status = 'disabled';
-            btn.textContent = 'Disabled';
-            btn.style.background = '#F1F5F9';
-            btn.style.color = '#64748B';
-            btn.style.borderColor = '#CBD5E1';
-            card.style.opacity = card.dataset.verification === 'not-supported' ? '0.6' : '0.78';
         } else {
+            if (card.dataset.verification === 'not-supported') {
+                alert('This bank account cannot be enabled until it is supported.');
+                return;
+            }
+            card.dataset.status = 'enabled';
             btn.dataset.status = 'enabled';
-            btn.textContent = 'Enabled';
-            btn.style.background = '#D1FAE5';
-            btn.style.color = '#059669';
-            btn.style.borderColor = '#10B981';
-            card.style.opacity = card.dataset.verification === 'not-supported' ? '0.72' : '1';
         }
+
+        applyManagedEntityCardState(card);
     };
 
     window.deleteBankAccount = function(btn) {
@@ -1306,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     : 'background: #DCFCE7; color: #15803D;';
 
         const newHtml = `
-            <div class="bank-account-item" data-bank-name="${bankName}" data-account-name="${accountName}" data-verification="pending" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+            <div class="bank-account-item" data-bank-name="${bankName}" data-account-name="${accountName}" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
                 <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
                     <div style="padding: 10px; border-radius: 10px; flex-shrink: 0; ${bankIconStyle}">
                         <i data-lucide="landmark" style="color: ${bankIconColor}; width: 18px; height: 18px;"></i>
@@ -1315,19 +1421,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
                             <span style="font-weight: 600; font-size: 14px; color: #0F172A;">${bankName} — ${accountName}</span>
                             <span data-role="bank-currency" style="${currencyBadgeStyle} font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${currency}</span>
-                            <span style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
+                            <span data-role="entity-status" style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
                         </div>
                         <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: ${maskedAccount} | Routing / IBAN: ${routingOrIban} | SWIFT: ${swift}</div>
                         <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Statement uploaded: ${statementFile.name}</div>
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <button onclick="window.toggleBankAccountStatus(this)" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                    <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                     <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
                 </div>
             </div>`;
 
         document.getElementById('bank-list-container').insertAdjacentHTML('afterbegin', newHtml);
+        applyManagedEntityCardState(document.querySelector('#bank-list-container .bank-account-item'));
         lucide.createIcons();
         alert('Bank account added. Verification is pending after statement upload.');
         window.switchToBankAccountsListView();
@@ -1937,9 +2044,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getApprovalRequestStatusPill(status) {
         const styles = {
-            pending: { background: '#F8FAFC', color: '#64748B', label: 'Pending' },
-            approved: { background: '#F0FDF4', color: '#15803D', label: 'Approved' },
-            rejected: { background: '#FEF2F2', color: '#B91C1C', label: 'Rejected' }
+            pending: { background: '#FEF3C7', color: '#B45309', label: 'Awaiting Approval' },
+            approved: { background: '#ECFDF5', color: '#15803D', label: 'Completed' },
+            rejected: { background: '#FEF2F2', color: '#B91C1C', label: 'Failed' }
         };
         return styles[status] || styles.pending;
     }
@@ -2107,7 +2214,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75;">Needs Attention</div>
-                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => request.status === 'pending').length} Pending</div>
+                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => request.status === 'pending').length} Awaiting Approval</div>
                                 </div>
                             </div>
                         </div>
@@ -2127,9 +2234,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             </select>
                             <select id="approval-list-status-filter" onchange="window.renderApprovalListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                                 <option value="all" ${currentStatus === 'all' ? 'selected' : ''}>All Statuses</option>
-                                <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Pending</option>
-                                <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Approved</option>
-                                <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Rejected</option>
+                                <option value="pending" ${currentStatus === 'pending' ? 'selected' : ''}>Awaiting Approval</option>
+                                <option value="approved" ${currentStatus === 'approved' ? 'selected' : ''}>Completed</option>
+                                <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Failed</option>
                             </select>
                         </div>
                         <div style="display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
@@ -3074,23 +3181,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.toggleAddressStatus = function(btn) {
-        if (btn.classList.contains('enabled')) {
-            btn.classList.remove('enabled');
-            btn.classList.add('disabled');
-            btn.textContent = 'Disabled';
-            btn.style.background = '#F1F5F9';
-            btn.style.color = '#64748B';
-            btn.style.borderColor = '#CBD5E1';
-            btn.closest('.addr-item').style.opacity = '0.6';
+        const card = btn.closest('.addr-item');
+        if (!card) return;
+        const currentStatus = card.dataset.status || (btn.classList.contains('enabled') ? 'enabled' : 'disabled');
+
+        if (currentStatus === 'enabled') {
+            card.dataset.status = 'disabled';
+            btn.dataset.status = 'disabled';
         } else {
-            btn.classList.remove('disabled');
-            btn.classList.add('enabled');
-            btn.textContent = 'Enabled';
-            btn.style.background = '#D1FAE5';
-            btn.style.color = '#059669';
-            btn.style.borderColor = '#10B981';
-            btn.closest('.addr-item').style.opacity = '1';
+            if (card.dataset.verification === 'not-supported') {
+                alert('This wallet address cannot be enabled until it is supported.');
+                return;
+            }
+            card.dataset.status = 'enabled';
+            btn.dataset.status = 'enabled';
         }
+        applyManagedEntityCardState(card);
     };
 
     window.deleteAddress = function(btn) {
@@ -3120,23 +3226,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const shortAddr = formatWalletListAddress(addr, network);
         
         const newHtml = `
-        <div class="addr-item" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+        <div class="addr-item" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                     <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${name}</div>
                     <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${network}</span>
+                    <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Pending Verification</span>
                 </div>
                 <div style="font-family: monospace; font-size: 12px; color: #64748B;">${shortAddr}</div>
             </div>
             <div style="display: flex; align-items: center; gap: 12px;">
-                <button onclick="window.toggleAddressStatus(this)" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #10B981; background: #D1FAE5; color: #059669; cursor: pointer;">Enabled</button>
+                <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
                 <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
             </div>
         </div>`;
         
         document.getElementById('addr-list-container').insertAdjacentHTML('beforeend', newHtml);
+        applyManagedEntityCardState(document.querySelector('#addr-list-container .addr-item:last-child'));
         lucide.createIcons();
-        alert('Address verified and added successfully.');
+        alert('Address added. Verification is now in progress.');
         window.switchToListAddressView();
     };
 
@@ -3216,6 +3324,61 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span class="asset-balance">85,000.00</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px; border: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Most Popular Usage</div>
+                            <h2 class="card-title" style="margin: 8px 0 0; font-size: 20px;">Deposit stablecoin → Convert to USD → Withdraw USD</h2>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch;">
+                        <div style="padding: 18px; border: 1px solid #DBEAFE; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 1</div>
+                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Deposit Stablecoin</div>
+                                </div>
+                                <span style="background: #ECFDF5; color: #059669; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Ready</span>
+                            </div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Move stablecoin into vault.</div>
+                            <button class="btn btn-primary" onclick="window.openTopUpDrawer('USDT')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Deposit USDT</button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
+                            <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+                        </div>
+
+                        <div style="padding: 18px; border: 1px solid #E2E8F0; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 2</div>
+                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Convert to USD</div>
+                                </div>
+                                <span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Next</span>
+                            </div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Convert into Fiat Vault USD.</div>
+                            <button class="btn btn-outline" onclick="window.openConvertDrawer('USDT')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Convert Now</button>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
+                            <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
+                        </div>
+
+                        <div style="padding: 18px; border: 1px solid #E2E8F0; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 3</div>
+                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Withdraw USD</div>
+                                </div>
+                                <span style="background: #F8FAFC; color: #64748B; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Pending Action</span>
+                            </div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Send USD to bank account.</div>
+                            <button class="btn btn-outline" onclick="window.openFiatTransferDrawer('USD')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Withdraw USD</button>
                         </div>
                     </div>
                 </div>
@@ -3385,11 +3548,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card activities-card">
                     <div class="card-header-flex">
                         <h2 class="card-title" style="margin-bottom: 0;">Activities</h2>
-                        <a href="#" class="view-all-link">View All</a>
+                        <a href="#" class="view-all-link" onclick="window.openActivitiesDrawer(); return false;">View All</a>
                     </div>
                     <div class="activity-feed">
                         <!-- Activity Item 1 -->
-                        <div class="activity-item" style="align-items: center;">
+                        <div class="activity-item">
                             <div class="activity-icon bg-warning">
                                 <i data-lucide="clock"></i>
                             </div>
@@ -3397,30 +3560,29 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p class="activity-text">Stablecoin withdrawal pending</p>
                                 <span class="activity-time">Just now</span>
                             </div>
+                            <div class="activity-amount" style="color: #B45309;">Awaiting Approval</div>
                             <div class="activity-actions">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Checking Approval Tasks...');">Review</button>
                             </div>
                         </div>
 
                         <!-- Activity Item 2 -->
-                        <div class="activity-item" style="align-items: center;">
+                        <div class="activity-item">
                             <div class="activity-icon bg-success">
                                 <i data-lucide="arrow-down"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-text-row">
-                                    <p class="activity-text">Received Checkout payment</p>
-                                    <span class="activity-amount text-success">+1,000 USDT</span>
-                                </div>
+                                <p class="activity-text">Received Checkout payment</p>
                                 <span class="activity-time">2 hours ago</span>
                             </div>
+                            <div class="activity-amount text-success">+1,000 USDT</div>
                             <div class="activity-actions">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Navigating to Order Details...');">View Tx</button>
                             </div>
                         </div>
 
                         <!-- Activity Item 3 -->
-                        <div class="activity-item" style="align-items: center;">
+                        <div class="activity-item">
                             <div class="activity-icon bg-info">
                                 <i data-lucide="user-plus"></i>
                             </div>
@@ -3428,23 +3590,22 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p class="activity-text">New member <strong>Alex</strong> joined</p>
                                 <span class="activity-time">Yesterday</span>
                             </div>
+                            <div class="activity-amount" style="color: #1D4ED8;">Member Update</div>
                             <div class="activity-actions">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Manage User Roles...');">Manage</button>
                             </div>
                         </div>
 
                         <!-- Activity Item 4 -->
-                        <div class="activity-item" style="align-items: center;">
+                        <div class="activity-item">
                             <div class="activity-icon bg-slate">
                                 <i data-lucide="arrow-up-right"></i>
                             </div>
                             <div class="activity-content">
-                                <div class="activity-text-row">
-                                    <p class="activity-text">Payment to supplier successful</p>
-                                    <span class="activity-amount">-20,000 HKD</span>
-                                </div>
+                                <p class="activity-text">Payment to supplier successful</p>
                                 <span class="activity-time">Feb 14, 2026</span>
                             </div>
+                            <div class="activity-amount">-20,000 HKD</div>
                             <div class="activity-actions">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Downloading Receipt...');">Receipt</button>
                             </div>
@@ -3459,52 +3620,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span class="badge" style="background-color: #EF4444; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">3 Tasks</span>
                     </div>
                     <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-                        
-                        <!-- Task 1 -->
-                        <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--clr-text-main); font-size: 14px;">Payout Request</div>
-                                    <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">Global Tech Ltd &bull; 10 mins ago</div>
+                        ${approvalRequests
+                            .filter(request => request.status === 'pending')
+                            .slice(0, 3)
+                            .map(request => `
+                                <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 8px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
+                                        <div>
+                                            <div style="font-weight: 600; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
+                                            <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
+                                        </div>
+                                        <div style="color: var(--clr-text-main); font-weight: 600; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
+                                    </div>
+                                    <div style="display: flex; justify-content: flex-end;">
+                                        <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
+                                    </div>
                                 </div>
-                                <div style="color: var(--clr-text-main); font-weight: 600; font-size: 14px;">$15,000.00</div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-outline" style="flex: 1; padding: 6px 0; font-size: 13px;">Details</button>
-                                <button class="btn btn-primary" style="flex: 1; padding: 6px 0; font-size: 13px;">Approve</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Task 2 -->
-                        <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--clr-text-main); font-size: 14px;">Asset Withdrawal</div>
-                                    <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">Wallet ending in 8xF4 &bull; 2 hrs ago</div>
-                                </div>
-                                <div style="color: var(--clr-text-main); font-weight: 600; font-size: 14px;">10,000 USDT</div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-outline" style="flex: 1; padding: 6px 0; font-size: 13px;">Details</button>
-                                <button class="btn btn-primary" style="flex: 1; padding: 6px 0; font-size: 13px;">Approve</button>
-                            </div>
-                        </div>
-
-                        <!-- Task 3 -->
-                        <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
-                                <div>
-                                    <div style="font-weight: 600; color: var(--clr-text-main); font-size: 14px;">Payout Request</div>
-                                    <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">Cloud Services Inc &bull; Yesterday</div>
-                                </div>
-                                <div style="color: var(--clr-text-main); font-weight: 600; font-size: 14px;">$30,000.00</div>
-                            </div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-outline" style="flex: 1; padding: 6px 0; font-size: 13px;">Details</button>
-                                <button class="btn btn-primary" style="flex: 1; padding: 6px 0; font-size: 13px;">Approve</button>
-                            </div>
-                        </div>
-                        
+                            `).join('')}
                     </div>
                 </div>
 
@@ -4645,8 +4777,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const renderStatus = (status) => {
-                const pill = getOrderReportStatusPill(status === 'Proceeding' ? 'Proceeding' : status);
-                return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+                return renderUnifiedStatusBadge(status);
             };
 
             contentBody.innerHTML = `
@@ -4739,7 +4870,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.gross}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${record.fee}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.net}</div>
-                                    <div><span style="background: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).bg}; color: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${record.status}</span></div>
+                                    <div>${renderUnifiedStatusBadge(record.status, true)}</div>
                                 </div>
                             `).join('') : '<div style="padding: 32px 0; font-size: 13px; color: #64748B;">No inbound payment has been matched to this invoice order yet.</div>'}
                         </div>
@@ -4762,7 +4893,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.decision}</div>
+                                        <div style="margin-top: 6px;">${renderUnifiedStatusBadge(step.decision, true)}</div>
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
@@ -4784,7 +4915,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
                                     <div style="font-size: 12px; color: #64748B;">${event.time}</div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
                             `).join('')}
@@ -4810,7 +4941,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const summary = INVOICE_SUMMARY_BY_DURATION[activeInvoiceOrdersDuration] || INVOICE_SUMMARY_BY_DURATION['1m'];
         const filteredRows = INVOICE_ORDER_LIST_DATA.filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             const matchesMethod = methodValue === 'all' || row.method === methodValue;
             const issuedOnDate = parseInvoiceOrderDate(row.issuedOn);
             const matchesDateRange = (!startDate || issuedOnDate >= startDate) && (!endDate || issuedOnDate <= endDate);
@@ -4825,8 +4956,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const renderStatus = (status) => {
-            const pill = getOrderReportStatusPill(status === 'Proceeding' ? 'Proceeding' : status);
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
         contentBody.innerHTML = `
@@ -4915,9 +5046,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <select id="invoice-orders-status" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Statuses</option>
-                            <option value="Settled" ${statusValue === 'Settled' ? 'selected' : ''}>Settled</option>
-                            <option value="Pending Payment" ${statusValue === 'Pending Payment' ? 'selected' : ''}>Pending Payment</option>
-                            <option value="Proceeding" ${statusValue === 'Proceeding' ? 'selected' : ''}>Proceeding</option>
+                            <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
+                            <option value="In Progress" ${statusValue === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
                         </select>
                         <select id="invoice-orders-method" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -4983,17 +5113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const renderStatus = (status) => {
-                const mapped = status === 'Pending Payment'
-                    ? 'Pending Payment'
-                    : status === 'Underpaid'
-                        ? 'Pending Payment'
-                        : status === 'Proceeding'
-                            ? 'Proceeding'
-                            : status;
-                const pill = getOrderReportStatusPill(mapped);
-                return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
-            };
+        const renderStatus = (status) => renderUnifiedStatusBadge(status);
 
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
@@ -5061,7 +5181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.gross}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${record.fee}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${record.net}</div>
-                                    <div><span style="background: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).bg}; color: ${getOrderReportStatusPill(record.status === 'Confirmed' ? 'Completed' : record.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${record.status}</span></div>
+                                    <div>${renderUnifiedStatusBadge(record.status, true)}</div>
                                 </div>
                             `).join('') : '<div style="padding: 32px 0; font-size: 13px; color: #64748B;">No inbound payment has been matched to this checkout order yet.</div>'}
                         </div>
@@ -5084,7 +5204,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${step.decision}</div>
+                                        <div style="margin-top: 6px;">${renderUnifiedStatusBadge(step.decision, true)}</div>
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
@@ -5106,7 +5226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
                                     <div style="font-size: 12px; color: #64748B;">${event.time}</div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
                             `).join('')}
@@ -5132,7 +5252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filteredRows = CHECKOUT_ORDER_LIST_DATA.filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             const matchesMethod = methodValue === 'all' || row.paymentMethod === methodValue;
             const createdAtDate = parseCheckoutOrderDate(row.createdAt);
             const matchesDateRange = (!startDate || createdAtDate >= startDate) && (!endDate || createdAtDate <= endDate);
@@ -5140,15 +5260,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const summary = filteredRows.reduce((acc, row) => {
+            const normalizedStatus = normalizeOrderStatus(row.status);
             acc.createdCount += 1;
             acc.createdAmount += parseCheckoutNumericAmount(row.amount);
-            if (row.status === 'Paid') {
+            if (normalizedStatus === 'Completed') {
                 acc.paidCount += 1;
                 acc.paidAmount += parseCheckoutNumericAmount(row.paidAmount);
-            } else if (row.status === 'Pending Payment' || row.status === 'Proceeding' || row.status === 'Underpaid') {
+            } else if (normalizedStatus === 'In Progress' || normalizedStatus === 'Awaiting Approval') {
                 acc.transitCount += 1;
                 acc.transitAmount += parseCheckoutNumericAmount(row.paidAmount);
-            } else if (row.status === 'Expired') {
+            } else if (normalizedStatus === 'Expired' || normalizedStatus === 'Failed' || normalizedStatus === 'Cancelled') {
                 acc.failedCount += 1;
                 acc.failedAmount += parseCheckoutNumericAmount(row.amount);
             }
@@ -5165,15 +5286,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const renderStatus = (status) => {
-            const mapped = status === 'Pending Payment'
-                ? 'Pending Payment'
-                : status === 'Underpaid'
-                    ? 'Pending Payment'
-                    : status === 'Proceeding'
-                        ? 'Proceeding'
-                        : status;
-            const pill = getOrderReportStatusPill(mapped);
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
         contentBody.innerHTML = `
@@ -5234,10 +5348,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <select id="checkout-orders-status" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Statuses</option>
-                            <option value="Paid" ${statusValue === 'Paid' ? 'selected' : ''}>Paid</option>
-                            <option value="Pending Payment" ${statusValue === 'Pending Payment' ? 'selected' : ''}>Pending Payment</option>
-                            <option value="Underpaid" ${statusValue === 'Underpaid' ? 'selected' : ''}>Underpaid</option>
-                            <option value="Proceeding" ${statusValue === 'Proceeding' ? 'selected' : ''}>Proceeding</option>
+                            <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
+                            <option value="In Progress" ${statusValue === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
                         </select>
                         <select id="checkout-orders-method" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -5334,18 +5446,33 @@ document.addEventListener('DOMContentLoaded', () => {
         ]
     };
 
+    function normalizeOrderStatus(status) {
+        const value = String(status || '').trim().toLowerCase();
+        if (['completed', 'confirmed', 'paid', 'settled', 'approved'].includes(value)) return 'Completed';
+        if (['pending approval', 'awaiting approval', 'pending'].includes(value)) return 'Awaiting Approval';
+        if (['proceeding', 'in progress', 'pending payment', 'quote locked', 'confirming', 'scheduled', 'pending fx lock', 'pending collection', 'in reserve', 'underpaid', 'partially paid', 'under review', 'accrued'].includes(value)) return 'In Progress';
+        if (['failed', 'rejected'].includes(value)) return 'Failed';
+        if (value === 'expired') return 'Expired';
+        if (['cancelled', 'canceled'].includes(value)) return 'Cancelled';
+        return status || 'In Progress';
+    }
+
     function getOrderReportStatusPill(status) {
+        const label = normalizeOrderStatus(status);
         const map = {
-            'Completed': { bg: '#ECFDF5', color: '#059669' },
-            'Proceeding': { bg: '#EFF6FF', color: '#1D4ED8' },
-            'Pending Approval': { bg: '#EFF6FF', color: '#1D4ED8' },
-            'Pending Payment': { bg: '#FEF3C7', color: '#D97706' },
-            'Quote Locked': { bg: '#FEF3C7', color: '#D97706' },
-            'Paid': { bg: '#ECFDF5', color: '#059669' },
-            'Settled': { bg: '#ECFDF5', color: '#059669' },
-            'Expired': { bg: '#FEF2F2', color: '#DC2626' }
+            'In Progress': { bg: '#EFF6FF', color: '#1D4ED8' },
+            'Awaiting Approval': { bg: '#FEF3C7', color: '#B45309' },
+            'Completed': { bg: '#ECFDF5', color: '#15803D' },
+            'Failed': { bg: '#FEF2F2', color: '#B91C1C' },
+            'Expired': { bg: '#FFF1F2', color: '#BE123C' },
+            'Cancelled': { bg: '#F1F5F9', color: '#64748B' }
         };
-        return map[status] || { bg: '#F8FAFC', color: '#64748B' };
+        return { label, ...(map[label] || map['In Progress']) };
+    }
+
+    function renderUnifiedStatusBadge(status, compact = false) {
+        const pill = getOrderReportStatusPill(status);
+        return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: ${compact ? '4px 10px' : '6px 12px'}; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
     }
 
     function renderOrderReportRows(tabId, rows) {
@@ -5356,7 +5483,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderStatus = (status) => {
             const pill = getOrderReportStatusPill(status);
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
         if (tabId === 'vault') {
@@ -5383,7 +5510,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const rows = ORDER_REPORT_DATA[activeTab.id].filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             
             // For simple demo, we check if the row date/time string roughly matches a date range if provided
             // In a real app, row.time would be a timestamp.
@@ -5405,27 +5532,27 @@ document.addEventListener('DOMContentLoaded', () => {
             vault: {
                 description: 'Top up and transfer activity from Stablecoin Vault and Fiat Vault.',
                 headers: ['Time', 'Order ID', 'Vault', 'Type', 'Channel', 'Source', 'Destination', 'Amount', 'Fee', 'Status'],
-                statusOptions: ['Proceeding', 'Completed']
+                statusOptions: ['In Progress', 'Completed']
             },
             conversion: {
                 description: 'Asset conversion requests between fiat and stablecoin balances.',
                 headers: ['Time', 'Order ID', 'Sell Amount', 'Buy Amount', 'FX Rate', 'Spread', 'Destination Vault', 'Status'],
-                statusOptions: ['Completed', 'Quote Locked']
+                statusOptions: ['In Progress', 'Completed']
             },
             invoice: {
                 description: 'Invoice collection orders and settlement status.',
                 headers: ['Invoice No.', 'Issued On', 'Buyer', 'Method', 'Settlement Currency', 'Amount', 'Status'],
-                statusOptions: ['Settled', 'Pending Payment']
+                statusOptions: ['Completed', 'In Progress', 'Expired']
             },
             checkout: {
                 description: 'Hosted checkout payments and customer payment results.',
                 headers: ['Checkout ID', 'Created At', 'Merchant Order', 'Customer', 'Payment Method', 'Amount', 'Status'],
-                statusOptions: ['Paid', 'Expired']
+                statusOptions: ['Completed', 'In Progress', 'Expired']
             },
             payout: {
                 description: 'Outbound payout requests with beneficiary and approval progress.',
                 headers: ['Time', 'Order ID', 'Beneficiary', 'Method', 'Purpose', 'Source', 'Amount', 'Status'],
-                statusOptions: ['Pending Approval', 'Completed']
+                statusOptions: ['Awaiting Approval', 'Completed', 'Failed']
             }
         }[activeTab.id];
 
@@ -5517,8 +5644,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const renderStatus = (status) => {
-            const pill = getOrderReportStatusPill(status === 'Scheduled' ? 'Proceeding' : status === 'Awaiting Approval' ? 'Pending Approval' : status === 'Pending FX Lock' ? 'Quote Locked' : status === 'Pending Collection' ? 'Pending Payment' : status === 'In Reserve' ? 'Proceeding' : status);
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
         const renderDirection = (direction) => {
             const map = {
@@ -5554,7 +5681,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const rows = SETTLEMENT_REPORT_DATA[activeTab.id].filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             
             let matchesDate = true;
             if (startDateValue || endDateValue) {
@@ -5571,27 +5698,27 @@ document.addEventListener('DOMContentLoaded', () => {
             vault: {
                 description: 'Settlement batches for fiat and stablecoin vault orders, with gross, fee, net, and settlement account details.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Business Line', 'Currency', 'Gross', 'Fee', 'Net', 'Settlement Account', 'Status'],
-                statusOptions: ['Scheduled', 'Settled']
+                statusOptions: ['In Progress', 'Completed']
             },
             conversion: {
                 description: 'Settlement outcomes for conversion orders, including source/target assets, applied FX rate, and destination wallet or vault.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Source', 'Target', 'Gross Source', 'Net Target', 'FX Rate', 'Settlement Wallet', 'Status'],
-                statusOptions: ['Settled', 'Pending FX Lock']
+                statusOptions: ['Completed', 'In Progress']
             },
             invoice: {
                 description: 'Invoice collection settlement records showing collected amount, processing fee, and final settled net amount.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Invoice No.', 'Buyer', 'Collected', 'Fee', 'Net Settlement', 'Status'],
-                statusOptions: ['Settled', 'Pending Collection']
+                statusOptions: ['Completed', 'In Progress']
             },
             checkout: {
                 description: 'Checkout settlement records with channel, gross collected amount, reserve/fee impact, and net settlement.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Checkout ID', 'Merchant Order', 'Channel', 'Gross Collected', 'Fee', 'Net Settlement', 'Status'],
-                statusOptions: ['Settled', 'In Reserve']
+                statusOptions: ['Completed', 'In Progress']
             },
             payout: {
                 description: 'Payout settlement records focusing on gross debit, network or bank fee, and net remitted amount.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Payout Order', 'Beneficiary', 'Method', 'Gross Debit', 'Network Fee', 'Net Remitted', 'Status'],
-                statusOptions: ['Awaiting Approval', 'Settled']
+                statusOptions: ['Awaiting Approval', 'Completed']
             }
         }[activeTab.id];
 
@@ -5683,12 +5810,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const renderStatus = (status) => {
-            const pill = getOrderReportStatusPill(
-                status === 'Accrued' ? 'Proceeding' :
-                status === 'Awaiting Approval' ? 'Pending Approval' :
-                status
-            );
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            const pill = getOrderReportStatusPill(status);
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
         return rows.map(row => `
@@ -5714,7 +5837,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const rows = FEE_REPORT_DATA[activeTab.id].filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             let matchesDate = true;
             if (startDateValue || endDateValue) {
                 const rowDateString = row.chargedOn || '';
@@ -5727,19 +5850,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const tableMeta = {
             vault: {
                 description: 'Fees charged for vault transfers and top up related processing.',
-                statusOptions: ['Accrued', 'Settled']
+                statusOptions: ['In Progress', 'Completed']
             },
             conversion: {
                 description: 'FX spread and conversion-related charges by conversion order.',
-                statusOptions: ['Settled', 'Pending FX Lock']
+                statusOptions: ['Completed', 'In Progress']
             },
             collection: {
                 description: 'Collection and checkout processing fees charged on inbound payments.',
-                statusOptions: ['Settled']
+                statusOptions: ['Completed']
             },
             payout: {
                 description: 'Payout processing and network fees for outbound disbursement activity.',
-                statusOptions: ['Awaiting Approval', 'Settled']
+                statusOptions: ['Awaiting Approval', 'Completed']
             }
         }[activeTab.id];
 
@@ -7904,7 +8027,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Payout Order Detail</h2>
                                 <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.orderId}</div>
                             </div>
-                            <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${order.status}</span>
+                            <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>
                         </div>
                     </div>
 
@@ -7929,7 +8052,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div><div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 6px;">${order.amount}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;"><span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${order.status}</span></div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;"><span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span></div></div>
                         </div>
                     </div>
 
@@ -7961,7 +8084,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.amount}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${item.fee}</div>
                                     <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.net}</div>
-                                    <div><span style="background: ${getOrderReportStatusPill(item.status).bg}; color: ${getOrderReportStatusPill(item.status).color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${item.status}</span></div>
+                                    <div>${renderUnifiedStatusBadge(item.status, true)}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -7980,7 +8103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Decision</div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${approver.status}</div>
+                                        <div style="margin-top: 6px;">${renderUnifiedStatusBadge(approver.status, true)}</div>
                                     </div>
                                     <div>
                                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Acted At</div>
@@ -8002,7 +8125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
                                     <div style="font-size: 12px; color: #64748B;">${event.time}</div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${event.status}</div>
+                                    <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
                             `).join('')}
@@ -8019,7 +8142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const statusValue = document.getElementById('payout-orders-status')?.value || 'all';
         const rows = ORDER_REPORT_DATA['payout'].filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
-            const matchesStatus = statusValue === 'all' || row.status === statusValue;
+            const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             return matchesSearch && matchesStatus;
         });
 
@@ -8069,7 +8192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderStatus = (status) => {
             const pill = getOrderReportStatusPill(status);
-            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${status}</span>`;
+            return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
         const listHTML = rows.length ? rows.map(row => `
@@ -8107,8 +8230,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <select id="payout-orders-status" onchange="window.renderPlaceholderContent('Payout Orders')" style="width: 200px; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                                 <option value="all">All Statuses</option>
-                                <option value="Pending Approval" ${statusValue === 'Pending Approval' ? 'selected' : ''}>Pending Approval</option>
+                                <option value="Awaiting Approval" ${statusValue === 'Awaiting Approval' ? 'selected' : ''}>Awaiting Approval</option>
                                 <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
+                                <option value="Failed" ${statusValue === 'Failed' ? 'selected' : ''}>Failed</option>
                             </select>
                         </div>
                     </div>
@@ -8906,5 +9030,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Initialize first page
+    syncManagedEntityStatuses();
     renderPlaceholderContent('Overview');
 });
