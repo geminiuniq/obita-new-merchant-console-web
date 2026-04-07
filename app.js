@@ -1962,12 +1962,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <label class="bank-form-label">Notes</label>
                             <textarea id="member-notes" class="bank-form-control" style="min-height: 88px; padding: 12px 14px;" placeholder="Optional notes for this member invitation...">${member ? member.notes || '' : ''}</textarea>
                         </div>
-                        ${currentUserIsAdmin ? `
-                            <label style="display: inline-flex; align-items: center; gap: 10px; width: fit-content; font-size: 13px; font-weight: 600; color: #0F172A;">
-                                <input id="member-is-admin" type="checkbox" ${isAdminMode ? 'checked' : ''} onchange="window.toggleAdminPermissionMode()">
-                                Grant Admin Permission
-                            </label>
-                        ` : ''}
+                        <!-- Admin assignment is restricted to Obita internal backend -->
                     </div>
                 </div>
 
@@ -2772,7 +2767,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = document.getElementById('member-name').value.trim();
         const email = document.getElementById('member-email').value.trim();
         const notes = document.getElementById('member-notes').value.trim();
-        const isAdminMode = Boolean(document.getElementById('member-is-admin')?.checked);
+        const existingMember = memberId ? getMemberById(memberId) : null;
+        const isAdminMode = isAdminMember(existingMember);
         const permissions = {};
 
         const finalPermissions = isAdminMode ? getSeedPermissionsByRole('Admin') : (() => {
@@ -3077,6 +3073,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderFeeReportsPage = function() {
         renderFeeReportsPage();
+    };
+
+    window.openReportCenterReport = function(reportId) {
+        const mapping = {
+            balance: 'Order Reports',
+            statement: 'Settlement Reports',
+            reconciliation: 'Fee Reports',
+            settlement: 'Settlement Reports'
+        };
+        const targetTitle = mapping[reportId] || 'Report Center';
+        pageTitle.textContent = targetTitle;
+        renderPlaceholderContent(targetTitle);
     };
 
     window.openPayoutOrderDetail = function(orderId) {
@@ -3482,61 +3490,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <div class="card" style="padding: 24px; border: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; flex-wrap: wrap;">
-                        <div>
-                            <div style="font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Most Popular Usage</div>
-                            <h2 class="card-title" style="margin: 8px 0 0; font-size: 20px;">Deposit stablecoin → Convert to USD → Withdraw USD</h2>
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 12px; align-items: stretch;">
-                        <div style="padding: 18px; border: 1px solid #DBEAFE; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; gap: 14px;">
-                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
-                                <div>
-                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 1</div>
-                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Deposit Stablecoin</div>
-                                </div>
-                                <span style="background: #ECFDF5; color: #059669; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Ready</span>
-                            </div>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Move stablecoin into vault.</div>
-                            <button class="btn btn-primary" onclick="window.openTopUpDrawer('USDT')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Deposit USDT</button>
-                        </div>
-
-                        <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
-                            <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
-                        </div>
-
-                        <div style="padding: 18px; border: 1px solid #E2E8F0; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px;">
-                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
-                                <div>
-                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 2</div>
-                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Convert to USD</div>
-                                </div>
-                                <span style="background: #EFF6FF; color: #1D4ED8; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Next</span>
-                            </div>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Convert into Fiat Vault USD.</div>
-                            <button class="btn btn-outline" onclick="window.openConvertDrawer('USDT')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Convert Now</button>
-                        </div>
-
-                        <div style="display: flex; align-items: center; justify-content: center; color: #CBD5E1;">
-                            <i data-lucide="arrow-right" style="width: 22px; height: 22px;"></i>
-                        </div>
-
-                        <div style="padding: 18px; border: 1px solid #E2E8F0; border-radius: 16px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px;">
-                            <div style="display: flex; justify-content: space-between; gap: 12px; align-items: flex-start;">
-                                <div>
-                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Step 3</div>
-                                    <div style="font-size: 17px; font-weight: 700; color: #0F172A; margin-top: 6px;">Withdraw USD</div>
-                                </div>
-                                <span style="background: #F8FAFC; color: #64748B; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">Pending Action</span>
-                            </div>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Send USD to bank account.</div>
-                            <button class="btn btn-outline" onclick="window.openFiatTransferDrawer('USD')" style="margin-top: auto; padding: 10px 14px; font-size: 13px; font-weight: 700;">Withdraw USD</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Fund Flow -->
                 <div class="card fund-flow-card">
                     <div class="fund-flow-header">
@@ -3699,7 +3652,89 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <!-- Secondary Column -->
             <div class="overview-sidebar">
-                <div class="card activities-card">
+                <!-- Exceptions & Tasks Card -->
+                <div class="card approvals-card">
+                    <div class="card-header-flex">
+                        <h2 class="card-title" style="margin-bottom: 0;">Exceptions & Tasks</h2>
+                        <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
+                    </div>
+                    ${(() => {
+                        const pendingApprovals = approvalRequests.filter(request => request.status === 'pending').slice(0, 2);
+                        const exceptions = [
+                            {
+                                title: 'Underpaid checkout detected',
+                                meta: 'CKO-20260406-0179 · 280.00 USDT short',
+                                toneBg: '#FFF7ED',
+                                toneBorder: '#FED7AA',
+                                toneColor: '#C2410C',
+                                pill: 'Exception',
+                                action: 'View Order',
+                                handler: "window.openCheckoutOrderDetail('CKO-20260406-0179')"
+                            },
+                            {
+                                title: 'Invoice approaching expiry',
+                                meta: 'INV-240405-8802 · expires in 2 days',
+                                toneBg: '#FEFCE8',
+                                toneBorder: '#FDE68A',
+                                toneColor: '#A16207',
+                                pill: 'Watch',
+                                action: 'View Invoice',
+                                handler: "window.openInvoiceOrderDetail('INV-240405-8802')"
+                            }
+                        ];
+                        return `
+                            <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 16px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To-Do</div>
+                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals</span>
+                                    </div>
+                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${pendingApprovals.map(request => `
+                                            <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 12px; background: #FFFFFF;">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
+                                                    <div>
+                                                        <div style="font-weight: 700; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
+                                                        <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
+                                                    </div>
+                                                    <div style="color: var(--clr-text-main); font-weight: 700; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end;">
+                                                    <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Exceptions</div>
+                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${exceptions.length} active</span>
+                                    </div>
+                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${exceptions.map(item => `
+                                            <div style="padding: 16px; border: 1px solid ${item.toneBorder}; border-radius: 12px; background: ${item.toneBg};">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                                                    <div>
+                                                        <div style="font-weight: 700; color: #0F172A; font-size: 14px;">${item.title}</div>
+                                                        <div style="color: #64748B; font-size: 13px; margin-top: 4px;">${item.meta}</div>
+                                                    </div>
+                                                    <span style="padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; color: ${item.toneColor}; background: rgba(255,255,255,0.72); border: 1px solid ${item.toneBorder};">${item.pill}</span>
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end;">
+                                                    <button class="btn btn-outline" onclick="${item.handler}" style="padding: 6px 14px; font-size: 13px; font-weight: 700;">${item.action}</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    })()}
+                </div>
+
+                <div class="card activities-card" style="margin-top: 24px;">
                     <div class="card-header-flex">
                         <h2 class="card-title" style="margin-bottom: 0;">Activities</h2>
                         <a href="#" class="view-all-link" onclick="window.openActivitiesDrawer(); return false;">View All</a>
@@ -3765,88 +3800,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Exceptions & Tasks Card -->
-                <div class="card approvals-card" style="margin-top: 24px;">
-                    <div class="card-header-flex">
-                        <h2 class="card-title" style="margin-bottom: 0;">Exceptions & Tasks</h2>
-                        <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
-                    </div>
-                    ${(() => {
-                        const pendingApprovals = approvalRequests.filter(request => request.status === 'pending').slice(0, 2);
-                        const exceptions = [
-                            {
-                                title: 'Underpaid checkout detected',
-                                meta: 'CKO-20260406-0179 · 280.00 USDT short',
-                                toneBg: '#FFF7ED',
-                                toneBorder: '#FED7AA',
-                                toneColor: '#C2410C',
-                                pill: 'Exception',
-                                action: 'View Order',
-                                handler: "window.openCheckoutOrderDetail('CKO-20260406-0179')"
-                            },
-                            {
-                                title: 'Invoice approaching expiry',
-                                meta: 'INV-240405-8802 · expires in 2 days',
-                                toneBg: '#FEFCE8',
-                                toneBorder: '#FDE68A',
-                                toneColor: '#A16207',
-                                pill: 'Watch',
-                                action: 'View Invoice',
-                                handler: "window.openInvoiceOrderDetail('INV-240405-8802')"
-                            }
-                        ];
-                        return `
-                            <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 16px;">
-                                <div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Exceptions</div>
-                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${exceptions.length} active</span>
-                                    </div>
-                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
-                                        ${exceptions.map(item => `
-                                            <div style="padding: 16px; border: 1px solid ${item.toneBorder}; border-radius: 12px; background: ${item.toneBg};">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
-                                                    <div>
-                                                        <div style="font-weight: 700; color: #0F172A; font-size: 14px;">${item.title}</div>
-                                                        <div style="color: #64748B; font-size: 13px; margin-top: 4px;">${item.meta}</div>
-                                                    </div>
-                                                    <span style="padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; color: ${item.toneColor}; background: rgba(255,255,255,0.72); border: 1px solid ${item.toneBorder};">${item.pill}</span>
-                                                </div>
-                                                <div style="display: flex; justify-content: flex-end;">
-                                                    <button class="btn btn-outline" onclick="${item.handler}" style="padding: 6px 14px; font-size: 13px; font-weight: 700;">${item.action}</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To-Do</div>
-                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals</span>
-                                    </div>
-                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
-                                        ${pendingApprovals.map(request => `
-                                            <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 12px; background: #FFFFFF;">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
-                                                    <div>
-                                                        <div style="font-weight: 700; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
-                                                        <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
-                                                    </div>
-                                                    <div style="color: var(--clr-text-main); font-weight: 700; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
-                                                </div>
-                                                <div style="display: flex; justify-content: flex-end;">
-                                                    <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    })()}
                 </div>
 
                 <!-- Ad Banner -->
@@ -6555,6 +6508,150 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    function renderReportCenterPage() {
+        const cards = [
+            {
+                title: 'Balance activity report',
+                badge: 'Asset Vaults',
+                description: 'Record of every settled wallet transaction. Used to track running account balances across currencies.',
+                icon: 'wallet',
+                iconBg: 'linear-gradient(180deg, #FFF7ED 0%, #FFEDD5 100%)',
+                iconColor: '#F97316',
+                action: 'balance'
+            },
+            {
+                title: 'Account statement',
+                badge: 'Asset Vaults',
+                description: 'An official statement for a given currency, providing a transaction history and key financial information such as minimum and maximum balance.',
+                icon: 'file-text',
+                iconBg: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
+                iconColor: '#94A3B8',
+                action: 'statement'
+            },
+            {
+                title: 'Transaction reconciliation report',
+                badge: 'Collection, Payout',
+                description: 'Detailed record of pending and settled transactions, including all individual payment attempts within a Payments batch settlement.',
+                icon: 'receipt-text',
+                iconBg: 'linear-gradient(180deg, #FFF7ED 0%, #FFE4E6 100%)',
+                iconColor: '#FB7185',
+                action: 'reconciliation'
+            },
+            {
+                title: 'Settlement and fee report',
+                badge: 'Collection, Payout',
+                description: 'Settled payment transactions and fees in the selected date range.',
+                icon: 'files',
+                iconBg: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
+                iconColor: '#06B6D4',
+                action: 'settlement'
+            }
+        ];
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; padding-bottom: 60px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    ${cards.map(card => `
+                        <div class="card" style="padding: 32px 34px; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
+                            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                                <div style="width: 78px; height: 78px; border-radius: 22px; background: ${card.iconBg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="${card.icon}" style="width: 38px; height: 38px; color: ${card.iconColor};"></i>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.02em;">${card.title}</h2>
+                                        <span style="padding: 6px 10px; border-radius: 8px; background: #EDE9FE; color: #4F46E5; font-size: 12px; font-weight: 800;">${card.badge}</span>
+                                    </div>
+                                    <div style="font-size: 14px; color: #0F172A; line-height: 1.7;">${card.description}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; justify-content: flex-end;">
+                                <button class="btn btn-outline" onclick="window.openReportCenterReport('${card.action}')" style="padding: 12px 18px; font-size: 15px; font-weight: 800; color: #4F46E5; border-color: #E2E8F0; background: #FFFFFF;">Generate</button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div>
+                    <h2 style="font-size: 24px; font-weight: 900; color: #0F172A; margin: 0 0 10px; letter-spacing: -0.02em;">Download generated reports</h2>
+                    <div style="font-size: 14px; color: #64748B; margin-bottom: 28px;">Download your previously generated reports. Reports are available to download for 30 days after generation.</div>
+                    
+                    <div class="card" style="padding: 24px; border-radius: 12px; background: #FFFFFF;">
+                        <div style="display: flex; flex-direction: column; gap: 20px;">
+                            <div style="max-width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; background: #F8FAFC; display: flex; align-items: center; gap: 10px;">
+                                <i data-lucide="search" style="width: 16px; height: 16px; color: #94A3B8;"></i>
+                                <input type="text" placeholder="Search by filename" style="width: 100%; border: none; background: transparent; font-size: 14px; outline: none; color: #0F172A;">
+                            </div>
+                            
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 280px; position: relative;">
+                                    <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B;"></i>
+                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">2026-03-08</span>
+                                    <span style="color: #CBD5E1; margin: 0 4px;">—</span>
+                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</span>
+                                    <i data-lucide="x" style="width: 14px; height: 14px; color: #94A3B8; cursor: pointer; margin-left: auto;"></i>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 110px; cursor: pointer;">
+                                    <i data-lucide="file-text" style="width: 16px; height: 16px; color: #64748B;"></i>
+                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">Type</span>
+                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: #64748B; margin-left: auto;"></i>
+                                </div>
+
+                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 110px; cursor: pointer;">
+                                    <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #64748B;"></i>
+                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">Status</span>
+                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: #64748B; margin-left: auto;"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 32px; overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; min-width: 1000px;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #F1F5F9;">
+                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 160px;">Created On</th>
+                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 220px;">Type</th>
+                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em;">Filename</th>
+                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 140px;">Status</th>
+                                        <th style="padding: 16px; width: 60px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #F1F5F9;">
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">Account statement</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #475569; font-weight: 500;">Account_Statement_HKD_2025-01-01-2025-12-31.pdf</td>
+                                        <td style="padding: 18px 16px;"><span style="padding: 5px 12px; border-radius: 6px; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 800;">Completed</span></td>
+                                        <td style="padding: 18px 16px; text-align: right;"><button style="background: none; border: none; color: #4F46E5; cursor: pointer; display: inline-flex; align-items: center; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><i data-lucide="download" style="width: 18px; height: 18px;"></i></button></td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid #F1F5F9;">
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">Balance activity report</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #475569; font-weight: 500;">Balance_Activity_Report_2026-04-07.csv</td>
+                                        <td style="padding: 18px 16px;"><span style="padding: 5px 12px; border-radius: 6px; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 800;">Completed</span></td>
+                                        <td style="padding: 18px 16px; text-align: right;"><button style="background: none; border: none; color: #4F46E5; cursor: pointer; display: inline-flex; align-items: center; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><i data-lucide="download" style="width: 18px; height: 18px;"></i></button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevrons-left" style="width: 16px; height: 16px;"></i></button>
+                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i></button>
+                                <button style="width: 32px; height: 32px; border-radius: 6px; background: #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 800; border: none;">1</button>
+                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i></button>
+                            </div>
+                            <div style="font-size: 13px; color: #64748B; font-weight: 500;">1-2 of 2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
     // ── PAYEE LIST ────────────────────────────────────────────────────────────
 
     const payeeList = [
@@ -9177,6 +9274,8 @@ document.addEventListener('DOMContentLoaded', () => {
             renderCheckoutOrdersPage();
         } else if (title === 'Order Reports') {
             renderOrderReportsPage();
+        } else if (title === 'Report Center') {
+            renderReportCenterPage();
         } else if (title === 'Settlement Reports') {
             renderSettlementReportsPage();
         } else if (title === 'Fee Reports') {
