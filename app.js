@@ -25,6 +25,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return network ? `${short}（${network}）` : short;
     }
 
+    function parseVaultFilterDate(value) {
+        if (!value) return null;
+        return new Date(`${value}T00:00:00`);
+    }
+
+    function filterVaultTransactions(prefix) {
+        const startDateValue = document.getElementById(`${prefix}-tx-start-date`)?.value || '';
+        const endDateValue = document.getElementById(`${prefix}-tx-end-date`)?.value || '';
+        const typeValue = document.getElementById(`${prefix}-tx-type-filter`)?.value || 'all';
+        const statusValue = document.getElementById(`${prefix}-tx-status-filter`)?.value || 'all';
+        const searchValue = document.getElementById(`${prefix}-tx-search`)?.value?.trim().toLowerCase() || '';
+        const rows = Array.from(document.querySelectorAll(`#${prefix}-tx-table-body tr[data-date]`));
+        const emptyState = document.getElementById(`${prefix}-tx-empty`);
+        const startDate = parseVaultFilterDate(startDateValue);
+        const effectiveEndDateValue = endDateValue || new Date().toISOString().slice(0, 10);
+        const endDate = parseVaultFilterDate(effectiveEndDateValue);
+        if (endDate) endDate.setHours(23, 59, 59, 999);
+
+        let visibleCount = 0;
+        rows.forEach(row => {
+            const rowDate = parseVaultFilterDate(row.dataset.date);
+            const matchesDate = (!startDate || (rowDate && rowDate >= startDate)) && (!endDate || (rowDate && rowDate <= endDate));
+            const matchesType = typeValue === 'all' || row.dataset.type === typeValue;
+            const matchesStatus = statusValue === 'all' || row.dataset.status === statusValue;
+            const haystack = row.dataset.search || '';
+            const matchesSearch = !searchValue || haystack.includes(searchValue);
+            const show = matchesDate && matchesType && matchesStatus && matchesSearch;
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount += 1;
+        });
+
+        if (emptyState) {
+            emptyState.style.display = visibleCount ? 'none' : '';
+        }
+    }
+    window.filterVaultTransactions = filterVaultTransactions;
+
     // Nav Items Selection
     const navItems = document.querySelectorAll('.nav-item:not(.has-submenu), .nav-subitem');
     const pageTitle = document.getElementById('page-title');
@@ -33,6 +70,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Submenu Toggles
     const sidebarNav = document.querySelector('.sidebar-nav');
     const submenuToggles = document.querySelectorAll('.submenu-toggle');
+    function setNavGroupExpanded(navGroup, expanded) {
+        if (!navGroup) return;
+        navGroup.classList.toggle('expanded', expanded);
+        const toggle = navGroup.querySelector('.submenu-toggle');
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        }
+    }
+
     submenuToggles.forEach(toggle => {
         const navGroup = toggle.closest('.nav-group');
         if (navGroup) {
@@ -42,16 +88,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sidebarNav?.addEventListener('click', (e) => {
         const toggle = e.target.closest('.submenu-toggle');
-        if (!toggle) return;
+        if (toggle) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const navGroup = toggle.closest('.nav-group');
+            if (!navGroup) return;
+
+            setNavGroupExpanded(navGroup, !navGroup.classList.contains('expanded'));
+            return;
+        }
+
+        const parentItem = e.target.closest('.nav-item.has-submenu');
+        if (!parentItem) return;
 
         e.preventDefault();
-        e.stopPropagation();
 
-        const navGroup = toggle.closest('.nav-group');
+        const navGroup = parentItem.closest('.nav-group');
         if (!navGroup) return;
 
-        navGroup.classList.toggle('expanded');
-        toggle.setAttribute('aria-expanded', navGroup.classList.contains('expanded') ? 'true' : 'false');
+        setNavGroupExpanded(navGroup, !navGroup.classList.contains('expanded'));
     });
     
     // Handle Navigation Selection
@@ -1482,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'my-merchant', label: 'My Merchant', level: 'primary' },
         { id: 'merchant-profile', label: 'Merchant Profile', level: 'secondary' },
         { id: 'members', label: 'Members', level: 'secondary' },
-        { id: 'settings', label: 'Settings', level: 'primary' }
+        { id: 'settings', label: 'Settings', level: 'secondary' }
     ];
 
     let approvalRuleView = 'list';
@@ -2712,11 +2768,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderInvoiceOrdersPage();
     };
 
-    window.switchCheckoutOrdersDuration = function(duration) {
-        activeCheckoutOrdersDuration = duration;
-        renderCheckoutOrdersPage();
-    };
-
     window.openCheckoutOrderDetail = function(checkoutId) {
         checkoutOrdersView = 'detail';
         activeCheckoutOrderId = checkoutId;
@@ -3693,15 +3744,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-header-flex">
                     <h2 class="card-title" style="margin-bottom: 0;">Vault Transactions</h2>
                     <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;"><i data-lucide="filter" style="width: 14px; height: 14px;"></i> Filters</button>
                         <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;"><i data-lucide="download" style="width: 14px; height: 14px;"></i> Export</button>
+                    </div>
+                </div>
+                <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                            <input id="fiat-vault-tx-start-date" type="date" onchange="filterVaultTransactions('fiat-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                            <span style="font-size: 12px; color: #94A3B8;">to</span>
+                            <input id="fiat-vault-tx-end-date" type="date" onchange="filterVaultTransactions('fiat-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                        </div>
+                    </div>
+                    <select id="fiat-vault-tx-type-filter" onchange="filterVaultTransactions('fiat-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <option value="all">All Types</option>
+                        <option value="top-up">Top Up</option>
+                        <option value="transfer">Transfer</option>
+                        <option value="convert">Convert</option>
+                    </select>
+                    <select id="fiat-vault-tx-status-filter" onchange="filterVaultTransactions('fiat-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <option value="all">All Statuses</option>
+                        <option value="completed">Completed</option>
+                        <option value="confirming">Confirming</option>
+                    </select>
+                    <div style="position: relative; min-width: 260px;">
+                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                        <input id="fiat-vault-tx-search" type="text" oninput="filterVaultTransactions('fiat-vault')" placeholder="Search by order ID, counterparty..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                     </div>
                 </div>
                 <div class="table-responsive" style="margin-top: 16px;">
                     <table class="data-table">
                         <thead><tr><th>Time</th><th>Order ID</th><th>Type</th><th>From</th><th>To</th><th class="text-right">Amount</th><th>Status</th></tr></thead>
-                        <tbody>
-                            <tr onclick="alert('Viewing Order Details...')">
+                        <tbody id="fiat-vault-tx-table-body">
+                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="fv-20261025-0031 top up chase bank 4821 fiat vault 500,000 usd completed" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Today, 11:30</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261025-0031</td>
                                 <td class="font-medium">Top Up</td>
@@ -3710,7 +3785,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-right font-medium text-success">+ 500,000.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="fv-20261024-0019 transfer fiat vault hsbc hk 9230 1,200,000 hkd completed" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Yesterday, 15:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261024-0019</td>
                                 <td class="font-medium">Transfer</td>
@@ -3719,7 +3794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-right font-medium">- 1,200,000.00 <span class="currency">HKD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2025-10-23" data-type="top-up" data-status="confirming" data-search="fv-20261023-0007 top up deutsche bank 0130 fiat vault 100,000 eur confirming" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Oct 23, 09:05</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261023-0007</td>
                                 <td class="font-medium">Top Up</td>
@@ -3728,7 +3803,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-right font-medium text-success">+ 100,000.00 <span class="currency">EUR</span></td>
                                 <td><span class="status-badge status-warning" style="background-color: #FEF3C7; color: #D97706;">Confirming</span></td>
                             </tr>
-                            <tr onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2025-10-22" data-type="convert" data-status="completed" data-search="fv-20261022-0003 convert usd balance brl balance 980,000 brl completed" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Oct 22, 14:00</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261022-0003</td>
                                 <td class="font-medium">Convert</td>
@@ -3736,6 +3811,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td style="font-size: 13px; color: var(--clr-text-muted);">BRL Balance</td>
                                 <td class="text-right font-medium text-success">+ 980,000.00 <span class="currency">BRL</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
+                            </tr>
+                            <tr id="fiat-vault-tx-empty" style="display: none;">
+                                <td colspan="7" style="padding: 48px 24px; text-align: center; color: #64748B;">No vault transactions matched your current filters.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -3928,11 +4006,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h2 class="card-title" style="margin-bottom: 0;">Vault Transactions</h2>
                     <div style="display: flex; gap: 12px;">
                         <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                            <i data-lucide="filter" style="width: 14px; height: 14px;"></i> Filters
-                        </button>
-                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
                             <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export
                         </button>
+                    </div>
+                </div>
+                <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                            <input id="stable-vault-tx-start-date" type="date" onchange="filterVaultTransactions('stable-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                            <span style="font-size: 12px; color: #94A3B8;">to</span>
+                            <input id="stable-vault-tx-end-date" type="date" onchange="filterVaultTransactions('stable-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                        </div>
+                    </div>
+                    <select id="stable-vault-tx-type-filter" onchange="filterVaultTransactions('stable-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <option value="all">All Types</option>
+                        <option value="top-up">Top Up</option>
+                        <option value="transfer">Transfer</option>
+                    </select>
+                    <select id="stable-vault-tx-status-filter" onchange="filterVaultTransactions('stable-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <option value="all">All Statuses</option>
+                        <option value="completed">Completed</option>
+                        <option value="confirming">Confirming</option>
+                    </select>
+                    <div style="position: relative; min-width: 260px;">
+                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                        <input id="stable-vault-tx-search" type="text" oninput="filterVaultTransactions('stable-vault')" placeholder="Search by order ID, address..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                     </div>
                 </div>
                 <div class="table-responsive" style="margin-top: 16px;">
@@ -3948,8 +4047,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <th>Status</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr onclick="alert('Viewing Order Details...')">
+                        <tbody id="stable-vault-tx-table-body">
+                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="vt-20261025-0031 top up stablecoin vault 0x1234567890abcdef1234567890abcdef12345678 5,000 usdc completed" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Today, 09:12</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261025-0031</td>
                                 <td class="font-medium">Top Up</td>
@@ -3958,7 +4057,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-right font-medium text-success">+ 5,000.00 <span class="currency">USDC</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="vt-20261024-0018 transfer stablecoin vault 0xabcdef1234567890abcdef1234567890abcdef12 12,500 usdt completed" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Yesterday, 16:45</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261024-0018</td>
                                 <td class="font-medium">Transfer</td>
@@ -3967,7 +4066,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td class="text-right font-medium">- 12,500.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2025-10-23" data-type="top-up" data-status="confirming" data-search="vt-20261023-0004 top up stablecoin vault tr7nhqjekqxgtci8q8zy4pl8otszgjlj6t 100,000 usdt confirming" onclick="alert('Viewing Order Details...')">
                                 <td class="text-muted">Oct 23, 11:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261023-0004</td>
                                 <td class="font-medium">Top Up</td>
@@ -3975,6 +4074,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <td style="font-size: 12px; color: var(--clr-text-muted);">Stablecoin Vault</td>
                                 <td class="text-right font-medium text-success">+ 100,000.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-warning" style="background-color: #FEF3C7; color: #D97706;">Confirming</span></td>
+                            </tr>
+                            <tr id="stable-vault-tx-empty" style="display: none;">
+                                <td colspan="7" style="padding: 48px 24px; text-align: center; color: #64748B;">No vault transactions matched your current filters.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -4174,10 +4276,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const INVOICE_DURATION_OPTIONS = ['1d', '1w', '1m', '6m', '1y'];
     let activeInvoiceOrdersDuration = '1m';
+    let activeInvoiceOrdersStartDate = '';
+    let activeInvoiceOrdersEndDate = '';
     let invoiceOrdersView = 'list';
     let activeInvoiceOrderId = null;
-    const CHECKOUT_DURATION_OPTIONS = ['1d', '1w', '1m', '6m', '1y'];
-    let activeCheckoutOrdersDuration = '1m';
+    let activeCheckoutOrdersStartDate = '';
+    let activeCheckoutOrdersEndDate = '';
     let checkoutOrdersView = 'list';
     let activeCheckoutOrderId = null;
     const INVOICE_SUMMARY_BY_DURATION = {
@@ -4508,8 +4612,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return CHECKOUT_ORDER_LIST_DATA.find(order => order.checkoutId === checkoutId);
     }
 
+    function parseCheckoutOrderDate(value) {
+        const normalized = String(value || '').replace(/\s+\d{2}:\d{2}$/, '');
+        return new Date(`${normalized} 00:00:00`);
+    }
+
+    function parseCheckoutNumericAmount(amount) {
+        return Number.parseFloat(String(amount || '0').replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    function formatCheckoutSummaryAmount(value) {
+        return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
     function getInvoiceOrderById(invoiceNo) {
         return INVOICE_ORDER_LIST_DATA.find(order => order.invoiceNo === invoiceNo);
+    }
+
+    function parseInvoiceOrderDate(value) {
+        return new Date(`${String(value || '').trim()} 00:00:00`);
     }
 
     function renderInvoiceOrdersPage() {
@@ -4679,19 +4800,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchValue = document.getElementById('invoice-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('invoice-orders-status')?.value || 'all';
         const methodValue = document.getElementById('invoice-orders-method')?.value || 'all';
+        const startDateValue = document.getElementById('invoice-orders-start-date')?.value ?? activeInvoiceOrdersStartDate;
+        const endDateValue = document.getElementById('invoice-orders-end-date')?.value ?? activeInvoiceOrdersEndDate;
+        activeInvoiceOrdersStartDate = startDateValue;
+        activeInvoiceOrdersEndDate = endDateValue;
+        const effectiveEndDateValue = endDateValue || new Date().toISOString().slice(0, 10);
+        const startDate = startDateValue ? new Date(`${startDateValue}T00:00:00`) : null;
+        const endDate = effectiveEndDateValue ? new Date(`${effectiveEndDateValue}T23:59:59`) : null;
         const summary = INVOICE_SUMMARY_BY_DURATION[activeInvoiceOrdersDuration] || INVOICE_SUMMARY_BY_DURATION['1m'];
-        const durationOrder = { '1d': 0, '1w': 1, '1m': 2, '6m': 3, '1y': 4 };
         const filteredRows = INVOICE_ORDER_LIST_DATA.filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || row.status === statusValue;
             const matchesMethod = methodValue === 'all' || row.method === methodValue;
-            const rowBucket = row.issuedOn.startsWith('Apr 6') ? '1d'
-                : row.issuedOn.startsWith('Apr') ? '1w'
-                : row.issuedOn.startsWith('Mar') ? '1m'
-                : row.issuedOn.startsWith('Feb') ? '6m'
-                : '1y';
-            const matchesDuration = durationOrder[rowBucket] <= durationOrder[activeInvoiceOrdersDuration];
-            return matchesSearch && matchesStatus && matchesMethod && matchesDuration;
+            const issuedOnDate = parseInvoiceOrderDate(row.issuedOn);
+            const matchesDateRange = (!startDate || issuedOnDate >= startDate) && (!endDate || issuedOnDate <= endDate);
+            return matchesSearch && matchesStatus && matchesMethod && matchesDateRange;
         });
 
         const recipientSummary = {
@@ -4781,13 +4904,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         </button>
                     </div>
 
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                            <div class="time-selector" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 999px; padding: 4px;">
-                                ${INVOICE_DURATION_OPTIONS.map(option => `
-                                    <span class="time-option ${option === activeInvoiceOrdersDuration ? 'active' : ''}" onclick="window.switchInvoiceOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
-                                `).join('')}
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                                <input id="invoice-orders-start-date" type="date" value="${activeInvoiceOrdersStartDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                                <span style="font-size: 12px; color: #94A3B8;">to</span>
+                                <input id="invoice-orders-end-date" type="date" value="${activeInvoiceOrdersEndDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
                             </div>
                         </div>
                         <select id="invoice-orders-status" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -4999,20 +5122,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const searchValue = document.getElementById('checkout-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('checkout-orders-status')?.value || 'all';
         const methodValue = document.getElementById('checkout-orders-method')?.value || 'all';
-        const summary = CHECKOUT_SUMMARY_BY_DURATION[activeCheckoutOrdersDuration] || CHECKOUT_SUMMARY_BY_DURATION['1m'];
-        const durationOrder = { '1d': 0, '1w': 1, '1m': 2, '6m': 3, '1y': 4 };
+        const startDateValue = document.getElementById('checkout-orders-start-date')?.value ?? activeCheckoutOrdersStartDate;
+        const endDateValue = document.getElementById('checkout-orders-end-date')?.value ?? activeCheckoutOrdersEndDate;
+        activeCheckoutOrdersStartDate = startDateValue;
+        activeCheckoutOrdersEndDate = endDateValue;
+        const effectiveEndDateValue = endDateValue || new Date().toISOString().slice(0, 10);
+        const startDate = startDateValue ? new Date(`${startDateValue}T00:00:00`) : null;
+        const endDate = effectiveEndDateValue ? new Date(`${effectiveEndDateValue}T23:59:59`) : null;
 
         const filteredRows = CHECKOUT_ORDER_LIST_DATA.filter(row => {
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || row.status === statusValue;
             const matchesMethod = methodValue === 'all' || row.paymentMethod === methodValue;
-            const rowBucket = row.createdAt.startsWith('Apr 6') ? '1d'
-                : row.createdAt.startsWith('Apr') ? '1w'
-                : row.createdAt.startsWith('Mar') ? '1m'
-                : row.createdAt.startsWith('Feb') ? '6m'
-                : '1y';
-            const matchesDuration = durationOrder[rowBucket] <= durationOrder[activeCheckoutOrdersDuration];
-            return matchesSearch && matchesStatus && matchesMethod && matchesDuration;
+            const createdAtDate = parseCheckoutOrderDate(row.createdAt);
+            const matchesDateRange = (!startDate || createdAtDate >= startDate) && (!endDate || createdAtDate <= endDate);
+            return matchesSearch && matchesStatus && matchesMethod && matchesDateRange;
+        });
+
+        const summary = filteredRows.reduce((acc, row) => {
+            acc.createdCount += 1;
+            acc.createdAmount += parseCheckoutNumericAmount(row.amount);
+            if (row.status === 'Paid') {
+                acc.paidCount += 1;
+                acc.paidAmount += parseCheckoutNumericAmount(row.paidAmount);
+            } else if (row.status === 'Pending Payment' || row.status === 'Proceeding' || row.status === 'Underpaid') {
+                acc.transitCount += 1;
+                acc.transitAmount += parseCheckoutNumericAmount(row.paidAmount);
+            } else if (row.status === 'Expired') {
+                acc.failedCount += 1;
+                acc.failedAmount += parseCheckoutNumericAmount(row.amount);
+            }
+            return acc;
+        }, {
+            createdCount: 0,
+            createdAmount: 0,
+            paidCount: 0,
+            paidAmount: 0,
+            transitCount: 0,
+            transitAmount: 0,
+            failedCount: 0,
+            failedAmount: 0
         });
 
         const renderStatus = (status) => {
@@ -5033,34 +5182,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="collection-header" style="margin-bottom: 22px;">
                         <div>
                             <h2 class="card-title" style="font-size: 18px; margin: 0;">Checkout Summary</h2>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance aligned with the overview dashboard summary.</div>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance for the selected date range.</div>
                         </div>
-                        <div class="time-selector">
-                            ${CHECKOUT_DURATION_OPTIONS.map(option => `
-                                <span class="time-option ${option === activeCheckoutOrdersDuration ? 'active' : ''}" onclick="window.switchCheckoutOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
-                            `).join('')}
+                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 999px; background: #FFFFFF;">
+                            <span style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Date Range</span>
+                            <span style="font-size: 13px; font-weight: 600; color: #0F172A;">
+                                ${activeCheckoutOrdersStartDate || 'All dates'} to ${activeCheckoutOrdersEndDate || 'Today'}
+                            </span>
                         </div>
                     </div>
                     <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
                         <div class="c-stat-box" style="min-width: 160px;">
                             <span class="c-stat-label">Created Orders</span>
                             <span class="c-stat-count">${summary.createdCount}</span>
-                            <span class="c-stat-amount">${summary.createdAmount}</span>
+                            <span class="c-stat-amount">${formatCheckoutSummaryAmount(summary.createdAmount)}</span>
                         </div>
                         <div class="c-stat-box" style="min-width: 160px;">
                             <span class="c-stat-label">Paid Successfully</span>
                             <span class="c-stat-count text-success">${summary.paidCount}</span>
-                            <span class="c-stat-amount text-success">${summary.paidAmount}</span>
+                            <span class="c-stat-amount text-success">${formatCheckoutSummaryAmount(summary.paidAmount)}</span>
                         </div>
                         <div class="c-stat-box" style="min-width: 160px;">
                             <span class="c-stat-label">In-Transit</span>
                             <span class="c-stat-count text-warning">${summary.transitCount}</span>
-                            <span class="c-stat-amount text-warning">${summary.transitAmount}</span>
+                            <span class="c-stat-amount text-warning">${formatCheckoutSummaryAmount(summary.transitAmount)}</span>
                         </div>
                         <div class="c-stat-box" style="min-width: 160px;">
                             <span class="c-stat-label">Failed (Expired/Cancelled)</span>
                             <span class="c-stat-count text-muted">${summary.failedCount}</span>
-                            <span class="c-stat-amount text-muted">${summary.failedAmount}</span>
+                            <span class="c-stat-amount text-muted">${formatCheckoutSummaryAmount(summary.failedAmount)}</span>
                         </div>
                     </div>
                 </div>
@@ -5073,13 +5223,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
 
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) auto; gap: 14px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) auto; gap: 14px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                            <div class="time-selector" style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 999px; padding: 4px;">
-                                ${CHECKOUT_DURATION_OPTIONS.map(option => `
-                                    <span class="time-option ${option === activeCheckoutOrdersDuration ? 'active' : ''}" onclick="window.switchCheckoutOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
-                                `).join('')}
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                                <input id="checkout-orders-start-date" type="date" value="${activeCheckoutOrdersStartDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
+                                <span style="font-size: 12px; color: #94A3B8;">to</span>
+                                <input id="checkout-orders-end-date" type="date" value="${activeCheckoutOrdersEndDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
                             </div>
                         </div>
                         <select id="checkout-orders-status" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -6118,7 +6268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label">Payout Currency</label>
+                    <label class="bank-form-label">Account Currency</label>
                     <select data-bank-currency class="bank-form-control">
                         ${['USD','HKD','EUR','BRL'].map(c => `<option>${c}</option>`).join('')}
                     </select>
@@ -6131,10 +6281,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card" style="padding: 24px;">
                     <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
-                        Back to Payee List
+                        Back to External Contacts
                     </button>
-                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">External Contact</h2>
-                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new payee. An email invitation will be sent to collect their payout details and complete identity verification before any payout can be executed.</div>
+                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">New Contact</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.</div>
                 </div>
                 `}
 
@@ -6150,7 +6300,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         <!-- Individual / Company toggle -->
                         <div>
-                            <label class="bank-form-label" style="margin-bottom: 10px;">Payee Type *</label>
+                            <label class="bank-form-label" style="margin-bottom: 10px;">Contact Type *</label>
                             <div style="display: flex; gap: 10px;">
                                 <label id="payee-indv-label" onclick="window.setPayeePersonType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
                                     <input type="radio" name="payee-person-type" value="individual" checked style="accent-color: #2563EB;">
@@ -6173,7 +6323,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <label class="bank-form-label">Email Address *</label>
                             <input id="payee-email" class="bank-form-control" type="email" placeholder="e.g. john.doe@example.com" required>
-                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this address.</div>
+                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this contact.</div>
                         </div>
 
                         <!-- Individual fields -->
@@ -6240,7 +6390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-wallet-num">3</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Wallet Address</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's crypto wallet for payout.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register this external contact's crypto wallet for supported orders and transactions.</div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -6253,22 +6403,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         <!-- Claim declaration -->
                         <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
                             <input type="checkbox" id="payee-wallet-claim" style="margin-top: 3px; accent-color: #2563EB;" oninput="window.onPayeeWalletClaimChange()">
-                            <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet(s) to be registered are owned by this payee and are used solely for receiving authorised payouts from this merchant profile.</span>
+                            <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet address(es) to be registered belong to this external contact and may be used in authorised Obita orders and transactions.</span>
                         </label>
+                        <div id="payee-wallet-claim-hint" style="display: block; font-size: 12px; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 12px 14px; line-height: 1.6;">
+                            Please confirm the declaration first. Until then, wallet information collection remains unavailable.
+                        </div>
 
                         <!-- Self-fill option -->
-                        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
-                            <input type="radio" name="payee-wallet-fill" value="self" id="payee-wallet-self" checked style="margin-top: 3px; accent-color: #059669;">
+                        <div id="payee-wallet-self-card" style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-wallet-fill" value="self" id="payee-wallet-self" checked disabled style="margin-top: 3px; accent-color: #059669;">
                             <label for="payee-wallet-self" style="cursor:pointer;">
-                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit wallet details</div>
-                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details needed now.</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit wallet details</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details are needed now.</div>
                             </label>
                         </div>
-                        <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
-                            <input type="radio" name="payee-wallet-fill" value="now" id="payee-wallet-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeWalletFillChange()">
+                        <div id="payee-wallet-now-card" style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
+                            <input type="radio" name="payee-wallet-fill" value="now" id="payee-wallet-now" disabled style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeWalletFillChange()">
                             <label for="payee-wallet-now" style="cursor:pointer;">
                                 <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter wallet details now</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of the payee.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of this external contact.</div>
                             </label>
                         </div>
 
@@ -6276,7 +6429,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
                             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; font-size: 11px; color: #92400E; line-height: 1.5; margin-bottom: 4px;">
                                 <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
-                                Even if you provide the wallet details now, an email will still be sent to the payee asking them to verify and confirm the wallet address.
+                                Even if you provide the wallet details now, an email will still be sent to the contact asking them to verify and confirm the wallet address.
                             </div>
                             <div id="payee-wallet-list" style="display: flex; flex-direction: column; gap: 12px;">
                                 ${renderWalletEntry(1)}
@@ -6296,7 +6449,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="width: 28px; height: 28px; border-radius: 999px; background: #F1F5F9; color: #64748B; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;" id="payee-bank-num">4</div>
                             <div>
                                 <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Bank Account</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register the payee's bank account for fiat payout.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Optionally register this external contact's bank account for supported orders and transactions.</div>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -6310,15 +6463,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-bank-fill" value="self" id="payee-bank-self" checked style="margin-top: 3px; accent-color: #059669;">
                             <label for="payee-bank-self" style="cursor:pointer;">
-                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit bank details</div>
-                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details needed now.</div>
+                                <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit bank details</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details are needed now.</div>
                             </label>
                         </div>
                         <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                             <input type="radio" name="payee-bank-fill" value="now" id="payee-bank-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="window.onPayeeBankFillChange()">
                             <label for="payee-bank-now" style="cursor:pointer;">
                                 <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter bank details now</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information.</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information for this external contact.</div>
                             </label>
                         </div>
 
@@ -6350,6 +6503,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
         document.getElementById('payee-wallet-self')?.addEventListener('change', window.onPayeeWalletFillChange);
         document.getElementById('payee-bank-self')?.addEventListener('change', window.onPayeeBankFillChange);
+        window.onPayeeWalletClaimChange();
+        window.onPayeeWalletFillChange();
+        window.onPayeeBankFillChange();
     }
 
     function refreshPayeeEntryLabels(selector, labelPrefix) {
@@ -6520,21 +6676,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <h4 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0;">Add New Wallet</h4>
                                 <label style="display: flex; align-items: flex-start; gap: 10px; background: #FFFFFF; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
                                     <input type="checkbox" style="margin-top: 3px; accent-color: #2563EB;" oninput="document.getElementById('detail-wallet-options').style.display = this.checked ? 'flex' : 'none'">
-                                    <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet(s) to be registered are owned by this payee and are used solely for receiving authorised payouts from this merchant profile.</span>
+                                    <span style="font-size: 13px; color: #334155; line-height: 1.6;">I declare that the wallet address(es) to be registered belong to this external contact and may be used in authorised Obita orders and transactions.</span>
                                 </label>
                                 <div id="detail-wallet-options" style="display: none; flex-direction: column; gap: 12px;">
                                     <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                                         <input type="radio" name="detail-wallet-fill" value="self" id="detail-wallet-self" checked style="margin-top: 3px; accent-color: #059669;" onchange="document.getElementById('detail-wallet-inputs').style.display = 'none'">
                                         <label for="detail-wallet-self" style="cursor:pointer; width: 100%;">
-                                            <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit wallet details</div>
-                                            <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details needed now.</div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit wallet details</div>
+                                            <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure wallet registration link. No wallet details are needed now.</div>
                                         </label>
                                     </div>
                                     <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                                         <input type="radio" name="detail-wallet-fill" value="now" id="detail-wallet-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="document.getElementById('detail-wallet-inputs').style.display = 'flex'">
                                         <label for="detail-wallet-now" style="cursor:pointer; width: 100%;">
                                             <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter wallet details now</div>
-                                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of the payee.</div>
+                                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually register the wallet address and network on behalf of this external contact.</div>
                                         </label>
                                     </div>
                                     <div id="detail-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;">
@@ -6601,15 +6757,15 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                                         <input type="radio" name="detail-bank-fill" value="self" id="detail-bank-self" checked style="margin-top: 3px; accent-color: #059669;" onchange="document.getElementById('detail-bank-inputs').style.display = 'none'">
                                         <label for="detail-bank-self" style="cursor:pointer; width: 100%;">
-                                            <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let payee submit bank details</div>
-                                            <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details needed now.</div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #15803D;">Let contact submit bank details</div>
+                                            <div style="font-size: 12px; color: #166534; margin-top: 3px;">The information-collection email will include a secure bank account registration link. No details are needed now.</div>
                                         </label>
                                     </div>
                                     <div style="background: white; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 10px;">
                                         <input type="radio" name="detail-bank-fill" value="now" id="detail-bank-now" style="margin-top: 3px; accent-color: #2563EB;" onchange="document.getElementById('detail-bank-inputs').style.display = 'flex'">
                                         <label for="detail-bank-now" style="cursor:pointer; width: 100%;">
                                             <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter bank details now</div>
-                                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information.</div>
+                                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Manually provide the receiving bank and account information for this external contact.</div>
                                         </label>
                                     </div>
                                     <div id="detail-bank-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px;">
@@ -6736,8 +6892,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!drawer || !drawerBody || !drawerTitle || !drawerSubtitle) return;
 
         payeeFormContext = { mode: 'payout-batch', payoutRowId: rowId };
-        drawerTitle.textContent = 'External Contact';
-        drawerSubtitle.textContent = 'Create a payee and return to the current payout batch row.';
+        drawerTitle.textContent = 'New Contact';
+        drawerSubtitle.textContent = 'Create a new external contact and return to the current payout batch row.';
         drawerBody.innerHTML = renderPayeeFormContent(true);
         closeAllDrawers();
         drawer.classList.add('drawer-active');
@@ -6826,10 +6982,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.onPayeeWalletClaimChange = function() {
         const claimed = document.getElementById('payee-wallet-claim')?.checked;
+        const walletSelf = document.getElementById('payee-wallet-self');
+        const walletNow = document.getElementById('payee-wallet-now');
+        const inputs = document.getElementById('payee-wallet-inputs');
+        const walletHint = document.getElementById('payee-wallet-claim-hint');
+        const walletSelfCard = document.getElementById('payee-wallet-self-card');
+        const walletNowCard = document.getElementById('payee-wallet-now-card');
+        if (walletSelf) walletSelf.disabled = !claimed;
+        if (walletNow) walletNow.disabled = !claimed;
+        if (walletHint) walletHint.style.display = claimed ? 'none' : 'block';
+        if (walletSelfCard) walletSelfCard.style.opacity = claimed ? '1' : '0.55';
+        if (walletNowCard) walletNowCard.style.opacity = claimed ? '1' : '0.55';
+        if (!claimed) {
+            if (walletSelf) walletSelf.checked = true;
+            if (walletNow) walletNow.checked = false;
+            if (inputs) inputs.style.display = 'none';
+        }
     };
 
     window.onPayeeWalletFillChange = function() {
+        const claimed = document.getElementById('payee-wallet-claim')?.checked;
         const nowSelected = document.getElementById('payee-wallet-now')?.checked;
+        const walletSelf = document.getElementById('payee-wallet-self');
+        if (!claimed) {
+            if (walletSelf) walletSelf.checked = true;
+            const walletNow = document.getElementById('payee-wallet-now');
+            if (walletNow) walletNow.checked = false;
+            const inputs = document.getElementById('payee-wallet-inputs');
+            if (inputs) inputs.style.display = 'none';
+            return;
+        }
         const inputs = document.getElementById('payee-wallet-inputs');
         if (inputs) inputs.style.display = nowSelected ? 'flex' : 'none';
     };
@@ -6910,7 +7092,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label">Payout Currency</label>
+                    <label class="bank-form-label">Account Currency</label>
                     <select data-bank-currency class="bank-form-control">
                         <option>USD</option>
                         <option>HKD</option>
@@ -6932,13 +7114,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
         const email      = document.getElementById('payee-email')?.value?.trim();
 
-        if (!email) { alert('Please enter the payee email address.'); return; }
+        if (!email) { alert('Please enter the contact email address.'); return; }
 
         let displayName = '';
         if (personType === 'individual') {
             const fname = document.getElementById('payee-fname')?.value?.trim();
             const lname = document.getElementById('payee-lname')?.value?.trim();
-            if (!fname || !lname) { alert('Please enter the payee First Name and Surname.'); return; }
+            if (!fname || !lname) { alert('Please enter the contact First Name and Surname.'); return; }
             const mname = document.getElementById('payee-mname')?.value?.trim();
             displayName = [fname, mname, lname].filter(Boolean).join(' ');
         } else {
@@ -6971,9 +7153,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
         const bankModeNow = document.getElementById('payee-bank-now')?.checked;
+        const walletClaimed = Boolean(document.getElementById('payee-wallet-claim')?.checked);
         const walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
         const bankEntries = bankModeNow ? collectPayeeBankEntries() : [];
         if (walletEntries === null || bankEntries === null) return;
+
+        if ((walletModeNow || walletEntries.length) && !walletClaimed) {
+            alert('Please confirm the wallet ownership declaration before wallet information can be collected.');
+            return;
+        }
 
         if (walletModeNow && walletEntries.length) {
             newPayee.wallets = walletEntries;
@@ -7055,7 +7243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
 
                         <button class="btn btn-primary" onclick="window.backToPayeeList()" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 700;">
-                            Back to Payee List
+                            Back to External Contacts
                         </button>
                     </div>
                 </div>
