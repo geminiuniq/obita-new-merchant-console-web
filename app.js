@@ -2872,6 +2872,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.backToInvoiceOrdersList = function() {
         invoiceOrdersView = 'list';
         activeInvoiceOrderId = null;
+        activeInvoiceDraft = null;
+        lastCreatedInvoiceSuccess = null;
         renderInvoiceOrdersPage();
     };
 
@@ -2900,7 +2902,158 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openNewInvoicePage = function() {
-        alert('Opening New Invoice creation flow...');
+        invoiceOrdersView = 'create';
+        activeInvoiceOrderId = null;
+        activeInvoiceDraft = getDefaultInvoiceDraft();
+        lastCreatedInvoiceSuccess = null;
+        renderInvoiceOrdersPage();
+    };
+
+    window.updateInvoiceDraftField = function(field, value, sourceId = '') {
+        if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+        activeInvoiceDraft[field] = value;
+        renderInvoiceOrdersPage();
+    };
+
+    window.updateInvoiceLineItem = function(index, field, value, sourceId = '') {
+        if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+        if (!Array.isArray(activeInvoiceDraft.lineItems)) activeInvoiceDraft.lineItems = [];
+        if (!activeInvoiceDraft.lineItems[index]) activeInvoiceDraft.lineItems[index] = { description: '', quantity: '1', amount: '' };
+        activeInvoiceDraft.lineItems[index][field] = value;
+        refreshInvoiceCreateSummaryPanels();
+    };
+
+    window.addInvoiceLineItem = function() {
+        if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+        if (!Array.isArray(activeInvoiceDraft.lineItems)) activeInvoiceDraft.lineItems = [];
+        activeInvoiceDraft.lineItems.push({ description: '', quantity: '1', amount: '' });
+        renderInvoiceOrdersPage();
+    };
+
+    window.removeInvoiceLineItem = function(index) {
+        if (!activeInvoiceDraft || !Array.isArray(activeInvoiceDraft.lineItems) || activeInvoiceDraft.lineItems.length <= 1) return;
+        activeInvoiceDraft.lineItems.splice(index, 1);
+        renderInvoiceOrdersPage();
+    };
+
+    window.selectInvoiceRecipient = function(recipientId) {
+        if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+        activeInvoiceDraft.recipientId = recipientId;
+        const recipient = getInvoiceDraftRecipient(recipientId);
+        activeInvoiceDraft.payerEmail = recipient?.email || '';
+        activeInvoiceDraft.buyerName = recipient?.name || '';
+        activeInvoiceDraft.settlementCurrency = activeInvoiceDraft.settlementCurrency || 'USDT';
+        renderInvoiceOrdersPage();
+    };
+
+    window.backToInvoiceCreate = function() {
+        invoiceOrdersView = 'create';
+        renderInvoiceOrdersPage();
+    };
+
+    window.confirmInvoiceDraft = function() {
+        if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+        const requiredFields = [
+            ['payerEmail', 'payer email'],
+            ['recipientId', 'payee'],
+            ['settlementCurrency', 'settlement currency'],
+            ['dueDate', 'due date'],
+            ['externalInvoiceId', 'external invoice ID']
+        ];
+        const missing = requiredFields.find(([key]) => !String(activeInvoiceDraft[key] || '').trim());
+        if (missing) {
+            alert(`Please complete the ${missing[1]} before continuing.`);
+            return;
+        }
+        const hasInvalidLine = !Array.isArray(activeInvoiceDraft.lineItems) || !activeInvoiceDraft.lineItems.length || activeInvoiceDraft.lineItems.some(item => {
+            return !String(item.description || '').trim() || (Number.parseFloat(item.quantity) || 0) <= 0 || parseInvoiceDraftAmount(item.amount) <= 0;
+        });
+        if (hasInvalidLine) {
+            alert('Please complete all invoice lines with description, quantity and amount.');
+            return;
+        }
+        invoiceOrdersView = 'confirm';
+        renderInvoiceOrdersPage();
+    };
+
+    window.copyInvoiceSuccessLink = function() {
+        const link = lastCreatedInvoiceSuccess?.invoiceLink;
+        if (!link) return;
+        navigator.clipboard.writeText(link).then(() => {
+            alert('Payment link copied.');
+        });
+    };
+
+    window.sendInvoiceDraft = function() {
+        if (!activeInvoiceDraft) return;
+        const recipient = getInvoiceDraftRecipient(activeInvoiceDraft.recipientId);
+        const financials = computeInvoiceDraftFinancials(activeInvoiceDraft);
+        const invoiceNo = `INV-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${String(INVOICE_ORDER_LIST_DATA.length + 1).padStart(4, '0')}`;
+        const issuedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const dueDate = formatInvoiceDisplayDate(activeInvoiceDraft.dueDate);
+        const invoiceLink = `https://invoice.obita.com/i/${invoiceNo}`;
+
+        INVOICE_ORDER_LIST_DATA.unshift({
+            invoiceNo,
+            issuedOn: issuedDate,
+            dueOn: dueDate,
+            buyer: activeInvoiceDraft.buyerName || recipient?.name || '-',
+            recipient: invoiceReceivingEntityName,
+            method: 'Wallet Pay',
+            settlementCurrency: activeInvoiceDraft.settlementCurrency,
+            amount: formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency),
+            collected: formatInvoiceDraftMoney(0, activeInvoiceDraft.settlementCurrency),
+            status: 'In Progress'
+        });
+
+        INVOICE_ORDER_DETAILS[invoiceNo] = {
+            externalInvoiceId: activeInvoiceDraft.externalInvoiceId,
+            invoiceLink,
+            collectionChannel: 'Stablecoin Invoice',
+            recipientEntity: invoiceReceivingEntityName,
+            settlementDestination: 'Merchant Stablecoin Settlement Wallet',
+            settlementTerms: 'Service fee deducted from collected amount',
+            lineItems: activeInvoiceDraft.lineItems.map(item => ({
+                item: item.description,
+                quantity: item.quantity || '1',
+                unitPrice: formatInvoiceDraftMoney(parseInvoiceDraftAmount(item.amount) / Math.max(Number.parseFloat(item.quantity) || 1, 1), activeInvoiceDraft.settlementCurrency),
+                amount: formatInvoiceDraftMoney(parseInvoiceDraftAmount(item.amount), activeInvoiceDraft.settlementCurrency)
+            })),
+            paymentRecords: [],
+            approvers: [
+                { step: 'Auto Review', approver: 'Collection Risk Engine', decision: 'Not Triggered', actedAt: '-' }
+            ],
+            timeline: [
+                { time: `${issuedDate} ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`, status: 'Issued', note: `Invoice was created and sent to ${activeInvoiceDraft.payerEmail}.` },
+                { time: `${issuedDate} ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`, status: 'Pending Payment', note: 'Invoice is waiting for payer remittance.' }
+            ]
+        };
+
+        lastCreatedInvoiceSuccess = {
+            invoiceNo,
+            invoiceLink,
+            payerEmail: activeInvoiceDraft.payerEmail,
+            buyerName: activeInvoiceDraft.buyerName || recipient?.name || '-',
+            recipientName: invoiceReceivingEntityName,
+            amount: formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency),
+            fee: formatInvoiceDraftMoney(financials.fee, activeInvoiceDraft.settlementCurrency),
+            net: formatInvoiceDraftMoney(financials.net, activeInvoiceDraft.settlementCurrency),
+            dueOn: dueDate
+        };
+
+        invoiceOrdersView = 'success';
+        notifyOrderCreated(
+            'Invoice Sent',
+            `${invoiceNo} was sent to ${activeInvoiceDraft.payerEmail} and is now waiting for payment.`,
+            'View Invoice',
+            () => {
+                pageTitle.textContent = 'Invoice Orders';
+                invoiceOrdersView = 'detail';
+                activeInvoiceOrderId = invoiceNo;
+                renderInvoiceOrdersPage();
+            }
+        );
+        renderInvoiceOrdersPage();
     };
 
     window.renderOrderReportsPage = function() {
@@ -3613,31 +3766,86 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <!-- Approvals Card -->
+                <!-- Exceptions & Tasks Card -->
                 <div class="card approvals-card" style="margin-top: 24px;">
                     <div class="card-header-flex">
-                        <h2 class="card-title" style="margin-bottom: 0;">Pending Approvals</h2>
-                        <span class="badge" style="background-color: #EF4444; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;">3 Tasks</span>
+                        <h2 class="card-title" style="margin-bottom: 0;">Exceptions & Tasks</h2>
+                        <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
                     </div>
-                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px;">
-                        ${approvalRequests
-                            .filter(request => request.status === 'pending')
-                            .slice(0, 3)
-                            .map(request => `
-                                <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 8px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
-                                        <div>
-                                            <div style="font-weight: 600; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
-                                            <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
-                                        </div>
-                                        <div style="color: var(--clr-text-main); font-weight: 600; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
+                    ${(() => {
+                        const pendingApprovals = approvalRequests.filter(request => request.status === 'pending').slice(0, 2);
+                        const exceptions = [
+                            {
+                                title: 'Underpaid checkout detected',
+                                meta: 'CKO-20260406-0179 · 280.00 USDT short',
+                                toneBg: '#FFF7ED',
+                                toneBorder: '#FED7AA',
+                                toneColor: '#C2410C',
+                                pill: 'Exception',
+                                action: 'View Order',
+                                handler: "window.openCheckoutOrderDetail('CKO-20260406-0179')"
+                            },
+                            {
+                                title: 'Invoice approaching expiry',
+                                meta: 'INV-240405-8802 · expires in 2 days',
+                                toneBg: '#FEFCE8',
+                                toneBorder: '#FDE68A',
+                                toneColor: '#A16207',
+                                pill: 'Watch',
+                                action: 'View Invoice',
+                                handler: "window.openInvoiceOrderDetail('INV-240405-8802')"
+                            }
+                        ];
+                        return `
+                            <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 16px;">
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Exceptions</div>
+                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${exceptions.length} active</span>
                                     </div>
-                                    <div style="display: flex; justify-content: flex-end;">
-                                        <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
+                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${exceptions.map(item => `
+                                            <div style="padding: 16px; border: 1px solid ${item.toneBorder}; border-radius: 12px; background: ${item.toneBg};">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                                                    <div>
+                                                        <div style="font-weight: 700; color: #0F172A; font-size: 14px;">${item.title}</div>
+                                                        <div style="color: #64748B; font-size: 13px; margin-top: 4px;">${item.meta}</div>
+                                                    </div>
+                                                    <span style="padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; color: ${item.toneColor}; background: rgba(255,255,255,0.72); border: 1px solid ${item.toneBorder};">${item.pill}</span>
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end;">
+                                                    <button class="btn btn-outline" onclick="${item.handler}" style="padding: 6px 14px; font-size: 13px; font-weight: 700;">${item.action}</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
                                     </div>
                                 </div>
-                            `).join('')}
-                    </div>
+
+                                <div>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
+                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To-Do</div>
+                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals</span>
+                                    </div>
+                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${pendingApprovals.map(request => `
+                                            <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 12px; background: #FFFFFF;">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
+                                                    <div>
+                                                        <div style="font-weight: 700; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
+                                                        <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
+                                                    </div>
+                                                    <div style="color: var(--clr-text-main); font-weight: 700; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end;">
+                                                    <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    })()}
                 </div>
 
                 <!-- Ad Banner -->
@@ -4412,6 +4620,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeInvoiceOrdersEndDate = '';
     let invoiceOrdersView = 'list';
     let activeInvoiceOrderId = null;
+    let activeInvoiceDraft = null;
+    let lastCreatedInvoiceSuccess = null;
     let activeCheckoutOrdersStartDate = '';
     let activeCheckoutOrdersEndDate = '';
     let checkoutOrdersView = 'list';
@@ -4765,7 +4975,398 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Date(`${String(value || '').trim()} 00:00:00`);
     }
 
+    function getInvoiceCollectionContacts() {
+        return payeeList.filter(payee => Boolean(payee.usageScope?.collectionInvoice) && payee.status !== 'disabled');
+    }
+
+    const invoiceReceivingEntityName = 'Nancy_Test Company';
+
+    function getInvoiceServiceFeeRate() {
+        return 0.004;
+    }
+
+    function parseInvoiceDraftAmount(value) {
+        return Number.parseFloat(String(value || '').replace(/[^0-9.]/g, '')) || 0;
+    }
+
+    function formatInvoiceDraftMoney(amount, currency = 'USD') {
+        return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+    }
+
+    function getInvoiceDraftRecipient(recipientId) {
+        return getInvoiceCollectionContacts().find(payee => payee.id === recipientId) || null;
+    }
+
+    function computeInvoiceDraftFinancials(draft) {
+        const amount = (draft?.lineItems || []).reduce((sum, item) => sum + parseInvoiceDraftAmount(item.amount), 0);
+        const rate = getInvoiceServiceFeeRate();
+        const fee = amount * rate;
+        const net = Math.max(amount - fee, 0);
+        return {
+            amount,
+            fee,
+            net,
+            rate
+        };
+    }
+
+    function getDefaultInvoiceDraft() {
+        const contacts = getInvoiceCollectionContacts();
+        const primaryRecipient = contacts[0] || null;
+        return {
+            externalInvoiceId: `ERP-INV-${Math.floor(993000 + Math.random() * 500)}`,
+            buyerName: '',
+            payerEmail: primaryRecipient?.email || '',
+            recipientId: primaryRecipient?.id || '',
+            settlementCurrency: 'USDT',
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            lineItems: [
+                { description: 'Treasury settlement service', quantity: '1', amount: '12000' }
+            ],
+            notes: ''
+        };
+    }
+
+    function formatInvoiceDisplayDate(dateValue) {
+        if (!dateValue) return '-';
+        const date = new Date(`${dateValue}T00:00:00`);
+        if (Number.isNaN(date.getTime())) return dateValue;
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function renderInvoicePreviewCard(draft) {
+        const recipient = getInvoiceDraftRecipient(draft.recipientId);
+        const financials = computeInvoiceDraftFinancials(draft);
+        const previewRows = (draft.lineItems || []).map(item => {
+            const quantity = Number.parseFloat(item.quantity) || 1;
+            const amount = parseInvoiceDraftAmount(item.amount);
+            const unit = quantity > 0 ? amount / quantity : amount;
+            return `
+                <div style="display: grid; grid-template-columns: 1.5fr 0.45fr 0.8fr 0.8fr; gap: 14px; padding: 18px; align-items: start; border-top: 1px solid #F1F5F9;">
+                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; line-height: 1.5;">${item.description || 'Invoice line item description'}</div>
+                    <div style="font-size: 14px; color: #475569;">${item.quantity || '1'}</div>
+                    <div class="text-right" style="font-size: 14px; font-weight: 700; color: #475569;">${formatInvoiceDraftMoney(unit, draft.settlementCurrency)}</div>
+                    <div class="text-right" style="font-size: 14px; font-weight: 800; color: #0F172A;">${formatInvoiceDraftMoney(amount, draft.settlementCurrency)}</div>
+                </div>
+            `;
+        }).join('');
+        return `
+            <div style="position: sticky; top: 24px; display: flex; flex-direction: column; gap: 18px;">
+                <div style="padding: 22px; border-radius: 22px; background: linear-gradient(180deg, #EAF2FF 0%, #F8FBFF 100%); border: 1px solid #DBEAFE;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
+                        <div>
+                            <div style="font-size: 12px; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Preview</div>
+                            <div style="font-size: 26px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${formatInvoiceDraftMoney(financials.amount, draft.settlementCurrency)}</div>
+                        </div>
+                        <div style="padding: 8px 12px; border-radius: 999px; background: #FFFFFF; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 800; color: #1D4ED8;">Awaiting Send</div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 28px; border-radius: 24px; background: linear-gradient(180deg, #FFFFFF 0%, #FCFDFE 100%); box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);">
+                    <div style="display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; margin-bottom: 28px;">
+                        <div>
+                            <div style="font-size: 22px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em;">Invoice</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 6px;">External ID: ${draft.externalInvoiceId || '-'}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due Date</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${formatInvoiceDisplayDate(draft.dueDate)}</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 26px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Billed To</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 8px;">${recipient?.name || draft.buyerName || 'Select payee'}</div>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">${draft.payerEmail || 'payer@example.com'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 8px;">${invoiceReceivingEntityName}</div>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Stablecoin Invoice · ${draft.settlementCurrency}</div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #E2E8F0; border-radius: 18px; overflow: hidden; margin-bottom: 22px;">
+                        <div style="display: grid; grid-template-columns: 1.5fr 0.45fr 0.8fr 0.8fr; gap: 14px; padding: 14px 18px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>Description</div>
+                            <div>Qty</div>
+                            <div class="text-right">Unit Price</div>
+                            <div class="text-right">Amount</div>
+                        </div>
+                        ${previewRows}
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; gap: 16px; padding-top: 12px; border-top: 1px dashed #CBD5E1; font-size: 15px; color: #0F172A;">
+                        <span style="font-weight: 700;">Invoice Total</span>
+                        <span style="font-weight: 900;">${formatInvoiceDraftMoney(financials.amount, draft.settlementCurrency)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderInvoiceCreateTotals(draft) {
+        const financials = computeInvoiceDraftFinancials(draft);
+        return `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Total</div>
+                        <div style="font-size: 24px; font-weight: 900; color: #0F172A; margin-top: 6px;">${formatInvoiceDraftMoney(financials.amount, draft.settlementCurrency)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Service Fee (deducted)</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #C2410C; margin-top: 6px;">${formatInvoiceDraftMoney(financials.fee, draft.settlementCurrency)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Merchant Net</div>
+                        <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 6px;">${formatInvoiceDraftMoney(financials.net, draft.settlementCurrency)}</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="window.confirmInvoiceDraft()" style="padding: 12px 22px; font-weight: 800;">Confirm</button>
+            </div>
+        `;
+    }
+
+    function refreshInvoiceCreateSummaryPanels() {
+        if (invoiceOrdersView !== 'create' || !activeInvoiceDraft) return;
+        const previewPanel = document.getElementById('invoice-preview-panel');
+        const totalsPanel = document.getElementById('invoice-create-totals');
+        if (previewPanel) previewPanel.innerHTML = renderInvoicePreviewCard(activeInvoiceDraft);
+        if (totalsPanel) totalsPanel.innerHTML = renderInvoiceCreateTotals(activeInvoiceDraft);
+        lucide.createIcons();
+    }
+
     function renderInvoiceOrdersPage() {
+        if (invoiceOrdersView === 'create') {
+            if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+            const contacts = getInvoiceCollectionContacts();
+            const financials = computeInvoiceDraftFinancials(activeInvoiceDraft);
+            const lineItems = Array.isArray(activeInvoiceDraft.lineItems) ? activeInvoiceDraft.lineItems : [];
+
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 24px 28px;">
+                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Invoice Orders</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">New Invoice</h2>
+                                <div style="font-size: 13px; color: #64748B;">Build the invoice on the right and review the live invoice layout on the left.</div>
+                            </div>
+                            <div style="padding: 10px 14px; border-radius: 999px; background: #F8FAFC; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 800; color: #475569;">Draft</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr); gap: 24px; align-items: start;">
+                        <div id="invoice-preview-panel">
+                            ${renderInvoicePreviewCard(activeInvoiceDraft)}
+                        </div>
+
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%);">
+                                <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Information</h3>
+                            </div>
+                            <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Payee *</label>
+                                        <select id="invoice-recipient" class="bank-form-control" onchange="window.selectInvoiceRecipient(this.value)">
+                                            <option value="">Select payee</option>
+                                            ${contacts.map(contact => `<option value="${contact.id}" ${activeInvoiceDraft.recipientId === contact.id ? 'selected' : ''}>${contact.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Email</label>
+                                        <input id="invoice-payer-email" class="bank-form-control" type="email" value="${activeInvoiceDraft.payerEmail || ''}" readonly style="background: #F8FAFC; color: #475569;">
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">External Invoice ID *</label>
+                                        <input id="invoice-external-id" class="bank-form-control" type="text" value="${activeInvoiceDraft.externalInvoiceId || ''}" oninput="window.updateInvoiceDraftField('externalInvoiceId', this.value, 'invoice-external-id')" placeholder="e.g. ERP-INV-993201">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Due Date *</label>
+                                        <input id="invoice-due-date" class="bank-form-control" type="date" value="${activeInvoiceDraft.dueDate || ''}" onchange="window.updateInvoiceDraftField('dueDate', this.value, 'invoice-due-date')">
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Receiving Entity</label>
+                                        <input class="bank-form-control" type="text" value="${invoiceReceivingEntityName}" readonly style="background: #F8FAFC; color: #475569;">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Settlement Currency *</label>
+                                        <select id="invoice-currency" class="bank-form-control" onchange="window.updateInvoiceDraftField('settlementCurrency', this.value, 'invoice-currency')">
+                                            ${['USDT', 'USDC'].map(currency => `<option value="${currency}" ${activeInvoiceDraft.settlementCurrency === currency ? 'selected' : ''}>${currency}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="padding: 18px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FCFDFE; display: flex; flex-direction: column; gap: 16px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                        <div style="font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Lines</div>
+                                        <button type="button" class="btn btn-outline" onclick="window.addInvoiceLineItem()" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                                        </button>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        ${lineItems.map((item, index) => `
+                                            <div style="display: grid; grid-template-columns: minmax(0, 1.45fr) 120px 160px auto; gap: 12px; align-items: end;">
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <label class="bank-form-label">Description ${index === 0 ? '*' : ''}</label>
+                                                    <input id="invoice-line-desc-${index}" class="bank-form-control" type="text" value="${item.description || ''}" oninput="window.updateInvoiceLineItem(${index}, 'description', this.value, 'invoice-line-desc-${index}')" placeholder="Describe what this invoice line is for">
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <label class="bank-form-label">Quantity</label>
+                                                    <input id="invoice-line-qty-${index}" class="bank-form-control" type="number" min="1" step="1" value="${item.quantity || '1'}" oninput="window.updateInvoiceLineItem(${index}, 'quantity', this.value, 'invoice-line-qty-${index}')">
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <label class="bank-form-label">Amount</label>
+                                                    <input id="invoice-line-amt-${index}" class="bank-form-control" type="number" min="0" step="0.01" value="${item.amount || ''}" oninput="window.updateInvoiceLineItem(${index}, 'amount', this.value, 'invoice-line-amt-${index}')" placeholder="0.00">
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end; padding-bottom: 2px;">
+                                                    ${lineItems.length > 1 ? `<button type="button" class="btn btn-outline" onclick="window.removeInvoiceLineItem(${index})" style="width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #DC2626; border-color: #FECACA;"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>` : ''}
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Notes</label>
+                                    <textarea id="invoice-notes" class="bank-form-control" rows="4" oninput="window.updateInvoiceDraftField('notes', this.value, 'invoice-notes')" placeholder="Optional notes for the payer or your internal team.">${activeInvoiceDraft.notes || ''}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="invoice-create-totals" style="padding: 22px 24px;">
+                        ${renderInvoiceCreateTotals(activeInvoiceDraft)}
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (invoiceOrdersView === 'confirm') {
+            if (!activeInvoiceDraft) activeInvoiceDraft = getDefaultInvoiceDraft();
+            const recipient = getInvoiceDraftRecipient(activeInvoiceDraft.recipientId);
+            const financials = computeInvoiceDraftFinancials(activeInvoiceDraft);
+            const lineItems = Array.isArray(activeInvoiceDraft.lineItems) ? activeInvoiceDraft.lineItems : [];
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 24px 28px;">
+                        <button onclick="window.backToInvoiceCreate()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to New Invoice</button>
+                        <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0;">Confirm Invoice</h2>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Summary</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payee</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.buyerName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer Email</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.payerEmail}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Invoice ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.externalInvoiceId}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due Date</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${formatInvoiceDisplayDate(activeInvoiceDraft.dueDate)}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${invoiceReceivingEntityName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Type</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">Stablecoin Invoice</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Currency</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.settlementCurrency}</div></div>
+                            <div style="grid-column: 1 / -1;"><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Notes</div><div style="font-size: 14px; font-weight: 600; color: #475569; margin-top: 6px;">${activeInvoiceDraft.notes || '-'}</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Lines</h3>
+                        </div>
+                        <div style="padding: 0 24px 18px 24px;">
+                            <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                <div>Description</div>
+                                <div>Qty</div>
+                                <div class="text-right">Amount</div>
+                            </div>
+                            ${lineItems.map(item => `
+                                <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13px; color: #0F172A; font-weight: 700;">${item.description}</div>
+                                    <div style="font-size: 13px; color: #475569;">${item.quantity}</div>
+                                    <div class="text-right" style="font-size: 13px; color: #0F172A; font-weight: 800;">${formatInvoiceDraftMoney(parseInvoiceDraftAmount(item.amount), activeInvoiceDraft.settlementCurrency)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 22px 24px;">
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;">
+                            <div>
+                                <div style="font-size: 13px; color: #64748B;">Invoice will be emailed to <strong style="color: #0F172A;">${activeInvoiceDraft.payerEmail}</strong> and a hosted payment link will be generated after sending.</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 240px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569;"><span>Invoice Total</span><span style="font-weight: 800; color: #0F172A;">${formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency)}</span></div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569;"><span>Service Fee</span><span style="font-weight: 800; color: #C2410C;">${formatInvoiceDraftMoney(financials.fee, activeInvoiceDraft.settlementCurrency)}</span></div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px dashed #CBD5E1; font-size: 14px; color: #0F172A;"><span style="font-weight: 700;">Merchant Net</span><span style="font-weight: 900;">${formatInvoiceDraftMoney(financials.net, activeInvoiceDraft.settlementCurrency)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn btn-primary" onclick="window.sendInvoiceDraft()" style="padding: 12px 22px; font-weight: 800;">Send Invoice</button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (invoiceOrdersView === 'success' && lastCreatedInvoiceSuccess) {
+            contentBody.innerHTML = `
+                <div class="fade-in" style="max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+                    <div class="card" style="padding: 32px 36px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); border: 1px solid #DBEAFE;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Sent</div>
+                                <h2 style="font-size: 28px; font-weight: 900; color: #0F172A; margin: 12px 0 8px; letter-spacing: -0.03em;">${lastCreatedInvoiceSuccess.invoiceNo}</h2>
+                                <div style="font-size: 14px; color: #475569; line-height: 1.7;">The invoice has been sent to <strong style="color: #0F172A;">${lastCreatedInvoiceSuccess.payerEmail}</strong> and is now waiting for payment.</div>
+                            </div>
+                            ${renderUnifiedStatusBadge('In Progress')}
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Information</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Buyer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.buyerName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.recipientName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Total</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.amount}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Service Fee</div><div style="font-size: 14px; font-weight: 700; color: #C2410C; margin-top: 6px;">${lastCreatedInvoiceSuccess.fee}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Net Collection</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.net}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.dueOn}</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Link</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #2563EB; margin-top: 8px; word-break: break-all;">${lastCreatedInvoiceSuccess.invoiceLink}</div>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-outline" onclick="window.copyInvoiceSuccessLink()" style="padding: 11px 16px; font-weight: 700;">Copy Payment Link</button>
+                            <button class="btn btn-primary" onclick="window.openInvoiceOrderDetail('${lastCreatedInvoiceSuccess.invoiceNo}')" style="padding: 11px 16px; font-weight: 800;">View Invoice Detail</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
         if (invoiceOrdersView === 'detail' && activeInvoiceOrderId) {
             const order = getInvoiceOrderById(activeInvoiceOrderId);
             const detail = INVOICE_ORDER_DETAILS[activeInvoiceOrderId];
@@ -8566,6 +9167,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (title === 'Invoice Orders') {
             invoiceOrdersView = 'list';
             activeInvoiceOrderId = null;
+            activeInvoiceDraft = null;
+            lastCreatedInvoiceSuccess = null;
             renderInvoiceOrdersPage();
         } else if (title === 'Checkout Orders') {
             checkoutOrdersView = 'list';
