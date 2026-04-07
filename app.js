@@ -1662,6 +1662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activePayoutOrderId = null;
     let payoutBatchDraft = null;
     let activePayoutNewPayeeRowId = null;
+    let latestConversionPageOrder = null;
     const currentUserIsAdmin = true;
 
     function getApprovalRuleById(ruleId) {
@@ -9289,8 +9290,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div style="height: 1px; background: var(--clr-border);"></div>
                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: #64748B;">Secured Rate</span>
+                            <span style="color: #64748B;">Expected Rate</span>
                             <span id="pg-cs2-rate" style="font-weight: 600; color: #1E293B; font-family: monospace;">-</span>
+                        </div>
+                        <div style="height: 1px; background: var(--clr-border);"></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px;">
+                            <span style="color: #64748B;">Quote Window</span>
+                            <span id="pg-cs2-quote-window" style="font-weight: 700; color: #D97706; display: inline-flex; align-items: center; gap: 8px;">15s</span>
                         </div>
                         <div style="height: 1px; background: var(--clr-border);"></div>
                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
@@ -9300,13 +9306,45 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="height: 1px; background: var(--clr-border);"></div>
                         <div style="display: flex; justify-content: space-between; font-size: 14px;">
                             <span style="color: #64748B;">Destination Vault</span>
-                            <span id="pg-cs2-dest-vault" style="font-weight: 600; color: #2563EB;">Fiat Vault</span>
+                            <span id="pg-cs2-dest-vault" style="font-weight: 600; color: #2563EB;">Funds will be credited to your <strong style="color:#0F172A;">USD Vault</strong></span>
                         </div>
                     </div>
 
                     <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                        <button onclick="window.pgCvExecute()" style="width: 100%; padding: 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
+                        <button id="pg-cv-confirm-btn" onclick="window.pgCvExecute()" style="width: 100%; padding: 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
                         <button onclick="window.pgCvBackToStep1()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer;">← Back to Edit</button>
+                    </div>
+                </div>
+
+                <div id="pg-cv-step-3" style="display: none;">
+                    <div class="card" style="padding: 28px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 12px; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 0.08em;">Conversion Order Created</div>
+                                <h2 id="pg-cv-success-order-id" style="font-size: 26px; font-weight: 900; color: #0F172A; margin: 12px 0 8px;">CV-ORDER</h2>
+                                <div style="font-size: 14px; color: #475569; line-height: 1.7;">Your conversion order is waiting for approval and will be executed after the required review is completed.</div>
+                            </div>
+                            <span style="background: #FEF3C7; color: #B45309; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800;">Awaiting Approval</span>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 20px; padding: 0; overflow: hidden;">
+                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
+                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Details</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source Vault</div><div id="pg-cv-success-src-vault" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Destination Vault</div><div id="pg-cv-success-dest-vault" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">From</div><div id="pg-cv-success-from" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To</div><div id="pg-cv-success-to" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Secured Rate</div><div id="pg-cv-success-rate" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px; font-family: monospace;">-</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Status</div><div style="margin-top: 6px;"><span style="background: #FEF3C7; color: #B45309; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800;">Awaiting Approval</span></div></div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 10px;">
+                        <button onclick="window.pgCvBackToStep1()" style="flex: 1; padding: 14px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Create Another Conversion</button>
+                        <button onclick="window.pgCvBackToStep1()" style="min-width: 140px; padding: 14px; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;">OK</button>
                     </div>
                 </div>
 
@@ -9426,6 +9464,10 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             window.pgCvCurrentRate = 1;
+            window.pgCvQuoteDeadline = 0;
+            window.pgCvQuoteTimer = null;
+            window.pgCvQuoteExpired = false;
+            window.pgCvQuoteRefreshCount = 0;
 
             const ALL_CURRENCIES = [
                 { value: 'USDT', label: 'USDT - Tether' },
@@ -9450,6 +9492,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            function pgCvGetLiveRate(fromCoin, toCoin) {
+                const baseRate = (PG_CV_RATES[fromCoin] && PG_CV_RATES[fromCoin][toCoin]) ? PG_CV_RATES[fromCoin][toCoin] : 1;
+                const refreshCount = window.pgCvQuoteRefreshCount || 0;
+                if (['USDT', 'USDC', 'USD'].includes(fromCoin) && ['USDT', 'USDC', 'USD'].includes(toCoin)) {
+                    return Number((baseRate + (refreshCount * 0.0001)).toFixed(4));
+                }
+                const adjusted = baseRate * (1 + (refreshCount * 0.0008));
+                return Number(adjusted.toFixed(4));
+            }
+
+            function pgCvSetConfirmEnabled(enabled) {
+                const button = document.getElementById('pg-cv-confirm-btn');
+                if (!button) return;
+                button.disabled = !enabled;
+                button.style.opacity = enabled ? '1' : '0.45';
+                button.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            }
+
+            function pgCvRenderQuoteWindow() {
+                const quoteEl = document.getElementById('pg-cs2-quote-window');
+                if (!quoteEl) return;
+                const remainingMs = window.pgCvQuoteDeadline - Date.now();
+                if (remainingMs <= 0) {
+                    window.pgCvQuoteExpired = true;
+                    quoteEl.innerHTML = `<button onclick="window.pgCvRefreshStep2Quote()" style="border: none; background: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; cursor: pointer;">Refresh</button>`;
+                    pgCvSetConfirmEnabled(false);
+                    if (window.pgCvQuoteTimer) {
+                        clearInterval(window.pgCvQuoteTimer);
+                        window.pgCvQuoteTimer = null;
+                    }
+                    return;
+                }
+                const seconds = Math.ceil(remainingMs / 1000);
+                quoteEl.textContent = `${seconds}s`;
+                pgCvSetConfirmEnabled(true);
+            }
+
+            function pgCvStartQuoteTimer() {
+                window.pgCvQuoteDeadline = Date.now() + 15000;
+                window.pgCvQuoteExpired = false;
+                if (window.pgCvQuoteTimer) clearInterval(window.pgCvQuoteTimer);
+                pgCvRenderQuoteWindow();
+                window.pgCvQuoteTimer = setInterval(pgCvRenderQuoteWindow, 250);
+            }
+
+            function pgCvApplyStep2Quote() {
+                const fromCoin = document.getElementById('pg-cv-from-coin').value;
+                const toCoin = document.getElementById('pg-cv-to-coin').value;
+                const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
+                const vaultLabel = document.getElementById('pg-cv-vault').options[document.getElementById('pg-cv-vault').selectedIndex].text;
+                const destVault = `${toCoin} Vault`;
+                const rate = pgCvGetLiveRate(fromCoin, toCoin);
+                const tgtAmt = amt * rate;
+
+                window.pgCvCurrentRate = rate;
+                document.getElementById('pg-cs2-src-amt').textContent = amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('pg-cs2-src-coin').textContent = fromCoin;
+                document.getElementById('pg-cs2-tgt-amt').textContent = tgtAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                document.getElementById('pg-cs2-tgt-coin').textContent = toCoin;
+                document.getElementById('pg-cs2-rate').textContent = `1 ${fromCoin} = ${rate} ${toCoin}`;
+                document.getElementById('pg-cs2-src-vault').textContent = vaultLabel;
+                document.getElementById('pg-cs2-dest-vault').innerHTML = `Funds will be credited to your <strong style="color:#0F172A;">${destVault}</strong>`;
+            }
+
             window.pgCvOnVaultChange = function() {
                 const vault = document.getElementById('pg-cv-vault').value;
                 const vaultData = PG_CV_VAULT_COINS[vault];
@@ -9470,7 +9576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 document.getElementById('pg-cv-avail').textContent = avail.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                 
-                const rate = (PG_CV_RATES[fromCoin] && PG_CV_RATES[fromCoin][toCoin]) ? PG_CV_RATES[fromCoin][toCoin] : 1;
+                const rate = pgCvGetLiveRate(fromCoin, toCoin);
                 window.pgCvCurrentRate = rate;
                 const estAmt = amt * rate;
                 
@@ -9490,45 +9596,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
                 if (amt <= 0) { alert('Please enter a valid amount.'); return; }
                 if (!window.pgCvUpdateQuote()) return;
-
-                const fromCoin = document.getElementById('pg-cv-from-coin').value;
-                const toCoin = document.getElementById('pg-cv-to-coin').value;
-                const tgtAmt = amt * window.pgCvCurrentRate;
-                const vaultLabel = document.getElementById('pg-cv-vault').options[document.getElementById('pg-cv-vault').selectedIndex].text;
-                const destVault = (['USDT','USDC'].includes(toCoin)) ? 'Stablecoin Vault' : 'Fiat Vault';
-
-                document.getElementById('pg-cs2-src-amt').textContent = amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('pg-cs2-src-coin').textContent = fromCoin;
-                document.getElementById('pg-cs2-tgt-amt').textContent = tgtAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                document.getElementById('pg-cs2-tgt-coin').textContent = toCoin;
-                document.getElementById('pg-cs2-rate').textContent = '1 ' + fromCoin + ' = ' + window.pgCvCurrentRate + ' ' + toCoin;
-                document.getElementById('pg-cs2-src-vault').textContent = vaultLabel;
-                document.getElementById('pg-cs2-dest-vault').textContent = destVault;
+                window.pgCvQuoteRefreshCount = 0;
+                pgCvApplyStep2Quote();
+                pgCvStartQuoteTimer();
 
                 document.getElementById('pg-cv-step-1').style.display = 'none';
                 document.getElementById('pg-cv-step-2').style.display = 'block';
                 lucide.createIcons();
             };
 
+            window.pgCvRefreshStep2Quote = function() {
+                window.pgCvQuoteRefreshCount += 1;
+                window.pgCvUpdateQuote();
+                pgCvApplyStep2Quote();
+                pgCvStartQuoteTimer();
+                lucide.createIcons();
+            };
+
             window.pgCvBackToStep1 = function() {
+                if (window.pgCvQuoteTimer) {
+                    clearInterval(window.pgCvQuoteTimer);
+                    window.pgCvQuoteTimer = null;
+                }
+                window.pgCvQuoteExpired = false;
+                window.pgCvQuoteRefreshCount = 0;
                 document.getElementById('pg-cv-step-1').style.display = 'block';
                 document.getElementById('pg-cv-step-2').style.display = 'none';
+                document.getElementById('pg-cv-step-3').style.display = 'none';
+                window.pgCvUpdateQuote();
             };
 
             window.pgCvExecute = function() {
+                if (window.pgCvQuoteExpired) return;
                 const fromCoin = document.getElementById('pg-cv-from-coin').value;
                 const toCoin = document.getElementById('pg-cv-to-coin').value;
                 const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
+                const targetAmt = amt * window.pgCvCurrentRate;
+                const vaultLabel = document.getElementById('pg-cv-vault').options[document.getElementById('pg-cv-vault').selectedIndex].text;
+                const destVault = (['USDT','USDC'].includes(toCoin)) ? 'Stablecoin Vault' : 'Fiat Vault';
+                const orderId = `CV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`;
+                latestConversionPageOrder = {
+                    orderId,
+                    submittedAt: new Date('2026-04-07T00:00:00+08:00'),
+                    fromCoin,
+                    toCoin,
+                    amt,
+                    targetAmt,
+                    rate: window.pgCvCurrentRate,
+                    sourceVault: vaultLabel,
+                    destinationVault: destVault
+                };
+
+                const approvalRequest = {
+                    id: `APR-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+                    title: 'Conversion Approval',
+                    scope: 'Conversion',
+                    orderId,
+                    type: 'Convert',
+                    requester: 'Nancy User',
+                    subject: `${fromCoin} to ${toCoin} conversion`,
+                    amount: amt.toFixed(2),
+                    currency: fromCoin,
+                    status: 'pending',
+                    levelLabel: 'Level 1 of 1',
+                    submittedAt: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }),
+                    submittedAtValue: Date.now(),
+                    notes: 'Conversion request submitted and waiting for approval.'
+                };
+                approvalRequests.unshift(approvalRequest);
+                updateApprovalNavIndicators();
+                notifyApprovalRequestCreated(approvalRequest);
+
+                const listBody = document.getElementById('cv-order-list-body');
+                if (listBody) {
+                    listBody.insertAdjacentHTML('afterbegin', `
+                        <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB;">
+                            <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">${orderId}</td>
+                            <td style="padding: 14px; color: #64748B; white-space: nowrap;">Just now</td>
+                            <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">${fromCoin}</span></td>
+                            <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">${toCoin}</span></td>
+                            <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">${amt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${fromCoin}</td>
+                            <td style="padding: 14px; text-align: right; font-weight: 600; color: #64748B;">${targetAmt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${toCoin}</td>
+                            <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 ${fromCoin} = ${window.pgCvCurrentRate} ${toCoin}</td>
+                            <td style="padding: 14px; text-align: center;"><span style="background: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Awaiting Approval</span></td>
+                        </tr>
+                    `);
+                }
+
+                document.getElementById('pg-cv-success-order-id').textContent = orderId;
+                document.getElementById('pg-cv-success-src-vault').textContent = vaultLabel;
+                document.getElementById('pg-cv-success-dest-vault').textContent = destVault;
+                document.getElementById('pg-cv-success-from').textContent = `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${fromCoin}`;
+                document.getElementById('pg-cv-success-to').textContent = `${targetAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${toCoin}`;
+                document.getElementById('pg-cv-success-rate').textContent = `1 ${fromCoin} = ${window.pgCvCurrentRate} ${toCoin}`;
                 notifyOrderCreated(
                     'Conversion Order Created',
                     `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${fromCoin} to ${toCoin} conversion order has been created.`,
                     'View Convert',
                     () => openInbox()
                 );
-                alert('Conversion executed successfully.');
-                window.pgCvBackToStep1();
+                if (window.pgCvQuoteTimer) {
+                    clearInterval(window.pgCvQuoteTimer);
+                    window.pgCvQuoteTimer = null;
+                }
+                document.getElementById('pg-cv-step-1').style.display = 'none';
+                document.getElementById('pg-cv-step-2').style.display = 'none';
+                document.getElementById('pg-cv-step-3').style.display = 'block';
                 document.getElementById('pg-cv-amount').value = '';
-                window.pgCvUpdateQuote();
+                lucide.createIcons();
             };
 
         } else if (title === 'Fiat Vault') {
