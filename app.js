@@ -15,7 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'manage-bank-accounts-drawer',
         'activities-drawer',
         'payee-form-drawer',
-        'member-form-drawer'
+        'member-form-drawer',
+        'kyb-drawer'
     ];
 
     const RECENT_ACTIVITY_ITEMS = [
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const navItems = document.querySelectorAll('.nav-item:not(.has-submenu), .nav-subitem');
     const pageTitle = document.getElementById('page-title');
     const contentBody = document.getElementById('content-body');
+    let currentPage = 'Overview';
     
     // Submenu Toggles
     const sidebarNav = document.querySelector('.sidebar-nav');
@@ -137,8 +139,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const targetTitle = spanText ? spanText.textContent : item.textContent.trim();
             pageTitle.textContent = targetTitle;
             
-            // Render a simulated page layout structure depending on the tab clicked
-            // To simulate basic SPA behavior
+            // Update basic SPA behavior
+            currentPage = targetTitle;
             renderPlaceholderContent(targetTitle);
         });
     });
@@ -324,7 +326,10 @@ document.addEventListener('DOMContentLoaded', () => {
     inboxToggle.classList.add('has-new');
     
     inboxToggle.addEventListener('click', openInbox);
-    closeInboxBtn.addEventListener('click', closeAllDrawers);
+    const closeKybBtn = document.getElementById('close-kyb-drawer-btn');
+
+    if (closeInboxBtn) closeInboxBtn.addEventListener('click', closeAllDrawers);
+    if (closeKybBtn) closeKybBtn.addEventListener('click', closeAllDrawers);
     drawerOverlay.addEventListener('click', closeAllDrawers);
     closePushNotificationBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3412,7 +3417,351 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Constant HTML for Overview Page
-    const overviewHTML = `
+    let kybDrawerState = 'form'; // 'form', 'confirm', 'success'
+    let kybUboCount = 1;
+    let kybReqId = '';
+    let kybSubmitted = false;
+    let merchantKybCompleted = false; // Set this to true to see the "Verified" state
+
+    window.addKybUbo = function() {
+        kybUboCount++;
+        renderBusinessVerificationDrawer();
+    };
+
+    window.confirmKybForm = function() {
+        kybReqId = 'KYB-' + Date.now().toString().slice(-6);
+        kybDrawerState = 'success';
+        renderBusinessVerificationDrawer();
+        kybSubmitted = true;
+        
+        // Refresh overview immediately to show Pending state
+        if (currentPage === 'Overview') {
+            renderPlaceholderContent('Overview');
+        }
+
+        notifyOrderCreated(
+            'Business Verification Request Created',
+            `Your KYB verification request (${kybReqId}) has been successfully created and is pending Obita compliance review.`,
+            'View Status',
+            () => { 
+                closeAllDrawers(); 
+                if (currentPage === 'Overview') {
+                    renderPlaceholderContent('Overview');
+                }
+            }
+        );
+
+        // Simulation: Auto-approve after 10 seconds
+        setTimeout(() => {
+            merchantKybCompleted = true;
+            
+            // Trigger Inbox message and Push Notification
+            notifyOrderCreated(
+                'Business Verification Approved',
+                `Congratulations! Your business verification (ID: ${kybReqId}) has been approved. Your account limits are now increased.`,
+                'View Account',
+                () => { 
+                    renderPlaceholderContent('Account');
+                    closeAllDrawers();
+                }
+            );
+
+            if (currentPage === 'Overview') {
+                renderPlaceholderContent('Overview');
+                // Subtle push notification for the approval
+                const statusChange = document.createElement('div');
+                statusChange.innerHTML = `
+                    <div class="fade-in" style="position: fixed; top: 24px; right: 24px; z-index: 10001; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 16px 20px; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 32px; height: 32px; border-radius: 999px; background: #10B981; color: white; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="badge-check" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 800; color: #064E3B;">Account Verified</div>
+                            <div style="font-size: 12px; color: #059669; margin-top: 2px;">Your KYB has been approved by Obita.</div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(statusChange);
+                lucide.createIcons();
+                setTimeout(() => statusChange.remove(), 4000);
+            }
+        }, 10000);
+
+        lucide.createIcons();
+    };
+
+    function renderBusinessVerificationDrawer() {
+        const bodyEl = document.getElementById('kyb-drawer-body');
+        if (!bodyEl) return;
+
+        if (kybDrawerState === 'success') {
+            bodyEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 60px 20px; height: 100%;">
+                    <div style="width: 80px; height: 80px; border-radius: 999px; background: #ECFDF5; border: 8px solid #D1FAE5; color: #059669; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                        <i data-lucide="check-circle-2" style="width: 40px; height: 40px;"></i>
+                    </div>
+                    <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 12px;">Verification Request Created</h2>
+                    <div style="font-size: 15px; color: #475569; max-width: 400px; line-height: 1.6; margin-bottom: 32px;">
+                        Your Business Verification request has been successfully submitted and is now pending Obita compliance review.
+                    </div>
+                    
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; width: 100%; max-width: 480px; text-align: left; margin-bottom: 32px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                            <span style="color: #64748B;">Request ID</span>
+                            <span style="font-weight: 700; color: #0F172A;">${kybReqId}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                            <span style="color: #64748B;">Status</span>
+                            <span style="display: inline-flex; align-items: center; gap: 6px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 4px 10px; border-radius: 999px; font-size: 12px;"><i data-lucide="clock" style="width: 12px; height: 12px;"></i> Pending Review</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+                            <span style="color: #64748B;">Estimated Processing</span>
+                            <span style="font-weight: 600; color: #0F172A;">1-3 business days</span>
+                        </div>
+                    </div>
+
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 16px; width: 100%; max-width: 480px; display: flex; gap: 12px; text-align: left; margin-bottom: 40px;">
+                        <i data-lucide="info" style="width: 20px; height: 20px; color: #D97706; flex-shrink: 0; margin-top: 2px;"></i>
+                        <div style="font-size: 13px; color: #92400E; line-height: 1.6;">
+                            Our onboarding team will contact your primary email if any additional verification materials are required. Otherwise, you will receive a notification once your account is fully verified.
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="closeAllDrawers()" style="padding: 12px 32px; font-size: 15px; font-weight: 800;">OK</button>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        if (kybDrawerState === 'confirm') {
+            bodyEl.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    <div style="background: #F8FBFF; border: 1px solid #BFDBFE; border-radius: 14px; padding: 24px; text-align: center;">
+                        <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Confirm Verification Details</h2>
+                        <div style="font-size: 14px; color: #64748B; line-height: 1.6;">Please review your submitted information carefully. Incorrect records may cause delays in the verification process.</div>
+                    </div>
+
+                    <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">Company Information</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Legal Entity Name</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">Global Tech Ltd</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Registration Number</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">CRN-20250001</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Country of Incorporation</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">Singapore</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 12px; color: #64748B;">Industry</div>
+                                <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 4px;">Software / IT</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                        <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0; border-bottom: 1px solid #E2E8F0; padding-bottom: 12px;">Supporting Documents</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i data-lucide="file-text" style="width: 16px; height: 16px; color: #64748B;"></i>
+                                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Registration_Cert.pdf</span>
+                                </div>
+                                <span style="font-size: 12px; color: #64748B;">Registration Document</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <i data-lucide="file-text" style="width: 16px; height: 16px; color: #64748B;"></i>
+                                    <span style="font-size: 13px; font-weight: 600; color: #0F172A;">Utility_Bill_Apr.pdf</span>
+                                </div>
+                                <span style="font-size: 12px; color: #64748B;">Proof of Address</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                        <button class="btn btn-outline" onclick="kybDrawerState='form'; renderBusinessVerificationDrawer();">Back</button>
+                        <button class="btn btn-primary" onclick="window.confirmKybForm()">Confirm & Submit</button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+
+        // Default 'form' state
+        bodyEl.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 32px; padding-bottom: 40px;">
+                <!-- Stepper UI -->
+                <div style="max-width: 600px; margin: 0 auto; width: 100%; position: relative;">
+                    <div style="position: absolute; top: 16px; left: 16%; right: 16%; height: 2px; background: #E2E8F0; z-index: 0;"></div>
+                    <div style="display: flex; justify-content: space-between; position: relative; z-index: 1;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 34px; height: 34px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 4px solid #F8FAFC;">1</div>
+                            <div style="font-size: 12px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.05em;">Company Info</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 34px; height: 34px; border-radius: 999px; background: #94A3B8; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 4px solid #F8FAFC;">2</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Documents</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div style="width: 34px; height: 34px; border-radius: 999px; background: #94A3B8; color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; border: 4px solid #F8FAFC;">3</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Controllers</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px; border: 1px solid #E2E8F0;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;">
+                        <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">1. Company Information</h3>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div style="display: flex; flex-direction: column; gap: 8px; grid-column: span 2;">
+                            <label class="bank-form-label">Legal Entity Name</label>
+                            <input class="bank-form-control" type="text" placeholder="As it appears on your official business registration">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Registration Number</label>
+                            <input class="bank-form-control" type="text" placeholder="CRN, UEN, or EIN">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Country of Incorporation</label>
+                            <select class="bank-form-control">
+                                <option value="">Select a country</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Hong Kong">Hong Kong</option>
+                                <option value="United Kingdom">United Kingdom</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Japan">Japan</option>
+                                <option value="Other">Other Allowed Region</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; grid-column: span 2;">
+                            <label class="bank-form-label">Operating Address</label>
+                            <input class="bank-form-control" type="text" placeholder="Physical business address">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; grid-column: span 2;">
+                            <label class="bank-form-label">Industry</label>
+                            <select class="bank-form-control">
+                                <option value="">Select an industry</option>
+                                <option value="ecommerce">E-commerce</option>
+                                <option value="software">Software / IT</option>
+                                <option value="travel">Travel & Hospitality</option>
+                                <option value="services">Professional Services</option>
+                                <option value="retail">Retail</option>
+                                <option value="digital_goods">Digital Goods & Assets</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px; border: 1px solid #E2E8F0;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;">
+                        <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">2. Supporting Documents</h3>
+                    </div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 24px;">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Registration Document</div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Certificate of Incorporation, Business Profile, or equivalent.</div>
+                            </div>
+                            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 20px; border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#3B82F6'; this.style.backgroundColor='#F0F9FF';" onmouseout="this.style.borderColor='#CBD5E1'; this.style.backgroundColor='#F8FAFC';">
+                                <div style="width: 48px; height: 48px; border-radius: 999px; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="cloud-upload" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #2563EB;">Click to upload or drag files here</div>
+                                    <div style="font-size: 12px; color: #64748B; margin-top: 6px;">Accepted formats: PDF, JPG, PNG (Max 10MB)</div>
+                                </div>
+                                <input type="file" style="display: none;" multiple>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Proof of Business Address</div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 2px;">Utility bill, bank statement, or leasing agreement (issued within last 3 months).</div>
+                            </div>
+                            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 20px; border: 2px dashed #CBD5E1; border-radius: 12px; background: #F8FAFC; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#3B82F6'; this.style.backgroundColor='#F0F9FF';" onmouseout="this.style.borderColor='#CBD5E1'; this.style.backgroundColor='#F8FAFC';">
+                                <div style="width: 48px; height: 48px; border-radius: 999px; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="cloud-upload" style="width: 24px; height: 24px;"></i>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #2563EB;">Click to upload or drag files here</div>
+                                    <div style="font-size: 12px; color: #64748B; margin-top: 6px;">Accepted formats: PDF, JPG, PNG (Max 10MB)</div>
+                                </div>
+                                <input type="file" style="display: none;" multiple>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 24px; border: 1px solid #E2E8F0;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #F1F5F9; padding-bottom: 16px;">
+                        <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">3. Ultimate Beneficial Owners (UBO)</h3>
+                    </div>
+                    <div style="font-size: 13px; color: #64748B; margin-bottom: 20px;">Provide information for all individuals who own or control 25% or more of the company.</div>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        ${Array(kybUboCount).fill(0).map((_, i) => `
+                            <div style="padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px; background: #F8FAFC; position: relative;">
+                                <div style="font-size: 14px; font-weight: 800; color: #0F172A; margin-bottom: 16px;">Beneficial Owner ${i + 1}</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Full Name</label>
+                                        <input class="bank-form-control" type="text" placeholder="As it appears on ID">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Ownership %</label>
+                                        <input class="bank-form-control" type="text" placeholder="e.g. 50%">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Nationality</label>
+                                        <input class="bank-form-control" type="text" placeholder="e.g. Singaporean">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Date of Birth</label>
+                                        <input class="bank-form-control" type="date">
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <button type="button" class="btn btn-outline" onclick="window.addKybUbo()" style="width: 100%; border-style: dashed; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                            Add Another Beneficial Owner
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 10px;">
+                    <button class="btn btn-primary" onclick="window.submitKybForm()" style="padding: 13px 32px; font-size: 15px; font-weight: 800;">Review & Submit</button>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    window.openBusinessVerificationDrawer = function() {
+        kybDrawerState = 'form';
+        kybUboCount = 1;
+        const drawer = document.getElementById('kyb-drawer');
+        if (drawer) {
+            renderBusinessVerificationDrawer();
+            drawer.classList.add('drawer-active');
+            document.body.classList.add('drawer-open');
+        }
+    };
+
+    function getOverviewHTML() {
+        return `
         <div class="overview-grid fade-in">
             <!-- Main Column -->
             <div class="overview-main">
@@ -3653,8 +4002,63 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <!-- Secondary Column -->
             <div class="overview-sidebar">
+                ${merchantKybCompleted ? `
+                    <!-- Standalone Slim Verified Bar (No Header) -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-radius: 16px; background: linear-gradient(90deg, #ECFDF5 0%, #F0FDF4 100%); border: 1px solid #A7F3D0; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.1);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 36px; height: 36px; border-radius: 999px; background: #10B981; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+                                <i data-lucide="badge-check" style="width: 20px; height: 20px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 15px; font-weight: 800; color: #064E3B; letter-spacing: -0.01em;">Business Verified</div>
+                                <div style="font-size: 12px; color: #059669; font-weight: 500;">Account fully verified</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 12px; font-weight: 700; color: #059669; opacity: 0.9;">Verified</div>
+                    </div>
+                ` : `
+                    <!-- Standard Action Card (For Pending or Not Started) -->
+                    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                        <div style="padding: 18px 20px; border-bottom: 1px solid #DBEAFE; display: flex; align-items: center; gap: 12px; background: linear-gradient(180deg, #EFF6FF 0%, #F8FBFF 100%);">
+                            <div style="width: 40px; height: 40px; border-radius: 12px; background: #FFFFFF; border: 1px solid #BFDBFE; color: #1D4ED8; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);">
+                                <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Business Verification</div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px 20px; display: flex; flex-direction: column; gap: 12px;">
+                            ${kybSubmitted ? `
+                                <!-- Detailed Under Review State -->
+                                <div style="padding: 18px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DBEAFE; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                        <div style="font-size: 15px; font-weight: 800; color: #0F172A;">Request Submitted</div>
+                                        <span style="display: inline-flex; align-items: center; gap: 6px; color: #D97706; font-weight: 700; background: #FFFBEB; border: 1px solid #FEF3C7; padding: 4px 10px; border-radius: 999px; font-size: 11px;">
+                                            <i data-lucide="clock" style="width: 12px; height: 12px;"></i> Pending Review
+                                        </span>
+                                    </div>
+                                    <div style="padding: 12px; background: #F8FAFC; border-radius: 8px; border: 1px solid #EDF2F7; display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 12px; color: #64748B; font-weight: 600;">Request ID</span>
+                                        <span style="font-size: 13px; font-weight: 700; color: #0F172A; font-family: monospace;">${kybReqId}</span>
+                                    </div>
+                                    <div style="font-size: 12px; color: #64748B; line-height: 1.6; display: flex; gap: 8px;">
+                                        <i data-lucide="info" style="width: 14px; height: 14px; color: #3B82F6; flex-shrink: 0; margin-top: 2px;"></i>
+                                        <span>Obita compliance is reviewing your documents. Estimated: 1-3 business days.</span>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div style="padding: 16px; border-radius: 14px; background: #FFFFFF; border: 1px solid #DBEAFE;">
+                                    <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Complete KYB to activate full business capabilities</div>
+                                    <div style="font-size: 12px; color: #64748B; line-height: 1.6; margin-top: 6px;">Submit company information and supporting documents to complete merchant verification.</div>
+                                </div>
+                                <button class="btn btn-primary" onclick="window.openBusinessVerificationDrawer()" style="width: 100%; padding: 11px 16px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Verify Business</button>
+                            `}
+                        </div>
+                    </div>
+                `}
+
                 <!-- Exceptions & Tasks Card -->
-                <div class="card approvals-card">
+                <div class="card approvals-card" style="margin-top: 24px;">
                     <div class="card-header-flex">
                         <h2 class="card-title" style="margin-bottom: 0;">Exceptions & Tasks</h2>
                         <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
@@ -3882,6 +4286,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         </div>
     `;
+    }
+
+    window.submitKybForm = function() {
+        kybDrawerState = 'confirm';
+        renderBusinessVerificationDrawer();
+    };
 
     // Constant HTML for Fiat Vault
     const fiatVaultHTML = `
@@ -9417,7 +9827,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
-            contentBody.innerHTML = overviewHTML;
+            contentBody.innerHTML = getOverviewHTML();
             // Initialize Chart after injecting HTML
             setTimeout(() => {
                 initFundFlowChart();
@@ -9448,6 +9858,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (title === 'My Profile') {
             contentBody.innerHTML = renderMyProfilePage();
             lucide.createIcons();
+        } else if (title === 'Business Verification (KYB)') {
+            // Note: Since this is now a drawer, we fallback to opening the drawer and showing overview
+            renderPlaceholderContent('Overview');
+            window.openBusinessVerificationDrawer();
         } else if (title === 'Merchant Profile') {
             contentBody.innerHTML = merchantProfileHTML;
             lucide.createIcons();
