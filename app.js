@@ -3620,12 +3620,121 @@ document.addEventListener('DOMContentLoaded', () => {
                     }));
                 }
 
+            } else if (isPayout) {
+                // ── each dt = one payout batch; 1-4 individual payouts per batch ──
+                const batchCcy      = pickRand(['USDT', 'USDC', 'USD', 'HKD']);
+                const isStableBatch = ['USDT', 'USDC'].includes(batchCcy);
+                const sourceVault   = isStableBatch ? 'Stablecoin Vault' : 'Fiat Vault';
+                const batchId       = 'BATCH-' + dateTag + '-' + seqStr;
+                const numPayouts    = Math.floor(randBetween(1, 5)); // 1–4 per batch
+
+                const payeePool = [
+                    { name: 'Global Trade Holdings', type: 'Business'    },
+                    { name: 'Nexus Finance Ltd',     type: 'Business'    },
+                    { name: 'TechVendor Inc',        type: 'Business'    },
+                    { name: 'Supplier HK Ltd',       type: 'Business'    },
+                    { name: 'Alex Chen',             type: 'Individual'  },
+                    { name: 'Maria Santos',          type: 'Individual'  },
+                    { name: 'Wei Zhang',             type: 'Individual'  },
+                ];
+                const failureReasons = [
+                    'Insufficient balance', 'Invalid account number',
+                    'Beneficiary account closed', 'Compliance check failed', 'Network timeout',
+                ];
+                const poStatusPool = [
+                    'Completed','Completed','Completed','Completed',  // 4×
+                    'Failed','Cancelled','Processing',                 // 1× each
+                ];
+
+                let batchPayoutTotal = 0;
+                let batchFeeTotal    = 0;
+                const payoutItems    = [];
+
+                for (let p = 0; p < numPayouts; p++) {
+                    const poSeq    = String(seqBase + i * 10 + p).slice(-7);
+                    const poId     = 'PO-' + dateTag + '-' + poSeq;
+                    const poStatus = pickRand(poStatusPool);
+                    const payee    = pickRand(payeePool);
+                    const createdAt   = new Date(dt.getTime() + p * Math.floor(randBetween(2, 15)) * 60000);
+                    const completedAt = (poStatus === 'Completed' || poStatus === 'Failed')
+                        ? new Date(createdAt.getTime() + Math.floor(randBetween(5, 90)) * 60000)
+                        : null;
+
+                    // destination currency — same asset family as batch
+                    const destCcy   = isStableBatch ? batchCcy : pickRand(['USD', 'EUR', 'HKD', 'SGD', 'GBP']);
+                    const destAsset = ['USDT','USDC'].includes(destCcy) ? 'Stablecoin' : 'Fiat';
+                    const poAmt     = parseFloat(fmtDecimal(randBetween(500, 25000)));
+                    const fee       = poStatus !== 'Cancelled' ? parseFloat(fmtDecimal(poAmt * 0.003)) : 0;
+
+                    const destAcct = isStableBatch
+                        ? '0x' + [...Array(40)].map(() => Math.floor(Math.random()*16).toString(16)).join('')
+                        : String(Math.floor(Math.random()*9e13 + 1e13));
+                    const txHash = poStatus === 'Completed'
+                        ? (isStableBatch
+                            ? '0x' + [...Array(64)].map(() => Math.floor(Math.random()*16).toString(16)).join('')
+                            : 'REF' + Math.floor(Math.random()*9000000 + 1000000))
+                        : '';
+
+                    const settlStatus = poStatus === 'Completed' ? 'Settled'
+                                      : poStatus === 'Failed'    ? 'Failed'
+                                      : 'Not Started';
+                    const settlId   = poStatus === 'Completed' ? 'STL-' + dateTag + '-' + poSeq : '';
+                    const settlDate = (settlId && completedAt)
+                        ? fmtDt(new Date(completedAt.getTime() + Math.floor(randBetween(30, 180)) * 60000))
+                        : '';
+                    const txId  = poStatus === 'Completed' ? 'TX-'  + poSeq : '';
+                    const movId = poStatus === 'Completed' ? 'MOV-' + dateTag + '-' + poSeq : '';
+                    const failureReason = poStatus === 'Failed' ? pickRand(failureReasons) : '';
+
+                    if (poStatus !== 'Cancelled') {
+                        batchPayoutTotal += poAmt;
+                        batchFeeTotal    += fee;
+                    }
+
+                    payoutItems.push({
+                        poId, poStatus, createdAt, completedAt, payee,
+                        destAsset, destCcy, poAmt, fee, destAcct, txHash,
+                        settlStatus, settlId, settlDate, txId, movId, failureReason,
+                    });
+                }
+
+                const batchAmt = parseFloat(fmtDecimal(batchPayoutTotal + batchFeeTotal));
+
+                payoutItems.forEach(po => {
+                    const hasFee = po.poStatus !== 'Cancelled';
+                    rows.push([
+                        batchId,                                               // 1  Payout Batch ID
+                        sourceVault,                                           // 2  Payout Batch Source Vault
+                        batchCcy,                                              // 3  Payout Batch Currency
+                        fmtDecimal(batchAmt),                                  // 4  Payout Batch Amount
+                        po.poId,                                               // 5  Payout ID
+                        po.poStatus,                                           // 6  Payout Status
+                        fmtDt(po.createdAt),                                   // 7  Payout Created Time
+                        po.completedAt ? fmtDt(po.completedAt) : '',           // 8  Payout Completed Time
+                        po.payee.name,                                         // 9  Payee Name
+                        po.payee.type,                                         // 10 Payee Type
+                        po.destAsset,                                          // 11 Destination Asset Type
+                        po.destCcy,                                            // 12 Destination Currency
+                        fmtDecimal(po.poAmt),                                  // 13 Payout Amount
+                        hasFee ? fmtDecimal(po.fee) : '',                      // 14 Total Fee
+                        hasFee ? batchCcy : '',                                // 15 Fee Currency
+                        maskAccount(po.destAcct),                              // 16 Destination Account / Address
+                        po.txHash,                                             // 17 Tx Hash / Reference
+                        po.settlStatus,                                        // 18 Settlement Status
+                        batchCcy,                                              // 19 Settlement Currency
+                        po.settlId,                                            // 20 Settlement ID
+                        po.settlDate,                                          // 21 Settlement Date
+                        po.txId,                                               // 22 Transaction ID
+                        po.movId,                                              // 23 Movement ID
+                        po.failureReason,                                      // 24 Failure Reason
+                        '',                                                    // 25 Notes
+                    ]);
+                });
+
             } else {
-                // Placeholder rows for Payout / Conversion
-                rows.push([randId(
-                    isPayout ? 'PAY-' : 'CVT-',
-                    dateTag, seqStr
-                ), orderType, fmtDt(dt), ...Array(27).fill('')]);
+                // Placeholder rows for Conversion
+                rows.push([randId('CVT-', dateTag, seqStr),
+                    orderType, fmtDt(dt), ...Array(22).fill('')]);
             }
         });
 
@@ -3650,8 +3759,17 @@ document.addEventListener('DOMContentLoaded', () => {
             'Settlement ID', 'Payment ID', 'Transaction ID',
             'Merchant External User ID', 'Payer Account / Address', 'Reference', 'Notes'
         ];
-        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(27).fill('').map((_, i) => `Field ${i+4}`)];
-        const headers = isInvoice ? invoiceHeaders : isCheckout ? checkoutHeaders : genericHeaders;
+        const payoutHeaders = [
+            'Payout Batch ID', 'Payout Batch Source Vault', 'Payout Batch Currency', 'Payout Batch Amount',
+            'Payout ID', 'Payout Status', 'Payout Created Time', 'Payout Completed Time',
+            'Payee Name', 'Payee Type', 'Destination Asset Type', 'Destination Currency',
+            'Payout Amount', 'Total Fee', 'Fee Currency',
+            'Destination Account / Address', 'Tx Hash / Reference',
+            'Settlement Status', 'Settlement Currency', 'Settlement ID', 'Settlement Date',
+            'Transaction ID', 'Movement ID', 'Failure Reason', 'Notes'
+        ];
+        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(22).fill('').map((_, j) => `Field ${j+4}`)];
+        const headers = isInvoice ? invoiceHeaders : isCheckout ? checkoutHeaders : isPayout ? payoutHeaders : genericHeaders;
 
         // ── period ─────────────────────────────────────────────────────────────
         let periodStart, periodEnd;
