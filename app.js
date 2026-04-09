@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'activities-drawer',
         'payee-form-drawer',
         'member-form-drawer',
-        'kyb-drawer'
+        'kyb-drawer',
+        'checkout-demo-drawer'
     ];
 
     const RECENT_ACTIVITY_ITEMS = [
@@ -328,8 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
     inboxToggle.addEventListener('click', openInbox);
     const closeKybBtn = document.getElementById('close-kyb-drawer-btn');
 
+    const closeCheckoutDemoBtn = document.getElementById('close-checkout-demo-drawer-btn');
     if (closeInboxBtn) closeInboxBtn.addEventListener('click', closeAllDrawers);
     if (closeKybBtn) closeKybBtn.addEventListener('click', closeAllDrawers);
+    if (closeCheckoutDemoBtn) closeCheckoutDemoBtn.addEventListener('click', closeAllDrawers);
     drawerOverlay.addEventListener('click', closeAllDrawers);
     closePushNotificationBtn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1508,6 +1511,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'FT-20260406-0182',
             type: 'Transfer',
             requester: 'Nancy User',
+            approver: 'Ethan Lee',
             subject: 'Global Trade Holdings',
             amount: '125000.00',
             currency: 'USD',
@@ -1524,6 +1528,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'SV-20260406-0094',
             type: 'Transfer',
             requester: 'Nancy User',
+            approver: 'Marcus Tan',
             subject: 'Wintermute Treasury',
             amount: '85000.00',
             currency: 'USDT',
@@ -1540,6 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'CV-20260405-0067',
             type: 'Convert',
             requester: 'Ethan Lee',
+            approver: 'Nancy User',
             subject: 'USD to USDC conversion',
             amount: '300000.00',
             currency: 'USD',
@@ -1556,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'BA-20260405-0018',
             type: 'Bank Account',
             requester: 'Emily Chen',
+            approver: 'Nancy User',
             subject: 'New DBS Treasury Settlement Account',
             amount: '0.00',
             currency: 'USD',
@@ -1572,6 +1579,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'CO-20260404-0146',
             type: 'Cancel Order',
             requester: 'Marcus Tan',
+            approver: 'Nancy User',
             subject: 'Invoice INV-240406-8821',
             amount: '4200.00',
             currency: 'EUR',
@@ -2280,42 +2288,83 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Failed</option>
                             </select>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
-                        <div>Request</div>
-                        <div>Scope</div>
-                        <div>Amount</div>
-                        <div>Status</div>
-                        <div style="text-align: right;">Actions</div>
-                    </div>
+                        <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.75fr 0.75fr 0.85fr 0.85fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>Request</div>
+                            <div>Scope</div>
+                            <div>Amount</div>
+                            <div>Status</div>
+                            <div>审批人</div>
+                            <div style="text-align: right;">Actions</div>
+                        </div>
                     </div>
                     <div>
-                        ${requests.length ? requests.map(request => {
-                            const statusPill = getApprovalRequestStatusPill(request.status);
-                            return `
-                                <div style="border-bottom: 1px solid var(--clr-border);">
-                                    <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; align-items: center; cursor: pointer;">
-                                        <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${request.title}</div>
-                                            <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${request.id} · ${request.orderId} · ${request.submittedAt}</div>
-                                        </div>
-                                        <div style="font-size: 13px; color: #334155; line-height: 1.5;">${request.scope}</div>
-                                        <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${request.amount} ${request.currency}</div>
-                                        <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
-                                        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
-                                            ${request.status === 'pending'
-                                                ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
-                                                : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
-                                            }
-                                        </div>
-                                    </div>
-                                    ${renderApprovalDecisionPanel(request.id)}
+                        ${(() => {
+                            if (!requests.length) return `
+                                <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                                    ${approvalListTab === 'my' ? 'No requests submitted by you or awaiting your approval.' : 'No approval requests matched your current filters.'}
                                 </div>
                             `;
-                        }).join('') : `
-                            <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
-                                ${approvalListTab === 'my' ? 'No requests submitted by you or awaiting your approval.' : 'No approval requests matched your current filters.'}
-                            </div>
-                        `}
+
+                            const renderRow = (request, accentColor = null) => {
+                                const statusPill = getApprovalRequestStatusPill(request.status);
+                                const rowBorder = accentColor ? `border-left: 3px solid ${accentColor};` : 'border-left: 3px solid transparent;';
+                                return `
+                                    <div style="border-bottom: 1px solid var(--clr-border);">
+                                        <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.3fr 0.9fr 0.75fr 0.75fr 0.85fr 0.85fr; gap: 16px; align-items: center; cursor: pointer; ${rowBorder}">
+                                            <div>
+                                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${request.title}</div>
+                                                <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${request.id} · ${request.orderId} · ${request.submittedAt}</div>
+                                            </div>
+                                            <div style="font-size: 13px; color: #334155; line-height: 1.5;">${request.scope}</div>
+                                            <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${request.amount} ${request.currency}</div>
+                                            <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
+                                            <div style="font-size: 13px; color: #334155;">${request.approver || '—'}</div>
+                                            <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                                ${request.status === 'pending'
+                                                    ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
+                                                    : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
+                                                }
+                                            </div>
+                                        </div>
+                                        ${renderApprovalDecisionPanel(request.id)}
+                                    </div>
+                                `;
+                            };
+
+                            if (approvalListTab !== 'my') {
+                                return requests.map(r => renderRow(r)).join('');
+                            }
+
+                            const currentUserName = getCurrentUser()?.name || '';
+                            const mySubmissions = requests.filter(r => r.requester === currentUserName);
+                            const needsMyApproval = requests.filter(r => r.requester !== currentUserName && r.status === 'pending');
+
+                            let html = '';
+
+                            if (mySubmissions.length) {
+                                html += `
+                                    <div style="padding: 9px 24px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="send" style="width: 13px; height: 13px; color: #2563EB; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">My Submissions</span>
+                                        <span style="font-size: 11px; font-weight: 700; background: #DBEAFE; color: #1D4ED8; padding: 1px 7px; border-radius: 999px;">${mySubmissions.length}</span>
+                                    </div>
+                                `;
+                                html += mySubmissions.map(r => renderRow(r, '#2563EB')).join('');
+                            }
+
+                            if (needsMyApproval.length) {
+                                html += `
+                                    <div style="padding: 9px 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; border-top: ${mySubmissions.length ? '2px solid #E2E8F0' : 'none'}; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="bell-ring" style="width: 13px; height: 13px; color: #D97706; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em;">Needs My Approval</span>
+                                        <span style="font-size: 11px; font-weight: 700; background: #FEF3C7; color: #92400E; padding: 1px 7px; border-radius: 999px;">${needsMyApproval.length}</span>
+                                    </div>
+                                `;
+                                html += needsMyApproval.map(r => renderRow(r, '#D97706')).join('');
+                            }
+
+                            return html;
+                        })()}
                     </div>
                 </div>
             </div>
@@ -3793,6 +3842,165 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         lucide.createIcons();
     }
+
+    window.openCheckoutDemoDrawer = function() {
+        const drawer = document.getElementById('checkout-demo-drawer');
+        const body = document.getElementById('checkout-demo-drawer-body');
+        if (!drawer || !body) return;
+
+        const steps = [
+            {
+                num: 1, color: '#2563EB', label: 'Select Stablecoins',
+                mockup: `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px;font-size:12px;">
+                    <div style="font-weight:700;color:#0F172A;margin-bottom:10px;">Payment Type</div>
+                    <div style="display:flex;flex-direction:column;gap:7px;">
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;color:#94A3B8;">
+                            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;flex-shrink:0;"></div>Credit or Debit Card
+                        </div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;color:#94A3B8;">
+                            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;flex-shrink:0;"></div>My IKEA Credit Card
+                        </div>
+                        <div style="border:2px solid #2563EB;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;background:#EFF6FF;color:#1D4ED8;font-weight:600;">
+                            <div style="width:14px;height:14px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #BFDBFE;flex-shrink:0;"></div>
+                            Stablecoins
+                            <span style="margin-left:auto;display:flex;gap:4px;">
+                                <span style="width:18px;height:18px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">T</span>
+                                <span style="width:18px;height:18px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">$</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0F172A;border-radius:8px;">
+                        <div><div style="font-size:10px;color:#94A3B8;">Order Total</div><div style="font-size:13px;font-weight:700;color:#fff;">$500.00</div></div>
+                        <div style="background:#2563EB;color:#fff;border-radius:6px;padding:8px 14px;font-weight:700;font-size:12px;">Pay $500.00 →</div>
+                    </div>
+                </div>`
+            },
+            {
+                num: 2, color: '#7C3AED', label: 'Select coin & network',
+                mockup: `<div style="background:#EEF2FF;border-radius:12px;padding:14px;font-size:12px;">
+                    <div style="background:linear-gradient(135deg,#EDE9FE,#C7D2FE);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+                        <div style="font-size:10px;color:#6D28D9;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
+                        <div style="font-size:22px;font-weight:800;color:#1E1B4B;margin-top:2px;">500.00 USD</div>
+                    </div>
+                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:8px;font-size:11px;">Select Stablecoin</div>
+                    <div style="display:flex;gap:8px;margin-bottom:14px;">
+                        <div style="flex:1;border:2px solid #7C3AED;border-radius:8px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:700;color:#7C3AED;font-size:12px;">
+                            <div style="width:20px;height:20px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">T</div>
+                            USDT <span style="margin-left:auto;color:#7C3AED;">✓</span>
+                        </div>
+                        <div style="flex:1;border:1px solid #E2E8F0;border-radius:8px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:6px;color:#64748B;font-size:12px;">
+                            <div style="width:20px;height:20px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">$</div>
+                            USDC
+                        </div>
+                    </div>
+                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:8px;font-size:11px;">Select Network</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <div style="border:2px solid #7C3AED;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#1E1B4B;">
+                            <span>BSC <span style="font-weight:400;color:#64748B;font-size:11px;">— Low fees, fast transactions</span></span><span style="color:#7C3AED;">✓</span>
+                        </div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Ethereum <span style="font-size:11px;">— Most secure, higher fees</span></div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Tron <span style="font-size:11px;">— Very low fees, fast confirmation</span></div>
+                    </div>
+                    <div style="margin-top:14px;background:#7C3AED;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Continue to Pay</div>
+                    <div style="text-align:center;margin-top:8px;font-size:10px;color:#94A3B8;">Powered by Obita</div>
+                </div>`
+            },
+            {
+                num: 3, color: '#D97706', label: 'Connect wallet or scan QR',
+                mockup: `<div style="background:#EEF2FF;border-radius:12px;padding:14px;font-size:12px;">
+                    <div style="background:linear-gradient(135deg,#EDE9FE,#C7D2FE);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div>
+                            <div style="font-size:10px;color:#6D28D9;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
+                            <div style="font-size:22px;font-weight:800;color:#1E1B4B;margin-top:2px;">500.00 USD</div>
+                            <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+                                <div style="width:14px;height:14px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:7px;font-weight:800;flex-shrink:0;">T</div>
+                                <span style="font-size:11px;color:#059669;font-weight:600;">500.04 USDT</span>
+                                <span style="font-size:10px;color:#64748B;">(1 USD ≈ 1.0000 USDT)</span>
+                            </div>
+                        </div>
+                        <div style="background:#FEF3C7;border-radius:6px;padding:5px 10px;font-size:13px;font-weight:800;color:#92400E;letter-spacing:0.05em;">14 : 15</div>
+                    </div>
+                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:7px;font-size:11px;display:flex;align-items:center;gap:6px;">Fast Payment <span style="background:#7C3AED;color:#fff;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:600;">Recommend</span></div>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;">
+                        <div style="border:2px solid #D97706;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#1E1B4B;">
+                            <div style="width:22px;height:22px;border-radius:6px;background:#F6851B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">M</div>
+                            MetaMask <span style="font-size:11px;font-weight:400;color:#64748B;margin-left:4px;">Pay directly with your MetaMask wallet</span>
+                            <span style="margin-left:auto;color:#D97706;font-size:14px;">✓</span>
+                        </div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
+                            <div style="width:22px;height:22px;border-radius:6px;background:#3B99FC;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">W</div>
+                            WalletConnect
+                        </div>
+                    </div>
+                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:7px;font-size:11px;">Wallet Scan</div>
+                    <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
+                        <div style="width:22px;height:22px;border-radius:6px;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;flex-shrink:0;">⊞</div>
+                        Scan QR Code <span style="font-size:11px;margin-left:4px;">Use your wallet app to scan and pay</span>
+                    </div>
+                    <div style="margin-top:14px;background:#2563EB;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Payment 500.04 USDT</div>
+                </div>`
+            },
+            {
+                num: 4, color: '#DC2626', label: 'Confirm in wallet',
+                mockup: `<div style="background:#1C1C1E;border-radius:12px;padding:18px;font-size:12px;color:#fff;">
+                    <div style="text-align:center;font-size:14px;font-weight:700;margin-bottom:14px;color:#E5E7EB;">转账请求</div>
+                    <div style="background:#2C2C2E;border-radius:8px;padding:14px;margin-bottom:12px;text-align:center;">
+                        <div style="font-size:10px;color:#9CA3AF;margin-bottom:4px;">U</div>
+                        <div style="font-size:18px;font-weight:800;color:#fff;">500.04 USDT</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;font-size:11px;padding:0 2px;margin-bottom:14px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="color:#9CA3AF;">自 → 至</span><span style="color:#fff;font-size:10px;font-family:monospace;">Jack_Liu → 0x5526…636…</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">网络</span><span style="color:#fff;">BNB Smart Chain Testnet</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">请求来自</span><span style="color:#3B82F6;">cashier-test.obita.org</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">合约</span><span style="color:#fff;font-family:monospace;font-size:10px;">0x3376…34dDd</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">网络费</span><span style="color:#fff;">&lt; $0.01 · tBNB</span></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                        <div style="background:#3F3F46;border-radius:8px;padding:11px;text-align:center;font-weight:600;color:#9CA3AF;font-size:13px;">取消</div>
+                        <div style="background:#2563EB;border-radius:8px;padding:11px;text-align:center;font-weight:700;color:#fff;font-size:13px;">确认</div>
+                    </div>
+                </div>`
+            },
+            {
+                num: 5, color: '#059669', label: 'Order complete',
+                mockup: `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:18px;font-size:12px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                        <div style="width:32px;height:32px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0;">✓</div>
+                        <div style="font-size:18px;font-weight:800;color:#0F172A;">Thanks for your order!</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;padding:12px;background:#F8FAFC;border-radius:8px;font-size:12px;margin-bottom:12px;">
+                        <div><span style="color:#64748B;">Order number </span><strong style="color:#0F172A;">#428046573</strong></div>
+                        <div><span style="color:#64748B;">Confirmation sent to </span><span style="color:#2563EB;">janesmith1.mobbin@gmail.com</span></div>
+                    </div>
+                    <div style="padding:10px 14px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:11px;font-weight:600;color:#059669;">
+                        ⟳ Obita webhook delivered · Settlement in progress
+                    </div>
+                </div>`
+            }
+        ];
+
+        body.innerHTML = `
+            <div style="padding:24px;display:flex;flex-direction:column;gap:0;position:relative;">
+                ${steps.map((step, i) => `
+                    <div style="display:flex;gap:0;position:relative;">
+                        <!-- Timeline column -->
+                        <div style="display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0;">
+                            <div style="width:32px;height:32px;border-radius:50%;background:${step.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0;z-index:1;box-shadow:0 0 0 4px #F1F5F9;">${step.num}</div>
+                            ${i < steps.length - 1 ? `<div style="width:2px;flex:1;min-height:24px;background:linear-gradient(to bottom,${step.color},${steps[i+1].color});margin:4px 0;opacity:0.35;"></div>` : ''}
+                        </div>
+                        <!-- Content -->
+                        <div style="flex:1;min-width:0;padding-bottom:${i < steps.length - 1 ? '20px' : '0'};">
+                            <div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:10px;padding-top:6px;">${step.label}</div>
+                            ${step.mockup}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        lucide.createIcons();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
 
     window.openBusinessVerificationDrawer = function() {
         kybDrawerState = 'form';
@@ -6302,39 +6510,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
         contentBody.innerHTML = `
             <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                <div class="card collections-summary-card" style="padding: 24px;">
-                    <div class="collection-header" style="margin-bottom: 22px;">
-                        <div>
-                            <h2 class="card-title" style="font-size: 18px; margin: 0;">Checkout Summary</h2>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance for the selected date range.</div>
+                <div style="display: flex; gap: 20px; align-items: stretch;">
+                    <div class="card collections-summary-card" style="padding: 24px; flex: 1; min-width: 0;">
+                        <div class="collection-header" style="margin-bottom: 22px;">
+                            <div>
+                                <h2 class="card-title" style="font-size: 18px; margin: 0;">Checkout Summary</h2>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance for the selected date range.</div>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 999px; background: #FFFFFF;">
+                                <span style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Date Range</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #0F172A;">
+                                    ${activeCheckoutOrdersStartDate || 'All dates'} to ${activeCheckoutOrdersEndDate || 'Today'}
+                                </span>
+                            </div>
                         </div>
-                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 999px; background: #FFFFFF;">
-                            <span style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Date Range</span>
-                            <span style="font-size: 13px; font-weight: 600; color: #0F172A;">
-                                ${activeCheckoutOrdersStartDate || 'All dates'} to ${activeCheckoutOrdersEndDate || 'Today'}
-                            </span>
+                        <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
+                            <div class="c-stat-box" style="min-width: 140px;">
+                                <span class="c-stat-label">Created Orders</span>
+                                <span class="c-stat-count">${summary.createdCount}</span>
+                                <span class="c-stat-amount">${formatCheckoutSummaryAmount(summary.createdAmount)}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 140px;">
+                                <span class="c-stat-label">Paid Successfully</span>
+                                <span class="c-stat-count text-success">${summary.paidCount}</span>
+                                <span class="c-stat-amount text-success">${formatCheckoutSummaryAmount(summary.paidAmount)}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 140px;">
+                                <span class="c-stat-label">In-Transit</span>
+                                <span class="c-stat-count text-warning">${summary.transitCount}</span>
+                                <span class="c-stat-amount text-warning">${formatCheckoutSummaryAmount(summary.transitAmount)}</span>
+                            </div>
+                            <div class="c-stat-box" style="min-width: 140px;">
+                                <span class="c-stat-label">Failed (Expired/Cancelled)</span>
+                                <span class="c-stat-count text-muted">${summary.failedCount}</span>
+                                <span class="c-stat-amount text-muted">${formatCheckoutSummaryAmount(summary.failedAmount)}</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
-                        <div class="c-stat-box" style="min-width: 160px;">
-                            <span class="c-stat-label">Created Orders</span>
-                            <span class="c-stat-count">${summary.createdCount}</span>
-                            <span class="c-stat-amount">${formatCheckoutSummaryAmount(summary.createdAmount)}</span>
+
+                    <div onclick="window.openCheckoutDemoDrawer()" style="width: 260px; flex-shrink: 0; align-self: stretch; border-radius: 16px; background: linear-gradient(145deg, #1E1B4B 0%, #312E81 60%, #4C1D95 100%); padding: 24px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; box-shadow: 0 8px 24px rgba(99,102,241,0.25); transition: box-shadow 0.2s ease;" onmouseover="this.style.boxShadow='0 12px 32px rgba(99,102,241,0.38)'" onmouseout="this.style.boxShadow='0 8px 24px rgba(99,102,241,0.25)'">
+                        <div>
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(165,180,252,0.15); border: 1px solid rgba(165,180,252,0.3); padding: 5px 10px; border-radius: 999px; margin-bottom: 14px;">
+                                <i data-lucide="play-circle" style="width: 12px; height: 12px; color: #A5B4FC;"></i>
+                                <span style="font-size: 10px; font-weight: 700; color: #A5B4FC; text-transform: uppercase; letter-spacing: 0.08em;">Live Demo</span>
+                            </div>
+                            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.4;">Checkout API Payment Flow</div>
                         </div>
-                        <div class="c-stat-box" style="min-width: 160px;">
-                            <span class="c-stat-label">Paid Successfully</span>
-                            <span class="c-stat-count text-success">${summary.paidCount}</span>
-                            <span class="c-stat-amount text-success">${formatCheckoutSummaryAmount(summary.paidAmount)}</span>
-                        </div>
-                        <div class="c-stat-box" style="min-width: 160px;">
-                            <span class="c-stat-label">In-Transit</span>
-                            <span class="c-stat-count text-warning">${summary.transitCount}</span>
-                            <span class="c-stat-amount text-warning">${formatCheckoutSummaryAmount(summary.transitAmount)}</span>
-                        </div>
-                        <div class="c-stat-box" style="min-width: 160px;">
-                            <span class="c-stat-label">Failed (Expired/Cancelled)</span>
-                            <span class="c-stat-count text-muted">${summary.failedCount}</span>
-                            <span class="c-stat-amount text-muted">${formatCheckoutSummaryAmount(summary.failedAmount)}</span>
+                        <div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
+                                ${[
+                                    { num: 1, label: 'Select Stablecoins', color: '#818CF8' },
+                                    { num: 2, label: 'Pick coin & network', color: '#A78BFA' },
+                                    { num: 3, label: 'Connect wallet / QR', color: '#F59E0B' },
+                                    { num: 4, label: 'Wallet confirmation', color: '#F87171' },
+                                    { num: 5, label: 'Order complete', color: '#34D399' }
+                                ].map(s => `
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 18px; height: 18px; border-radius: 50%; background: ${s.color}22; border: 1.5px solid ${s.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <span style="font-size: 9px; font-weight: 800; color: ${s.color};">${s.num}</span>
+                                        </div>
+                                        <span style="font-size: 11px; color: #C7D2FE;">${s.label}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px;">
+                                <span style="font-size: 12px; font-weight: 700; color: #FFFFFF;">View Full Demo</span>
+                                <i data-lucide="arrow-right" style="width: 15px; height: 15px; color: #A5B4FC;"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
