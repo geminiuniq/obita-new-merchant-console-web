@@ -1667,6 +1667,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let approvalListView = 'list';
     let approvalListTab = 'my'; // 'my' or 'all'
     let activeApprovalRequestId = null;
+    // Report Center card selections: { [action]: { type: 'daily'|'monthly', value: '' } }
+    let reportCardSelections = {
+        balance:        { type: 'daily', value: '' },
+        statement:      { type: 'daily', value: '' },
+        reconciliation: { type: 'daily', value: '' },
+        settlement:     { type: 'daily', value: '' }
+    };
     let expandedApprovalActionId = null;
     let activeApprovalDecision = null;
     let membersView = 'list';
@@ -3173,6 +3180,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.renderFeeReportsPage = function() {
         renderFeeReportsPage();
+    };
+
+    window.setReportCardType = function(action, type) {
+        if (reportCardSelections[action]) {
+            reportCardSelections[action].type = type;
+            reportCardSelections[action].value = ''; // reset date when switching type
+        }
+        renderReportCenterPage();
+    };
+
+    window.setReportCardValue = function(action, value) {
+        if (reportCardSelections[action]) {
+            reportCardSelections[action].value = value;
+        }
+        renderReportCenterPage();
     };
 
     window.openReportCenterReport = function(reportId) {
@@ -7246,8 +7268,21 @@ document.addEventListener('DOMContentLoaded', () => {
         contentBody.innerHTML = `
             <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; padding-bottom: 60px;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                    ${cards.map(card => `
-                        <div class="card" style="padding: 32px 34px; min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
+                    ${cards.map(card => {
+                        const sel = reportCardSelections[card.action];
+                        const isDaily = sel.type === 'daily';
+                        // Daily: max = yesterday
+                        const today = new Date();
+                        const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+                        const maxDay = yesterday.toISOString().split('T')[0];
+                        // Monthly: max = last month, min = 6 months ago
+                        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1);
+                        const maxMonth = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth()+1).padStart(2,'0')}`;
+                        const minMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth()+1).padStart(2,'0')}`;
+                        const hasValue = sel.value !== '';
+                        return `
+                        <div class="card" style="padding: 32px 34px; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
                             <div style="display: flex; align-items: flex-start; gap: 20px;">
                                 <div style="width: 78px; height: 78px; border-radius: 22px; background: ${card.iconBg}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                     <i data-lucide="${card.icon}" style="width: 38px; height: 38px; color: ${card.iconColor};"></i>
@@ -7262,11 +7297,29 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div style="font-size: 14px; color: #0F172A; line-height: 1.7;">${card.description}</div>
                                 </div>
                             </div>
-                            <div style="display: flex; justify-content: flex-end;">
-                                <button class="btn btn-outline" onclick="window.openReportCenterReport('${card.action}')" style="padding: 12px 18px; font-size: 15px; font-weight: 800; color: #4F46E5; border-color: #E2E8F0; background: #FFFFFF;">Generate</button>
+                            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+                                <!-- Report type toggle -->
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">报表类型</span>
+                                    <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
+                                        <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
+                                        <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
+                                    </div>
+                                </div>
+                                <!-- Date / Month picker -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; background: #FFFFFF; flex: 1; cursor: pointer;">
+                                        <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0;"></i>
+                                        ${isDaily
+                                            ? `<input type="date" id="report-date-${card.action}" value="${sel.value}" max="${maxDay}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasValue ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                            : `<input type="month" id="report-date-${card.action}" value="${sel.value}" min="${minMonth}" max="${maxMonth}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasValue ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                        }
+                                    </div>
+                                    <button class="btn" onclick="${hasValue ? `window.openReportCenterReport('${card.action}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        </div>`;
+                    }).join('')}
                 </div>
 
                 <div>
