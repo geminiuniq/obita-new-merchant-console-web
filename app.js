@@ -1671,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let reportCardSelections = {
         balance:        { type: 'daily', value: '' },
         statement:      { type: 'daily', value: '' },
-        reconciliation: { type: 'daily', value: '' },
+        reconciliation: { type: 'daily', value: '', orderType: '' },
         settlement:     { type: 'daily', value: '' }
     };
     let expandedApprovalActionId = null;
@@ -3190,9 +3190,17 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReportCenterPage();
     };
 
+
     window.setReportCardValue = function(action, value) {
         if (reportCardSelections[action]) {
             reportCardSelections[action].value = value;
+        }
+        renderReportCenterPage();
+    };
+
+    window.setReportOrderType = function(orderType) {
+        if (reportCardSelections.reconciliation) {
+            reportCardSelections.reconciliation.orderType = orderType;
         }
         renderReportCenterPage();
     };
@@ -7513,7 +7521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 action: 'statement'
             },
             {
-                title: 'Transaction reconciliation report',
+                title: 'Order reconciliation report',
                 badge: 'Collection, Payout',
                 description: 'Detailed record of pending and settled transactions, including all individual payment attempts within a Payments batch settlement.',
                 icon: 'receipt-text',
@@ -7538,6 +7546,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${cards.map(card => {
                         const sel = reportCardSelections[card.action];
                         const isDaily = sel.type === 'daily';
+                        const isRecon = card.action === 'reconciliation';
                         // Daily: max = yesterday
                         const today = new Date();
                         const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
@@ -7547,7 +7556,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1);
                         const maxMonth = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth()+1).padStart(2,'0')}`;
                         const minMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth()+1).padStart(2,'0')}`;
-                        const hasValue = sel.value !== '';
+                        const hasDate = sel.value !== '';
+                        const hasOrderType = !isRecon || (sel.orderType && sel.orderType !== '');
+                        const hasValue = hasDate && hasOrderType;
+                        const ORDER_TYPES = ['Collection-Checkout', 'Collection-Invoice', 'Payout', 'Conversion'];
                         return `
                         <div class="card" style="padding: 32px 34px; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
                             <div style="display: flex; align-items: flex-start; gap: 20px;">
@@ -7564,7 +7576,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div style="font-size: 14px; color: #0F172A; line-height: 1.7;">${card.description}</div>
                                 </div>
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
+                            <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 24px;">
                                 <!-- Report type toggle -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">报表类型</span>
@@ -7573,13 +7585,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
                                     </div>
                                 </div>
+                                ${isRecon ? `
+                                <!-- Order Type selector (reconciliation only) -->
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">Order Type</span>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                        ${ORDER_TYPES.map(ot => {
+                                            const active = sel.orderType === ot;
+                                            return `<button onclick="window.setReportOrderType('${ot}')" style="padding: 6px 14px; border-radius: 8px; border: 1.5px solid ${active ? '#4F46E5' : '#E2E8F0'}; background: ${active ? '#EDE9FE' : '#FFFFFF'}; color: ${active ? '#4F46E5' : '#64748B'}; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;">${ot}</button>`;
+                                        }).join('')}
+                                    </div>
+                                </div>` : ''}
                                 <!-- Date / Month picker -->
                                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                                     <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; background: #FFFFFF; flex: 1; cursor: pointer;">
                                         <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0;"></i>
                                         ${isDaily
-                                            ? `<input type="date" id="report-date-${card.action}" value="${sel.value}" max="${maxDay}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasValue ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
-                                            : `<input type="month" id="report-date-${card.action}" value="${sel.value}" min="${minMonth}" max="${maxMonth}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasValue ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                            ? `<input type="date" id="report-date-${card.action}" value="${sel.value}" max="${maxDay}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasDate ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                            : `<input type="month" id="report-date-${card.action}" value="${sel.value}" min="${minMonth}" max="${maxMonth}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasDate ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
                                         }
                                     </div>
                                     <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
