@@ -3293,6 +3293,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const txId    = hasPay ? 'TX-' + seqStr + suffix : '';
             const movId   = hasPay ? 'MOV-' + dateTag + '-' + seqStr + suffix : '';
             const payTimeStr = hasPay ? fmtDt(payTime) : '';
+            const settlStatus = !hasPay ? 'Not Started'
+                              : rowStatus === 'Refunded' ? 'Not Started'
+                              : rowStatus === 'Failed'   ? 'Failed'
+                              : settlId                  ? 'Settled'
+                              : 'Not Started';
             return [
                 invId,                                                        // InvoiceOrder ID
                 invStatus,                                                    // Invoice Status (final)
@@ -3311,6 +3316,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 hasPay ? invCcy : '',                                         // Fee Currency
                 hasPay ? fmtDecimal(net) : '',                                // Net Amount
                 payId,                                                        // Payment ID
+                settlStatus,                                                  // Settlement Status
                 settlId,                                                      // Settlement ID
                 txId,                                                         // Transaction ID
                 movId,                                                        // Movement ID
@@ -3443,7 +3449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'Invoice Currency', 'Invoice Amount', 'Total Paid Amount', 'Outstanding Amount',
             'Payment Status', 'Last Payment Time', 'Payment Currency', 'Payment Amount',
             'Asset Type', 'Total Fee', 'Fee Currency', 'Net Amount',
-            'Payment ID', 'Settlement ID', 'Transaction ID', 'Movement ID',
+            'Payment ID', 'Settlement Status', 'Settlement ID', 'Transaction ID', 'Movement ID',
             'Payer Name', 'Payer ID', 'Payer Account / Address', 'Payment Completed Time',
             'Status', 'Notes'
         ];
@@ -7862,18 +7868,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 24px;">
-                                <!-- Report type toggle -->
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">报表类型</span>
-                                    <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
-                                        <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
-                                        <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
-                                    </div>
-                                </div>
                                 ${isRecon ? `
-                                <!-- Order Type selector (reconciliation only) -->
+                                <!-- 1. Order Type selector (reconciliation only, shown first) -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">Order Type</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Order Type</span>
                                     <div style="position: relative; flex: 1;">
                                         <select onchange="window.setReportOrderType(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.orderType ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.orderType ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.orderType ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
                                             <option value="" disabled ${!sel.orderType ? 'selected' : ''}>Select order type...</option>
@@ -7882,8 +7880,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.orderType ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
                                     </div>
                                 </div>` : ''}
-                                <!-- Date / Month picker -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <!-- 2. Report type toggle -->
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; ${isRecon ? 'width: 76px;' : ''}">报表类型</span>
+                                    <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
+                                        <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
+                                        <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
+                                    </div>
+                                </div>
+                                <!-- 3. Date / Month picker + Generate -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; ${isRecon ? 'padding-left: 90px;' : ''}">
                                     <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; background: #FFFFFF; flex: 1; cursor: pointer;">
                                         <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0;"></i>
                                         ${isDaily
