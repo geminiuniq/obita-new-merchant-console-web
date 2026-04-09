@@ -3197,6 +3197,217 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReportCenterPage();
     };
 
+    window.generateReport = function(action, type, value) {
+        if (action === 'balance') {
+            window.generateBalanceActivityCSV(type, value);
+        } else {
+            window.openReportCenterReport(action);
+        }
+    };
+
+    window.generateBalanceActivityCSV = function(reportType, dateValue) {
+        const MERCHANT_ID = 'MCH-20240801-0012';
+
+        // ── helpers ──────────────────────────────────────────────────────────
+        function maskAccount(str) {
+            if (!str) return '';
+            const clean = str.replace(/\s/g, '');
+            if (clean.length <= 10) return clean;
+            return clean.slice(0, 6) + '****' + clean.slice(-4);
+        }
+        function fmtDt(d) {
+            return d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+        }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function randBetween(a, b) { return Math.random() * (b - a) + a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        // ── date range ───────────────────────────────────────────────────────
+        let dates = [];
+        if (reportType === 'daily') {
+            // dateValue = 'YYYY-MM-DD'
+            const [y, m, d] = dateValue.split('-').map(Number);
+            for (let h = 0; h < 24; h += 3) {
+                const dt = new Date(Date.UTC(y, m - 1, d, h, Math.floor(Math.random() * 59), Math.floor(Math.random() * 59)));
+                dates.push(dt);
+            }
+        } else {
+            // dateValue = 'YYYY-MM'
+            const [y, m] = dateValue.split('-').map(Number);
+            const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const txPerDay = Math.floor(randBetween(1, 4));
+                for (let t = 0; t < txPerDay; t++) {
+                    const dt = new Date(Date.UTC(y, m - 1, day,
+                        Math.floor(Math.random() * 23),
+                        Math.floor(Math.random() * 59),
+                        Math.floor(Math.random() * 59)));
+                    dates.push(dt);
+                }
+            }
+            dates.sort((a, b) => a - b);
+        }
+
+        // ── activity templates ────────────────────────────────────────────────
+        const templates = [
+            {
+                activityType: 'Settlement', direction: 'Inflow',
+                currency: 'USDT', amountRange: [500, 15000],
+                relatedBizType: 'Collection-Checkout', railType: 'On-chain',
+                orderPrefix: 'CKO-', settlementPrefix: 'STL-', txPrefix: 'TX-',
+                counterpartyName: () => pickRand(['Alex Chen', 'Maria Santos', 'Wei Zhang', 'John Kim', 'Yuki Tanaka']),
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            },
+            {
+                activityType: 'Settlement', direction: 'Inflow',
+                currency: 'USDC', amountRange: [1000, 20000],
+                relatedBizType: 'Collection-Invoice', railType: 'On-chain',
+                orderPrefix: 'INV-', settlementPrefix: 'STL-', txPrefix: 'TX-',
+                counterpartyName: () => pickRand(['Global Trade Holdings', 'Nexus Finance Ltd', 'Pacific Merchants Co']),
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            },
+            {
+                activityType: 'Fee', direction: 'Outflow',
+                currency: 'USDT', amountRange: [5, 120],
+                relatedBizType: 'Collection-Checkout', railType: 'On-chain',
+                orderPrefix: 'CKO-', settlementPrefix: 'STL-', txPrefix: '',
+                counterpartyName: () => 'Obita Platform',
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '',
+            },
+            {
+                activityType: 'Transfer', direction: 'Outflow',
+                currency: 'USDT', amountRange: [2000, 50000],
+                relatedBizType: 'Payout', railType: 'On-chain',
+                orderPrefix: 'PAY-', settlementPrefix: '', txPrefix: 'TX-',
+                counterpartyName: () => pickRand(['Supplier HK Ltd', 'TechVendor Inc', 'Logistics Partner Co']),
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            },
+            {
+                activityType: 'Transfer', direction: 'Inflow',
+                currency: 'USD', amountRange: [5000, 100000],
+                relatedBizType: 'Fiat Top-up', railType: 'Bank',
+                orderPrefix: 'TOP-', settlementPrefix: '', txPrefix: 'REF-',
+                counterpartyName: () => 'Nancy_Test Company',
+                counterpartyAccount: () => pickRand(['12345678901234', '98765432101234', '11223344556677']),
+                txHashGen: () => 'REF' + Math.floor(Math.random() * 9000000 + 1000000),
+            },
+            {
+                activityType: 'Transfer', direction: 'Outflow',
+                currency: 'HKD', amountRange: [10000, 200000],
+                relatedBizType: 'Fiat Transfer', railType: 'Bank',
+                orderPrefix: 'TRF-', settlementPrefix: '', txPrefix: 'REF-',
+                counterpartyName: () => pickRand(['HSBC HK Account', 'BOC Corporate Account']),
+                counterpartyAccount: () => pickRand(['001-234567-890', '012-987654-321']),
+                txHashGen: () => 'REF' + Math.floor(Math.random() * 9000000 + 1000000),
+            },
+            {
+                activityType: 'Adjustment', direction: 'Inflow',
+                currency: 'USDT', amountRange: [10, 500],
+                relatedBizType: null, railType: null,
+                orderPrefix: '', settlementPrefix: '', txPrefix: '',
+                counterpartyName: () => 'Obita Platform',
+                counterpartyAccount: () => '',
+                txHashGen: () => '',
+            },
+        ];
+
+        // ── generate rows ─────────────────────────────────────────────────────
+        let balance = 250000.00;
+        const rows = [];
+        const seqBase = Date.now();
+
+        dates.forEach((dt, i) => {
+            const tpl = pickRand(templates);
+            const amount = parseFloat(fmtDecimal(randBetween(...tpl.amountRange)));
+            const balBefore = balance;
+            balance = tpl.direction === 'Inflow' ? balance + amount : Math.max(0, balance - amount);
+            const balAfter = balance;
+
+            const seqStr = String(seqBase + i).slice(-8);
+            const dateTag = `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}`;
+
+            const orderId = tpl.orderPrefix ? tpl.orderPrefix + dateTag + '-' + seqStr.slice(0, 4) : '';
+            const settlId = tpl.settlementPrefix ? tpl.settlementPrefix + dateTag + '-' + seqStr.slice(0, 4) : '';
+            const settlDate = settlId ? fmtDt(new Date(dt.getTime() + 3600000)) : '';
+            const txId = tpl.txPrefix ? tpl.txPrefix + seqStr : '';
+            const txHash = tpl.txHashGen();
+            const cpName = tpl.counterpartyName();
+            const cpAccount = maskAccount(tpl.counterpartyAccount());
+            const status = Math.random() < 0.96 ? 'Completed' : 'Reversed';
+            const movId = 'MOV-' + dateTag + '-' + seqStr;
+
+            rows.push([
+                fmtDt(dt),
+                MERCHANT_ID,
+                movId,
+                tpl.activityType,
+                tpl.direction,
+                tpl.currency,
+                fmtDecimal(amount),
+                fmtDecimal(balBefore),
+                fmtDecimal(balAfter),
+                status,
+                tpl.relatedBizType || '',
+                orderId,
+                settlId,
+                settlDate,
+                txId,
+                tpl.railType || '',
+                txHash,
+                cpName,
+                cpAccount,
+                '',  // Notes
+            ]);
+        });
+
+        // ── build CSV ─────────────────────────────────────────────────────────
+        const headers = [
+            'Value Date', 'Merchant ID', 'Movement ID', 'Activity Type', 'Direction',
+            'Currency', 'Amount', 'Balance Before', 'Balance After', 'Status',
+            'Related Business Type', 'Order ID', 'Settlement ID', 'Settlement Date',
+            'Transaction ID', 'Rail Type', 'Tx Hash / Reference',
+            'Counterparty Name', 'Counterparty Account / Address', 'Notes'
+        ];
+
+        function csvEscape(v) {
+            const s = String(v);
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? '"' + s.replace(/"/g, '""') + '"'
+                : s;
+        }
+
+        const csvLines = [headers.map(csvEscape).join(',')];
+        rows.forEach(r => csvLines.push(r.map(csvEscape).join(',')));
+        const csvContent = csvLines.join('\r\n');
+
+        // ── trigger download ──────────────────────────────────────────────────
+        const fileName = reportType === 'daily'
+            ? `balance_activity_daily_report_${MERCHANT_ID}_${dateValue}.csv`
+            : `balance_activity_monthly_report_${MERCHANT_ID}_${dateValue}.csv`;
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        // ── toast notification ────────────────────────────────────────────────
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);animation:slideUp 0.25s ease;';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 4000);
+    };
+
     window.openReportCenterReport = function(reportId) {
         const mapping = {
             balance: 'Order Reports',
@@ -7315,7 +7526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             : `<input type="month" id="report-date-${card.action}" value="${sel.value}" min="${minMonth}" max="${maxMonth}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasValue ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
                                         }
                                     </div>
-                                    <button class="btn" onclick="${hasValue ? `window.openReportCenterReport('${card.action}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
+                                    <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
                                 </div>
                             </div>
                         </div>`;
