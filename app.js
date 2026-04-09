@@ -3434,12 +3434,198 @@ document.addEventListener('DOMContentLoaded', () => {
                     }));
                 }
 
+            } else if (isCheckout) {
+                const scenario = pickRand(scenarioPool);
+                const orderCcy   = pickRand(['HKD', 'USD']);
+                const listCcyPool = ['EUR', 'JPY', 'THB', 'CNY', 'USD', 'HKD'];
+                const listCcy    = pickRand(listCcyPool);
+                const orderAmt   = parseFloat(fmtDecimal(randBetween(100, 50000)));
+                // rough FX to simulate Order List Amount in customer-facing currency
+                const listFx = { EUR: 0.118, JPY: 157, THB: 36.5, CNY: 7.25, USD: orderCcy === 'HKD' ? 0.128 : 1, HKD: orderCcy === 'USD' ? 7.8 : 1 };
+                const listAmt = listCcy === orderCcy ? orderAmt : parseFloat(fmtDecimal(orderAmt * (listFx[listCcy] || 1)));
+                // payment currency: stablecoin or same fiat
+                const payCcy     = pickRand(['USDT', 'USDC', orderCcy]);
+                const isStable   = ['USDT', 'USDC'].includes(payCcy);
+                // conversion rate: payAmt (in payCcy) → orderCcy
+                const toOrderFx  = (payCcy === orderCcy) ? 1
+                                 : (isStable && orderCcy === 'USD') ? 1
+                                 : (isStable && orderCcy === 'HKD') ? 7.8
+                                 : 1;
+                const ckoId      = randId('CKO-', dateTag, seqStr);
+                const extOrderId = 'ORD-' + dateTag + '-' + seqStr;
+                const expiryTime = new Date(dt.getTime() + 30 * 60 * 1000);
+                const payerAcct  = isStable
+                    ? '0x' + [...Array(40)].map(() => Math.floor(Math.random()*16).toString(16)).join('')
+                    : String(Math.floor(Math.random()*9e13 + 1e13));
+                const extUserId  = 'USR-' + String(Math.floor(Math.random()*90000 + 10000));
+                const reference  = 'REF-' + seqStr;
+
+                // helper: build one payment-event row for checkout
+                function makeCkoRow({
+                    extOrderId, ckoId, orderStatus, createdAt, expiryTime,
+                    listCcy, listAmt, orderCcy, orderAmt,
+                    runningPaid, runningOutstanding, runningPayStatus,
+                    payCcy, payAmtInPayCcy, payTime, rowStatus,
+                    payerAcct, extUserId, reference, seqStr, dateTag, suffix, notes
+                }) {
+                    const hasPay   = payAmtInPayCcy > 0;
+                    const isPayStable = ['USDT', 'USDC'].includes(payCcy);
+                    // Total Fee & Net are based on runningPaid (Order Currency) at point of this row
+                    const rowPaid  = hasPay ? parseFloat(fmtDecimal(payAmtInPayCcy * toOrderFx)) : 0;
+                    const fee      = hasPay ? parseFloat(fmtDecimal(rowPaid * 0.005)) : 0;
+                    const net      = hasPay ? parseFloat(fmtDecimal(rowPaid - fee)) : 0;
+                    const settlAmt = net;
+                    const payId    = hasPay ? 'PAY-' + dateTag + '-' + seqStr + suffix : '';
+                    const settlId  = hasPay && rowStatus !== 'Refunded' ? 'STL-' + dateTag + '-' + seqStr + suffix : '';
+                    const txId     = hasPay ? 'TX-'  + seqStr + suffix : '';
+                    const settlStatus = !hasPay        ? 'Not Started'
+                                     : rowStatus === 'Refunded' ? 'Not Started'
+                                     : rowStatus === 'Failed'   ? 'Failed'
+                                     : settlId                  ? 'Settled'
+                                     : 'Not Started';
+                    const payTimeStr = hasPay ? fmtDt(payTime) : '';
+                    return [
+                        extOrderId,                                              // 1  Merchant External Order ID
+                        ckoId,                                                   // 2  Checkout Order ID
+                        orderStatus,                                             // 3  Order Status
+                        fmtDt(createdAt),                                        // 4  Checkout Created Time
+                        expiryTime ? fmtDt(expiryTime) : '',                    // 5  Checkout Expiry Time
+                        listCcy,                                                 // 6  Order List Currency
+                        fmtDecimal(listAmt),                                     // 7  Order List Amount
+                        orderCcy,                                                // 8  Order Currency
+                        fmtDecimal(orderAmt),                                    // 9  Order Amount
+                        fmtDecimal(runningPaid),                                 // 10 Total Paid Amount (running, in orderCcy)
+                        fmtDecimal(runningOutstanding),                          // 11 Outstanding Amount (running)
+                        runningPayStatus,                                        // 12 Payment Status (running)
+                        hasPay ? payCcy : '',                                   // 13 Payment Currency
+                        hasPay ? fmtDecimal(payAmtInPayCcy) : '',               // 14 Payment Amount (in payCcy)
+                        hasPay ? (isPayStable ? 'Stablecoin' : 'Fiat') : '',    // 15 Asset Type
+                        payTimeStr,                                              // 16 Payment Completed Time
+                        rowStatus,                                               // 17 Status
+                        hasPay ? orderCcy : '',                                 // 18 Fee Currency
+                        hasPay ? fmtDecimal(fee) : '',                          // 19 Total Fee
+                        hasPay ? fmtDecimal(net) : '',                          // 20 Net Amount
+                        settlStatus,                                             // 21 Settlement Status
+                        hasPay ? orderCcy : '',                                 // 22 Settlement Currency
+                        hasPay ? fmtDecimal(settlAmt) : '',                     // 23 Settlement Amount
+                        settlId,                                                 // 24 Settlement ID
+                        payId,                                                   // 25 Payment ID
+                        txId,                                                    // 26 Transaction ID
+                        extUserId || '',                                         // 27 Merchant External User ID
+                        hasPay ? maskAccount(payerAcct) : '',                   // 28 Payer Account / Address
+                        reference || '',                                         // 29 Reference
+                        notes || '',                                             // 30 Notes
+                    ];
+                }
+
+                const ckoBase = { extOrderId, ckoId, createdAt: dt, expiryTime, listCcy, listAmt, orderCcy, orderAmt, payCcy, payerAcct, extUserId, reference, seqStr, dateTag };
+
+                if (scenario === 'paid_single') {
+                    // 1 row: full payment
+                    const payAmt = parseFloat(fmtDecimal(orderAmt / toOrderFx));
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Completed',
+                        runningPaid: orderAmt, runningOutstanding: 0, runningPayStatus: 'Paid',
+                        payAmtInPayCcy: payAmt,
+                        payTime: new Date(dt.getTime() + randBetween(1, 20) * 60000),
+                        rowStatus: 'Completed', suffix: 'A',
+                    }));
+
+                } else if (scenario === 'paid_multi') {
+                    // 2 rows: partial → full (both in Order Currency terms)
+                    const firstPaid  = parseFloat(fmtDecimal(orderAmt * randBetween(0.25, 0.65)));
+                    const secondPaid = parseFloat(fmtDecimal(orderAmt - firstPaid));
+                    const t1 = new Date(dt.getTime() + randBetween(1, 10) * 60000);
+                    const t2 = new Date(t1.getTime()  + randBetween(5, 30) * 60000);
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Completed',
+                        runningPaid: firstPaid,
+                        runningOutstanding: parseFloat(fmtDecimal(orderAmt - firstPaid)),
+                        runningPayStatus: 'Partially Paid',
+                        payAmtInPayCcy: parseFloat(fmtDecimal(firstPaid / toOrderFx)),
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Partial payment 1 of 2',
+                    }));
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Completed',
+                        runningPaid: orderAmt, runningOutstanding: 0, runningPayStatus: 'Paid',
+                        payAmtInPayCcy: parseFloat(fmtDecimal(secondPaid / toOrderFx)),
+                        payTime: t2, rowStatus: 'Completed', suffix: 'B',
+                        notes: 'Partial payment 2 of 2',
+                    }));
+
+                } else if (scenario === 'refund_full') {
+                    // 2 rows: full payment → full refund
+                    const payAmt = parseFloat(fmtDecimal(orderAmt / toOrderFx));
+                    const t1 = new Date(dt.getTime() + randBetween(1, 10) * 60000);
+                    const t2 = new Date(t1.getTime()  + randBetween(5, 60) * 60000);
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Refunded',
+                        runningPaid: orderAmt, runningOutstanding: 0, runningPayStatus: 'Paid',
+                        payAmtInPayCcy: payAmt,
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Payment received; pending cancellation',
+                    }));
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Refunded',
+                        runningPaid: 0, runningOutstanding: orderAmt, runningPayStatus: 'Unpaid',
+                        payAmtInPayCcy: payAmt,
+                        payTime: t2, rowStatus: 'Refunded', suffix: 'B',
+                        notes: 'Full refund — order cancelled',
+                    }));
+
+                } else if (scenario === 'refund_partial') {
+                    // 2 rows: partial payment → refund while underpaid
+                    const paidInOrder = parseFloat(fmtDecimal(orderAmt * randBetween(0.2, 0.6)));
+                    const t1 = new Date(dt.getTime() + randBetween(1, 10) * 60000);
+                    const t2 = new Date(t1.getTime()  + randBetween(10, 120) * 60000);
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Refunded',
+                        runningPaid: paidInOrder,
+                        runningOutstanding: parseFloat(fmtDecimal(orderAmt - paidInOrder)),
+                        runningPayStatus: 'Partially Paid',
+                        payAmtInPayCcy: parseFloat(fmtDecimal(paidInOrder / toOrderFx)),
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Partial payment received; order later cancelled',
+                    }));
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Refunded',
+                        runningPaid: 0, runningOutstanding: orderAmt, runningPayStatus: 'Unpaid',
+                        payAmtInPayCcy: parseFloat(fmtDecimal(paidInOrder / toOrderFx)),
+                        payTime: t2, rowStatus: 'Refunded', suffix: 'B',
+                        notes: 'Partial refund — order cancelled while underpaid',
+                    }));
+
+                } else if (scenario === 'partially_paid') {
+                    // 1 row: partial payment, session still open / expired
+                    const paidInOrder = parseFloat(fmtDecimal(orderAmt * randBetween(0.15, 0.75)));
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: 'Expired',
+                        runningPaid: paidInOrder,
+                        runningOutstanding: parseFloat(fmtDecimal(orderAmt - paidInOrder)),
+                        runningPayStatus: 'Partially Paid',
+                        payAmtInPayCcy: parseFloat(fmtDecimal(paidInOrder / toOrderFx)),
+                        payTime: new Date(dt.getTime() + randBetween(1, 25) * 60000),
+                        rowStatus: 'Completed', suffix: 'A',
+                    }));
+
+                } else {
+                    // 1 row: no payment (Pending / Expired)
+                    const finalStatus = scenario === 'expired' ? 'Expired' : 'Pending';
+                    rows.push(makeCkoRow({ ...ckoBase,
+                        orderStatus: finalStatus,
+                        runningPaid: 0, runningOutstanding: orderAmt, runningPayStatus: 'Unpaid',
+                        payAmtInPayCcy: 0,
+                        payTime: null, rowStatus: 'Pending', suffix: 'A',
+                    }));
+                }
+
             } else {
-                // Placeholder rows for other order types (Checkout, Payout, Conversion)
+                // Placeholder rows for Payout / Conversion
                 rows.push([randId(
-                    isCheckout ? 'CKO-' : isPayout ? 'PAY-' : 'CVT-',
+                    isPayout ? 'PAY-' : 'CVT-',
                     dateTag, seqStr
-                ), orderType, fmtDt(dt), ...Array(23).fill('')]);
+                ), orderType, fmtDt(dt), ...Array(27).fill('')]);
             }
         });
 
@@ -3453,8 +3639,19 @@ document.addEventListener('DOMContentLoaded', () => {
             'Payer Name', 'Payer ID', 'Payer Account / Address', 'Payment Completed Time',
             'Status', 'Notes'
         ];
-        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(23).fill('').map((_, i) => `Field ${i+4}`)];
-        const headers = isInvoice ? invoiceHeaders : genericHeaders;
+        const checkoutHeaders = [
+            'Merchant External Order ID', 'Checkout Order ID', 'Order Status',
+            'Checkout Created Time', 'Checkout Expiry Time',
+            'Order List Currency', 'Order List Amount', 'Order Currency', 'Order Amount',
+            'Total Paid Amount', 'Outstanding Amount', 'Payment Status',
+            'Payment Currency', 'Payment Amount', 'Asset Type', 'Payment Completed Time',
+            'Status', 'Fee Currency', 'Total Fee', 'Net Amount',
+            'Settlement Status', 'Settlement Currency', 'Settlement Amount',
+            'Settlement ID', 'Payment ID', 'Transaction ID',
+            'Merchant External User ID', 'Payer Account / Address', 'Reference', 'Notes'
+        ];
+        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(27).fill('').map((_, i) => `Field ${i+4}`)];
+        const headers = isInvoice ? invoiceHeaders : isCheckout ? checkoutHeaders : genericHeaders;
 
         // ── period ─────────────────────────────────────────────────────────────
         let periodStart, periodEnd;
