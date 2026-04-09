@@ -1657,6 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeApprovalRuleId = null;
     let approvalRuleFormLevels = 1;
     let approvalListView = 'list';
+    let approvalListTab = 'my'; // 'my' or 'all'
     let activeApprovalRequestId = null;
     let expandedApprovalActionId = null;
     let activeApprovalDecision = null;
@@ -2079,6 +2080,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    function getFilteredMyApprovalRequests() {
+        const currentUser = getCurrentUser();
+        const currentUserName = currentUser ? currentUser.name : '';
+        const scopeFilter = document.getElementById('approval-list-scope-filter')?.value || 'all';
+        const statusFilter = document.getElementById('approval-list-status-filter')?.value || 'all';
+        const keyword = (document.getElementById('approval-list-search')?.value || '').trim().toLowerCase();
+
+        return approvalRequests
+            .slice()
+            .sort((a, b) => b.submittedAtValue - a.submittedAtValue)
+            .filter(request => {
+                // My Requests: submitted by me OR pending (needs my approval)
+                if (request.requester !== currentUserName && request.status !== 'pending') return false;
+                if (scopeFilter !== 'all' && request.scope !== scopeFilter) return false;
+                if (statusFilter !== 'all' && request.status !== statusFilter) return false;
+                if (!keyword) return true;
+
+                const haystack = [
+                    request.id,
+                    request.title,
+                    request.scope,
+                    request.orderId,
+                    request.subject,
+                    request.requester,
+                    request.currency
+                ].join(' ').toLowerCase();
+
+                return haystack.includes(keyword);
+            });
+    }
+
     function renderApprovalDecisionPanel(requestId, compact = false) {
         const isExpanded = expandedApprovalActionId === requestId;
         const isReject = activeApprovalDecision === 'rejected';
@@ -2186,7 +2218,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const requests = getFilteredApprovalRequests();
+        const requests = approvalListTab === 'my' ? getFilteredMyApprovalRequests() : getFilteredApprovalRequests();
+        const myCount = approvalRequests.filter(r => r.requester === (getCurrentUser()?.name || '') || r.status === 'pending').length;
+        const allCount = approvalRequests.length;
         const scopeOptions = [
             'Payout',
             'Fiat Vault - Transfer',
@@ -2223,6 +2257,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
 
                 <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 18px 24px 0; border-bottom: 1px solid var(--clr-border); background: #FCFDFE; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; gap: 0;">
+                            <button onclick="window.switchApprovalListTab('my')" style="padding: 10px 20px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: none; color: ${approvalListTab === 'my' ? '#2563EB' : '#64748B'}; border-bottom: 2px solid ${approvalListTab === 'my' ? '#2563EB' : 'transparent'}; transition: all 0.15s ease;">My Requests <span style="font-size: 11px; font-weight: 700; background: ${approvalListTab === 'my' ? '#EFF6FF' : '#F1F5F9'}; color: ${approvalListTab === 'my' ? '#2563EB' : '#64748B'}; padding: 2px 8px; border-radius: 999px; margin-left: 6px;">${myCount}</span></button>
+                            <button onclick="window.switchApprovalListTab('all')" style="padding: 10px 20px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; background: none; color: ${approvalListTab === 'all' ? '#2563EB' : '#64748B'}; border-bottom: 2px solid ${approvalListTab === 'all' ? '#2563EB' : 'transparent'}; transition: all 0.15s ease;">All <span style="font-size: 11px; font-weight: 700; background: ${approvalListTab === 'all' ? '#EFF6FF' : '#F1F5F9'}; color: ${approvalListTab === 'all' ? '#2563EB' : '#64748B'}; padding: 2px 8px; border-radius: 999px; margin-left: 6px;">${allCount}</span></button>
+                        </div>
+                    </div>
                     <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: #FCFDFE; display: flex; flex-direction: column; gap: 14px;">
                         <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 14px;">
                             <div style="position: relative;">
@@ -2273,7 +2313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             `;
                         }).join('') : `
                             <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
-                                No approval requests matched your current filters.
+                                ${approvalListTab === 'my' ? 'No requests submitted by you or awaiting your approval.' : 'No approval requests matched your current filters.'}
                             </div>
                         `}
                     </div>
@@ -2848,6 +2888,11 @@ document.addEventListener('DOMContentLoaded', () => {
         activeApprovalRequestId = null;
         expandedApprovalActionId = null;
         activeApprovalDecision = null;
+        renderApprovalListPage();
+    };
+
+    window.switchApprovalListTab = function(tab) {
+        approvalListTab = tab;
         renderApprovalListPage();
     };
 
