@@ -3264,72 +3264,170 @@ document.addEventListener('DOMContentLoaded', () => {
         const isPayout     = orderType === 'Payout';
         const isConversion = orderType === 'Conversion';
 
-        const invCurrencies  = ['USDT', 'USDC', 'USD', 'HKD'];
-        const payerNames     = ['Global Trade Holdings', 'Nexus Finance Ltd', 'Pacific Merchants Co', 'Alex Chen', 'Maria Santos'];
-        const invStatuses    = ['Paid', 'Paid', 'Paid', 'Partially Paid', 'Unpaid', 'Expired'];
-        const recStatuses    = ['Completed', 'Completed', 'Completed', 'Pending', 'Failed', 'Refunded'];
+        const invCurrencies = ['USDT', 'USDC', 'USD', 'HKD'];
+        const payerNames    = ['Global Trade Holdings', 'Nexus Finance Ltd', 'Pacific Merchants Co', 'Alex Chen', 'Maria Santos'];
+        // weighted scenario pool for realistic distribution
+        const scenarioPool  = [
+            'paid_single', 'paid_single', 'paid_single', 'paid_single',  // most common
+            'paid_multi',  'paid_multi',                                  // partial→paid (2 rows)
+            'refund_full', 'refund_partial',                              // payment then refund (2 rows each)
+            'partially_paid',                                             // still outstanding (1 row)
+            'unpaid', 'expired',                                          // no payment (1 row)
+        ];
 
         const seqBase = Date.now();
         const rows = [];
 
+        // helper: build one payment-event row with running totals
+        function makeInvRow({
+            invId, invStatus, createdAt, dueDate, invCcy, invAmt,
+            runningPaid, runningOutstanding, runningPayStatus,
+            payAmt, payTime, rowStatus, payer, payerAcct, seqStr, dateTag, suffix, notes
+        }) {
+            const isStable = ['USDT','USDC'].includes(invCcy);
+            const hasPay = payAmt > 0;
+            const fee = hasPay ? parseFloat(fmtDecimal(payAmt * 0.005)) : 0;
+            const net = hasPay ? parseFloat(fmtDecimal(payAmt - fee)) : 0;
+            const payId   = hasPay ? 'PAY-' + dateTag + '-' + seqStr + suffix : '';
+            const settlId = hasPay && rowStatus !== 'Refunded' ? 'STL-' + dateTag + '-' + seqStr + suffix : '';
+            const txId    = hasPay ? 'TX-' + seqStr + suffix : '';
+            const movId   = hasPay ? 'MOV-' + dateTag + '-' + seqStr + suffix : '';
+            const payTimeStr = hasPay ? fmtDt(payTime) : '';
+            return [
+                invId,                                                        // InvoiceOrder ID
+                invStatus,                                                    // Invoice Status (final)
+                fmtDt(createdAt),                                             // Invoice Created Time
+                dueDate,                                                      // Invoice Due Date
+                invCcy,                                                       // Invoice Currency
+                fmtDecimal(invAmt),                                           // Invoice Amount
+                fmtDecimal(runningPaid),                                      // Total Paid Amount (running)
+                fmtDecimal(runningOutstanding),                               // Outstanding Amount (running)
+                runningPayStatus,                                             // Payment Status (running)
+                payTimeStr,                                                   // Last Payment Time
+                hasPay ? invCcy : '',                                         // Payment Currency
+                hasPay ? fmtDecimal(payAmt) : '',                             // Payment Amount
+                hasPay ? (isStable ? 'Stablecoin' : 'Fiat') : '',            // Asset Type
+                hasPay ? fmtDecimal(fee) : '',                                // Total Fee
+                hasPay ? invCcy : '',                                         // Fee Currency
+                hasPay ? fmtDecimal(net) : '',                                // Net Amount
+                payId,                                                        // Payment ID
+                settlId,                                                      // Settlement ID
+                txId,                                                         // Transaction ID
+                movId,                                                        // Movement ID
+                hasPay ? payer : '',                                          // Payer Name
+                hasPay ? 'PYR-' + seqStr : '',                               // Payer ID
+                hasPay ? maskAccount(payerAcct) : '',                         // Payer Account / Address
+                payTimeStr,                                                   // Payment Completed Time
+                rowStatus,                                                    // Status (row-level)
+                notes || '',                                                  // Notes
+            ];
+        }
+
         dates.forEach((dt, i) => {
-            const seqStr = String(seqBase + i).slice(-6);
+            const seqStr  = String(seqBase + i).slice(-6);
             const dateTag = `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}`;
 
             if (isInvoice) {
-                const invCcy = pickRand(invCurrencies);
+                const scenario = pickRand(scenarioPool);
+                const invCcy   = pickRand(invCurrencies);
                 const isStable = ['USDT','USDC'].includes(invCcy);
-                const invAmt = parseFloat(fmtDecimal(randBetween(500, 50000)));
-                const invStatus = pickRand(invStatuses);
-                const isPaid = invStatus === 'Paid';
-                const isPartial = invStatus === 'Partially Paid';
-                const totalPaid = isPaid ? invAmt : isPartial ? parseFloat(fmtDecimal(invAmt * randBetween(0.2, 0.8))) : 0;
-                const outstanding = parseFloat(fmtDecimal(invAmt - totalPaid));
-                const payStatus = isPaid ? 'Paid' : isPartial ? 'Partially Paid' : 'Unpaid';
-                const hasPay = isPaid || isPartial;
-                const fee = hasPay ? parseFloat(fmtDecimal(totalPaid * 0.005)) : 0;
-                const net = hasPay ? parseFloat(fmtDecimal(totalPaid - fee)) : 0;
-                const lastPayTime = hasPay ? fmtDt(new Date(dt.getTime() + 1800000)) : '';
-                const payCompTime = hasPay ? fmtDt(new Date(dt.getTime() + 1800000)) : '';
-                const dueDate = fmtDt(new Date(dt.getTime() + 7 * 86400000));
-                const payer = pickRand(payerNames);
+                const invAmt   = parseFloat(fmtDecimal(randBetween(500, 50000)));
+                const invId    = randId('INV-', dateTag, seqStr);
+                const dueDate  = fmtDt(new Date(dt.getTime() + 7 * 86400000));
+                const payer    = pickRand(payerNames);
                 const payerAcct = isStable
-                    ? maskAccount('0x' + [...Array(40)].map(() => Math.floor(Math.random()*16).toString(16)).join(''))
-                    : maskAccount(String(Math.floor(Math.random()*9e13 + 1e13)));
-                const status = pickRand(recStatuses);
-                const payId = hasPay ? 'PAY-' + dateTag + '-' + seqStr : '';
-                const settlId = hasPay ? 'STL-' + dateTag + '-' + seqStr : '';
-                const txId = hasPay ? 'TX-' + seqStr : '';
-                const movId = hasPay ? 'MOV-' + dateTag + '-' + seqStr : '';
+                    ? '0x' + [...Array(40)].map(() => Math.floor(Math.random()*16).toString(16)).join('')
+                    : String(Math.floor(Math.random()*9e13 + 1e13));
 
-                rows.push([
-                    randId('INV-', dateTag, seqStr),   // InvoiceOrder ID
-                    invStatus,                          // Invoice Status
-                    fmtDt(dt),                          // Invoice Created Time
-                    dueDate,                            // Invoice Due Date
-                    invCcy,                             // Invoice Currency
-                    fmtDecimal(invAmt),                 // Invoice Amount
-                    fmtDecimal(totalPaid),              // Total Paid Amount
-                    fmtDecimal(outstanding),            // Outstanding Amount
-                    payStatus,                          // Payment Status
-                    lastPayTime,                        // Last Payment Time
-                    hasPay ? invCcy : '',               // Payment Currency
-                    hasPay ? fmtDecimal(totalPaid) : '',// Payment Amount
-                    hasPay ? (isStable ? 'Stablecoin' : 'Fiat') : '', // Asset Type
-                    hasPay ? fmtDecimal(fee) : '',      // Total Fee
-                    hasPay ? invCcy : '',               // Fee Currency
-                    hasPay ? fmtDecimal(net) : '',      // Net Amount
-                    payId,                              // Payment ID
-                    settlId,                            // Settlement ID
-                    txId,                               // Transaction ID
-                    movId,                              // Movement ID
-                    hasPay ? payer : '',                // Payer Name
-                    hasPay ? 'PYR-' + seqStr : '',     // Payer ID
-                    hasPay ? payerAcct : '',            // Payer Account / Address
-                    payCompTime,                        // Payment Completed Time
-                    status,                             // Status
-                    '',                                 // Notes
-                ]);
+                const base = { invId, createdAt: dt, dueDate, invCcy, invAmt, payer, payerAcct, seqStr, dateTag };
+
+                if (scenario === 'paid_single') {
+                    // ── 1 row: full payment ──────────────────────────────────────
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Paid', runningPaid: invAmt, runningOutstanding: 0,
+                        runningPayStatus: 'Paid', payAmt: invAmt,
+                        payTime: new Date(dt.getTime() + randBetween(1, 3) * 3600000),
+                        rowStatus: 'Completed', suffix: 'A',
+                    }));
+
+                } else if (scenario === 'paid_multi') {
+                    // ── 2 rows: partial → full ───────────────────────────────────
+                    const firstAmt  = parseFloat(fmtDecimal(invAmt * randBetween(0.25, 0.65)));
+                    const secondAmt = parseFloat(fmtDecimal(invAmt - firstAmt));
+                    const t1 = new Date(dt.getTime() + randBetween(1, 4) * 3600000);
+                    const t2 = new Date(t1.getTime()  + randBetween(2, 8) * 3600000);
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Paid', runningPaid: firstAmt,
+                        runningOutstanding: parseFloat(fmtDecimal(invAmt - firstAmt)),
+                        runningPayStatus: 'Partially Paid', payAmt: firstAmt,
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Partial payment 1 of 2',
+                    }));
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Paid', runningPaid: invAmt, runningOutstanding: 0,
+                        runningPayStatus: 'Paid', payAmt: secondAmt,
+                        payTime: t2, rowStatus: 'Completed', suffix: 'B',
+                        notes: 'Partial payment 2 of 2',
+                    }));
+
+                } else if (scenario === 'refund_full') {
+                    // ── 2 rows: full payment → full refund ───────────────────────
+                    const t1 = new Date(dt.getTime() + randBetween(1, 3) * 3600000);
+                    const t2 = new Date(t1.getTime()  + randBetween(2, 12) * 3600000);
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Refunded', runningPaid: invAmt, runningOutstanding: 0,
+                        runningPayStatus: 'Paid', payAmt: invAmt,
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Payment received; pending cancellation',
+                    }));
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Refunded', runningPaid: 0, runningOutstanding: invAmt,
+                        runningPayStatus: 'Unpaid', payAmt: invAmt,
+                        payTime: t2, rowStatus: 'Refunded', suffix: 'B',
+                        notes: 'Full refund — order cancelled',
+                    }));
+
+                } else if (scenario === 'refund_partial') {
+                    // ── 2 rows: partial payment → refund (order cancelled while underpaid) ──
+                    const paidAmt   = parseFloat(fmtDecimal(invAmt * randBetween(0.2, 0.6)));
+                    const t1 = new Date(dt.getTime() + randBetween(1, 4) * 3600000);
+                    const t2 = new Date(t1.getTime()  + randBetween(3, 24) * 3600000);
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Refunded', runningPaid: paidAmt,
+                        runningOutstanding: parseFloat(fmtDecimal(invAmt - paidAmt)),
+                        runningPayStatus: 'Partially Paid', payAmt: paidAmt,
+                        payTime: t1, rowStatus: 'Completed', suffix: 'A',
+                        notes: 'Partial payment received; order later cancelled',
+                    }));
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Refunded', runningPaid: 0, runningOutstanding: invAmt,
+                        runningPayStatus: 'Unpaid', payAmt: paidAmt,
+                        payTime: t2, rowStatus: 'Refunded', suffix: 'B',
+                        notes: 'Partial refund — order cancelled while underpaid',
+                    }));
+
+                } else if (scenario === 'partially_paid') {
+                    // ── 1 row: partial payment, still open ───────────────────────
+                    const paidAmt = parseFloat(fmtDecimal(invAmt * randBetween(0.15, 0.75)));
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: 'Partially Paid',
+                        runningPaid: paidAmt,
+                        runningOutstanding: parseFloat(fmtDecimal(invAmt - paidAmt)),
+                        runningPayStatus: 'Partially Paid', payAmt: paidAmt,
+                        payTime: new Date(dt.getTime() + randBetween(1, 3) * 3600000),
+                        rowStatus: 'Completed', suffix: 'A',
+                    }));
+
+                } else {
+                    // ── 1 row: no payment (Unpaid / Expired) ─────────────────────
+                    const finalStatus = scenario === 'expired' ? 'Expired' : 'Unpaid';
+                    rows.push(makeInvRow({ ...base,
+                        invStatus: finalStatus, runningPaid: 0, runningOutstanding: invAmt,
+                        runningPayStatus: 'Unpaid', payAmt: 0,
+                        payTime: null, rowStatus: 'Pending', suffix: 'A',
+                    }));
+                }
+
             } else {
                 // Placeholder rows for other order types (Checkout, Payout, Conversion)
                 rows.push([randId(
