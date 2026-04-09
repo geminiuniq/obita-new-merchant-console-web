@@ -3208,9 +3208,194 @@ document.addEventListener('DOMContentLoaded', () => {
     window.generateReport = function(action, type, value) {
         if (action === 'balance') {
             window.generateBalanceActivityCSV(type, value);
+        } else if (action === 'reconciliation') {
+            const orderType = reportCardSelections.reconciliation.orderType;
+            window.generateOrderReconciliationCSV(type, value, orderType);
         } else {
             window.openReportCenterReport(action);
         }
+    };
+
+    window.generateOrderReconciliationCSV = function(reportType, dateValue, orderType) {
+        const MERCHANT_ID = 'MCH-20240801-0012';
+
+        // ── helpers ────────────────────────────────────────────────────────────
+        function maskAccount(str) {
+            if (!str) return '';
+            const clean = str.replace(/\s/g, '');
+            if (clean.length <= 10) return clean;
+            return clean.slice(0, 6) + '****' + clean.slice(-4);
+        }
+        function fmtDt(d) { return d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'; }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function randBetween(a, b) { return Math.random() * (b - a) + a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function pad(n) { return String(n).padStart(2, '0'); }
+        function csvEscape(v) {
+            const s = String(v);
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }
+        function randId(prefix, dateTag, seq) { return prefix + dateTag + '-' + seq; }
+
+        // ── date range ─────────────────────────────────────────────────────────
+        let dates = [];
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            for (let h = 0; h < 24; h += 4) {
+                const dt = new Date(Date.UTC(y, m-1, d, h, Math.floor(Math.random()*59), Math.floor(Math.random()*59)));
+                dates.push(dt);
+            }
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const n = Math.floor(randBetween(1, 4));
+                for (let t = 0; t < n; t++) {
+                    dates.push(new Date(Date.UTC(y, m-1, day, Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                }
+            }
+            dates.sort((a, b) => a - b);
+        }
+
+        // ── data templates by order type ───────────────────────────────────────
+        const isInvoice    = orderType === 'Collection-Invoice';
+        const isCheckout   = orderType === 'Collection-Checkout';
+        const isPayout     = orderType === 'Payout';
+        const isConversion = orderType === 'Conversion';
+
+        const invCurrencies  = ['USDT', 'USDC', 'USD', 'HKD'];
+        const payerNames     = ['Global Trade Holdings', 'Nexus Finance Ltd', 'Pacific Merchants Co', 'Alex Chen', 'Maria Santos'];
+        const invStatuses    = ['Paid', 'Paid', 'Paid', 'Partially Paid', 'Unpaid', 'Expired'];
+        const recStatuses    = ['Completed', 'Completed', 'Completed', 'Pending', 'Failed', 'Refunded'];
+
+        const seqBase = Date.now();
+        const rows = [];
+
+        dates.forEach((dt, i) => {
+            const seqStr = String(seqBase + i).slice(-6);
+            const dateTag = `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}`;
+
+            if (isInvoice) {
+                const invCcy = pickRand(invCurrencies);
+                const isStable = ['USDT','USDC'].includes(invCcy);
+                const invAmt = parseFloat(fmtDecimal(randBetween(500, 50000)));
+                const invStatus = pickRand(invStatuses);
+                const isPaid = invStatus === 'Paid';
+                const isPartial = invStatus === 'Partially Paid';
+                const totalPaid = isPaid ? invAmt : isPartial ? parseFloat(fmtDecimal(invAmt * randBetween(0.2, 0.8))) : 0;
+                const outstanding = parseFloat(fmtDecimal(invAmt - totalPaid));
+                const payStatus = isPaid ? 'Paid' : isPartial ? 'Partially Paid' : 'Unpaid';
+                const hasPay = isPaid || isPartial;
+                const fee = hasPay ? parseFloat(fmtDecimal(totalPaid * 0.005)) : 0;
+                const net = hasPay ? parseFloat(fmtDecimal(totalPaid - fee)) : 0;
+                const lastPayTime = hasPay ? fmtDt(new Date(dt.getTime() + 1800000)) : '';
+                const payCompTime = hasPay ? fmtDt(new Date(dt.getTime() + 1800000)) : '';
+                const dueDate = fmtDt(new Date(dt.getTime() + 7 * 86400000));
+                const payer = pickRand(payerNames);
+                const payerAcct = isStable
+                    ? maskAccount('0x' + [...Array(40)].map(() => Math.floor(Math.random()*16).toString(16)).join(''))
+                    : maskAccount(String(Math.floor(Math.random()*9e13 + 1e13)));
+                const status = pickRand(recStatuses);
+                const payId = hasPay ? 'PAY-' + dateTag + '-' + seqStr : '';
+                const settlId = hasPay ? 'STL-' + dateTag + '-' + seqStr : '';
+                const txId = hasPay ? 'TX-' + seqStr : '';
+                const movId = hasPay ? 'MOV-' + dateTag + '-' + seqStr : '';
+
+                rows.push([
+                    randId('INV-', dateTag, seqStr),   // InvoiceOrder ID
+                    invStatus,                          // Invoice Status
+                    fmtDt(dt),                          // Invoice Created Time
+                    dueDate,                            // Invoice Due Date
+                    invCcy,                             // Invoice Currency
+                    fmtDecimal(invAmt),                 // Invoice Amount
+                    fmtDecimal(totalPaid),              // Total Paid Amount
+                    fmtDecimal(outstanding),            // Outstanding Amount
+                    payStatus,                          // Payment Status
+                    lastPayTime,                        // Last Payment Time
+                    hasPay ? invCcy : '',               // Payment Currency
+                    hasPay ? fmtDecimal(totalPaid) : '',// Payment Amount
+                    hasPay ? (isStable ? 'Stablecoin' : 'Fiat') : '', // Asset Type
+                    hasPay ? fmtDecimal(fee) : '',      // Total Fee
+                    hasPay ? invCcy : '',               // Fee Currency
+                    hasPay ? fmtDecimal(net) : '',      // Net Amount
+                    payId,                              // Payment ID
+                    settlId,                            // Settlement ID
+                    txId,                               // Transaction ID
+                    movId,                              // Movement ID
+                    hasPay ? payer : '',                // Payer Name
+                    hasPay ? 'PYR-' + seqStr : '',     // Payer ID
+                    hasPay ? payerAcct : '',            // Payer Account / Address
+                    payCompTime,                        // Payment Completed Time
+                    status,                             // Status
+                    '',                                 // Notes
+                ]);
+            } else {
+                // Placeholder rows for other order types (Checkout, Payout, Conversion)
+                rows.push([randId(
+                    isCheckout ? 'CKO-' : isPayout ? 'PAY-' : 'CVT-',
+                    dateTag, seqStr
+                ), orderType, fmtDt(dt), ...Array(23).fill('')]);
+            }
+        });
+
+        // ── headers per order type ─────────────────────────────────────────────
+        const invoiceHeaders = [
+            'InvoiceOrder ID', 'Invoice Status', 'Invoice Created Time', 'Invoice Due Date',
+            'Invoice Currency', 'Invoice Amount', 'Total Paid Amount', 'Outstanding Amount',
+            'Payment Status', 'Last Payment Time', 'Payment Currency', 'Payment Amount',
+            'Asset Type', 'Total Fee', 'Fee Currency', 'Net Amount',
+            'Payment ID', 'Settlement ID', 'Transaction ID', 'Movement ID',
+            'Payer Name', 'Payer ID', 'Payer Account / Address', 'Payment Completed Time',
+            'Status', 'Notes'
+        ];
+        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(23).fill('').map((_, i) => `Field ${i+4}`)];
+        const headers = isInvoice ? invoiceHeaders : genericHeaders;
+
+        // ── period ─────────────────────────────────────────────────────────────
+        let periodStart, periodEnd;
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            periodStart = fmtDt(new Date(Date.UTC(y, m-1, d, 0, 0, 0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y, m-1, d, 23, 59, 59)));
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            periodStart = fmtDt(new Date(Date.UTC(y, m-1, 1, 0, 0, 0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y, m-1, lastDay, 23, 59, 59)));
+        }
+
+        function metaRow(label, value) { return csvEscape(label) + ',' + csvEscape(value); }
+        const metaLines = [
+            metaRow('Report Name',            'Order Reconciliation Report'),
+            metaRow('Merchant ID',            MERCHANT_ID),
+            metaRow('Merchant Name',          currentMerchantName),
+            metaRow('Order Type',             orderType),
+            metaRow('Statement Period Start', periodStart),
+            metaRow('Statement Period End',   periodEnd),
+            metaRow('Generated At',           fmtDt(new Date())),
+        ];
+
+        const csvLines = [
+            ...metaLines, '', '',
+            headers.map(csvEscape).join(','),
+            ...rows.map(r => r.map(csvEscape).join(',')),
+        ];
+
+        const typeSlug = orderType.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        const fileName = `order_reconciliation_${typeSlug}_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
+        const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 4000);
     };
 
     window.generateBalanceActivityCSV = function(reportType, dateValue) {
@@ -3367,11 +3552,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const cpAccount = maskAccount(tpl.counterpartyAccount());
             const status = Math.random() < 0.96 ? 'Completed' : 'Reversed';
             const movId = 'MOV-' + dateTag + '-' + seqStr;
+            const valueVault = ['USDT', 'USDC'].includes(tpl.currency) ? 'Stablecoin Vault' : 'Fiat Vault';
 
             rows.push([
                 fmtDt(dt),
                 MERCHANT_ID,
                 movId,
+                valueVault,
                 tpl.activityType,
                 tpl.direction,
                 tpl.currency,
@@ -3433,7 +3620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         const headers = [
-            'Value Date', 'Merchant ID', 'Movement ID', 'Activity Type', 'Direction',
+            'Value Date', 'Merchant ID', 'Movement ID', 'Value Vault', 'Activity Type', 'Direction',
             'Currency', 'Amount', 'Balance Before', 'Balance After', 'Status',
             'Related Business Type', 'Order ID', 'Settlement ID', 'Settlement Date',
             'Transaction ID', 'Rail Type', 'Tx Hash / Reference',
@@ -7589,11 +7776,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <!-- Order Type selector (reconciliation only) -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">Order Type</span>
-                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                        ${ORDER_TYPES.map(ot => {
-                                            const active = sel.orderType === ot;
-                                            return `<button onclick="window.setReportOrderType('${ot}')" style="padding: 6px 14px; border-radius: 8px; border: 1.5px solid ${active ? '#4F46E5' : '#E2E8F0'}; background: ${active ? '#EDE9FE' : '#FFFFFF'}; color: ${active ? '#4F46E5' : '#64748B'}; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;">${ot}</button>`;
-                                        }).join('')}
+                                    <div style="position: relative; flex: 1;">
+                                        <select onchange="window.setReportOrderType(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.orderType ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.orderType ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.orderType ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
+                                            <option value="" disabled ${!sel.orderType ? 'selected' : ''}>Select order type...</option>
+                                            ${ORDER_TYPES.map(ot => `<option value="${ot}" ${sel.orderType === ot ? 'selected' : ''} style="color: #0F172A;">${ot}</option>`).join('')}
+                                        </select>
+                                        <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.orderType ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
                                     </div>
                                 </div>` : ''}
                                 <!-- Date / Month picker -->
