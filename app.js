@@ -3306,6 +3306,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 txHashGen: () => 'REF' + Math.floor(Math.random() * 9000000 + 1000000),
             },
             {
+                activityType: 'Transfer', direction: 'Outflow',
+                currency: 'USDT', amountRange: [1000, 30000],
+                relatedBizType: 'Conversion', railType: 'On-chain',
+                orderPrefix: 'CVT-', settlementPrefix: '', txPrefix: 'TX-',
+                counterpartyName: () => 'Obita Platform',
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            },
+            {
+                activityType: 'Transfer', direction: 'Inflow',
+                currency: 'USDC', amountRange: [1000, 30000],
+                relatedBizType: 'Conversion', railType: 'On-chain',
+                orderPrefix: 'CVT-', settlementPrefix: '', txPrefix: 'TX-',
+                counterpartyName: () => 'Obita Platform',
+                counterpartyAccount: () => '0x' + [...Array(40)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+                txHashGen: () => '0x' + [...Array(64)].map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+            },
+            {
                 activityType: 'Adjustment', direction: 'Inflow',
                 currency: 'USDT', amountRange: [10, 500],
                 relatedBizType: null, railType: null,
@@ -3317,7 +3335,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         // ── generate rows ─────────────────────────────────────────────────────
-        let balance = 250000.00;
+        const OPENING_BALANCE = 250000.00;
+        let balance = OPENING_BALANCE;
         const rows = [];
         const seqBase = Date.now();
 
@@ -3365,7 +3384,46 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
         });
 
+        const CLOSING_BALANCE = balance;
+
+        // ── statement period ──────────────────────────────────────────────────
+        let periodStart, periodEnd;
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            periodStart = fmtDt(new Date(Date.UTC(y, m - 1, d, 0, 0, 0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y, m - 1, d, 23, 59, 59)));
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            periodStart = fmtDt(new Date(Date.UTC(y, m - 1, 1, 0, 0, 0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y, m - 1, lastDay, 23, 59, 59)));
+        }
+
         // ── build CSV ─────────────────────────────────────────────────────────
+        function csvEscape(v) {
+            const s = String(v);
+            return s.includes(',') || s.includes('"') || s.includes('\n')
+                ? '"' + s.replace(/"/g, '""') + '"'
+                : s;
+        }
+        function metaRow(label, value) {
+            return csvEscape(label) + ',' + csvEscape(value);
+        }
+
+        const generatedAt = fmtDt(new Date());
+        const MERCHANT_NAME = currentMerchantName;
+
+        const metaLines = [
+            metaRow('Report Name',          'Balance Activity Report'),
+            metaRow('Merchant ID',          MERCHANT_ID),
+            metaRow('Merchant Name',        MERCHANT_NAME),
+            metaRow('Statement Period Start', periodStart),
+            metaRow('Statement Period End',   periodEnd),
+            metaRow('Generated At',         generatedAt),
+            metaRow('Opening Balance',      fmtDecimal(OPENING_BALANCE)),
+            metaRow('Closing Balance',      fmtDecimal(CLOSING_BALANCE)),
+        ];
+
         const headers = [
             'Value Date', 'Merchant ID', 'Movement ID', 'Activity Type', 'Direction',
             'Currency', 'Amount', 'Balance Before', 'Balance After', 'Status',
@@ -3374,15 +3432,13 @@ document.addEventListener('DOMContentLoaded', () => {
             'Counterparty Name', 'Counterparty Account / Address', 'Notes'
         ];
 
-        function csvEscape(v) {
-            const s = String(v);
-            return s.includes(',') || s.includes('"') || s.includes('\n')
-                ? '"' + s.replace(/"/g, '""') + '"'
-                : s;
-        }
-
-        const csvLines = [headers.map(csvEscape).join(',')];
-        rows.forEach(r => csvLines.push(r.map(csvEscape).join(',')));
+        const csvLines = [
+            ...metaLines,
+            '',   // blank row 1
+            '',   // blank row 2
+            headers.map(csvEscape).join(','),
+            ...rows.map(r => r.map(csvEscape).join(',')),
+        ];
         const csvContent = csvLines.join('\r\n');
 
         // ── trigger download ──────────────────────────────────────────────────
