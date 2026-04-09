@@ -1508,6 +1508,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'FT-20260406-0182',
             type: 'Transfer',
             requester: 'Nancy User',
+            approver: 'Ethan Lee',
             subject: 'Global Trade Holdings',
             amount: '125000.00',
             currency: 'USD',
@@ -1524,6 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'SV-20260406-0094',
             type: 'Transfer',
             requester: 'Nancy User',
+            approver: 'Marcus Tan',
             subject: 'Wintermute Treasury',
             amount: '85000.00',
             currency: 'USDT',
@@ -1540,6 +1542,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'CV-20260405-0067',
             type: 'Convert',
             requester: 'Ethan Lee',
+            approver: 'Nancy User',
             subject: 'USD to USDC conversion',
             amount: '300000.00',
             currency: 'USD',
@@ -1556,6 +1559,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'BA-20260405-0018',
             type: 'Bank Account',
             requester: 'Emily Chen',
+            approver: 'Nancy User',
             subject: 'New DBS Treasury Settlement Account',
             amount: '0.00',
             currency: 'USD',
@@ -1572,6 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
             orderId: 'CO-20260404-0146',
             type: 'Cancel Order',
             requester: 'Marcus Tan',
+            approver: 'Nancy User',
             subject: 'Invoice INV-240406-8821',
             amount: '4200.00',
             currency: 'EUR',
@@ -2280,42 +2285,83 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="rejected" ${currentStatus === 'rejected' ? 'selected' : ''}>Failed</option>
                             </select>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
-                        <div>Request</div>
-                        <div>Scope</div>
-                        <div>Amount</div>
-                        <div>Status</div>
-                        <div style="text-align: right;">Actions</div>
-                    </div>
+                        <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 0.75fr 0.75fr 0.85fr 0.85fr; gap: 16px; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>Request</div>
+                            <div>Scope</div>
+                            <div>Amount</div>
+                            <div>Status</div>
+                            <div>审批人</div>
+                            <div style="text-align: right;">Actions</div>
+                        </div>
                     </div>
                     <div>
-                        ${requests.length ? requests.map(request => {
-                            const statusPill = getApprovalRequestStatusPill(request.status);
-                            return `
-                                <div style="border-bottom: 1px solid var(--clr-border);">
-                                    <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.45fr 1fr 0.9fr 0.9fr 1fr; gap: 16px; align-items: center; cursor: pointer;">
-                                        <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${request.title}</div>
-                                            <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${request.id} · ${request.orderId} · ${request.submittedAt}</div>
-                                        </div>
-                                        <div style="font-size: 13px; color: #334155; line-height: 1.5;">${request.scope}</div>
-                                        <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${request.amount} ${request.currency}</div>
-                                        <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
-                                        <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
-                                            ${request.status === 'pending'
-                                                ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
-                                                : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
-                                            }
-                                        </div>
-                                    </div>
-                                    ${renderApprovalDecisionPanel(request.id)}
+                        ${(() => {
+                            if (!requests.length) return `
+                                <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                                    ${approvalListTab === 'my' ? 'No requests submitted by you or awaiting your approval.' : 'No approval requests matched your current filters.'}
                                 </div>
                             `;
-                        }).join('') : `
-                            <div style="padding: 48px 24px; text-align: center; color: #64748B; font-size: 14px;">
-                                ${approvalListTab === 'my' ? 'No requests submitted by you or awaiting your approval.' : 'No approval requests matched your current filters.'}
-                            </div>
-                        `}
+
+                            const renderRow = (request, accentColor = null) => {
+                                const statusPill = getApprovalRequestStatusPill(request.status);
+                                const rowBorder = accentColor ? `border-left: 3px solid ${accentColor};` : 'border-left: 3px solid transparent;';
+                                return `
+                                    <div style="border-bottom: 1px solid var(--clr-border);">
+                                        <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.3fr 0.9fr 0.75fr 0.75fr 0.85fr 0.85fr; gap: 16px; align-items: center; cursor: pointer; ${rowBorder}">
+                                            <div>
+                                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${request.title}</div>
+                                                <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${request.id} · ${request.orderId} · ${request.submittedAt}</div>
+                                            </div>
+                                            <div style="font-size: 13px; color: #334155; line-height: 1.5;">${request.scope}</div>
+                                            <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${request.amount} ${request.currency}</div>
+                                            <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
+                                            <div style="font-size: 13px; color: #334155;">${request.approver || '—'}</div>
+                                            <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
+                                                ${request.status === 'pending'
+                                                    ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
+                                                    : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
+                                                }
+                                            </div>
+                                        </div>
+                                        ${renderApprovalDecisionPanel(request.id)}
+                                    </div>
+                                `;
+                            };
+
+                            if (approvalListTab !== 'my') {
+                                return requests.map(r => renderRow(r)).join('');
+                            }
+
+                            const currentUserName = getCurrentUser()?.name || '';
+                            const mySubmissions = requests.filter(r => r.requester === currentUserName);
+                            const needsMyApproval = requests.filter(r => r.requester !== currentUserName && r.status === 'pending');
+
+                            let html = '';
+
+                            if (mySubmissions.length) {
+                                html += `
+                                    <div style="padding: 9px 24px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="send" style="width: 13px; height: 13px; color: #2563EB; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">My Submissions</span>
+                                        <span style="font-size: 11px; font-weight: 700; background: #DBEAFE; color: #1D4ED8; padding: 1px 7px; border-radius: 999px;">${mySubmissions.length}</span>
+                                    </div>
+                                `;
+                                html += mySubmissions.map(r => renderRow(r, '#2563EB')).join('');
+                            }
+
+                            if (needsMyApproval.length) {
+                                html += `
+                                    <div style="padding: 9px 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; border-top: ${mySubmissions.length ? '2px solid #E2E8F0' : 'none'}; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="bell-ring" style="width: 13px; height: 13px; color: #D97706; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em;">Needs My Approval</span>
+                                        <span style="font-size: 11px; font-weight: 700; background: #FEF3C7; color: #92400E; padding: 1px 7px; border-radius: 999px;">${needsMyApproval.length}</span>
+                                    </div>
+                                `;
+                                html += needsMyApproval.map(r => renderRow(r, '#D97706')).join('');
+                            }
+
+                            return html;
+                        })()}
                     </div>
                 </div>
             </div>
