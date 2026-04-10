@@ -3224,6 +3224,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.generateSettlementReportCSV(type, value);
             } else if (subType === 'Fee Report') {
                 window.generateFeeReportCSV(type, value);
+            } else if (subType === 'Fee Summary Report') {
+                window.generateFeeSummaryReportCSV(type, value);
             } else {
                 window.openReportCenterReport(action);
             }
@@ -4299,6 +4301,139 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
 
         const fileName = `fee_report_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
+        const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 4000);
+    };
+
+    window.generateFeeSummaryReportCSV = function(reportType, dateValue) {
+        const MERCHANT_ID = 'MCH-20240801-0012';
+
+        function fmtDt(d) { return d.toISOString().replace('T',' ').slice(0,19)+' UTC'; }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function randBetween(a, b) { return Math.random()*(b-a)+a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+        function csvEscape(v) { const s=String(v); return s.includes(',')||s.includes('"')||s.includes('\n') ? '"'+s.replace(/"/g,'""')+'"' : s; }
+
+        // ── period bounds ────────────────────────────────────────────────────────
+        let periodStartDt, periodEndDt;
+        if (reportType === 'daily') {
+            const [y,m,d] = dateValue.split('-').map(Number);
+            periodStartDt = new Date(Date.UTC(y, m-1, d, 0, 0, 0));
+            periodEndDt   = new Date(Date.UTC(y, m-1, d, 23, 59, 59));
+        } else {
+            const [y,m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            periodStartDt = new Date(Date.UTC(y, m-1, 1, 0, 0, 0));
+            periodEndDt   = new Date(Date.UTC(y, m-1, lastDay, 23, 59, 59));
+        }
+        const periodStart = fmtDt(periodStartDt);
+        const periodEnd   = fmtDt(periodEndDt);
+
+        // ── summary combination pool ─────────────────────────────────────────────
+        // Each entry: { settlCcy, feeCcy, feeType, unitChargeRange, unitRefundRange }
+        const summaryPool = [
+            { settlCcy:'USDT', feeCcy:'USDT', feeType:'Processing',   chargeUnit:[5,50],   refundUnit:[2,20]  },
+            { settlCcy:'USDC', feeCcy:'USDC', feeType:'Processing',   chargeUnit:[5,50],   refundUnit:[2,20]  },
+            { settlCcy:'USD',  feeCcy:'USD',  feeType:'Processing',   chargeUnit:[5,50],   refundUnit:[2,20]  },
+            { settlCcy:'HKD',  feeCcy:'HKD',  feeType:'Processing',   chargeUnit:[40,400], refundUnit:[20,150]},
+            { settlCcy:'USDT', feeCcy:'USDT', feeType:'Network Fee',  chargeUnit:[1,15],   refundUnit:[1,8]   },
+            { settlCcy:'USDC', feeCcy:'USDC', feeType:'Network Fee',  chargeUnit:[1,15],   refundUnit:[1,8]   },
+            { settlCcy:'USD',  feeCcy:'USD',  feeType:'Conversion',   chargeUnit:[10,200], refundUnit:[5,80]  },
+            { settlCcy:'HKD',  feeCcy:'HKD',  feeType:'Conversion',   chargeUnit:[80,1500],refundUnit:[40,600]},
+            { settlCcy:'USDT', feeCcy:'USDT', feeType:'Conversion',   chargeUnit:[10,200], refundUnit:[5,80]  },
+            { settlCcy:'USD',  feeCcy:'USD',  feeType:'Subscription', chargeUnit:[99,299], refundUnit:[99,299]},
+            { settlCcy:'HKD',  feeCcy:'HKD',  feeType:'Subscription', chargeUnit:[780,2340],refundUnit:[780,2340]},
+            { settlCcy:'USD',  feeCcy:'USD',  feeType:'Maintenance',  chargeUnit:[20,80],  refundUnit:[10,40] },
+            { settlCcy:'USDT', feeCcy:'USDT', feeType:'Adjustment',   chargeUnit:[5,100],  refundUnit:[5,100] },
+            { settlCcy:'USD',  feeCcy:'USD',  feeType:'Adjustment',   chargeUnit:[5,100],  refundUnit:[5,100] },
+            { settlCcy:'HKD',  feeCcy:'HKD',  feeType:'Adjustment',   chargeUnit:[40,800], refundUnit:[40,800]},
+        ];
+
+        // daily: 6-10 rows; monthly: all 15 rows (full breakdown)
+        const numRows = reportType === 'daily'
+            ? Math.floor(randBetween(6, 11))
+            : summaryPool.length;
+
+        // shuffle pool and take numRows
+        const shuffled = [...summaryPool].sort(() => Math.random() - 0.5).slice(0, numRows);
+        // for monthly sort to a consistent order by feeType then settlCcy
+        if (reportType === 'monthly') shuffled.sort((a,b) => a.feeType.localeCompare(b.feeType) || a.settlCcy.localeCompare(b.settlCcy));
+
+        const rows = shuffled.map(combo => {
+            // scale counts to period length
+            const isMonthly    = reportType === 'monthly';
+            const maxCharge    = isMonthly ? Math.floor(randBetween(80, 500)) : Math.floor(randBetween(5, 50));
+            const maxRefund    = isMonthly ? Math.floor(randBetween(0, 30))   : Math.floor(randBetween(0, 5));
+            const chargeCount  = combo.feeType === 'Subscription' || combo.feeType === 'Maintenance'
+                ? (isMonthly ? 1 : 0)  // flat monthly fees happen once
+                : maxCharge;
+            const refundCount  = combo.feeType === 'Subscription' || combo.feeType === 'Maintenance'
+                ? (maxRefund > 0 && isMonthly ? 1 : 0)
+                : maxRefund;
+            const feeItemCount = chargeCount + refundCount;
+
+            // aggregate amounts = count × random unit
+            const chargeAmt = chargeCount > 0
+                ? parseFloat(fmtDecimal(chargeCount * randBetween(...combo.chargeUnit)))
+                : 0;
+            const refundAmt = refundCount > 0
+                ? parseFloat(fmtDecimal(refundCount * randBetween(...combo.refundUnit)))
+                : 0;
+            const netFeeAmt = parseFloat(fmtDecimal(chargeAmt - refundAmt));
+
+            return [
+                periodStart,               // 1  Summary Period Start
+                periodEnd,                 // 2  Summary Period End
+                MERCHANT_ID,               // 3  Merchant ID
+                combo.settlCcy,            // 4  Settlement Currency
+                combo.feeCcy,              // 5  Fee Currency
+                combo.feeType,             // 6  Fee Type
+                feeItemCount,              // 7  Fee Item Count
+                fmtDecimal(chargeAmt),     // 8  Charge Amount
+                fmtDecimal(refundAmt),     // 9  Refund Amount
+                fmtDecimal(netFeeAmt),     // 10 Net Fee Amount
+                chargeCount,               // 11 Charge Count
+                refundCount,               // 12 Refund Count
+                '',                        // 13 Notes
+            ];
+        });
+
+        // ── headers ──────────────────────────────────────────────────────────────
+        const headers = [
+            'Summary Period Start', 'Summary Period End', 'Merchant ID',
+            'Settlement Currency', 'Fee Currency', 'Fee Type',
+            'Fee Item Count', 'Charge Amount', 'Refund Amount', 'Net Fee Amount',
+            'Charge Count', 'Refund Count', 'Notes'
+        ];
+
+        // ── metadata block ───────────────────────────────────────────────────────
+        function metaRow(label, value) { return csvEscape(label)+','+csvEscape(value); }
+        const metaLines = [
+            metaRow('Report Name',            'Fee Summary Report'),
+            metaRow('Merchant ID',            MERCHANT_ID),
+            metaRow('Merchant Name',          currentMerchantName),
+            metaRow('Statement Period Start', periodStart),
+            metaRow('Statement Period End',   periodEnd),
+            metaRow('Generated At',           fmtDt(new Date())),
+        ];
+
+        const csvLines = [
+            ...metaLines, '', '',
+            headers.map(csvEscape).join(','),
+            ...rows.map(r => r.map(csvEscape).join(',')),
+        ];
+
+        const fileName = `fee_summary_report_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
         const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
         const url  = URL.createObjectURL(blob);
         const a    = document.createElement('a');
@@ -8716,7 +8851,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <div style="position: relative; flex: 1;">
                                         <select onchange="window.setSettlementReportType(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.reportSubType ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.reportSubType ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.reportSubType ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
                                             <option value="" disabled ${!sel.reportSubType ? 'selected' : ''}>Select report type...</option>
-                                            ${['Settlement Report','Fee Report'].map(rt => `<option value="${rt}" ${sel.reportSubType === rt ? 'selected' : ''} style="color: #0F172A;">${rt}</option>`).join('')}
+                                            ${['Settlement Report','Fee Report','Fee Summary Report'].map(rt => `<option value="${rt}" ${sel.reportSubType === rt ? 'selected' : ''} style="color: #0F172A;">${rt}</option>`).join('')}
                                         </select>
                                         <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.reportSubType ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
                                     </div>
