@@ -3222,6 +3222,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const subType = reportCardSelections.settlement.reportSubType;
             if (subType === 'Settlement Report') {
                 window.generateSettlementReportCSV(type, value);
+            } else if (subType === 'Fee Report') {
+                window.generateFeeReportCSV(type, value);
             } else {
                 window.openReportCenterReport(action);
             }
@@ -4124,6 +4126,182 @@ document.addEventListener('DOMContentLoaded', () => {
         const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 4000);
+    };
+
+    window.generateFeeReportCSV = function(reportType, dateValue) {
+        const MERCHANT_ID = 'MCH-20240801-0012';
+
+        function fmtDt(d) { return d.toISOString().replace('T',' ').slice(0,19)+' UTC'; }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function randBetween(a, b) { return Math.random()*(b-a)+a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+        function pad(n) { return String(n).padStart(2,'0'); }
+        function csvEscape(v) { const s=String(v); return s.includes(',')||s.includes('"')||s.includes('\n') ? '"'+s.replace(/"/g,'""')+'"' : s; }
+
+        // ── date range ──────────────────────────────────────────────────────────
+        let dates = [];
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            for (let h = 0; h < 24; h += 3) {
+                dates.push(new Date(Date.UTC(y, m-1, d, h, Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+            }
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const n = Math.floor(randBetween(1, 4));
+                for (let t = 0; t < n; t++) {
+                    dates.push(new Date(Date.UTC(y, m-1, day, Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                }
+            }
+            dates.sort((a,b)=>a-b);
+        }
+
+        // ── fee templates (weighted: Processing Fee appears 3×) ─────────────────
+        const relBizPfx = { 'Collection-Checkout':'CKO-', 'Collection-Invoice':'INV-', 'Payout':'PO-', 'Conversion':'CVT-', 'Top-Up':'TOP-', 'Transfer':'TRF-' };
+        const tpls = [
+            // Processing Fee — most common, from collection / payout settlements
+            { feeType:'Processing Fee',  source:'Settlement', relBizPool:['Collection-Checkout','Collection-Invoice','Payout'], ccys:['USDT','USDC','USD','HKD'], amtRange:[1,500],   basis:'% fee',    rate:0.005, minFee:0.50,  maxFee:100.00, hasConvId:false },
+            { feeType:'Processing Fee',  source:'Settlement', relBizPool:['Collection-Checkout','Collection-Invoice','Payout'], ccys:['USDT','USDC','USD','HKD'], amtRange:[1,500],   basis:'% fee',    rate:0.005, minFee:0.50,  maxFee:100.00, hasConvId:false },
+            { feeType:'Processing Fee',  source:'Settlement', relBizPool:['Collection-Checkout','Collection-Invoice','Payout'], ccys:['USDT','USDC','USD','HKD'], amtRange:[1,500],   basis:'% fee',    rate:0.005, minFee:0.50,  maxFee:100.00, hasConvId:false },
+            // Network Fee — on-chain gas, flat
+            { feeType:'Network Fee',     source:'Vault',      relBizPool:[],                                                   ccys:['USDT','USDC'],             amtRange:[0.5,30],  basis:'flat fee', rate:null,  minFee:null,  maxFee:null,   hasConvId:false },
+            // Conversion — spread/% fee, linked to a CVT order
+            { feeType:'Conversion',      source:'Conversion', relBizPool:['Conversion'],                                       ccys:['USD','HKD','USDT','USDC'], amtRange:[2,300],   basis:'spread',   rate:0.002, minFee:null,  maxFee:null,   hasConvId:true  },
+            { feeType:'Conversion',      source:'Conversion', relBizPool:['Conversion'],                                       ccys:['USD','HKD','USDT','USDC'], amtRange:[2,300],   basis:'% fee',    rate:0.002, minFee:null,  maxFee:null,   hasConvId:true  },
+            // Subscription — flat monthly platform fee
+            { feeType:'Subscription',    source:'Manual',     relBizPool:[],                                                   ccys:['USD','HKD'],               amtRange:[50,500],  basis:'flat fee', rate:null,  minFee:null,  maxFee:null,   hasConvId:false },
+            // Maintenance
+            { feeType:'Maintenance',     source:'Manual',     relBizPool:[],                                                   ccys:['USD','HKD'],               amtRange:[10,100],  basis:'flat fee', rate:null,  minFee:null,  maxFee:null,   hasConvId:false },
+            // Adjustment — can be Charge or Refund
+            { feeType:'Adjustment',      source:'Manual',     relBizPool:[],                                                   ccys:['USDT','USD','HKD'],        amtRange:[1,200],   basis:null,       rate:null,  minFee:null,  maxFee:null,   hasConvId:false },
+        ];
+
+        const statusPool   = ['Charged','Charged','Charged','Charged','Pending','Refunded','Reversed'];
+        const reconPool    = ['Matched','Matched','Matched','Unmatched','Pending'];
+        const seqBase      = Date.now();
+        const rows         = [];
+
+        dates.forEach((dt, i) => {
+            const tpl     = pickRand(tpls);
+            const seqStr  = String(seqBase + i).slice(-8);
+            const dateTag = `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}`;
+
+            // ── status & direction ─────────────────────────────────────────────
+            const status    = pickRand(statusPool);
+            const isCharged = status === 'Charged' || status === 'Refunded' || status === 'Reversed';
+            // Refunded/Reversed rows or Adjustment type can be Refund direction
+            const direction = (status === 'Refunded' || status === 'Reversed' || (tpl.feeType === 'Adjustment' && Math.random() < 0.4))
+                ? 'Refund' : 'Charge';
+
+            // ── amounts ────────────────────────────────────────────────────────
+            const feeCcy = pickRand(tpl.ccys);
+            const feeAmt = parseFloat(randBetween(...tpl.amtRange).toFixed(2));
+
+            // ── timing ────────────────────────────────────────────────────────
+            const chargedAt = isCharged
+                ? new Date(dt.getTime() + Math.floor(randBetween(30, 180)) * 60000)
+                : null;
+
+            // ── IDs ────────────────────────────────────────────────────────────
+            const feeId    = 'FEE-' + dateTag + '-' + seqStr.slice(0,6);
+            const settlId  = isCharged && tpl.source !== 'Manual' && tpl.source !== 'Vault'
+                ? 'STL-' + dateTag + '-' + seqStr.slice(0,6) : '';
+            const txId     = isCharged ? 'TX-'  + seqStr.slice(0,6) : '';
+            const movId    = isCharged ? 'MOV-' + dateTag + '-' + seqStr.slice(0,6) : '';
+            const convId   = tpl.hasConvId ? 'CVT-' + dateTag + '-' + seqStr.slice(0,6) : '';
+
+            // ── related business ───────────────────────────────────────────────
+            const relBizType  = tpl.relBizPool.length ? pickRand(tpl.relBizPool) : '';
+            const relOrderPfx = relBizType ? (relBizPfx[relBizType] || '') : '';
+            const relOrderId  = relOrderPfx ? relOrderPfx + dateTag + '-' + seqStr.slice(0,6) : '';
+
+            // ── charge basis fields ────────────────────────────────────────────
+            const chargeRate = tpl.rate !== null ? tpl.rate.toFixed(4) : '';
+            const minFee     = tpl.minFee !== null ? fmtDecimal(tpl.minFee) : '';
+            const maxFee     = tpl.maxFee !== null ? fmtDecimal(tpl.maxFee) : '';
+
+            const reconStatus = isCharged ? pickRand(reconPool) : 'Pending';
+
+            rows.push([
+                feeId,                                                 // 1  Fee ID
+                MERCHANT_ID,                                           // 2  Merchant ID
+                tpl.feeType,                                           // 3  Fee Type
+                direction,                                             // 4  Fee Direction
+                feeCcy,                                                // 5  Fee Currency
+                fmtDecimal(feeAmt),                                    // 6  Fee Amount
+                status,                                                // 7  Fee Status
+                fmtDt(dt),                                             // 8  Fee Created Time
+                chargedAt ? fmtDt(chargedAt) : '',                     // 9  Fee Charged Time
+                tpl.source,                                            // 10 Fee Source
+                relBizType,                                            // 11 Related Business Type
+                relOrderId,                                            // 12 Related Order ID
+                settlId,                                               // 13 Settlement ID
+                txId,                                                  // 14 Transaction ID
+                movId,                                                 // 15 Movement ID
+                convId,                                                // 16 Conversion ID
+                tpl.basis || '',                                       // 17 Charge Basis
+                chargeRate,                                            // 18 Charge Rate
+                minFee,                                                // 19 Minimum Fee
+                maxFee,                                                // 20 Maximum Fee
+                reconStatus,                                           // 21 Reconciliation Status
+                '',                                                    // 22 Notes
+            ]);
+        });
+
+        // ── headers ─────────────────────────────────────────────────────────────
+        const headers = [
+            'Fee ID', 'Merchant ID', 'Fee Type', 'Fee Direction',
+            'Fee Currency', 'Fee Amount', 'Fee Status',
+            'Fee Created Time', 'Fee Charged Time', 'Fee Source',
+            'Related Business Type', 'Related Order ID',
+            'Settlement ID', 'Transaction ID', 'Movement ID', 'Conversion ID',
+            'Charge Basis', 'Charge Rate', 'Minimum Fee', 'Maximum Fee',
+            'Reconciliation Status', 'Notes'
+        ];
+
+        // ── period / metadata ────────────────────────────────────────────────────
+        let periodStart, periodEnd;
+        if (reportType === 'daily') {
+            const [y,m,d] = dateValue.split('-').map(Number);
+            periodStart = fmtDt(new Date(Date.UTC(y,m-1,d,0,0,0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y,m-1,d,23,59,59)));
+        } else {
+            const [y,m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y,m,0)).getUTCDate();
+            periodStart = fmtDt(new Date(Date.UTC(y,m-1,1,0,0,0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y,m-1,lastDay,23,59,59)));
+        }
+
+        function metaRow(label, value) { return csvEscape(label)+','+csvEscape(value); }
+        const metaLines = [
+            metaRow('Report Name',            'Fee Report'),
+            metaRow('Merchant ID',            MERCHANT_ID),
+            metaRow('Merchant Name',          currentMerchantName),
+            metaRow('Statement Period Start', periodStart),
+            metaRow('Statement Period End',   periodEnd),
+            metaRow('Generated At',           fmtDt(new Date())),
+        ];
+
+        const csvLines = [
+            ...metaLines, '', '',
+            headers.map(csvEscape).join(','),
+            ...rows.map(r => r.map(csvEscape).join(',')),
+        ];
+
+        const fileName = `fee_report_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
+        const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
