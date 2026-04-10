@@ -3625,6 +3625,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const batchCcy      = pickRand(['USDT', 'USDC', 'USD', 'HKD']);
                 const isStableBatch = ['USDT', 'USDC'].includes(batchCcy);
                 const sourceVault   = isStableBatch ? 'Stablecoin Vault' : 'Fiat Vault';
+                // stablecoin batches settle in USD; conversion rate reflects the peg
+                const batchSettlCcy  = isStableBatch ? 'USD' : batchCcy;
+                const batchSettlRate = isStableBatch
+                    ? parseFloat((1 + (Math.random() - 0.5) * 0.002).toFixed(6))  // ~1.000 ± 0.001
+                    : 1.000000;
                 const batchId       = 'BATCH-' + dateTag + '-' + seqStr;
                 const numPayouts    = Math.floor(randBetween(1, 5)); // 1–4 per batch
 
@@ -3721,20 +3726,104 @@ document.addEventListener('DOMContentLoaded', () => {
                         maskAccount(po.destAcct),                              // 16 Destination Account / Address
                         po.txHash,                                             // 17 Tx Hash / Reference
                         po.settlStatus,                                        // 18 Settlement Status
-                        batchCcy,                                              // 19 Settlement Currency
-                        po.settlId,                                            // 20 Settlement ID
-                        po.settlDate,                                          // 21 Settlement Date
-                        po.txId,                                               // 22 Transaction ID
-                        po.movId,                                              // 23 Movement ID
-                        po.failureReason,                                      // 24 Failure Reason
-                        '',                                                    // 25 Notes
+                        batchSettlCcy,                                         // 19 Settlement Currency
+                        po.poStatus === 'Completed' ? batchSettlRate.toFixed(6) : '', // 20 Settlement Conversion Rate
+                        po.settlId,                                            // 21 Settlement ID
+                        po.settlDate,                                          // 22 Settlement Date
+                        po.txId,                                               // 23 Transaction ID
+                        po.movId,                                              // 24 Movement ID
+                        po.failureReason,                                      // 25 Failure Reason
+                        '',                                                    // 26 Notes
                     ]);
                 });
 
             } else {
-                // Placeholder rows for Conversion
-                rows.push([randId('CVT-', dateTag, seqStr),
-                    orderType, fmtDt(dt), ...Array(22).fill('')]);
+                // ── Conversion Order Report ──────────────────────────────────────
+                const cvtTpls = [
+                    { type: 'Fiat → Fiat',             src: 'USD',  tgt: 'HKD',  rate: () => 7.78 + Math.random()*0.04,  feeRate: 0.002 },
+                    { type: 'Fiat → Fiat',             src: 'HKD',  tgt: 'USD',  rate: () => 0.128 + Math.random()*0.001, feeRate: 0.002 },
+                    { type: 'Fiat → Fiat',             src: 'EUR',  tgt: 'USD',  rate: () => 1.08 + Math.random()*0.04,  feeRate: 0.002 },
+                    { type: 'Fiat → Stablecoin',       src: 'USD',  tgt: 'USDT', rate: () => 0.999 + Math.random()*0.002, feeRate: 0.001 },
+                    { type: 'Fiat → Stablecoin',       src: 'HKD',  tgt: 'USDT', rate: () => 0.128 + Math.random()*0.001, feeRate: 0.001 },
+                    { type: 'Fiat → Stablecoin',       src: 'USD',  tgt: 'USDC', rate: () => 0.999 + Math.random()*0.002, feeRate: 0.001 },
+                    { type: 'Stablecoin → Fiat',       src: 'USDT', tgt: 'USD',  rate: () => 0.999 + Math.random()*0.002, feeRate: 0.001 },
+                    { type: 'Stablecoin → Fiat',       src: 'USDC', tgt: 'USD',  rate: () => 0.999 + Math.random()*0.002, feeRate: 0.001 },
+                    { type: 'Stablecoin → Fiat',       src: 'USDT', tgt: 'HKD',  rate: () => 7.77 + Math.random()*0.05,  feeRate: 0.001 },
+                    { type: 'Stablecoin → Stablecoin', src: 'USDT', tgt: 'USDC', rate: () => 0.998 + Math.random()*0.004, feeRate: 0.0005 },
+                    { type: 'Stablecoin → Stablecoin', src: 'USDC', tgt: 'USDT', rate: () => 0.998 + Math.random()*0.004, feeRate: 0.0005 },
+                ];
+                const cvtSrcPool = [
+                    { src: 'Standalone',  parentType: '',                    idPrefix: ''     },
+                    { src: 'Standalone',  parentType: '',                    idPrefix: ''     },
+                    { src: 'Collection',  parentType: 'Collection-Invoice',  idPrefix: 'INV-' },
+                    { src: 'Collection',  parentType: 'Collection-Checkout', idPrefix: 'CKO-' },
+                    { src: 'Payout',      parentType: 'Payout',              idPrefix: 'PO-'  },
+                    { src: 'Settlement',  parentType: 'Settlement',          idPrefix: 'STL-' },
+                ];
+                const cvtStatusPool = ['Executed','Executed','Executed','Executed','Failed','Cancelled','Pending'];
+                const cvtFailReasons = ['Quote expired','Insufficient source balance','Rate limit exceeded','Compliance check failed','System error'];
+                const vaultName = ccy => ['USDT','USDC'].includes(ccy) ? `Stablecoin Vault (${ccy})` : `Fiat Vault (${ccy})`;
+
+                const tpl       = pickRand(cvtTpls);
+                const cvtSrc    = pickRand(cvtSrcPool);
+                const status    = pickRand(cvtStatusPool);
+                const isOnChain = ['USDT','USDC'].includes(tpl.src) || ['USDT','USDC'].includes(tpl.tgt);
+                const hasQuote  = Math.random() < 0.7;  // 70% RFQ mode
+                const rate      = parseFloat(tpl.rate().toFixed(6));
+                const srcAmt    = parseFloat(fmtDecimal(randBetween(500, 100000)));
+                const tgtAmtGross = parseFloat(fmtDecimal(srcAmt * rate));
+                const fee       = status === 'Executed' ? parseFloat(fmtDecimal(tgtAmtGross * tpl.feeRate)) : 0;
+                const netAmt    = status === 'Executed' ? parseFloat(fmtDecimal(tgtAmtGross - fee)) : 0;
+                const executedAt = status === 'Executed'
+                    ? new Date(dt.getTime() + Math.floor(randBetween(30, 300)) * 1000)
+                    : null;
+                const cvtId     = 'CVT-' + dateTag + '-' + seqStr;
+                const quoteId   = hasQuote ? 'QT-' + dateTag + '-' + seqStr : '';
+                const quoteExpiry = hasQuote
+                    ? fmtDt(new Date(dt.getTime() + Math.floor(randBetween(5, 15)) * 60000))
+                    : '';
+                const settlId   = status === 'Executed' ? 'STL-' + dateTag + '-' + seqStr : '';
+                const settlDate = (status === 'Executed' && executedAt)
+                    ? fmtDt(new Date(executedAt.getTime() + Math.floor(randBetween(10, 60)) * 60000))
+                    : '';
+                const txId      = status === 'Executed' ? 'TX-'  + seqStr : '';
+                const movId     = status === 'Executed' ? 'MOV-' + dateTag + '-' + seqStr : '';
+                const txHash    = (status === 'Executed' && isOnChain)
+                    ? '0x' + [...Array(64)].map(() => Math.floor(Math.random()*16).toString(16)).join('')
+                    : '';
+                const failReason = status === 'Failed' ? pickRand(cvtFailReasons) : '';
+                const parentId   = cvtSrc.idPrefix ? cvtSrc.idPrefix + dateTag + '-' + seqStr : '';
+
+                rows.push([
+                    cvtId,                                                     // 1  Conversion Order ID
+                    MERCHANT_ID,                                               // 2  Merchant ID
+                    cvtSrc.src,                                                // 3  Conversion Source
+                    cvtSrc.parentType,                                         // 4  Parent Order Type
+                    parentId,                                                  // 5  Parent Order ID
+                    tpl.type,                                                  // 6  Conversion Type
+                    quoteId,                                                   // 7  Quote ID
+                    quoteExpiry,                                               // 8  Quote Expiry Time
+                    status,                                                    // 9  Execution Status
+                    fmtDt(dt),                                                 // 10 Created Time
+                    executedAt ? fmtDt(executedAt) : '',                       // 11 Executed Time
+                    tpl.src,                                                   // 12 Source Currency
+                    fmtDecimal(srcAmt),                                        // 13 Source Amount
+                    tpl.tgt,                                                   // 14 Target Currency
+                    fmtDecimal(tgtAmtGross),                                   // 15 Target Amount (Gross)
+                    rate.toFixed(6),                                           // 16 Exchange Rate
+                    status === 'Executed' ? fmtDecimal(fee) : '',              // 17 Conversion Fee
+                    status === 'Executed' ? tpl.tgt : '',                      // 18 Fee Currency
+                    status === 'Executed' ? fmtDecimal(netAmt) : '',           // 19 Net Amount
+                    vaultName(tpl.src),                                        // 20 From Account
+                    vaultName(tpl.tgt),                                        // 21 To Account
+                    settlId,                                                   // 22 Settlement ID
+                    settlDate,                                                 // 23 Settlement Date
+                    txId,                                                      // 24 Transaction ID
+                    movId,                                                     // 25 Movement ID
+                    txHash,                                                    // 26 Tx Hash / Reference
+                    failReason,                                                // 27 Failure Reason
+                    '',                                                        // 28 Notes
+                ]);
             }
         });
 
@@ -3765,11 +3854,27 @@ document.addEventListener('DOMContentLoaded', () => {
             'Payee Name', 'Payee Type', 'Destination Asset Type', 'Destination Currency',
             'Payout Amount', 'Total Fee', 'Fee Currency',
             'Destination Account / Address', 'Tx Hash / Reference',
-            'Settlement Status', 'Settlement Currency', 'Settlement ID', 'Settlement Date',
+            'Settlement Status', 'Settlement Currency', 'Settlement Conversion Rate',
+            'Settlement ID', 'Settlement Date',
             'Transaction ID', 'Movement ID', 'Failure Reason', 'Notes'
         ];
-        const genericHeaders = ['Order ID', 'Order Type', 'Created Time', ...Array(22).fill('').map((_, j) => `Field ${j+4}`)];
-        const headers = isInvoice ? invoiceHeaders : isCheckout ? checkoutHeaders : isPayout ? payoutHeaders : genericHeaders;
+        const conversionHeaders = [
+            'Conversion Order ID', 'Merchant ID', 'Conversion Source',
+            'Parent Order Type', 'Parent Order ID', 'Conversion Type',
+            'Quote ID', 'Quote Expiry Time', 'Execution Status',
+            'Created Time', 'Executed Time',
+            'Source Currency', 'Source Amount', 'Target Currency', 'Target Amount (Gross)',
+            'Exchange Rate', 'Conversion Fee', 'Fee Currency', 'Net Amount',
+            'From Account', 'To Account',
+            'Settlement ID', 'Settlement Date', 'Transaction ID', 'Movement ID',
+            'Tx Hash / Reference', 'Failure Reason', 'Notes'
+        ];
+        const genericHeaders = ['Order ID', 'Order Type', 'Created Time'];
+        const headers = isInvoice    ? invoiceHeaders
+                      : isCheckout   ? checkoutHeaders
+                      : isPayout     ? payoutHeaders
+                      : isConversion ? conversionHeaders
+                      : genericHeaders;
 
         // ── period ─────────────────────────────────────────────────────────────
         let periodStart, periodEnd;
