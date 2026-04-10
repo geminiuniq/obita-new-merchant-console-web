@@ -1670,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Report Center card selections: { [action]: { type: 'daily'|'monthly', value: '' } }
     let reportCardSelections = {
         balance:        { type: 'daily', value: '' },
-        statement:      { type: 'daily', value: '' },
+        statement:      { type: 'daily', value: '', currency: '' },
         reconciliation: { type: 'daily', value: '', orderType: '' },
         settlement:     { type: 'daily', value: '', reportSubType: '' }
     };
@@ -3215,9 +3215,19 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReportCenterPage();
     };
 
+    window.setStatementCurrency = function(currency) {
+        if (reportCardSelections.statement) {
+            reportCardSelections.statement.currency = currency;
+        }
+        renderReportCenterPage();
+    };
+
     window.generateReport = function(action, type, value) {
         if (action === 'balance') {
             window.generateBalanceActivityCSV(type, value);
+        } else if (action === 'statement') {
+            const currency = reportCardSelections.statement.currency;
+            window.generateAccountStatementCSV(type, value, currency);
         } else if (action === 'reconciliation') {
             const orderType = reportCardSelections.reconciliation.orderType;
             window.generateOrderReconciliationCSV(type, value, orderType);
@@ -4715,6 +4725,276 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
         document.body.appendChild(toast);
         setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 4000);
+    };
+
+    // ─── generateAccountStatementCSV ────────────────────────────────────────
+    window.generateAccountStatementCSV = function(reportType, dateValue, currency) {
+        const MERCHANT_ID   = 'MCH-20240801-0012';
+        const MERCHANT_NAME = currentMerchantName || 'Obita Test Company';
+
+        // ── helpers ──────────────────────────────────────────────────────────
+        function fmtDt(d) { return d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'; }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function fmtComma(n)   { return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+        function randBetween(a, b) { return Math.random() * (b - a) + a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function pad(n) { return String(n).padStart(2, '0'); }
+        function csvEscape(v) {
+            const s = String(v == null ? '' : v);
+            return (s.includes(',') || s.includes('"') || s.includes('\n'))
+                ? '"' + s.replace(/"/g, '""') + '"' : s;
+        }
+        function metaRow(label, value) { return csvEscape(label) + ',' + csvEscape(value); }
+        function dateFmt(d) {
+            const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            return pad(d.getUTCDate()) + ' ' + mo[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+        }
+        function randomHex(len) { return [...Array(len)].map(() => Math.floor(Math.random()*16).toString(16)).join(''); }
+        function randomAddr() { return '0x' + randomHex(40); }
+        function randomHash() { return '0x' + randomHex(64); }
+        function maskAcct(s) { if (!s || s.length <= 10) return s; return s.slice(0,6)+'****'+s.slice(-4); }
+
+        // ── currency metadata ─────────────────────────────────────────────────
+        const isStablecoin = ['USDT','USDC','USDC.e'].includes(currency);
+        const vaultTypeLabel = isStablecoin ? 'Stablecoin Vault' : 'Fiat Vault';
+        const ccySlug = currency.toLowerCase().replace('.','');
+        const vaultId = 'VLT-' + ccySlug.toUpperCase() + '-' + MERCHANT_ID.replace('MCH-','');
+
+        // Scale factor vs USD for opening balance & amounts
+        const fxScale = { USDT:1, USDC:1, 'USDC.e':1, USD:1, HKD:7.8, SGD:1.35, EUR:0.92, GBP:0.79 }[currency] || 1;
+        const OPENING_BALANCE = parseFloat(fmtDecimal(pickRand([
+            500000,750000,980000,1250000,1500000,2000000
+        ]) * fxScale));
+
+        // ── transaction templates per vault type ──────────────────────────────
+        const stablecoinTemplates = [
+            // ── Inflows ──
+            { weight:15, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Checkout',
+              descFn:(r)=>'Collection Receipt – '+r.orderId,
+              orderPfx:'CKO-', amtRange:[800,20000],
+              cpNameFn:()=>pickRand(['Alex Chen','Maria Santos','Wei Zhang','John Kim','Priya Mehta','Li Wei','Carlos Rivera']),
+              cpAcctFn:randomAddr, remarkFn:()=>'' },
+            { weight:12, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Invoice',
+              descFn:(r)=>'Collection Receipt – '+r.orderId,
+              orderPfx:'INV-', amtRange:[5000,80000],
+              cpNameFn:()=>pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co','Asia Sourcing Group']),
+              cpAcctFn:randomAddr, remarkFn:()=>'' },
+            { weight:8, dir:'Credit', txType:'FX Conversion Received', relBizType:'Conversion',
+              descFn:(r)=>'FX Conversion Received from '+pickRand(['USD','HKD','SGD','EUR']),
+              orderPfx:'CVT-', amtRange:[3000,40000],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Conversion credit' },
+            { weight:5, dir:'Credit', txType:'Merchant Deposit', relBizType:'On-chain Deposit',
+              descFn:()=>'On-chain Deposit from External Wallet',
+              orderPfx:'DEP-', amtRange:[20000,200000],
+              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:randomAddr, remarkFn:()=>'Self-initiated' },
+            // ── Outflows ──
+            { weight:18, dir:'Debit', txType:'Payout Disbursement', relBizType:'Payout',
+              descFn:(r)=>'Payout Disbursement – '+r.orderId,
+              orderPfx:'PAY-', amtRange:[1000,45000],
+              cpNameFn:()=>pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co','Supplier HK Ltd','Global Parts Ltd']),
+              cpAcctFn:randomAddr, remarkFn:()=>'' },
+            { weight:10, dir:'Debit', txType:'Platform Fee', relBizType:'Collection-Checkout',
+              descFn:()=>'Platform Fee – Collection Service',
+              orderPfx:'FEE-', amtRange:[5,180],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Service fee' },
+            { weight:7, dir:'Debit', txType:'Platform Fee', relBizType:'Payout',
+              descFn:()=>'Platform Fee – Payout Service',
+              orderPfx:'FEE-', amtRange:[8,120],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Service fee' },
+            { weight:12, dir:'Debit', txType:'FX Conversion Sold', relBizType:'Conversion',
+              descFn:(r)=>'FX Conversion Sold – '+currency+' to '+pickRand(['USD','HKD','SGD']),
+              orderPfx:'CVT-', amtRange:[5000,60000],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Conversion debit' },
+            { weight:6, dir:'Debit', txType:'Merchant Withdrawal', relBizType:'On-chain Withdrawal',
+              descFn:()=>'Withdrawal to External Wallet',
+              orderPfx:'WDR-', amtRange:[10000,150000],
+              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:randomAddr, remarkFn:()=>'Self-initiated' },
+        ];
+
+        const fiatTemplates = [
+            // ── Inflows ──
+            { weight:18, dir:'Credit', txType:'FX Settlement Credit', relBizType:'Conversion',
+              descFn:(r)=>'FX Settlement Credit – '+pickRand(['USDT','USDC'])+' to '+currency,
+              orderPfx:'STL-', amtRange:[5000,90000],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct(pickRand(['HK-'+randomHex(10),'SG-'+randomHex(10)])), remarkFn:()=>'Settlement credit' },
+            { weight:10, dir:'Credit', txType:'FX Conversion Received', relBizType:'Conversion',
+              descFn:(r)=>'FX Conversion Received – '+pickRand(['USD','EUR','GBP','SGD'])+' to '+currency,
+              orderPfx:'CVT-', amtRange:[8000,120000],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Conversion credit' },
+            { weight:12, dir:'Credit', txType:'Merchant Deposit', relBizType:'Bank Deposit',
+              descFn:()=>'Incoming SWIFT / TT from ' + MERCHANT_NAME,
+              orderPfx:'DEP-', amtRange:[50000,500000],
+              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:()=>maskAcct('12345'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'SWIFT transfer' },
+            { weight:8, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Invoice',
+              descFn:(r)=>'Collection Receipt – '+r.orderId,
+              orderPfx:'INV-', amtRange:[3000,60000],
+              cpNameFn:()=>pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co']),
+              cpAcctFn:()=>maskAcct('9876'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'' },
+            // ── Outflows ──
+            { weight:15, dir:'Debit', txType:'FX Conversion Sold', relBizType:'Conversion',
+              descFn:(r)=>'FX Conversion Sold – '+currency+' to '+pickRand(['USDT','USDC']),
+              orderPfx:'CVT-', amtRange:[8000,100000],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Conversion debit' },
+            { weight:10, dir:'Debit', txType:'Merchant Withdrawal', relBizType:'Bank Withdrawal',
+              descFn:()=>'Outgoing SWIFT / TT to ' + pickRand(['HSBC '+currency+' Account','Standard Chartered','Bank of China','DBS Bank']),
+              orderPfx:'WDR-', amtRange:[20000,300000],
+              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:()=>maskAcct('8800'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'SWIFT transfer' },
+            { weight:8, dir:'Debit', txType:'Payout Disbursement', relBizType:'Payout',
+              descFn:(r)=>'Payout Disbursement – '+r.orderId,
+              orderPfx:'PAY-', amtRange:[2000,80000],
+              cpNameFn:()=>pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co']),
+              cpAcctFn:()=>maskAcct('1122'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'' },
+            { weight:5, dir:'Debit', txType:'Platform Fee', relBizType:'Service Fee',
+              descFn:()=>'Platform Fee – Service Charge',
+              orderPfx:'FEE-', amtRange:[50,600],
+              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Monthly service fee' },
+        ];
+
+        const templates = isStablecoin ? stablecoinTemplates : fiatTemplates;
+        // Build weighted pool
+        const pool = [];
+        templates.forEach(t => { for (let w = 0; w < t.weight; w++) pool.push(t); });
+
+        // ── date range ────────────────────────────────────────────────────────
+        let dates = [];
+        let periodStart, periodEnd;
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            periodStart = new Date(Date.UTC(y, m-1, d, 0, 0, 0));
+            periodEnd   = new Date(Date.UTC(y, m-1, d, 23, 59, 59));
+            const txCount = Math.floor(randBetween(6, 18));
+            for (let i = 0; i < txCount; i++) {
+                dates.push(new Date(Date.UTC(y, m-1, d,
+                    Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+            }
+            dates.sort((a, b) => a - b);
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            periodStart = new Date(Date.UTC(y, m-1, 1, 0, 0, 0));
+            periodEnd   = new Date(Date.UTC(y, m-1, lastDay, 23, 59, 59));
+            for (let day = 1; day <= lastDay; day++) {
+                const n = Math.floor(randBetween(2, 7));
+                for (let i = 0; i < n; i++) {
+                    dates.push(new Date(Date.UTC(y, m-1, day,
+                        Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                }
+            }
+            dates.sort((a, b) => a - b);
+        }
+
+        // ── generate rows ─────────────────────────────────────────────────────
+        let runBal = OPENING_BALANCE;
+        let totalCredit = 0, totalDebit = 0, creditCount = 0, debitCount = 0;
+        let maxBal = runBal, minBal = runBal;
+        const txRows = [];
+        const seqBase = Date.now();
+
+        dates.forEach((dt, i) => {
+            const tpl = pickRand(pool);
+            const scaledAmt = parseFloat(fmtDecimal(randBetween(...tpl.amtRange) * fxScale));
+            const dateTag   = dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate());
+            const seqStr    = String(seqBase + i).slice(-6);
+            const txRefNo   = 'TXN-' + dateTag + '-' + seqStr;
+            const orderId   = tpl.orderPfx + dateTag + '-' + seqStr.slice(0,4);
+            const cpName    = tpl.cpNameFn();
+            const rawCpAcct = isStablecoin ? tpl.cpAcctFn() : tpl.cpAcctFn();
+            const remark    = tpl.remarkFn();
+            const desc      = tpl.descFn({ orderId });
+            const valueDate = fmtDt(new Date(dt.getTime() + (isStablecoin ? 0 : 86400000))); // fiat: +1 day value date
+
+            const isCredit = tpl.dir === 'Credit';
+            if (isCredit) {
+                runBal += scaledAmt;
+                totalCredit += scaledAmt; creditCount++;
+            } else {
+                runBal = Math.max(0, runBal - scaledAmt);
+                totalDebit += scaledAmt; debitCount++;
+            }
+            if (runBal > maxBal) maxBal = runBal;
+            if (runBal < minBal) minBal = runBal;
+
+            txRows.push([
+                fmtDt(dt),                                   // 1  Transaction Date
+                valueDate,                                   // 2  Value Date
+                txRefNo,                                     // 3  Transaction Ref No.
+                desc,                                        // 4  Description
+                tpl.txType,                                  // 5  Transaction Type
+                tpl.relBizType,                              // 6  Related Order Type
+                orderId,                                     // 7  Related Order ID
+                cpName,                                      // 8  Counterparty Name
+                isStablecoin ? rawCpAcct : rawCpAcct,        // 9  Counterparty Account / Address
+                isCredit ? '' : fmtDecimal(scaledAmt),       // 10 Withdrawal (Debit)
+                isCredit ? fmtDecimal(scaledAmt) : '',       // 11 Deposit (Credit)
+                currency,                                    // 12 Currency
+                fmtDecimal(runBal),                          // 13 Running Balance
+                remark,                                      // 14 Remarks
+            ]);
+        });
+
+        const CLOSING_BALANCE = runBal;
+
+        // ── statement period display ──────────────────────────────────────────
+        const periodStartDisp = dateFmt(periodStart);
+        const periodEndDisp   = dateFmt(periodEnd);
+        const generatedAt     = fmtDt(new Date());
+
+        // ── build CSV ─────────────────────────────────────────────────────────
+        const txHeaders = [
+            'Transaction Date', 'Value Date', 'Transaction Ref No.', 'Description',
+            'Transaction Type', 'Related Order Type', 'Related Order ID',
+            'Counterparty Name', 'Counterparty Account / Address',
+            'Withdrawal (Debit)', 'Deposit (Credit)', 'Currency',
+            'Running Balance', 'Remarks'
+        ];
+
+        const csvLines = [
+            // ── title ──────────────────────────────────────────────────────
+            'ACCOUNT STATEMENT',
+            '',
+            // ── account info ───────────────────────────────────────────────
+            metaRow('Merchant Name',     MERCHANT_NAME),
+            metaRow('Merchant ID',       MERCHANT_ID),
+            metaRow('Account Currency',  currency),
+            metaRow('Vault ID',          vaultId),
+            metaRow('Vault Type',        vaultTypeLabel),
+            metaRow('Statement Period',  periodStartDisp + ' to ' + periodEndDisp),
+            metaRow('Generated On',      generatedAt),
+            '',
+            // ── account summary ─────────────────────────────────────────────
+            'ACCOUNT SUMMARY',
+            metaRow('Opening Balance',            fmtComma(OPENING_BALANCE) + ' ' + currency),
+            metaRow('Total Credits',              fmtComma(totalCredit)     + ' ' + currency),
+            metaRow('No. of Credit Transactions', creditCount),
+            metaRow('Total Debits',               fmtComma(totalDebit)      + ' ' + currency),
+            metaRow('No. of Debit Transactions',  debitCount),
+            metaRow('Closing Balance',            fmtComma(CLOSING_BALANCE) + ' ' + currency),
+            metaRow('Highest Balance',            fmtComma(maxBal)          + ' ' + currency),
+            metaRow('Lowest Balance',             fmtComma(minBal)          + ' ' + currency),
+            metaRow('Total Transactions',         txRows.length),
+            '',
+            // ── transaction detail ──────────────────────────────────────────
+            'TRANSACTION DETAIL',
+            '',
+            txHeaders.map(csvEscape).join(','),
+            ...txRows.map(r => r.map(csvEscape).join(',')),
+        ];
+
+        // ── trigger download ──────────────────────────────────────────────────
+        const fileName = `account_statement_${ccySlug}_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
+        const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Account Statement \u2014 ' + currency, fileName, dateValue);
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 4000);
     };
 
     window.openReportCenterReport = function(reportId) {
@@ -8803,6 +9083,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const isDaily = sel.type === 'daily';
                         const isRecon      = card.action === 'reconciliation';
                         const isSettlement = card.action === 'settlement';
+                        const isStatement  = card.action === 'statement';
                         // Daily: max = yesterday
                         const today = new Date();
                         const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
@@ -8813,9 +9094,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         const maxMonth = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth()+1).padStart(2,'0')}`;
                         const minMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth()+1).padStart(2,'0')}`;
                         const hasDate = sel.value !== '';
-                        const hasOrderType    = !isRecon      || (sel.orderType    && sel.orderType    !== '');
-                        const hasReportSubType = !isSettlement || (sel.reportSubType && sel.reportSubType !== '');
-                        const hasValue = hasDate && hasOrderType && hasReportSubType;
+                        const hasOrderType         = !isRecon      || (sel.orderType    && sel.orderType    !== '');
+                        const hasReportSubType     = !isSettlement || (sel.reportSubType && sel.reportSubType !== '');
+                        const hasStatementCurrency = !isStatement  || (sel.currency     && sel.currency     !== '');
+                        const hasValue = hasDate && hasOrderType && hasReportSubType && hasStatementCurrency;
                         const ORDER_TYPES = ['Collection-Checkout', 'Collection-Invoice', 'Payout', 'Conversion'];
                         return `
                         <div class="card" style="padding: 32px 34px; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
@@ -8862,6 +9144,23 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                     <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; flex-shrink: 0; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
                                 </div>` : `
+                                ${isStatement ? `
+                                <!-- Account Statement currency selector -->
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Currency</span>
+                                    <div style="position: relative; flex: 1;">
+                                        <select onchange="window.setStatementCurrency(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.currency ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.currency ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.currency ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
+                                            <option value="" disabled ${!sel.currency ? 'selected' : ''}>Select currency...</option>
+                                            <optgroup label="Stablecoin">
+                                                ${['USDT','USDC','USDC.e'].map(c => `<option value="${c}" ${sel.currency===c?'selected':''} style="color:#0F172A;">${c}</option>`).join('')}
+                                            </optgroup>
+                                            <optgroup label="Fiat">
+                                                ${['USD','HKD','SGD','EUR','GBP'].map(c => `<option value="${c}" ${sel.currency===c?'selected':''} style="color:#0F172A;">${c}</option>`).join('')}
+                                            </optgroup>
+                                        </select>
+                                        <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.currency ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                    </div>
+                                </div>` : ''}
                                 ${isSettlement ? `
                                 <!-- Settlement report sub-type selector -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -8876,7 +9175,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>` : ''}
                                 <!-- 2. Report type toggle -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; ${isSettlement ? 'width: 76px;' : ''}">报表类型</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; ${(isSettlement || isStatement) ? 'width: 76px;' : ''}">报表类型</span>
                                     <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
                                         <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
                                         <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
@@ -8905,9 +9204,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="card" style="padding: 24px; border-radius: 12px; background: #FFFFFF;">
                         ${(() => {
                             // ── filter helpers ───────────────────────────────────────────
-                            const TYPE_CATS = ['Balance Activity Report','Business Order Report','Settlement Report','Fee Report','Fee Summary Report'];
+                            const TYPE_CATS = ['Balance Activity Report','Account Statement','Business Order Report','Settlement Report','Fee Report','Fee Summary Report'];
                             function typeCategory(typeName) {
                                 if (typeName.startsWith('Business Order Report')) return 'Business Order Report';
+                                if (typeName.startsWith('Account Statement'))      return 'Account Statement';
                                 return typeName;
                             }
                             const presentCats = new Set(generatedReportHistory.map(r => typeCategory(r.typeName)));
