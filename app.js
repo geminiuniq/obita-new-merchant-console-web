@@ -1670,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Report Center card selections: { [action]: { type: 'daily'|'monthly', value: '' } }
     let reportCardSelections = {
         balance:        { type: 'daily', value: '' },
-        statement:      { type: 'daily', value: '', currency: '' },
+        statement:      { type: 'daily', value: '', vaultType: '' },
         reconciliation: { type: 'daily', value: '', orderType: '' },
         settlement:     { type: 'daily', value: '', reportSubType: '' }
     };
@@ -3215,9 +3215,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReportCenterPage();
     };
 
-    window.setStatementCurrency = function(currency) {
+    window.setStatementVaultType = function(vaultType) {
         if (reportCardSelections.statement) {
-            reportCardSelections.statement.currency = currency;
+            reportCardSelections.statement.vaultType = vaultType;
         }
         renderReportCenterPage();
     };
@@ -3226,8 +3226,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (action === 'balance') {
             window.generateBalanceActivityCSV(type, value);
         } else if (action === 'statement') {
-            const currency = reportCardSelections.statement.currency;
-            window.generateAccountStatementPDF(type, value, currency);
+            const vaultType = reportCardSelections.statement.vaultType;
+            window.generateAccountStatementPDF(type, value, vaultType);
         } else if (action === 'reconciliation') {
             const orderType = reportCardSelections.reconciliation.orderType;
             window.generateOrderReconciliationCSV(type, value, orderType);
@@ -4728,9 +4728,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ─── generateAccountStatementPDF ────────────────────────────────────────
-    window.generateAccountStatementPDF = function(reportType, dateValue, currency) {
+    window.generateAccountStatementPDF = function(reportType, dateValue, vaultType) {
         const MERCHANT_ID   = 'MCH-20240801-0012';
         const MERCHANT_NAME = currentMerchantName || 'Obita Test Company';
+        const BRAND         = '#0072F7';
 
         // ── helpers ──────────────────────────────────────────────────────────
         function fmtDt(d) { return d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC'; }
@@ -4739,259 +4740,248 @@ document.addEventListener('DOMContentLoaded', () => {
         function randBetween(a, b) { return Math.random() * (b - a) + a; }
         function pickRand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
         function pad(n) { return String(n).padStart(2, '0'); }
-        function csvEscape(v) {
-            const s = String(v == null ? '' : v);
-            return (s.includes(',') || s.includes('"') || s.includes('\n'))
-                ? '"' + s.replace(/"/g, '""') + '"' : s;
-        }
-        function metaRow(label, value) { return csvEscape(label) + ',' + csvEscape(value); }
         function dateFmt(d) {
-            const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             return pad(d.getUTCDate()) + ' ' + mo[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         }
-        function randomHex(len) { return [...Array(len)].map(() => Math.floor(Math.random()*16).toString(16)).join(''); }
+        function randomHex(len) { return Array.from({length:len},function(){return Math.floor(Math.random()*16).toString(16);}).join(''); }
         function randomAddr() { return '0x' + randomHex(40); }
-        function randomHash() { return '0x' + randomHex(64); }
         function maskAcct(s) { if (!s || s.length <= 10) return s; return s.slice(0,6)+'****'+s.slice(-4); }
 
-        // ── currency metadata ─────────────────────────────────────────────────
-        const isStablecoin = ['USDT','USDC'].includes(currency);
-        const vaultTypeLabel = isStablecoin ? 'Stablecoin Vault' : 'Fiat Vault';
-        const ccySlug = currency.toLowerCase().replace('.','');
-        const vaultId = 'VLT-' + ccySlug.toUpperCase() + '-' + MERCHANT_ID.replace('MCH-','');
-
-        // Scale factor vs USD for opening balance & amounts
-        const fxScale = { USDT:1, USDC:1, 'USDC.e':1, USD:1, HKD:7.8, SGD:1.35, EUR:0.92, GBP:0.79 }[currency] || 1;
-        const OPENING_BALANCE = parseFloat(fmtDecimal(pickRand([
-            500000,750000,980000,1250000,1500000,2000000
-        ]) * fxScale));
-
-        // ── transaction templates per vault type ──────────────────────────────
-        const stablecoinTemplates = [
-            // ── Inflows ──
-            { weight:15, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Checkout',
-              descFn:(r)=>'Collection Receipt – '+r.orderId,
-              orderPfx:'CKO-', amtRange:[800,20000],
-              cpNameFn:()=>pickRand(['Alex Chen','Maria Santos','Wei Zhang','John Kim','Priya Mehta','Li Wei','Carlos Rivera']),
-              cpAcctFn:randomAddr, remarkFn:()=>'' },
-            { weight:12, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Invoice',
-              descFn:(r)=>'Collection Receipt – '+r.orderId,
-              orderPfx:'INV-', amtRange:[5000,80000],
-              cpNameFn:()=>pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co','Asia Sourcing Group']),
-              cpAcctFn:randomAddr, remarkFn:()=>'' },
-            { weight:8, dir:'Credit', txType:'FX Conversion Received', relBizType:'Conversion',
-              descFn:(r)=>'FX Conversion Received from '+pickRand(['USD','HKD','SGD','EUR']),
-              orderPfx:'CVT-', amtRange:[3000,40000],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Conversion credit' },
-            { weight:5, dir:'Credit', txType:'Merchant Deposit', relBizType:'On-chain Deposit',
-              descFn:()=>'On-chain Deposit from External Wallet',
-              orderPfx:'DEP-', amtRange:[20000,200000],
-              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:randomAddr, remarkFn:()=>'Self-initiated' },
-            // ── Outflows ──
-            { weight:18, dir:'Debit', txType:'Payout Disbursement', relBizType:'Payout',
-              descFn:(r)=>'Payout Disbursement – '+r.orderId,
-              orderPfx:'PAY-', amtRange:[1000,45000],
-              cpNameFn:()=>pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co','Supplier HK Ltd','Global Parts Ltd']),
-              cpAcctFn:randomAddr, remarkFn:()=>'' },
-            { weight:10, dir:'Debit', txType:'Platform Fee', relBizType:'Collection-Checkout',
-              descFn:()=>'Platform Fee – Collection Service',
-              orderPfx:'FEE-', amtRange:[5,180],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Service fee' },
-            { weight:7, dir:'Debit', txType:'Platform Fee', relBizType:'Payout',
-              descFn:()=>'Platform Fee – Payout Service',
-              orderPfx:'FEE-', amtRange:[8,120],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Service fee' },
-            { weight:12, dir:'Debit', txType:'FX Conversion Sold', relBizType:'Conversion',
-              descFn:(r)=>'FX Conversion Sold – '+currency+' to '+pickRand(['USD','HKD','SGD']),
-              orderPfx:'CVT-', amtRange:[5000,60000],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:randomAddr, remarkFn:()=>'Conversion debit' },
-            { weight:6, dir:'Debit', txType:'Merchant Withdrawal', relBizType:'On-chain Withdrawal',
-              descFn:()=>'Withdrawal to External Wallet',
-              orderPfx:'WDR-', amtRange:[10000,150000],
-              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:randomAddr, remarkFn:()=>'Self-initiated' },
-        ];
-
-        const fiatTemplates = [
-            // ── Inflows ──
-            { weight:18, dir:'Credit', txType:'FX Settlement Credit', relBizType:'Conversion',
-              descFn:(r)=>'FX Settlement Credit – '+pickRand(['USDT','USDC'])+' to '+currency,
-              orderPfx:'STL-', amtRange:[5000,90000],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct(pickRand(['HK-'+randomHex(10),'SG-'+randomHex(10)])), remarkFn:()=>'Settlement credit' },
-            { weight:10, dir:'Credit', txType:'FX Conversion Received', relBizType:'Conversion',
-              descFn:(r)=>'FX Conversion Received – '+pickRand(['USD','EUR','GBP','SGD'])+' to '+currency,
-              orderPfx:'CVT-', amtRange:[8000,120000],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Conversion credit' },
-            { weight:12, dir:'Credit', txType:'Merchant Deposit', relBizType:'Bank Deposit',
-              descFn:()=>'Incoming SWIFT / TT from ' + MERCHANT_NAME,
-              orderPfx:'DEP-', amtRange:[50000,500000],
-              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:()=>maskAcct('12345'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'SWIFT transfer' },
-            { weight:8, dir:'Credit', txType:'Collection Receipt', relBizType:'Collection-Invoice',
-              descFn:(r)=>'Collection Receipt – '+r.orderId,
-              orderPfx:'INV-', amtRange:[3000,60000],
-              cpNameFn:()=>pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co']),
-              cpAcctFn:()=>maskAcct('9876'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'' },
-            // ── Outflows ──
-            { weight:15, dir:'Debit', txType:'FX Conversion Sold', relBizType:'Conversion',
-              descFn:(r)=>'FX Conversion Sold – '+currency+' to '+pickRand(['USDT','USDC']),
-              orderPfx:'CVT-', amtRange:[8000,100000],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Conversion debit' },
-            { weight:10, dir:'Debit', txType:'Merchant Withdrawal', relBizType:'Bank Withdrawal',
-              descFn:()=>'Outgoing SWIFT / TT to ' + pickRand(['HSBC '+currency+' Account','Standard Chartered','Bank of China','DBS Bank']),
-              orderPfx:'WDR-', amtRange:[20000,300000],
-              cpNameFn:()=>MERCHANT_NAME, cpAcctFn:()=>maskAcct('8800'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'SWIFT transfer' },
-            { weight:8, dir:'Debit', txType:'Payout Disbursement', relBizType:'Payout',
-              descFn:(r)=>'Payout Disbursement – '+r.orderId,
-              orderPfx:'PAY-', amtRange:[2000,80000],
-              cpNameFn:()=>pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co']),
-              cpAcctFn:()=>maskAcct('1122'+(Math.floor(Math.random()*9000000+1000000))), remarkFn:()=>'' },
-            { weight:5, dir:'Debit', txType:'Platform Fee', relBizType:'Service Fee',
-              descFn:()=>'Platform Fee – Service Charge',
-              orderPfx:'FEE-', amtRange:[50,600],
-              cpNameFn:()=>'Obita Platform', cpAcctFn:()=>maskAcct('ACC'+randomHex(8)), remarkFn:()=>'Monthly service fee' },
-        ];
-
-        const templates = isStablecoin ? stablecoinTemplates : fiatTemplates;
-        // Build weighted pool
-        const pool = [];
-        templates.forEach(t => { for (let w = 0; w < t.weight; w++) pool.push(t); });
+        // ── vault config ──────────────────────────────────────────────────────
+        var isStablecoin = vaultType === 'Stablecoin Vault';
+        var vaultCurrencies = isStablecoin ? ['USDT','USDC'] : ['USD','HKD','SGD','EUR','GBP'];
+        var vaultId = (isStablecoin ? 'VLT-STABLE-' : 'VLT-FIAT-') + MERCHANT_ID.replace('MCH-','');
+        var fxScaleMap = { USDT:1, USDC:1, USD:1, HKD:7.8, SGD:1.35, EUR:0.92, GBP:0.79 };
 
         // ── date range ────────────────────────────────────────────────────────
-        let dates = [];
-        let periodStart, periodEnd;
+        var periodStart, periodEnd;
         if (reportType === 'daily') {
-            const [y, m, d] = dateValue.split('-').map(Number);
-            periodStart = new Date(Date.UTC(y, m-1, d, 0, 0, 0));
-            periodEnd   = new Date(Date.UTC(y, m-1, d, 23, 59, 59));
-            const txCount = Math.floor(randBetween(6, 18));
-            for (let i = 0; i < txCount; i++) {
-                dates.push(new Date(Date.UTC(y, m-1, d,
-                    Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
-            }
-            dates.sort((a, b) => a - b);
+            var _dp = dateValue.split('-').map(Number);
+            periodStart = new Date(Date.UTC(_dp[0], _dp[1]-1, _dp[2], 0, 0, 0));
+            periodEnd   = new Date(Date.UTC(_dp[0], _dp[1]-1, _dp[2], 23, 59, 59));
         } else {
-            const [y, m] = dateValue.split('-').map(Number);
-            const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
-            periodStart = new Date(Date.UTC(y, m-1, 1, 0, 0, 0));
-            periodEnd   = new Date(Date.UTC(y, m-1, lastDay, 23, 59, 59));
-            for (let day = 1; day <= lastDay; day++) {
-                const n = Math.floor(randBetween(2, 7));
-                for (let i = 0; i < n; i++) {
-                    dates.push(new Date(Date.UTC(y, m-1, day,
-                        Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
-                }
-            }
-            dates.sort((a, b) => a - b);
+            var _mp = dateValue.split('-').map(Number);
+            var _lastDay = new Date(Date.UTC(_mp[0], _mp[1], 0)).getUTCDate();
+            periodStart = new Date(Date.UTC(_mp[0], _mp[1]-1, 1, 0, 0, 0));
+            periodEnd   = new Date(Date.UTC(_mp[0], _mp[1]-1, _lastDay, 23, 59, 59));
         }
 
-        // ── generate rows ─────────────────────────────────────────────────────
-        let runBal = OPENING_BALANCE;
-        let totalCredit = 0, totalDebit = 0, creditCount = 0, debitCount = 0;
-        let maxBal = runBal, minBal = runBal;
-        const txRows = [];
-        const seqBase = Date.now();
-
-        dates.forEach((dt, i) => {
-            const tpl = pickRand(pool);
-            const scaledAmt = parseFloat(fmtDecimal(randBetween(...tpl.amtRange) * fxScale));
-            const dateTag   = dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate());
-            const seqStr    = String(seqBase + i).slice(-6);
-            const txRefNo   = 'TXN-' + dateTag + '-' + seqStr;
-            const orderId   = tpl.orderPfx + dateTag + '-' + seqStr.slice(0,4);
-            const cpName    = tpl.cpNameFn();
-            const rawCpAcct = isStablecoin ? tpl.cpAcctFn() : tpl.cpAcctFn();
-            const remark    = tpl.remarkFn();
-            const desc      = tpl.descFn({ orderId });
-            const valueDate = fmtDt(new Date(dt.getTime() + (isStablecoin ? 0 : 86400000))); // fiat: +1 day value date
-
-            const isCredit = tpl.dir === 'Credit';
-            if (isCredit) {
-                runBal += scaledAmt;
-                totalCredit += scaledAmt; creditCount++;
+        function genDates() {
+            var dates = [];
+            if (reportType === 'daily') {
+                var y = periodStart.getUTCFullYear(), mo = periodStart.getUTCMonth(), dy = periodStart.getUTCDate();
+                var txCount = Math.floor(randBetween(4, 12));
+                for (var i = 0; i < txCount; i++) {
+                    dates.push(new Date(Date.UTC(y, mo, dy, Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                }
             } else {
-                runBal = Math.max(0, runBal - scaledAmt);
-                totalDebit += scaledAmt; debitCount++;
+                var y2 = periodStart.getUTCFullYear(), mo2 = periodStart.getUTCMonth();
+                var lastDay2 = periodEnd.getUTCDate();
+                for (var day = 1; day <= lastDay2; day++) {
+                    var n = Math.floor(randBetween(1, 5));
+                    for (var j = 0; j < n; j++) {
+                        dates.push(new Date(Date.UTC(y2, mo2, day, Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                    }
+                }
             }
-            if (runBal > maxBal) maxBal = runBal;
-            if (runBal < minBal) minBal = runBal;
+            dates.sort(function(a, b) { return a - b; });
+            return dates;
+        }
 
-            txRows.push([
-                fmtDt(dt),                                   // 1  Transaction Date
-                valueDate,                                   // 2  Value Date
-                txRefNo,                                     // 3  Transaction Ref No.
-                desc,                                        // 4  Description
-                tpl.txType,                                  // 5  Transaction Type
-                tpl.relBizType,                              // 6  Related Order Type
-                orderId,                                     // 7  Related Order ID
-                cpName,                                      // 8  Counterparty Name
-                isStablecoin ? rawCpAcct : rawCpAcct,        // 9  Counterparty Account / Address
-                isCredit ? '' : fmtDecimal(scaledAmt),       // 10 Withdrawal (Debit)
-                isCredit ? fmtDecimal(scaledAmt) : '',       // 11 Deposit (Credit)
-                currency,                                    // 12 Currency
-                fmtDecimal(runBal),                          // 13 Running Balance
-                remark,                                      // 14 Remarks
-            ]);
+        // ── transaction templates factory ─────────────────────────────────────
+        function makeTemplates(ccy) {
+            if (isStablecoin) {
+                return [
+                    { weight:15, dir:'Credit', txType:'Collection Receipt', orderPfx:'CKO-', amtRange:[800,20000],
+                      cpNameFn:function(){return pickRand(['Alex Chen','Maria Santos','Wei Zhang','John Kim','Priya Mehta','Li Wei']);},
+                      cpAcctFn:randomAddr,
+                      narrativeFn:function(r){return 'Online payment via checkout link from '+r.cpName;} },
+                    { weight:12, dir:'Credit', txType:'Collection Receipt', orderPfx:'INV-', amtRange:[5000,80000],
+                      cpNameFn:function(){return pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co','Asia Sourcing Group']);},
+                      cpAcctFn:randomAddr,
+                      narrativeFn:function(r){return 'Invoice settlement received from '+r.cpName;} },
+                    { weight:8, dir:'Credit', txType:'FX Conversion Received', orderPfx:'CVT-', amtRange:[3000,40000],
+                      cpNameFn:function(){return 'Obita Platform';}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Proceeds credited from foreign currency exchange';} },
+                    { weight:5, dir:'Credit', txType:'Merchant Deposit', orderPfx:'DEP-', amtRange:[20000,200000],
+                      cpNameFn:function(){return MERCHANT_NAME;}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Self-initiated on-chain transfer to vault';} },
+                    { weight:18, dir:'Debit', txType:'Payout Disbursement', orderPfx:'PAY-', amtRange:[1000,45000],
+                      cpNameFn:function(){return pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co','Supplier HK Ltd']);},
+                      cpAcctFn:randomAddr,
+                      narrativeFn:function(r){return 'Vendor payment disbursed to '+r.cpName;} },
+                    { weight:10, dir:'Debit', txType:'Platform Fee', orderPfx:'FEE-', amtRange:[5,180],
+                      cpNameFn:function(){return 'Obita Platform';}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Collection service charge applied by Obita';} },
+                    { weight:7, dir:'Debit', txType:'Platform Fee', orderPfx:'FEE-', amtRange:[8,120],
+                      cpNameFn:function(){return 'Obita Platform';}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Payout service charge applied by Obita';} },
+                    { weight:12, dir:'Debit', txType:'FX Conversion Sold', orderPfx:'CVT-', amtRange:[5000,60000],
+                      cpNameFn:function(){return 'Obita Platform';}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Source currency sold for outgoing foreign exchange';} },
+                    { weight:6, dir:'Debit', txType:'Merchant Withdrawal', orderPfx:'WDR-', amtRange:[10000,150000],
+                      cpNameFn:function(){return MERCHANT_NAME;}, cpAcctFn:randomAddr,
+                      narrativeFn:function(){return 'Withdrawal initiated to external wallet address';} },
+                ];
+            } else {
+                return [
+                    { weight:18, dir:'Credit', txType:'FX Settlement Credit', orderPfx:'STL-', amtRange:[5000,90000],
+                      cpNameFn:function(){return 'Obita Platform';},
+                      cpAcctFn:function(){return maskAcct('ACC'+randomHex(8));},
+                      narrativeFn:function(){return 'Stablecoin-to-'+ccy+' settlement proceeds';} },
+                    { weight:10, dir:'Credit', txType:'FX Conversion Received', orderPfx:'CVT-', amtRange:[8000,120000],
+                      cpNameFn:function(){return 'Obita Platform';},
+                      cpAcctFn:function(){return maskAcct('ACC'+randomHex(8));},
+                      narrativeFn:function(){return 'Incoming foreign exchange conversion to '+ccy;} },
+                    { weight:12, dir:'Credit', txType:'Merchant Deposit', orderPfx:'DEP-', amtRange:[50000,500000],
+                      cpNameFn:function(){return MERCHANT_NAME;},
+                      cpAcctFn:function(){return maskAcct('12345'+(Math.floor(Math.random()*9000000+1000000)));},
+                      narrativeFn:function(){return 'Incoming SWIFT / TT transfer from account holder';} },
+                    { weight:8, dir:'Credit', txType:'Collection Receipt', orderPfx:'INV-', amtRange:[3000,60000],
+                      cpNameFn:function(){return pickRand(['Global Trade Holdings Ltd','Nexus Finance Ltd','Pacific Merchants Co']);},
+                      cpAcctFn:function(){return maskAcct('9876'+(Math.floor(Math.random()*9000000+1000000)));},
+                      narrativeFn:function(r){return 'Invoice payment received from '+r.cpName;} },
+                    { weight:15, dir:'Debit', txType:'FX Conversion Sold', orderPfx:'CVT-', amtRange:[8000,100000],
+                      cpNameFn:function(){return 'Obita Platform';},
+                      cpAcctFn:function(){return maskAcct('ACC'+randomHex(8));},
+                      narrativeFn:function(){return ccy+' sold for outgoing foreign exchange conversion';} },
+                    { weight:10, dir:'Debit', txType:'Merchant Withdrawal', orderPfx:'WDR-', amtRange:[20000,300000],
+                      cpNameFn:function(){return MERCHANT_NAME;},
+                      cpAcctFn:function(){return maskAcct('8800'+(Math.floor(Math.random()*9000000+1000000)));},
+                      narrativeFn:function(){return 'Outgoing SWIFT / TT to external bank account';} },
+                    { weight:8, dir:'Debit', txType:'Payout Disbursement', orderPfx:'PAY-', amtRange:[2000,80000],
+                      cpNameFn:function(){return pickRand(['Shenzhen Apex Electronics','TechVendor Inc','Logistics Partner Co']);},
+                      cpAcctFn:function(){return maskAcct('1122'+(Math.floor(Math.random()*9000000+1000000)));},
+                      narrativeFn:function(r){return 'Fiat payout disbursed to '+r.cpName;} },
+                    { weight:5, dir:'Debit', txType:'Platform Fee', orderPfx:'FEE-', amtRange:[50,600],
+                      cpNameFn:function(){return 'Obita Platform';},
+                      cpAcctFn:function(){return maskAcct('ACC'+randomHex(8));},
+                      narrativeFn:function(){return 'Monthly platform service charge';} },
+                ];
+            }
+        }
+
+        // ── generate per-currency data ─────────────────────────────────────────
+        var ccyDataMap = {};
+        var seqBase = Date.now();
+        var seqOffset = 0;
+
+        vaultCurrencies.forEach(function(ccy) {
+            var scale = fxScaleMap[ccy] || 1;
+            var OPENING = parseFloat(fmtDecimal(pickRand([500000,750000,980000,1250000,1500000]) * scale));
+            var templates = makeTemplates(ccy);
+            var pool = [];
+            templates.forEach(function(t) { for (var w = 0; w < t.weight; w++) pool.push(t); });
+            var dates = genDates();
+
+            var runBal = OPENING;
+            var totalCredit = 0, totalDebit = 0, creditCount = 0, debitCount = 0;
+            var maxBal = runBal, minBal = runBal;
+            var rows = [];
+
+            dates.forEach(function(dt, i) {
+                var tpl = pickRand(pool);
+                var scaledAmt = parseFloat(fmtDecimal(randBetween(tpl.amtRange[0], tpl.amtRange[1]) * scale));
+                var dateTag = dt.getUTCFullYear() + pad(dt.getUTCMonth()+1) + pad(dt.getUTCDate());
+                var seqStr = String(seqBase + seqOffset + i).slice(-6);
+                var txRefNo = 'TXN-' + dateTag + '-' + seqStr;
+                var orderId = tpl.orderPfx + dateTag + '-' + seqStr.slice(0,4);
+                var cpName = tpl.cpNameFn();
+                var rawCpAcct = tpl.cpAcctFn();
+                var narrative = tpl.narrativeFn({ cpName: cpName, ccy: ccy, orderId: orderId });
+                var isCredit = tpl.dir === 'Credit';
+                if (isCredit) { runBal += scaledAmt; totalCredit += scaledAmt; creditCount++; }
+                else { runBal = Math.max(0, runBal - scaledAmt); totalDebit += scaledAmt; debitCount++; }
+                if (runBal > maxBal) maxBal = runBal;
+                if (runBal < minBal) minBal = runBal;
+                rows.push({ dt:dt, txRefNo:txRefNo, orderId:orderId, cpName:cpName, rawCpAcct:rawCpAcct, narrative:narrative, isCredit:isCredit, scaledAmt:scaledAmt, runBal:runBal, txType:tpl.txType });
+            });
+
+            seqOffset += dates.length;
+            ccyDataMap[ccy] = { rows:rows, opening:OPENING, closing:runBal, totalCredit:totalCredit, totalDebit:totalDebit, creditCount:creditCount, debitCount:debitCount, maxBal:maxBal, minBal:minBal };
         });
 
-        const CLOSING_BALANCE = runBal;
+        var generatedAt = fmtDt(new Date());
+        var periodStartDisp = dateFmt(periodStart);
+        var periodEndDisp   = dateFmt(periodEnd);
 
-        // ── statement period display ──────────────────────────────────────────
-        const periodStartDisp = dateFmt(periodStart);
-        const periodEndDisp   = dateFmt(periodEnd);
-        const generatedAt     = fmtDt(new Date());
-
-        // ── build PDF (HTML opened in new tab → Print / Save as PDF) ─────────
-
-        // Supplementary metadata
-        const bankingPartner = {USD:'DBS Bank (USA) N.A.',HKD:'Bank of Communications (HK) Ltd',SGD:'DBS Bank Ltd',EUR:'Banking Circle S.A.',GBP:'Barclays Bank PLC'}[currency] || 'Partner Bank';
-        const networkLabel = currency === 'USDT' ? 'TRC-20 (Tron) / ERC-20 (Ethereum)' : 'ERC-20 (Ethereum)';
-
-        // Inline SVG logo (geometric hexagon mark + wordmark)
-        var logoSVG = '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="36" rx="8" fill="#4F46E5"/><path d="M18 9 L27 14 L27 22 L18 27 L9 22 L9 14 Z" fill="none" stroke="white" stroke-width="2.2" stroke-linejoin="round"/><circle cx="18" cy="18" r="3.2" fill="white"/></svg>';
-
-        // Pre-build transaction rows (string concat to avoid nested template literal issues)
-        var txRowsHTML = txRows.map(function(row, idx) {
-            var txDate  = row[0], txRefNo = row[2], txType = row[4];
-            var orderId = row[6], debit = row[9], credit = row[10], runBal = row[12];
-            var datePart = txDate.substring(0, 10);
-            var timePart = txDate.substring(11, 19);
-            var bg = idx % 2 === 0 ? '#ffffff' : '#FAFAFA';
-            var cAmt = credit ? fmtComma(parseFloat(credit)) : '';
-            var dAmt = debit  ? fmtComma(parseFloat(debit))  : '';
+        // ── build summary table HTML ──────────────────────────────────────────
+        var summaryRowsHTML = vaultCurrencies.map(function(ccy, idx) {
+            var d = ccyDataMap[ccy];
+            var bg = idx % 2 === 0 ? '#FFFFFF' : '#F8FAFF';
+            var net = d.totalCredit - d.totalDebit;
+            var netColor = net >= 0 ? BRAND : '#DC2626';
+            var netSign = net >= 0 ? '+' : '-';
             return '<tr style="background:' + bg + ';border-bottom:0.5pt solid #F1F5F9;">'
-                + '<td style="padding:2mm 3mm;vertical-align:top;"><div style="font-size:7.5pt;font-weight:600;color:#0F172A;white-space:nowrap;">' + datePart + '</div><div style="font-size:6.5pt;color:#94A3B8;white-space:nowrap;">' + timePart + ' UTC</div></td>'
-                + '<td style="padding:2mm 3mm;vertical-align:top;"><div style="font-size:7.5pt;font-weight:600;color:#0F172A;">' + txType + '</div><div style="font-size:6.5pt;color:#64748B;margin-top:0.5mm;">' + orderId + '</div></td>'
-                + '<td style="padding:2mm 3mm;vertical-align:top;font-size:7pt;color:#475569;white-space:nowrap;">' + txRefNo + '</td>'
-                + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:600;color:#059669;white-space:nowrap;">' + cAmt + '</td>'
-                + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:600;color:#DC2626;white-space:nowrap;">' + dAmt + '</td>'
-                + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:700;color:#0F172A;white-space:nowrap;">' + fmtComma(parseFloat(runBal)) + '</td>'
+                + '<td style="padding:2.5mm 3mm;font-size:8pt;font-weight:700;color:#0F172A;">' + ccy + '</td>'
+                + '<td style="padding:2.5mm 3mm;font-size:7.5pt;color:#475569;text-align:right;">' + fmtComma(d.opening) + '</td>'
+                + '<td style="padding:2.5mm 3mm;font-size:7.5pt;font-weight:600;color:' + BRAND + ';text-align:right;">+' + fmtComma(d.totalCredit) + '<div style="font-size:6pt;color:#94A3B8;font-weight:400;">' + d.creditCount + ' txns</div></td>'
+                + '<td style="padding:2.5mm 3mm;font-size:7.5pt;font-weight:600;color:#64748B;text-align:right;">-' + fmtComma(d.totalDebit) + '<div style="font-size:6pt;color:#94A3B8;font-weight:400;">' + d.debitCount + ' txns</div></td>'
+                + '<td style="padding:2.5mm 3mm;font-size:8pt;font-weight:800;color:#0F172A;text-align:right;">' + fmtComma(d.closing) + '</td>'
+                + '<td style="padding:2.5mm 3mm;font-size:7.5pt;font-weight:600;color:' + netColor + ';text-align:right;">' + netSign + fmtComma(Math.abs(net)) + '</td>'
                 + '</tr>';
         }).join('');
 
-        // Pre-build transaction type glossary
-        var txTypeDefs = [
-            ['Collection Receipt',    'Funds credited to the vault upon settlement of a Collection order (Checkout or Invoice).'],
-            ['Payout Disbursement',   'Funds debited from the vault upon execution of a Payout order to a beneficiary.'],
-            ['FX Conversion Received','Funds credited to the vault as the target currency of a foreign exchange conversion.'],
-            ['FX Conversion Sold',    'Funds debited from the vault as the source currency of a foreign exchange conversion.'],
-            ['FX Settlement Credit',  'Settlement funds credited following conversion from a stablecoin or foreign currency balance.'],
-            ['Platform Fee',          'Service charge applied by Obita for use of its payment or conversion services.'],
-            ['Merchant Deposit',      'Funds deposited into the vault directly by the Account Holder.'],
-            ['Merchant Withdrawal',   'Funds withdrawn from the vault to an external account by the Account Holder.'],
-        ];
-        var txTypesHTML = txTypeDefs.map(function(pair) {
-            return '<div style="padding:2.5mm 0;border-bottom:0.5pt solid #F1F5F9;">'
-                + '<div style="font-size:7.5pt;font-weight:700;color:#0F172A;">' + pair[0] + '</div>'
-                + '<div style="font-size:7pt;color:#64748B;margin-top:1mm;line-height:1.5;">' + pair[1] + '</div>'
+        // ── build per-currency activity sections ──────────────────────────────
+        var activityHTML = '';
+        vaultCurrencies.forEach(function(ccy) {
+            var d = ccyDataMap[ccy];
+            var rowsHTML = d.rows.map(function(row, idx) {
+                var datePart = row.dt.toISOString().substring(0, 10);
+                var timePart = row.dt.toISOString().substring(11, 19);
+                var bg = idx % 2 === 0 ? '#FFFFFF' : '#FAFAFA';
+                var cAmt = row.isCredit ? fmtComma(row.scaledAmt) : '';
+                var dAmt = !row.isCredit ? fmtComma(row.scaledAmt) : '';
+                var cpDisp = !row.isCredit ? maskAcct(row.rawCpAcct) : '';
+                var nar = row.narrative || '';
+                return '<tr style="background:' + bg + ';border-bottom:0.5pt solid #F1F5F9;">'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;"><div style="font-size:7.5pt;font-weight:600;color:#0F172A;white-space:nowrap;">' + datePart + '</div><div style="font-size:6.5pt;color:#94A3B8;white-space:nowrap;">' + timePart + ' UTC</div></td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;"><div style="font-size:7.5pt;font-weight:700;color:#0F172A;">' + row.txType + '</div><div style="font-size:6.5pt;color:#64748B;margin-top:0.5mm;">' + row.orderId + '</div>' + (nar ? '<div style="font-size:6.5pt;color:#94A3B8;margin-top:0.5mm;font-style:italic;">' + nar + '</div>' : '') + '</td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;font-size:7pt;color:#475569;white-space:nowrap;">' + row.txRefNo + '</td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;font-size:6.5pt;color:#475569;word-break:break-all;max-width:26mm;">' + cpDisp + '</td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:600;color:' + BRAND + ';white-space:nowrap;">' + cAmt + '</td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:600;color:#64748B;white-space:nowrap;">' + dAmt + '</td>'
+                    + '<td style="padding:2mm 3mm;vertical-align:top;text-align:right;font-size:7.5pt;font-weight:700;color:#0F172A;white-space:nowrap;">' + fmtComma(row.runBal) + '</td>'
+                    + '</tr>';
+            }).join('');
+
+            activityHTML += '<div style="margin:0 14mm 6mm;">'
+                + '<div style="background:#0F172A;padding:2.5mm 5mm;border-radius:2.5mm 2.5mm 0 0;display:flex;align-items:center;justify-content:space-between;">'
+                + '<span style="font-size:8pt;font-weight:700;color:white;text-transform:uppercase;letter-spacing:0.1em;">' + ccy + ' Account Activity</span>'
+                + '<span style="font-size:7pt;color:#94A3B8;">' + d.rows.length + ' transaction' + (d.rows.length !== 1 ? 's' : '') + '</span>'
+                + '</div>'
+                + '<table class="act-t" style="width:100%;border-collapse:collapse;border:0.5pt solid #E2E8F0;border-top:none;">'
+                + '<thead>'
+                + '<tr style="background:#F1F5F9;border-bottom:0.5pt solid #CBD5E1;">'
+                + '<th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:22mm;">Date &amp; Time</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;">Description</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:26mm;">Ref No.</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;width:26mm;">Counterparty</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:' + BRAND + ';white-space:nowrap;width:20mm;">Credit</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:20mm;">Debit</th>'
+                + '<th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:22mm;">Balance</th>'
+                + '</tr>'
+                + '<tr style="background:#F8FAFF;border-bottom:0.5pt solid #E2E8F0;">'
+                + '<td colspan="6" style="padding:2.5mm 3mm;font-size:8pt;font-weight:700;color:#0F172A;">Opening Balance</td>'
+                + '<td style="padding:2.5mm 3mm;text-align:right;font-size:8pt;font-weight:800;color:#0F172A;white-space:nowrap;">' + fmtComma(d.opening) + '</td>'
+                + '</tr>'
+                + '</thead>'
+                + '<tbody>' + rowsHTML + '</tbody>'
+                + '<tfoot>'
+                + '<tr style="background:#F0F7FF;border-top:0.75pt solid #BFDBFE;">'
+                + '<td colspan="6" style="padding:2.5mm 3mm;font-size:8.5pt;font-weight:800;color:#0F172A;">Closing Balance</td>'
+                + '<td style="padding:2.5mm 3mm;text-align:right;font-size:8.5pt;font-weight:800;color:' + BRAND + ';white-space:nowrap;">' + fmtComma(d.closing) + '</td>'
+                + '</tr>'
+                + '</tfoot>'
+                + '</table>'
                 + '</div>';
-        }).join('');
+        });
 
-        // Vault-type specific note for page 2
-        var vaultNote = isStablecoin
-            ? '<p style="margin-top:3mm;">Stablecoin vault balances represent funds held in segregated on-chain custodial wallets. All movements are verifiable on the respective public blockchain (' + (currency === 'USDT' ? 'Tron / Ethereum' : 'Ethereum') + ').</p>'
-            : '<p style="margin-top:3mm;">Fiat currency balances are held in omnibus accounts with Obita\'s licensed banking partner (' + bankingPartner + '). Client funds are fully segregated from Obita\'s operational funds in compliance with applicable MSO regulations.</p>';
+        // ── shared assets ─────────────────────────────────────────────────────
+        var logoSVG = '<svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="36" height="36" rx="8" fill="' + BRAND + '"/><path d="M18 9 L27 14 L27 22 L18 27 L9 22 L9 14 Z" fill="none" stroke="white" stroke-width="2.2" stroke-linejoin="round"/><circle cx="18" cy="18" r="3.2" fill="white"/></svg>';
 
-        // Shared header block (used on both pages)
-        var headerBlock = '<div style="height:4px;background:linear-gradient(90deg,#4F46E5 0%,#7C3AED 55%,#06B6D4 100%);"></div>'
+        var headerBlock = '<div style="height:4px;background:' + BRAND + ';"></div>'
             + '<div style="padding:10mm 14mm 7mm;display:flex;justify-content:space-between;align-items:flex-start;">'
             +   '<div>'
             +     '<div style="display:flex;align-items:center;gap:9px;margin-bottom:4mm;">' + logoSVG + '<span style="font-size:22pt;font-weight:800;color:#0F172A;letter-spacing:-0.03em;font-family:Inter,sans-serif;">Obita</span></div>'
@@ -5005,14 +4995,36 @@ document.addEventListener('DOMContentLoaded', () => {
             + '</div>'
             + '<div style="margin:0 14mm;border-top:0.75pt solid #E2E8F0;"></div>';
 
+        var txTypeDefs = [
+            ['Collection Receipt',     'Funds credited upon settlement of a Collection order (Checkout or Invoice).'],
+            ['Payout Disbursement',    'Funds debited upon execution of a Payout order to a beneficiary.'],
+            ['FX Conversion Received', 'Funds credited as the target currency of a foreign exchange conversion.'],
+            ['FX Conversion Sold',     'Funds debited as the source currency of a foreign exchange conversion.'],
+            ['FX Settlement Credit',   'Settlement funds credited following stablecoin-to-fiat conversion.'],
+            ['Platform Fee',           'Service charge applied by Obita for payment or conversion services.'],
+            ['Merchant Deposit',       'Funds deposited into the vault directly by the Account Holder.'],
+            ['Merchant Withdrawal',    'Funds withdrawn from the vault to an external account by the Account Holder.'],
+        ];
+        var txTypesHTML = txTypeDefs.map(function(pair) {
+            return '<div style="padding:2.5mm 0;border-bottom:0.5pt solid #F1F5F9;">'
+                + '<div style="font-size:7.5pt;font-weight:700;color:#0F172A;">' + pair[0] + '</div>'
+                + '<div style="font-size:7pt;color:#64748B;margin-top:1mm;line-height:1.5;">' + pair[1] + '</div>'
+                + '</div>';
+        }).join('');
+
+        var vaultNote = isStablecoin
+            ? '<p style="margin-top:3mm;">Stablecoin vault balances represent funds held in segregated on-chain custodial wallets (USDT and USDC). All movements are verifiable on the respective public blockchain networks.</p>'
+            : '<p style="margin-top:3mm;">Fiat currency balances are held in omnibus accounts with Obita\'s licensed banking partners. Client funds are fully segregated from Obita\'s operational funds in compliance with applicable MSO regulations.</p>';
+
+        var vaultCcyList = vaultCurrencies.join(', ');
+
         const fullHTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Obita Account Statement \u2014 ${currency} \u2014 ${dateValue}</title>
+<title>Obita Account Statement \u2014 ${vaultType} \u2014 ${dateValue}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-@page{size:A4;margin:0}
+<style>@page{size:A4;margin:0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;font-size:10pt;color:#1E293B;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .no-print{}
@@ -5023,9 +5035,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 </head>
 <body>
 
-<div class="no-print" style="background:#4F46E5;padding:11px 24px;display:flex;align-items:center;justify-content:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(79,70,229,0.35);">
-  <span style="color:#C7D2FE;font-size:13px;font-weight:500;">Obita Account Statement &mdash; ${currency} &mdash; ${periodStartDisp} to ${periodEndDisp}</span>
-  <button onclick="window.print()" style="background:white;color:#4F46E5;border:none;padding:8px 22px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.12);letter-spacing:-0.01em;">&#x2399;&nbsp; Print / Save as PDF</button>
+<div class="no-print" style="background:${BRAND};padding:11px 24px;display:flex;align-items:center;justify-content:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,114,247,0.30);">
+  <span style="color:#DBEAFE;font-size:13px;font-weight:500;">Obita Account Statement &mdash; ${vaultType} &mdash; ${periodStartDisp} to ${periodEndDisp}</span>
+  <button onclick="window.print()" style="background:white;color:${BRAND};border:none;padding:8px 22px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.12);">&#x2399;&nbsp; Print / Save as PDF</button>
 </div>
 
 <!-- ═══════════════ PAGE 1 ═══════════════ -->
@@ -5045,99 +5057,47 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
       <div style="font-size:6.5pt;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3mm;">Vault Details</div>
       <table style="font-size:7.5pt;color:#475569;line-height:1.75;border-collapse:collapse;width:100%;">
         <tr><td style="font-weight:600;color:#0F172A;padding-right:3mm;white-space:nowrap;">Vault ID:</td><td style="font-size:7pt;word-break:break-all;">${vaultId}</td></tr>
-        <tr><td style="font-weight:600;color:#0F172A;">Currency:</td><td>${currency}</td></tr>
-        <tr><td style="font-weight:600;color:#0F172A;">Type:</td><td>${vaultTypeLabel}</td></tr>
-        <tr><td style="font-weight:600;color:#0F172A;white-space:nowrap;">${isStablecoin ? 'Network:' : 'Partner:'}</td><td style="font-size:7pt;">${isStablecoin ? networkLabel : bankingPartner}</td></tr>
+        <tr><td style="font-weight:600;color:#0F172A;">Type:</td><td>${vaultType}</td></tr>
+        <tr><td style="font-weight:600;color:#0F172A;white-space:nowrap;">Currencies:</td><td style="font-size:7pt;">${vaultCcyList}</td></tr>
       </table>
     </div>
 
-    <div style="padding:4mm 5mm;background:#EEF2FF;border:0.5pt solid #C7D2FE;border-radius:2.5mm;">
+    <div style="padding:4mm 5mm;border:0.5pt solid #BFDBFE;border-left:2.5pt solid ${BRAND};border-radius:2.5mm;background:#EFF6FF;">
       <div style="font-size:6.5pt;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3mm;">Statement Period</div>
       <div style="font-size:9pt;font-weight:800;color:#0F172A;">${periodStartDisp}</div>
-      <div style="font-size:8pt;color:#4F46E5;margin-top:1mm;font-weight:600;">to ${periodEndDisp}</div>
+      <div style="font-size:8pt;color:${BRAND};margin-top:1mm;font-weight:600;">to ${periodEndDisp}</div>
       <div style="font-size:6.5pt;color:#94A3B8;margin-top:3mm;">Generated ${generatedAt}</div>
     </div>
   </div>
 
   <!-- ACCOUNT SUMMARY -->
-  <div style="margin:0 14mm 4mm;">
-    <div style="background:#4F46E5;padding:3mm 5mm;border-radius:2.5mm 2.5mm 0 0;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:8pt;font-weight:700;color:white;text-transform:uppercase;letter-spacing:0.1em;">${currency} Account Summary</span>
-      <span style="font-size:7pt;color:#C7D2FE;">${periodStartDisp} to ${periodEndDisp}</span>
+  <div style="margin:0 14mm 5mm;">
+    <div style="border-left:2.5pt solid ${BRAND};padding:2mm 5mm;margin-bottom:3mm;">
+      <span style="font-size:8.5pt;font-weight:700;color:#0F172A;text-transform:uppercase;letter-spacing:0.05em;">${vaultType} &mdash; Account Summary</span>
+      <span style="font-size:7pt;color:#64748B;margin-left:8mm;">${periodStartDisp} to ${periodEndDisp}</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border:0.5pt solid #E2E8F0;border-top:none;overflow:hidden;border-radius:0 0 2.5mm 2.5mm;">
-
-      <div style="padding:4mm 5mm;border-right:0.5pt solid #E2E8F0;border-bottom:0.5pt solid #E2E8F0;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Opening Balance</div>
-        <div style="font-size:13pt;font-weight:800;color:#0F172A;">${fmtComma(OPENING_BALANCE)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${currency}</div>
-      </div>
-      <div style="padding:4mm 5mm;border-right:0.5pt solid #E2E8F0;border-bottom:0.5pt solid #E2E8F0;background:#F0FDF4;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Total Credits</div>
-        <div style="font-size:13pt;font-weight:800;color:#059669;">+${fmtComma(totalCredit)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${creditCount} transactions</div>
-      </div>
-      <div style="padding:4mm 5mm;border-bottom:0.5pt solid #E2E8F0;background:#EEF2FF;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Closing Balance</div>
-        <div style="font-size:13pt;font-weight:800;color:#4F46E5;">${fmtComma(CLOSING_BALANCE)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${currency}</div>
-      </div>
-
-      <div style="padding:4mm 5mm;border-right:0.5pt solid #E2E8F0;background:#FEF2F2;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Total Debits</div>
-        <div style="font-size:13pt;font-weight:800;color:#DC2626;">-${fmtComma(totalDebit)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${debitCount} transactions</div>
-      </div>
-      <div style="padding:4mm 5mm;border-right:0.5pt solid #E2E8F0;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Highest Balance</div>
-        <div style="font-size:13pt;font-weight:800;color:#0F172A;">${fmtComma(maxBal)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${currency}</div>
-      </div>
-      <div style="padding:4mm 5mm;">
-        <div style="font-size:6.5pt;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2mm;">Lowest Balance</div>
-        <div style="font-size:13pt;font-weight:800;color:#0F172A;">${fmtComma(minBal)}</div>
-        <div style="font-size:7pt;color:#94A3B8;margin-top:1mm;">${currency}</div>
-      </div>
-    </div>
-    <div style="text-align:right;margin-top:2mm;font-size:7pt;color:#94A3B8;">
-      Total: <b style="color:#475569;">${txRows.length}</b> transactions in this period
-    </div>
-  </div>
-
-  <!-- ACTIVITY TABLE -->
-  <div style="margin:0 14mm;">
-    <div style="background:#1E293B;padding:3mm 5mm;border-radius:2.5mm 2.5mm 0 0;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-size:8pt;font-weight:700;color:white;text-transform:uppercase;letter-spacing:0.1em;">${currency} Account Activity</span>
-      <span style="font-size:7pt;color:#94A3B8;">${periodStartDisp} to ${periodEndDisp}</span>
-    </div>
-    <table class="act-t" style="width:100%;border-collapse:collapse;border:0.5pt solid #E2E8F0;border-top:none;">
+    <table style="width:100%;border-collapse:collapse;border:0.5pt solid #E2E8F0;">
       <thead>
-        <tr style="background:#F1F5F9;border-bottom:0.5pt solid #CBD5E1;">
-          <th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:25mm;">Date &amp; Time</th>
-          <th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;">Description</th>
-          <th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:30mm;">Ref No.</th>
-          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#059669;white-space:nowrap;width:22mm;">Credit</th>
-          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#DC2626;white-space:nowrap;width:22mm;">Debit</th>
-          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;white-space:nowrap;width:24mm;">Balance</th>
-        </tr>
-        <tr style="background:#F8FAFF;border-bottom:0.5pt solid #E2E8F0;">
-          <td colspan="5" style="padding:2.5mm 3mm;font-size:8pt;font-weight:700;color:#0F172A;">Opening Balance</td>
-          <td style="padding:2.5mm 3mm;text-align:right;font-size:8pt;font-weight:800;color:#0F172A;white-space:nowrap;">${fmtComma(OPENING_BALANCE)}</td>
+        <tr style="background:#F8FAFF;border-bottom:0.5pt solid #CBD5E1;">
+          <th style="padding:2.5mm 3mm;text-align:left;font-size:7pt;font-weight:700;color:#475569;width:16mm;">Currency</th>
+          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;">Opening Balance</th>
+          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:${BRAND};">Credits</th>
+          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;">Debits</th>
+          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;">Closing Balance</th>
+          <th style="padding:2.5mm 3mm;text-align:right;font-size:7pt;font-weight:700;color:#475569;">Net Movement</th>
         </tr>
       </thead>
-      <tbody>${txRowsHTML}</tbody>
-      <tfoot>
-        <tr style="background:#EEF2FF;border-top:0.75pt solid #C7D2FE;">
-          <td colspan="5" style="padding:2.5mm 3mm;font-size:8.5pt;font-weight:800;color:#0F172A;">Closing Balance</td>
-          <td style="padding:2.5mm 3mm;text-align:right;font-size:8.5pt;font-weight:800;color:#4F46E5;white-space:nowrap;">${fmtComma(CLOSING_BALANCE)}</td>
-        </tr>
-      </tfoot>
+      <tbody>${summaryRowsHTML}</tbody>
     </table>
+    <div style="text-align:right;margin-top:2mm;font-size:7pt;color:#94A3B8;">All amounts in respective currency</div>
   </div>
+
+  <!-- PER-CURRENCY ACTIVITY -->
+  ${activityHTML}
 
   <!-- PAGE 1 FOOTER -->
   <div style="margin:4mm 14mm 8mm;padding-top:3mm;border-top:0.5pt solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:6.5pt;color:#94A3B8;">Obita Financial Technologies Limited &middot; MSO No. 26-10-03847 &middot; All amounts in ${currency} unless stated otherwise</div>
+    <div style="font-size:6.5pt;color:#94A3B8;">Obita Financial Technologies Limited &middot; MSO No. 26-10-03847 &middot; All amounts in respective currency unless stated otherwise</div>
     <div style="font-size:6.5pt;color:#94A3B8;">Page 1</div>
   </div>
 </div>
@@ -5148,10 +5108,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
   <!-- IMPORTANT INFORMATION -->
   <div style="margin:5mm 14mm;">
-    <div style="background:#F1F5F9;padding:3mm 5mm;border-radius:2mm 2mm 0 0;border:0.5pt solid #E2E8F0;">
+    <div style="border-left:2.5pt solid ${BRAND};padding:2mm 5mm;margin-bottom:3mm;">
       <span style="font-size:8pt;font-weight:700;color:#0F172A;">Important Information</span>
     </div>
-    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-top:none;border-radius:0 0 2mm 2mm;font-size:8pt;color:#475569;line-height:1.75;">
+    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-radius:2mm;font-size:8pt;color:#475569;line-height:1.75;">
       <p>Obita Financial Technologies Limited is licensed as a Money Service Operator by the Hong Kong Customs &amp; Excise Department (MSO Licence No. 26-10-03847).</p>
       <p style="margin-top:3mm;">All balances and account activities in this statement are recorded in Coordinated Universal Time (UTC).</p>
     </div>
@@ -5159,28 +5119,28 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
   <!-- ACCOUNT DETAILS -->
   <div style="margin:4mm 14mm;">
-    <div style="background:#F1F5F9;padding:3mm 5mm;border-radius:2mm 2mm 0 0;border:0.5pt solid #E2E8F0;">
+    <div style="border-left:2.5pt solid ${BRAND};padding:2mm 5mm;margin-bottom:3mm;">
       <span style="font-size:8pt;font-weight:700;color:#0F172A;">Account Details</span>
     </div>
-    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-top:none;border-radius:0 0 2mm 2mm;font-size:8pt;color:#475569;line-height:1.75;">
-      <p>This Account Statement covers all transaction activity associated with the Account Holder&rsquo;s Obita ${currency} Asset Vault for the indicated statement period. The Account Holder may maintain multiple vaults across different currencies, each of which has its own separate statement.</p>
+    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-radius:2mm;font-size:8pt;color:#475569;line-height:1.75;">
+      <p>This Account Statement covers all transaction activity within the Account Holder&rsquo;s Obita ${vaultType} for the indicated period. The Account Holder may maintain a separate Stablecoin Vault and Fiat Vault, each covered by its own statement.</p>
       ${vaultNote}
-      <p style="margin-top:3mm;">The Running Balance column reflects the vault balance after each individual transaction in chronological order. Opening and Closing Balances represent the vault balance at the start and end of the statement period respectively.</p>
+      <p style="margin-top:3mm;">The Balance column reflects the per-currency running balance after each transaction. Opening and Closing Balances represent the balance at the start and end of the statement period for each currency respectively.</p>
     </div>
   </div>
 
   <!-- TRANSACTION TYPES -->
   <div style="margin:4mm 14mm;">
-    <div style="background:#F1F5F9;padding:3mm 5mm;border-radius:2mm 2mm 0 0;border:0.5pt solid #E2E8F0;">
+    <div style="border-left:2.5pt solid ${BRAND};padding:2mm 5mm;margin-bottom:3mm;">
       <span style="font-size:8pt;font-weight:700;color:#0F172A;">Transaction Types</span>
     </div>
-    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-top:none;border-radius:0 0 2mm 2mm;display:grid;grid-template-columns:1fr 1fr;gap:1mm 8mm;">
+    <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-radius:2mm;display:grid;grid-template-columns:1fr 1fr;gap:1mm 8mm;">
       ${txTypesHTML}
     </div>
   </div>
 
   <!-- DISCLAIMER -->
-  <div style="margin:4mm 14mm;padding:4mm 5mm;background:#FFFBEB;border:0.5pt solid #FDE68A;border-radius:2mm;font-size:7.5pt;color:#92400E;line-height:1.65;">
+  <div style="margin:4mm 14mm;padding:4mm 5mm;background:#EFF6FF;border:0.5pt solid #BFDBFE;border-left:2.5pt solid ${BRAND};border-radius:2mm;font-size:7.5pt;color:#1E40AF;line-height:1.65;">
     <b>Disclaimer:</b> This statement is generated for informational purposes and reflects transaction activity recorded within Obita&rsquo;s platform. This document is computer-generated and is valid without signature. For queries or discrepancies, please contact Obita Support at <b>support@obita.com</b> or call <b>+852 3900 8800</b>.
   </div>
 
@@ -5201,8 +5161,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         setTimeout(function() { URL.revokeObjectURL(htmlUrl); }, 120000);
 
         // ── record + toast ────────────────────────────────────────────────────
-        var fileName = 'account_statement_' + ccySlug + '_' + reportType + '_' + MERCHANT_ID + '_' + dateValue + '.pdf';
-        addReportRecord('Account Statement \u2014 ' + currency, fileName, dateValue);
+        var slugType = isStablecoin ? 'stablecoin' : 'fiat';
+        var fileName = 'account_statement_' + slugType + '_vault_' + reportType + '_' + MERCHANT_ID + '_' + dateValue + '.pdf';
+        addReportRecord('Account Statement \u2014 ' + vaultType, fileName, dateValue);
 
         var toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
@@ -9263,7 +9224,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             {
                 title: 'Account statement',
                 badge: 'Asset Vaults',
-                description: 'An official statement for a given currency, providing a transaction history and key financial information such as minimum and maximum balance.',
+                description: 'An official vault statement covering all currencies within a Stablecoin Vault or Fiat Vault, with per-currency transaction history and financial summary.',
                 icon: 'file-text',
                 iconBg: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
                 iconColor: '#94A3B8',
@@ -9310,8 +9271,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         const hasDate = sel.value !== '';
                         const hasOrderType         = !isRecon      || (sel.orderType    && sel.orderType    !== '');
                         const hasReportSubType     = !isSettlement || (sel.reportSubType && sel.reportSubType !== '');
-                        const hasStatementCurrency = !isStatement  || (sel.currency     && sel.currency     !== '');
-                        const hasValue = hasDate && hasOrderType && hasReportSubType && hasStatementCurrency;
+                        const hasStatementVaultType = !isStatement  || (sel.vaultType && sel.vaultType !== '');
+                        const hasValue = hasDate && hasOrderType && hasReportSubType && hasStatementVaultType;
                         const ORDER_TYPES = ['Collection-Checkout', 'Collection-Invoice', 'Payout', 'Conversion'];
                         return `
                         <div class="card" style="padding: 32px 34px; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
@@ -9359,20 +9320,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; flex-shrink: 0; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
                                 </div>` : `
                                 ${isStatement ? `
-                                <!-- Account Statement currency selector -->
+                                <!-- Account Statement vault type selector -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Currency</span>
-                                    <div style="position: relative; flex: 1;">
-                                        <select onchange="window.setStatementCurrency(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.currency ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.currency ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.currency ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
-                                            <option value="" disabled ${!sel.currency ? 'selected' : ''}>Select currency...</option>
-                                            <optgroup label="Stablecoin">
-                                                ${['USDT','USDC'].map(c => `<option value="${c}" ${sel.currency===c?'selected':''} style="color:#0F172A;">${c}</option>`).join('')}
-                                            </optgroup>
-                                            <optgroup label="Fiat">
-                                                ${['USD','HKD','SGD','EUR','GBP'].map(c => `<option value="${c}" ${sel.currency===c?'selected':''} style="color:#0F172A;">${c}</option>`).join('')}
-                                            </optgroup>
-                                        </select>
-                                        <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.currency ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Vault</span>
+                                    <div style="display: flex; gap: 8px; flex: 1;">
+                                        ${['Stablecoin Vault','Fiat Vault'].map(vt => `
+                                        <button onclick="window.setStatementVaultType('${vt}')" style="flex: 1; padding: 9px 10px; border-radius: 10px; border: 1px solid ${sel.vaultType === vt ? '#0072F7' : '#E2E8F0'}; background: ${sel.vaultType === vt ? '#EFF6FF' : '#FFFFFF'}; color: ${sel.vaultType === vt ? '#0072F7' : '#94A3B8'}; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap;">${vt}</button>
+                                        `).join('')}
                                     </div>
                                 </div>` : ''}
                                 ${isSettlement ? `
