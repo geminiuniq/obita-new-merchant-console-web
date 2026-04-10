@@ -1674,6 +1674,9 @@ document.addEventListener('DOMContentLoaded', () => {
         reconciliation: { type: 'daily', value: '', orderType: '' },
         settlement:     { type: 'daily', value: '', reportSubType: '' }
     };
+    // Records added each time a report is generated; filters for the download table
+    let generatedReportHistory = [];
+    let downloadFilters = { type: 'All', status: 'All' };
     let expandedApprovalActionId = null;
     let activeApprovalDecision = null;
     let membersView = 'list';
@@ -3932,6 +3935,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Business Order Report \u2014 ' + orderType, fileName, dateValue);
 
         const toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
@@ -4131,6 +4135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Settlement Report', fileName, dateValue);
 
         const toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
@@ -4307,6 +4312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Fee Report', fileName, dateValue);
 
         const toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
@@ -4440,6 +4446,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.href = url; a.download = fileName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Fee Summary Report', fileName, dateValue);
 
         const toast = document.createElement('div');
         toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
@@ -4700,6 +4707,7 @@ document.addEventListener('DOMContentLoaded', () => {
         a.click();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 5000);
+        addReportRecord('Balance Activity Report', fileName, dateValue);
 
         // ── toast notification ────────────────────────────────────────────────
         const toast = document.createElement('div');
@@ -8737,6 +8745,16 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     }
 
+    function addReportRecord(typeName, fileName, period) {
+        generatedReportHistory.unshift({ createdOn: new Date(), typeName, fileName, period: period || '' });
+        if (currentPage === 'Report Center') renderReportCenterPage();
+    }
+
+    window.setDownloadFilter = function(key, value) {
+        downloadFilters[key] = value;
+        renderReportCenterPage();
+    };
+
     function renderReportCenterPage() {
         const cards = [
             {
@@ -8882,77 +8900,90 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 <div>
                     <h2 style="font-size: 24px; font-weight: 900; color: #0F172A; margin: 0 0 10px; letter-spacing: -0.02em;">Download generated reports</h2>
-                    <div style="font-size: 14px; color: #64748B; margin-bottom: 28px;">Download your previously generated reports. Reports are available to download for 30 days after generation.</div>
-                    
+                    <div style="font-size: 14px; color: #64748B; margin-bottom: 28px;">Generate a report using the cards above — it will appear here automatically. Records are available for 30 days.</div>
+
                     <div class="card" style="padding: 24px; border-radius: 12px; background: #FFFFFF;">
-                        <div style="display: flex; flex-direction: column; gap: 20px;">
-                            <div style="max-width: 100%; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; background: #F8FAFC; display: flex; align-items: center; gap: 10px;">
-                                <i data-lucide="search" style="width: 16px; height: 16px; color: #94A3B8;"></i>
-                                <input type="text" placeholder="Search by filename" style="width: 100%; border: none; background: transparent; font-size: 14px; outline: none; color: #0F172A;">
-                            </div>
-                            
-                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 280px; position: relative;">
-                                    <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B;"></i>
-                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">2026-03-08</span>
-                                    <span style="color: #CBD5E1; margin: 0 4px;">—</span>
-                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</span>
-                                    <i data-lucide="x" style="width: 14px; height: 14px; color: #94A3B8; cursor: pointer; margin-left: auto;"></i>
-                                </div>
-                                
-                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 110px; cursor: pointer;">
-                                    <i data-lucide="file-text" style="width: 16px; height: 16px; color: #64748B;"></i>
-                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">Type</span>
-                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: #64748B; margin-left: auto;"></i>
-                                </div>
+                        ${(() => {
+                            // ── filter helpers ───────────────────────────────────────────
+                            const TYPE_CATS = ['Balance Activity Report','Business Order Report','Settlement Report','Fee Report','Fee Summary Report'];
+                            function typeCategory(typeName) {
+                                if (typeName.startsWith('Business Order Report')) return 'Business Order Report';
+                                return typeName;
+                            }
+                            const presentCats = new Set(generatedReportHistory.map(r => typeCategory(r.typeName)));
+                            const visibleCats = TYPE_CATS.filter(c => presentCats.has(c));
 
-                                <div style="display: flex; align-items: center; gap: 10px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px 16px; background: #FFFFFF; min-width: 110px; cursor: pointer;">
-                                    <i data-lucide="check-circle" style="width: 16px; height: 16px; color: #64748B;"></i>
-                                    <span style="font-size: 14px; color: #0F172A; font-weight: 500;">Status</span>
-                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: #64748B; margin-left: auto;"></i>
-                                </div>
-                            </div>
-                        </div>
+                            function pillBtn(label, filterKey, value) {
+                                const isActive = downloadFilters[filterKey] === value;
+                                return `<button onclick="window.setDownloadFilter('${filterKey}','${value}')" style="padding: 6px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; ${isActive ? 'background:#4F46E5;color:#FFFFFF;' : 'background:#F1F5F9;color:#64748B;'}">${label}</button>`;
+                            }
 
-                        <div style="margin-top: 32px; overflow-x: auto;">
-                            <table style="width: 100%; border-collapse: collapse; min-width: 1000px;">
-                                <thead>
-                                    <tr style="border-bottom: 2px solid #F1F5F9;">
-                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 160px;">Created On</th>
-                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 220px;">Type</th>
-                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em;">Filename</th>
-                                        <th style="padding: 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 140px;">Status</th>
-                                        <th style="padding: 16px; width: 60px;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+                            // ── filtered records ─────────────────────────────────────────
+                            const filtered = generatedReportHistory.filter(r => {
+                                const typeOk = downloadFilters.type === 'All' || typeCategory(r.typeName) === downloadFilters.type;
+                                const statusOk = downloadFilters.status === 'All' || true; // all Completed
+                                return typeOk && statusOk;
+                            });
+
+                            const filtersUI = generatedReportHistory.length > 0 ? `
+                            <div style="display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap; padding-bottom: 20px; border-bottom: 1px solid #F1F5F9; margin-bottom: 4px;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; padding: 6px 0;">Type</span>
+                                    ${pillBtn('All','type','All')}
+                                    ${visibleCats.map(c => pillBtn(c, 'type', c)).join('')}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                                    <span style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; padding: 6px 0;">Status</span>
+                                    ${pillBtn('All','status','All')}
+                                    ${pillBtn('Completed','status','Completed')}
+                                </div>
+                            </div>` : '';
+
+                            const tableBody = filtered.length === 0 ? `
+                                    <tr><td colspan="6" style="padding: 48px 16px; text-align: center; color: #94A3B8; font-size: 14px; font-weight: 500;">
+                                        ${generatedReportHistory.length === 0 ? 'No reports generated yet. Use the cards above to generate a report.' : 'No records match the selected filters.'}
+                                    </td></tr>` :
+                                filtered.map(rec => {
+                                    const d   = rec.createdOn;
+                                    const now = new Date();
+                                    const isToday = d.toDateString() === now.toDateString();
+                                    const hh  = String(d.getHours()).padStart(2,'0');
+                                    const mm  = String(d.getMinutes()).padStart(2,'0');
+                                    const dateStr = isToday ? `Today, ${hh}:${mm}` : d.toISOString().slice(0,10);
+                                    return `
                                     <tr style="border-bottom: 1px solid #F1F5F9;">
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</td>
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">Account statement</td>
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #475569; font-weight: 500;">Account_Statement_HKD_2025-01-01-2025-12-31.pdf</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500; white-space: nowrap;">${dateStr}</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">${rec.typeName}</td>
+                                        <td style="padding: 18px 16px; font-size: 14px; color: #64748B; font-weight: 500; white-space: nowrap;">${rec.period || '—'}</td>
+                                        <td style="padding: 18px 16px; font-size: 13px; color: #475569; font-weight: 500; word-break: break-all;">${rec.fileName}</td>
                                         <td style="padding: 18px 16px;"><span style="padding: 5px 12px; border-radius: 6px; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 800;">Completed</span></td>
-                                        <td style="padding: 18px 16px; text-align: right;"><button style="background: none; border: none; color: #4F46E5; cursor: pointer; display: inline-flex; align-items: center; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><i data-lucide="download" style="width: 18px; height: 18px;"></i></button></td>
-                                    </tr>
-                                    <tr style="border-bottom: 1px solid #F1F5F9;">
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">2026-04-07</td>
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #0F172A; font-weight: 500;">Balance activity report</td>
-                                        <td style="padding: 18px 16px; font-size: 14px; color: #475569; font-weight: 500;">Balance_Activity_Report_2026-04-07.csv</td>
-                                        <td style="padding: 18px 16px;"><span style="padding: 5px 12px; border-radius: 6px; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 800;">Completed</span></td>
-                                        <td style="padding: 18px 16px; text-align: right;"><button style="background: none; border: none; color: #4F46E5; cursor: pointer; display: inline-flex; align-items: center; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><i data-lucide="download" style="width: 18px; height: 18px;"></i></button></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                        <td style="padding: 18px 16px; text-align: right;"><button onclick="alert('File was already downloaded to your device. Re-generate the report to download again.')" title="Downloaded" style="background:none;border:none;color:#4F46E5;cursor:pointer;display:inline-flex;align-items:center;transition:transform 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><i data-lucide="download" style="width:18px;height:18px;"></i></button></td>
+                                    </tr>`;
+                                }).join('');
 
-                        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevrons-left" style="width: 16px; height: 16px;"></i></button>
-                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i></button>
-                                <button style="width: 32px; height: 32px; border-radius: 6px; background: #F1F5F9; color: #0F172A; font-size: 13px; font-weight: 800; border: none;">1</button>
-                                <button style="width: 32px; height: 32px; border-radius: 6px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #CBD5E1; cursor: not-allowed;"><i data-lucide="chevron-right" style="width: 16px; height: 16px;"></i></button>
+                            return `
+                            ${filtersUI}
+                            <div style="margin-top: 20px; overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #F1F5F9;">
+                                            <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 150px;">Created On</th>
+                                            <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 240px;">Report Type</th>
+                                            <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 110px;">Period</th>
+                                            <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em;">Filename</th>
+                                            <th style="padding: 14px 16px; text-align: left; font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.1em; width: 120px;">Status</th>
+                                            <th style="padding: 14px 16px; width: 50px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${tableBody}</tbody>
+                                </table>
                             </div>
-                            <div style="font-size: 13px; color: #64748B; font-weight: 500;">1-2 of 2</div>
-                        </div>
+                            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: flex-end;">
+                                <div style="font-size: 13px; color: #64748B; font-weight: 500;">
+                                    ${filtered.length} of ${generatedReportHistory.length} record${generatedReportHistory.length !== 1 ? 's' : ''}
+                                </div>
+                            </div>`;
+                        })()}
                     </div>
                 </div>
             </div>
