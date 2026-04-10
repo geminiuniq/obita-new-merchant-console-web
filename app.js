@@ -1672,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
         balance:        { type: 'daily', value: '' },
         statement:      { type: 'daily', value: '' },
         reconciliation: { type: 'daily', value: '', orderType: '' },
-        settlement:     { type: 'daily', value: '' }
+        settlement:     { type: 'daily', value: '', reportSubType: '' }
     };
     let expandedApprovalActionId = null;
     let activeApprovalDecision = null;
@@ -3205,12 +3205,26 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReportCenterPage();
     };
 
+    window.setSettlementReportType = function(subType) {
+        if (reportCardSelections.settlement) {
+            reportCardSelections.settlement.reportSubType = subType;
+        }
+        renderReportCenterPage();
+    };
+
     window.generateReport = function(action, type, value) {
         if (action === 'balance') {
             window.generateBalanceActivityCSV(type, value);
         } else if (action === 'reconciliation') {
             const orderType = reportCardSelections.reconciliation.orderType;
             window.generateOrderReconciliationCSV(type, value, orderType);
+        } else if (action === 'settlement') {
+            const subType = reportCardSelections.settlement.reportSubType;
+            if (subType === 'Settlement Report') {
+                window.generateSettlementReportCSV(type, value);
+            } else {
+                window.openReportCenterReport(action);
+            }
         } else {
             window.openReportCenterReport(action);
         }
@@ -3908,6 +3922,205 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const typeSlug = orderType.toLowerCase().replace(/[^a-z0-9]+/g, '_');
         const fileName = `order_reconciliation_${typeSlug}_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
+        const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;bottom:32px;right:32px;background:#0F172A;color:#FFFFFF;padding:14px 22px;border-radius:12px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 24px rgba(15,23,42,0.18);';
+        toast.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + fileName;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.style.opacity='0'; toast.style.transition='opacity 0.3s'; setTimeout(()=>toast.remove(),300); }, 4000);
+    };
+
+    window.generateSettlementReportCSV = function(reportType, dateValue) {
+        const MERCHANT_ID = 'MCH-20240801-0012';
+
+        function fmtDt(d) { return d.toISOString().replace('T',' ').slice(0,19)+' UTC'; }
+        function fmtDecimal(n) { return n.toFixed(2); }
+        function fmtRate(n) { return n.toFixed(6); }
+        function randBetween(a, b) { return Math.random()*(b-a)+a; }
+        function pickRand(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+        function pad(n) { return String(n).padStart(2,'0'); }
+        function csvEscape(v) { const s=String(v); return s.includes(',')||s.includes('"')||s.includes('\n') ? '"'+s.replace(/"/g,'""')+'"' : s; }
+        function vaultName(ccy) { return ['USDT','USDC'].includes(ccy) ? `Stablecoin Vault (${ccy})` : `Fiat Vault (${ccy})`; }
+        function onChainHash() { return '0x'+[...Array(64)].map(()=>Math.floor(Math.random()*16).toString(16)).join(''); }
+        function bankRef() { return 'REF'+Math.floor(Math.random()*9000000+1000000); }
+
+        // ── date range ──────────────────────────────────────────────────────────
+        let dates = [];
+        if (reportType === 'daily') {
+            const [y, m, d] = dateValue.split('-').map(Number);
+            for (let h = 0; h < 24; h += 3) {
+                dates.push(new Date(Date.UTC(y, m-1, d, h, Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+            }
+        } else {
+            const [y, m] = dateValue.split('-').map(Number);
+            const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const n = Math.floor(randBetween(1, 4));
+                for (let t = 0; t < n; t++) {
+                    dates.push(new Date(Date.UTC(y, m-1, day, Math.floor(Math.random()*23), Math.floor(Math.random()*59), Math.floor(Math.random()*59))));
+                }
+            }
+            dates.sort((a,b)=>a-b);
+        }
+
+        // ── settlement templates ────────────────────────────────────────────────
+        const statusPool = ['Completed','Completed','Completed','Completed','Processing','Pending','Failed','Reversed'];
+        const reconPool  = ['Matched','Matched','Matched','Unmatched','Pending'];
+        const failReasons = ['Insufficient funds','Compliance hold','Bank rejection','System error','Expired settlement window'];
+        const convPairs = [
+            { src:'USDT', tgt:'USD',  rate:()=>0.999+Math.random()*0.002 },
+            { src:'USD',  tgt:'HKD',  rate:()=>7.78+Math.random()*0.04  },
+            { src:'HKD',  tgt:'USD',  rate:()=>0.128+Math.random()*0.001 },
+            { src:'USDT', tgt:'HKD',  rate:()=>7.77+Math.random()*0.05  },
+            { src:'USDC', tgt:'USD',  rate:()=>0.999+Math.random()*0.002 },
+            { src:'USD',  tgt:'USDT', rate:()=>0.999+Math.random()*0.002 },
+        ];
+        const tpls = [
+            { settlType:'Collection',  dir:'Inflow',  ccys:['USDT','USDC'],      feeRate:0.005, relBizTypes:['Collection-Checkout','Collection-Invoice'], relPfxs:['CKO-','INV-'], hasBatch:false, hasConv:false },
+            { settlType:'Collection',  dir:'Inflow',  ccys:['USDT','USDC'],      feeRate:0.005, relBizTypes:['Collection-Checkout','Collection-Invoice'], relPfxs:['CKO-','INV-'], hasBatch:false, hasConv:false },
+            { settlType:'Payout',      dir:'Outflow', ccys:['USDT','USDC','USD','HKD'], feeRate:0.003, relBizTypes:['Payout'], relPfxs:['PO-'], hasBatch:true, hasConv:false },
+            { settlType:'Conversion',  dir:null,      ccys:null,                 feeRate:0.002, relBizTypes:['Conversion'], relPfxs:['CVT-'], hasBatch:false, hasConv:true  },
+            { settlType:'Top-Up',      dir:'Inflow',  ccys:['USD','HKD'],        feeRate:0,     relBizTypes:[], relPfxs:['TOP-'], hasBatch:false, hasConv:false },
+            { settlType:'Transfer',    dir:null,      ccys:['USD','HKD','USDT'], feeRate:0.001, relBizTypes:[], relPfxs:['TRF-'], hasBatch:false, hasConv:false },
+            { settlType:'Adjustment',  dir:null,      ccys:['USDT','USD','HKD'], feeRate:0,     relBizTypes:[], relPfxs:[], hasBatch:false, hasConv:false },
+        ];
+        const amtRanges = { Collection:[500,50000], Payout:[1000,30000], Conversion:[1000,100000], 'Top-Up':[5000,200000], Transfer:[2000,100000], Adjustment:[10,2000] };
+
+        const seqBase = Date.now();
+        const rows    = [];
+
+        dates.forEach((dt, i) => {
+            const tpl    = pickRand(tpls);
+            const seqStr = String(seqBase + i).slice(-8);
+            const dateTag= `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}`;
+
+            // ── currency / amounts ────────────────────────────────────────────
+            let settlCcy, srcCcy, srcAmt, exchRate, convId;
+            if (tpl.hasConv) {
+                const pair  = pickRand(convPairs);
+                srcCcy      = pair.src;
+                settlCcy    = pair.tgt;
+                exchRate    = parseFloat(pair.rate().toFixed(6));
+                srcAmt      = parseFloat(fmtDecimal(randBetween(...amtRanges['Conversion'])));
+                convId      = 'CVT-' + dateTag + '-' + seqStr.slice(0,6);
+            } else {
+                settlCcy = pickRand(tpl.ccys);
+                srcCcy   = ''; srcAmt = 0; exchRate = 0; convId = '';
+            }
+            const isStable  = ['USDT','USDC'].includes(settlCcy);
+            const [lo, hi]  = amtRanges[tpl.settlType] || [100, 10000];
+            const grossAmt  = tpl.hasConv ? parseFloat(fmtDecimal(srcAmt * exchRate)) : parseFloat(fmtDecimal(randBetween(lo, hi)));
+            const fee       = tpl.feeRate > 0 ? parseFloat(fmtDecimal(grossAmt * tpl.feeRate)) : 0;
+            const netAmt    = parseFloat(fmtDecimal(grossAmt - fee));
+            const dir       = tpl.dir || (Math.random() < 0.5 ? 'Inflow' : 'Outflow');
+
+            // ── status / timing ───────────────────────────────────────────────
+            const status      = pickRand(statusPool);
+            const completedAt = (status === 'Completed' || status === 'Reversed')
+                ? new Date(dt.getTime() + Math.floor(randBetween(30, 180)) * 60000)
+                : null;
+
+            // ── IDs ───────────────────────────────────────────────────────────
+            const settlId   = 'STL-' + dateTag + '-' + seqStr.slice(0,6);
+            const txId      = status === 'Completed' ? 'TX-'  + seqStr : '';
+            const movId     = status === 'Completed' ? 'MOV-' + dateTag + '-' + seqStr.slice(0,6) : '';
+            const batchId   = tpl.hasBatch ? 'BATCH-' + dateTag + '-' + seqStr.slice(0,4) : '';
+            const relBizType = tpl.relBizTypes.length ? pickRand(tpl.relBizTypes) : '';
+            const relPfx    = tpl.relPfxs.length ? tpl.relPfxs[tpl.relBizTypes.indexOf(relBizType)] || tpl.relPfxs[0] : '';
+            const relOrderId = relPfx ? relPfx + dateTag + '-' + seqStr.slice(0,6) : '';
+            const txHash    = status === 'Completed'
+                ? (isStable || (tpl.hasConv && ['USDT','USDC'].includes(srcCcy)) ? onChainHash() : bankRef())
+                : '';
+            const failReason = status === 'Failed' ? pickRand(failReasons) : '';
+            const reconStatus = status === 'Completed' ? pickRand(reconPool) : 'Pending';
+
+            // ── from / to accounts ────────────────────────────────────────────
+            const fromAcct = dir === 'Inflow'
+                ? (isStable ? 'External Wallet' : 'External Bank Account')
+                : vaultName(settlCcy);
+            const toAcct   = dir === 'Inflow'
+                ? vaultName(settlCcy)
+                : (isStable ? 'External Wallet' : 'External Bank Account');
+
+            rows.push([
+                settlId,                                              // 1  Settlement ID
+                MERCHANT_ID,                                          // 2  Merchant ID
+                tpl.settlType,                                        // 3  Settlement Type
+                status,                                               // 4  Settlement Status
+                settlCcy,                                             // 5  Settlement Currency
+                fmtDecimal(grossAmt),                                 // 6  Gross Amount
+                fee > 0 ? fmtDecimal(fee) : '',                       // 7  Total Fee
+                fee > 0 ? settlCcy : '',                              // 8  Fee Currency
+                fmtDecimal(netAmt),                                   // 9  Net Amount
+                dir,                                                  // 10 Direction
+                fmtDt(dt),                                            // 11 Settlement Created Time
+                completedAt ? fmtDt(completedAt) : '',                // 12 Settlement Completed Time
+                relBizType,                                           // 13 Related Business Type
+                relOrderId,                                           // 14 Related Order ID
+                srcCcy,                                               // 15 Source Currency
+                srcAmt > 0 ? fmtDecimal(srcAmt) : '',                 // 16 Source Amount
+                exchRate > 0 ? fmtRate(exchRate) : '',                // 17 Exchange Rate
+                convId,                                               // 18 Conversion ID
+                fromAcct,                                             // 19 From Account
+                toAcct,                                               // 20 To Account
+                txId,                                                 // 21 Transaction ID
+                movId,                                                 // 22 Movement ID
+                txHash,                                               // 23 Tx Hash / Reference
+                batchId,                                              // 24 Batch ID
+                reconStatus,                                          // 25 Reconciliation Status
+                failReason,                                           // 26 Failure Reason
+                '',                                                   // 27 Notes
+            ]);
+        });
+
+        // ── headers ─────────────────────────────────────────────────────────────
+        const headers = [
+            'Settlement ID', 'Merchant ID', 'Settlement Type', 'Settlement Status',
+            'Settlement Currency', 'Gross Amount', 'Total Fee', 'Fee Currency', 'Net Amount',
+            'Direction', 'Settlement Created Time', 'Settlement Completed Time',
+            'Related Business Type', 'Related Order ID',
+            'Source Currency', 'Source Amount', 'Exchange Rate', 'Conversion ID',
+            'From Account', 'To Account',
+            'Transaction ID', 'Movement ID', 'Tx Hash / Reference',
+            'Batch ID', 'Reconciliation Status', 'Failure Reason', 'Notes'
+        ];
+
+        // ── period ───────────────────────────────────────────────────────────────
+        let periodStart, periodEnd;
+        if (reportType === 'daily') {
+            const [y,m,d] = dateValue.split('-').map(Number);
+            periodStart = fmtDt(new Date(Date.UTC(y,m-1,d,0,0,0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y,m-1,d,23,59,59)));
+        } else {
+            const [y,m] = dateValue.split('-').map(Number);
+            const lastDay = new Date(Date.UTC(y,m,0)).getUTCDate();
+            periodStart = fmtDt(new Date(Date.UTC(y,m-1,1,0,0,0)));
+            periodEnd   = fmtDt(new Date(Date.UTC(y,m-1,lastDay,23,59,59)));
+        }
+
+        function metaRow(label, value) { return csvEscape(label)+','+csvEscape(value); }
+        const metaLines = [
+            metaRow('Report Name',            'Settlement Report'),
+            metaRow('Merchant ID',            MERCHANT_ID),
+            metaRow('Merchant Name',          currentMerchantName),
+            metaRow('Statement Period Start', periodStart),
+            metaRow('Statement Period End',   periodEnd),
+            metaRow('Generated At',           fmtDt(new Date())),
+        ];
+
+        const csvLines = [
+            ...metaLines, '', '',
+            headers.map(csvEscape).join(','),
+            ...rows.map(r => r.map(csvEscape).join(',')),
+        ];
+
+        const fileName = `settlement_report_${reportType}_${MERCHANT_ID}_${dateValue}.csv`;
         const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -8257,7 +8470,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${cards.map(card => {
                         const sel = reportCardSelections[card.action];
                         const isDaily = sel.type === 'daily';
-                        const isRecon = card.action === 'reconciliation';
+                        const isRecon      = card.action === 'reconciliation';
+                        const isSettlement = card.action === 'settlement';
                         // Daily: max = yesterday
                         const today = new Date();
                         const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
@@ -8268,8 +8482,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         const maxMonth = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth()+1).padStart(2,'0')}`;
                         const minMonth = `${sixMonthsAgo.getFullYear()}-${String(sixMonthsAgo.getMonth()+1).padStart(2,'0')}`;
                         const hasDate = sel.value !== '';
-                        const hasOrderType = !isRecon || (sel.orderType && sel.orderType !== '');
-                        const hasValue = hasDate && hasOrderType;
+                        const hasOrderType    = !isRecon      || (sel.orderType    && sel.orderType    !== '');
+                        const hasReportSubType = !isSettlement || (sel.reportSubType && sel.reportSubType !== '');
+                        const hasValue = hasDate && hasOrderType && hasReportSubType;
                         const ORDER_TYPES = ['Collection-Checkout', 'Collection-Invoice', 'Payout', 'Conversion'];
                         return `
                         <div class="card" style="padding: 32px 34px; min-height: 300px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 16px; border: 1px solid #E2E8F0; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);">
@@ -8316,9 +8531,21 @@ document.addEventListener('DOMContentLoaded', () => {
                                     </div>
                                     <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; flex-shrink: 0; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
                                 </div>` : `
+                                ${isSettlement ? `
+                                <!-- Settlement report sub-type selector -->
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Report</span>
+                                    <div style="position: relative; flex: 1;">
+                                        <select onchange="window.setSettlementReportType(this.value)" style="width: 100%; padding: 9px 36px 9px 14px; border: 1px solid ${sel.reportSubType ? '#4F46E5' : '#E2E8F0'}; border-radius: 10px; background: ${sel.reportSubType ? '#EDE9FE' : '#FFFFFF'}; color: ${sel.reportSubType ? '#4F46E5' : '#94A3B8'}; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; appearance: none; -webkit-appearance: none;">
+                                            <option value="" disabled ${!sel.reportSubType ? 'selected' : ''}>Select report type...</option>
+                                            ${['Settlement Report','Fee Report'].map(rt => `<option value="${rt}" ${sel.reportSubType === rt ? 'selected' : ''} style="color: #0F172A;">${rt}</option>`).join('')}
+                                        </select>
+                                        <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.reportSubType ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
+                                    </div>
+                                </div>` : ''}
                                 <!-- 2. Report type toggle -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">报表类型</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; ${isSettlement ? 'width: 76px;' : ''}">报表类型</span>
                                     <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
                                         <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
                                         <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
