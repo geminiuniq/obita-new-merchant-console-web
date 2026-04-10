@@ -3891,7 +3891,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function metaRow(label, value) { return csvEscape(label) + ',' + csvEscape(value); }
         const metaLines = [
-            metaRow('Report Name',            'Order Reconciliation Report'),
+            metaRow('Report Name',            'Business Order Report'),
             metaRow('Merchant ID',            MERCHANT_ID),
             metaRow('Merchant Name',          currentMerchantName),
             metaRow('Order Type',             orderType),
@@ -8232,7 +8232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 action: 'statement'
             },
             {
-                title: 'Order reconciliation report',
+                title: 'Business Order Report',
                 badge: 'Collection, Payout',
                 description: 'Detailed record of pending and settled transactions, including all individual payment attempts within a Payments batch settlement.',
                 icon: 'receipt-text',
@@ -8300,16 +8300,32 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <i data-lucide="chevron-down" style="width: 15px; height: 15px; color: ${sel.orderType ? '#4F46E5' : '#94A3B8'}; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none;"></i>
                                     </div>
                                 </div>` : ''}
+                                ${isRecon ? `
+                                <!-- 2+3. 报表类型 toggle + date picker + Generate (single row for recon) -->
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px; flex-shrink: 0;">
+                                        <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
+                                        <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; background: #FFFFFF; flex: 1; cursor: pointer;">
+                                        <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0;"></i>
+                                        ${isDaily
+                                            ? `<input type="date" id="report-date-${card.action}" value="${sel.value}" max="${maxDay}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasDate ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                            : `<input type="month" id="report-date-${card.action}" value="${sel.value}" min="${minMonth}" max="${maxMonth}" onchange="window.setReportCardValue('${card.action}', this.value)" style="border: none; background: transparent; font-size: 13px; color: ${hasDate ? '#0F172A' : '#94A3B8'}; outline: none; width: 100%; cursor: pointer; font-weight: 500;">`
+                                        }
+                                    </div>
+                                    <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; flex-shrink: 0; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
+                                </div>` : `
                                 <!-- 2. Report type toggle -->
                                 <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; ${isRecon ? 'width: 76px;' : ''}">报表类型</span>
+                                    <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap;">报表类型</span>
                                     <div style="display: flex; background: #F1F5F9; border-radius: 10px; padding: 3px; gap: 2px;">
                                         <button onclick="window.setReportCardType('${card.action}', 'daily')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">日报</button>
                                         <button onclick="window.setReportCardType('${card.action}', 'monthly')" style="padding: 7px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; transition: all 0.15s; ${!isDaily ? 'background: #FFFFFF; color: #4F46E5; box-shadow: 0 1px 4px rgba(15,23,42,0.10);' : 'background: transparent; color: #64748B;'}">月报</button>
                                     </div>
                                 </div>
                                 <!-- 3. Date / Month picker + Generate -->
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; ${isRecon ? 'padding-left: 90px;' : ''}">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                                     <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #E2E8F0; border-radius: 10px; padding: 10px 14px; background: #FFFFFF; flex: 1; cursor: pointer;">
                                         <i data-lucide="calendar" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0;"></i>
                                         ${isDaily
@@ -8318,7 +8334,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
                                     </div>
                                     <button class="btn" onclick="${hasValue ? `window.generateReport('${card.action}', '${sel.type}', '${sel.value}')` : ''}" style="padding: 10px 20px; font-size: 14px; font-weight: 800; white-space: nowrap; ${hasValue ? 'background: #4F46E5; color: #FFFFFF; border-color: #4F46E5; cursor: pointer; opacity: 1;' : 'background: #F1F5F9; color: #94A3B8; border-color: #E2E8F0; cursor: not-allowed; opacity: 0.7;'}">Generate</button>
-                                </div>
+                                </div>`}
                             </div>
                         </div>`;
                     }).join('')}
