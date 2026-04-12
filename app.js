@@ -3008,6 +3008,15 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPayeeListPage();
     };
 
+    window.openPayeeManagementPage = function() {
+        pageTitle.textContent = 'Payee List';
+        payeeListView = 'list';
+        activePayeeId = null;
+        payeeDirectoryMode = 'payeeList';
+        activeExternalContactsUsageFilter = 'payout';
+        renderPayeeListPage();
+    };
+
     window.openNewInvoicePage = function() {
         invoiceOrdersView = 'create';
         activeInvoiceOrderId = null;
@@ -6639,56 +6648,143 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
             <!-- Connected Bank Accounts -->
             <div class="card">
-                <div class="card-header-flex">
+                <div class="card-header-flex" style="margin-bottom: 20px;">
                     <h2 class="card-title" style="margin-bottom: 0;">Connected Bank Accounts</h2>
                     <a href="#" class="view-all-link" onclick="window.openManageBankAccountsDrawer(); return false;">Manage Accounts</a>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 0; margin-top: 16px;">
-                    <!-- Chase: USD -->
-                    <div class="wallet-card" style="border-radius:0; border-left:none; border-right:none; border-top:none; border-bottom: 1px solid var(--clr-border); padding: 16px 0;" onclick="alert('Chase Bank transactions...')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #EFF6FF; border-radius: 8px; border: 1px solid #BFDBFE; flex-shrink: 0;"><i data-lucide="landmark" style="color: #2563EB; width: 18px; height: 18px;"></i></div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Chase Bank — Corporate Account</span>
-                                    <span style="background-color: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">USD</span>
-                                    <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted);">Account: •••• 4821 &nbsp;|&nbsp; Routing: 021000021 &nbsp;|&nbsp; SWIFT: CHASUS33</div>
-                            </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Today</div>
+
+                <!-- Group 1: Obita 开设的账户 -->
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #EFF6FF, #DBEAFE); border: 1px solid #BFDBFE; border-radius: 20px; padding: 3px 10px 3px 6px;">
+                            <i data-lucide="shield-check" style="width: 13px; height: 13px; color: #2563EB;"></i>
+                            <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; letter-spacing: 0.2px;">由 Obita 开设</span>
                         </div>
+                        <span style="font-size: 11px; color: #94A3B8;">平台代开，合规托管</span>
                     </div>
-                    <!-- HSBC: HKD -->
-                    <div class="wallet-card" style="border-radius:0; border-left:none; border-right:none; border-top:none; border-bottom: 1px solid var(--clr-border); padding: 16px 0;" onclick="alert('HSBC transactions...')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #FEF2F2; border-radius: 8px; border: 1px solid #FECACA; flex-shrink: 0;"><i data-lucide="landmark" style="color: #DC2626; width: 18px; height: 18px;"></i></div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">HSBC Hong Kong — Operating</span>
-                                    <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">HKD</span>
-                                    <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Transfer</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted);">Account: •••• 9230 &nbsp;|&nbsp; Bank Code: 004 &nbsp;|&nbsp; SWIFT: HSBCHKHHHKH</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+
+                        <!-- Chase Bank -->
+                        <div onclick="alert('Chase Bank transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
+                            <div style="position: absolute; top: 12px; right: 12px;">
+                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
                             </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Yesterday</div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #1D4ED8, #2563EB); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Chase Bank</div>
+                                    <div style="font-size: 11px; color: #64748B;">Corporate Account</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 4821</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 5px;">
+                                    <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
+                                </div>
+                                <span style="font-size: 10px; color: #94A3B8;">Last used: Today</span>
+                            </div>
                         </div>
+
+                        <!-- HSBC -->
+                        <div onclick="alert('HSBC transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFF5F5); border: 1px solid #FECACA; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(220,38,38,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(220,38,38,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(220,38,38,0.06)'">
+                            <div style="position: absolute; top: 12px; right: 12px;">
+                                <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B91C1C, #DC2626); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,38,38,0.3);">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">HSBC Hong Kong</div>
+                                    <div style="font-size: 11px; color: #64748B;">Operating Account</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 9230</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 5px;">
+                                    <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">HKD</span>
+                                </div>
+                                <span style="font-size: 10px; color: #94A3B8;">Last used: Yesterday</span>
+                            </div>
+                        </div>
+
+                        <!-- Deutsche Bank -->
+                        <div onclick="alert('Deutsche Bank transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
+                            <div style="position: absolute; top: 12px; right: 12px;">
+                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Deutsche Bank</div>
+                                    <div style="font-size: 11px; color: #64748B;">Euro Settlement</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">IBAN DE89 •••• •••• 0130</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 5px;">
+                                    <span style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">EUR</span>
+                                    <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
+                                </div>
+                                <span style="font-size: 10px; color: #94A3B8;">Last used: Oct 23</span>
+                            </div>
+                        </div>
+
                     </div>
-                    <!-- Deutsche: EUR + USD -->
-                    <div class="wallet-card" style="border-radius:0; border-left:none; border-right:none; border-top:none; border-bottom: none; padding: 16px 0;" onclick="alert('Deutsche Bank transactions...')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #F5F3FF; border-radius: 8px; border: 1px solid #DDD6FE; flex-shrink: 0;"><i data-lucide="landmark" style="color: #7C3AED; width: 18px; height: 18px;"></i></div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Deutsche Bank — Euro Settlement</span>
-                                    <span style="background-color: #EDE9FE; color: #7C3AED; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">EUR</span>
-                                    <span style="background-color: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">USD</span>
-                                    <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted);">IBAN: DE89 3704 0044 0532 0130 00 &nbsp;|&nbsp; SWIFT: DEUTDEDB</div>
-                            </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Oct 23</div>
+                </div>
+
+                <!-- Divider -->
+                <div style="height: 1px; background: var(--clr-border); margin-bottom: 20px;"></div>
+
+                <!-- Group 2: 客户自行绑定 -->
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 6px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 20px; padding: 3px 10px 3px 6px;">
+                            <i data-lucide="link" style="width: 12px; height: 12px; color: #64748B;"></i>
+                            <span style="font-size: 11px; font-weight: 600; color: #475569; letter-spacing: 0.2px;">客户自行绑定</span>
                         </div>
+                        <span style="font-size: 11px; color: #94A3B8;">需经 Obita 审核后激活</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+
+                        <!-- Banco Bradesco -->
+                        <div onclick="alert('Banco Bradesco transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
+                            <div style="position: absolute; top: 12px; right: 12px;">
+                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Transfer</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #047857, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Banco Bradesco</div>
+                                    <div style="font-size: 11px; color: #64748B;">BRL Payments</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 7712</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 5px;">
+                                    <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">BRL</span>
+                                </div>
+                                <span style="font-size: 10px; color: #94A3B8;">Last used: Sep 15</span>
+                            </div>
+                        </div>
+
+                        <!-- Add Account card -->
+                        <div onclick="window.openManageBankAccountsDrawer()" style="border: 2px dashed #CBD5E1; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 136px; transition: border-color 0.15s, background 0.15s;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
+                                <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 13px; font-weight: 600; color: #475569;">绑定新账户</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Add Bank Account</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -6888,66 +6984,98 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
             </div>
 
-            <!-- Wallet Management Section -->
+            <!-- Address Book -->
             <div class="card">
-                <div class="card-header-flex">
+                <div class="card-header-flex" style="margin-bottom: 20px;">
                     <h2 class="card-title" style="margin-bottom: 0;">Address Book</h2>
                     <a href="#" class="view-all-link" onclick="window.openManageAddressesDrawer(); return false;">Manage Addresses</a>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 0; margin-top: 16px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
 
-                    <!-- Wallet 1 -->
-                    <div class="wallet-card" style="border-radius: 0; border-left: none; border-right: none; border-top: none; border-bottom: 1px solid var(--clr-border); padding: 16px 0;" onclick="openWalletDrawer('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'Inbound')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #F0FDF4; border-radius: 8px; border: 1px solid #BBF7D0; flex-shrink: 0;">
-                                <i data-lucide="arrow-down-left" style="color: #10B981; width: 18px; height: 18px;"></i>
+                    <!-- Vendor Binance — ERC-20 · Verified · Enabled -->
+                    <div onclick="openWalletDrawer('0xabcdef1234567890abcdef1234567890abcdef12', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
+                        <div style="position: absolute; top: 12px; right: 12px;">
+                            <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #4F46E5, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
+                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
                             </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Kraken Exchange</span>
-                                    <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
-                                    <span style="background-color: #EFF6FF; color: #2563EB; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">TRC-20</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</div>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Vendor Binance</div>
+                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
                             </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Today</div>
+                        </div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</div>
+                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
+                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
+                            </div>
+                            <span style="background: #DCFCE7; color: #16A34A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已启用</span>
                         </div>
                     </div>
 
-                    <!-- Wallet 2 -->
-                    <div class="wallet-card" style="border-radius: 0; border-left: none; border-right: none; border-top: none; border-bottom: 1px solid var(--clr-border); padding: 16px 0;" onclick="openWalletDrawer('0xabcdef1234567890abcdef1234567890abcdef12', 'Outbound')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #FFFBEB; border-radius: 8px; border: 1px solid #FDE68A; flex-shrink: 0;">
-                                <i data-lucide="arrow-up-right" style="color: #F59E0B; width: 18px; height: 18px;"></i>
+                    <!-- OKX Trading — TRC-20 · Verified · Disabled -->
+                    <div onclick="openWalletDrawer('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FAFAFA); border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; opacity: 0.82; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+                        <div style="position: absolute; top: 12px; right: 12px;">
+                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #374151, #6B7280); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
                             </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Vendor Binance</span>
-                                    <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Transfer</span>
-                                    <span style="background-color: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">ERC-20</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</div>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">OKX Trading</div>
+                                <div style="font-size: 11px; color: #64748B;">TRON · TRC-20</div>
                             </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Yesterday</div>
+                        </div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</div>
+                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
+                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
+                            </div>
+                            <span style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已禁用</span>
                         </div>
                     </div>
 
-                    <!-- Wallet 3 -->
-                    <div class="wallet-card" style="border-radius: 0; border-left: none; border-right: none; border-top: none; border-bottom: none; padding: 16px 0;" onclick="openWalletDrawer('0x1234567890abcdef1234567890abcdef12345678', 'Inbound')">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div style="padding: 8px; background-color: #F0FDF4; border-radius: 8px; border: 1px solid #BBF7D0; flex-shrink: 0;">
-                                <i data-lucide="arrow-down-left" style="color: #10B981; width: 18px; height: 18px;"></i>
+                    <!-- New Wallet — ERC-20 · Pending Verification -->
+                    <div onclick="openWalletDrawer('0x1234567890abcdef1234567890abcdef12345678', 'Inbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFFBEB); border: 1px solid #FDE68A; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(245,158,11,0.07);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(245,158,11,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(245,158,11,0.07)'">
+                        <div style="position: absolute; top: 12px; right: 12px;">
+                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B45309, #D97706); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(217,119,6,0.28);">
+                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
                             </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                                    <span style="font-weight: 600; font-size: 14px; color: var(--clr-text-main);">Partner Treasury</span>
-                                    <span style="background-color: #D1FAE5; color: #059669; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">Top Up</span>
-                                    <span style="background-color: #F3F4F6; color: #4B5563; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 4px;">ERC-20</span>
-                                </div>
-                                <div style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</div>
+                            <div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Partner Treasury</div>
+                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
                             </div>
-                            <div style="font-size: 12px; color: var(--clr-text-muted); flex-shrink: 0;">Last used: Oct 23</div>
+                        </div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</div>
+                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <i data-lucide="clock" style="width: 12px; height: 12px; color: #D97706;"></i>
+                                <span style="font-size: 11px; font-weight: 600; color: #D97706;">待验证</span>
+                            </div>
+                            <span style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">待激活</span>
+                        </div>
+                    </div>
+
+                    <!-- Add Address card -->
+                    <div onclick="window.openManageAddressesDrawer()" style="border: 2px dashed #CBD5E1; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 168px; transition: border-color 0.15s, background 0.15s;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 13px; font-weight: 600; color: #475569;">添加新地址</div>
+                            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Add Wallet Address</div>
                         </div>
                     </div>
 
@@ -7094,23 +7222,143 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
             </div>
 
+            <!-- Contracts & Agreements -->
             <div class="card" style="padding: 0; overflow: hidden;">
                 <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 34px; height: 34px; border-radius: 10px; background: #F8FAFC; display: flex; align-items: center; justify-content: center; color: #475569; border: 1px solid #E2E8F0;">
-                        <i data-lucide="file-text" style="width: 16px; height: 16px;"></i>
+                    <div style="width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; border: 1px solid #BFDBFE;">
+                        <i data-lucide="file-check-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
                     </div>
-                    <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Service Agreements & Policies</h3>
+                    <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Contracts & Agreements</h3>
                 </div>
-                <div style="padding: 10px 28px 8px 28px; display: flex; flex-direction: column;">
-                    <div style="padding: 18px 0; display: grid; grid-template-columns: 1.8fr 0.9fr 110px; gap: 20px; align-items: center; border-bottom: 1px solid #F1F5F9;">
-                        <a href="#" style="font-size: 15px; font-weight: 600; color: #2563EB; text-decoration: none;">1. Obita Privacy Policy</a>
-                        <div style="font-size: 13px; color: #64748B;">Signed on: Nov 21, 2025</div>
-                        <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">View</button>
+
+                <!-- Signed Contracts sub-section -->
+                <div style="padding: 20px 28px 0;">
+                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 16px;">
+                        <i data-lucide="pen-line" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                        <span style="font-size: 13px; font-weight: 700; color: #1E293B;">已签署合约</span>
+                        <span style="font-size: 11px; color: #94A3B8; margin-left: 4px;">Signed Contracts</span>
                     </div>
-                    <div style="padding: 18px 0; display: grid; grid-template-columns: 1.8fr 0.9fr 110px; gap: 20px; align-items: center;">
-                        <a href="#" style="font-size: 15px; font-weight: 600; color: #2563EB; text-decoration: none;">2. Obita Enterprise Wallet Service Agreement</a>
-                        <div style="font-size: 13px; color: #64748B;">Signed on: Nov 21, 2025</div>
-                        <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12px;">View</button>
+
+                    <!-- Contract 1 -->
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                                <i data-lucide="scroll-text" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">Obita Platform Services Master Agreement</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">规范使用 Obita 企业资金管理平台、稳定币金库及法币管理服务的主服务协议，涵盖账户开设、资金操作、合规要求及责任条款。</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">签署</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Nov 21, 2025</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">到期</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Nov 20, 2027</span>
+                                </div>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 4px;">Effective</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract 2 -->
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                                <i data-lucide="scroll-text" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">Stablecoin Custody & Settlement Agreement</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">规范稳定币（USDT/USDC）托管、金库操作及链上结算流程的专项协议，包含链上划转授权、网络手续费安排及合规审查条款。</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">签署</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 5, 2025</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">到期</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 4, 2026</span>
+                                </div>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 4px;">Effective</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract 3 — expiring soon, renewal reminder -->
+                    <div style="padding: 16px 0;">
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;">
+                            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                <div style="width: 36px; height: 36px; background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                                    <i data-lucide="scroll-text" style="width: 16px; height: 16px; color: #EA580C;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">FX Conversion Service Addendum</div>
+                                    <div style="font-size: 12px; color: #64748B; line-height: 1.6;">法币金库实时外汇兑换、汇率锁定及多币种结算的补充协议，明确报价窗口时效、点差收费标准及异常情况处理机制。</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
+                                <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 11px; color: #94A3B8;">签署</span>
+                                        <span style="font-size: 12px; font-weight: 600; color: #475569;">Jan 10, 2026</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-size: 11px; color: #94A3B8;">到期</span>
+                                        <span style="font-size: 12px; font-weight: 700; color: #DC2626;">May 9, 2026</span>
+                                    </div>
+                                    <span style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 4px;">即将到期</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Renewal reminder banner -->
+                        <div style="margin-top: 12px; margin-left: 50px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="bell-ring" style="width: 14px; height: 14px; color: #D97706; flex-shrink: 0;"></i>
+                            <div style="flex: 1;">
+                                <span style="font-size: 12px; font-weight: 600; color: #92400E;">续签提醒</span>
+                                <span style="font-size: 12px; color: #78350F; margin-left: 6px;">合约将于 <strong>27 天</strong>后到期，请及时联系 Obita 客户经理安排续签事宜。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div style="height: 1px; background: #E2E8F0; margin: 4px 0;"></div>
+
+                <!-- Service Agreements & Policies sub-section -->
+                <div style="padding: 20px 28px 20px;">
+                    <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 16px;">
+                        <i data-lucide="file-text" style="width: 14px; height: 14px; color: #64748B;"></i>
+                        <span style="font-size: 13px; font-weight: 700; color: #1E293B;">服务条款与政策</span>
+                        <span style="font-size: 11px; color: #94A3B8; margin-left: 4px;">Service Agreements & Policies</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="padding: 13px 0; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; border-bottom: 1px solid #F1F5F9;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; color: #334155;">Obita Privacy Policy</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">用户数据处理、隐私保护及信息安全规范</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 12px; color: #94A3B8; white-space: nowrap;">Accepted Nov 21, 2025</div>
+                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">View</button>
+                            </div>
+                        </div>
+                        <div style="padding: 13px 0; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;">
+                            <div>
+                                <div style="font-size: 13px; font-weight: 600; color: #334155;">Obita Enterprise Wallet Service Agreement</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">企业钱包服务标准条款及用户权责声明</div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <div style="font-size: 12px; color: #94A3B8; white-space: nowrap;">Accepted Nov 21, 2025</div>
+                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px;">View</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -9710,6 +9958,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const activeCount = scopedContacts.filter(p => p.status === 'active').length;
         const pendingCount = scopedContacts.filter(p => p.status === 'pending_collection').length;
         const disabledCount = scopedContacts.filter(p => p.status === 'disabled').length;
+        const payeeCount = isContactManagementMode ? scopedContacts.filter(p => p.directoryType === 'payee').length : 0;
+        const invoicePayerCount = isContactManagementMode ? scopedContacts.filter(p => p.directoryType === 'invoicePayer').length : 0;
 
         contentBody.innerHTML = `
             <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
@@ -9770,16 +10020,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 ` : `
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
                         <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Contacts</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total</div>
                             <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
                         </div>
                         <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payout</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalPayout}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payee</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${payeeCount}</div>
                         </div>
                         <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Collection - Invoice</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalInvoice}</div>
+                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payer for Invoice</div>
+                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${invoicePayerCount}</div>
                         </div>
                     </div>
                 `}
@@ -11839,45 +12089,78 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             return matchesSearch && matchesStatus;
         });
 
+        const payoutPayees = payeeList.filter(p => p.usageScope?.payout);
+        const payoutPayeeSummary = {
+            total: payoutPayees.length,
+            active: payoutPayees.filter(p => p.status === 'active').length,
+            pending: payoutPayees.filter(p => p.status === 'pending_collection').length,
+            lastUpdated: 'Updated Apr 12, 2026'
+        };
+
         const summaryHTML = `
-            <div class="card payouts-summary-card">
-                <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
-                <div class="collection-card-inner">
-                    <div class="collection-header">
-                        <div class="time-selector">
-                            <span class="time-option">1d</span>
-                            <span class="time-option">1w</span>
-                            <span class="time-option active">1m</span>
-                            <span class="time-option">6m</span>
-                            <span class="time-option">1y</span>
+            <div style="display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.95fr); gap: 20px; align-items: stretch;">
+                <div class="card payouts-summary-card" style="margin: 0;">
+                    <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
+                    <div class="collection-card-inner">
+                        <div class="collection-header">
+                            <div class="time-selector">
+                                <span class="time-option">1d</span>
+                                <span class="time-option">1w</span>
+                                <span class="time-option active">1m</span>
+                                <span class="time-option">6m</span>
+                                <span class="time-option">1y</span>
+                            </div>
+                        </div>
+                        <div class="collection-stats-grid">
+                            <div class="c-stat-box">
+                                <span class="c-stat-label">Created Orders</span>
+                                <span class="c-stat-count">350</span>
+                                <span class="c-stat-amount">$2,550,000.00</span>
+                            </div>
+                            <div class="c-stat-box">
+                                <span class="c-stat-label">Successful</span>
+                                <span class="c-stat-count text-success">310</span>
+                                <span class="c-stat-amount text-success">$2,400,000.00</span>
+                            </div>
+                            <div class="c-stat-box">
+                                <span class="c-stat-label">Settled</span>
+                                <span class="c-stat-count" style="color: #3B82F6;">290</span>
+                                <span class="c-stat-amount" style="color: #3B82F6;">$2,250,000.00</span>
+                            </div>
+                            <div class="c-stat-box">
+                                <span class="c-stat-label">In-Transit</span>
+                                <span class="c-stat-count text-warning">25</span>
+                                <span class="c-stat-amount text-warning">$100,000.00</span>
+                            </div>
+                            <div class="c-stat-box">
+                                <span class="c-stat-label">Failed</span>
+                                <span class="c-stat-count text-muted">15</span>
+                                <span class="c-stat-amount text-muted">$50,000.00</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="collection-stats-grid">
-                        <div class="c-stat-box">
-                            <span class="c-stat-label">Created Orders</span>
-                            <span class="c-stat-count">350</span>
-                            <span class="c-stat-amount">$2,550,000.00</span>
+                </div>
+
+                <div class="card" style="margin: 0; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06);">
+                    <div style="min-height: 42px; display: flex; align-items: center;">
+                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Payee List</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Payees</div>
+                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${payoutPayeeSummary.total}</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${payoutPayeeSummary.active} active</div>
                         </div>
-                        <div class="c-stat-box">
-                            <span class="c-stat-label">Successful</span>
-                            <span class="c-stat-count text-success">310</span>
-                            <span class="c-stat-amount text-success">$2,400,000.00</span>
+                        <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Pending Setup</div>
+                                <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${payoutPayeeSummary.pending}</div>
+                            </div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${payoutPayeeSummary.lastUpdated}</div>
                         </div>
-                        <div class="c-stat-box">
-                            <span class="c-stat-label">Settled</span>
-                            <span class="c-stat-count" style="color: #3B82F6;">290</span>
-                            <span class="c-stat-amount" style="color: #3B82F6;">$2,250,000.00</span>
-                        </div>
-                        <div class="c-stat-box">
-                            <span class="c-stat-label">In-Transit</span>
-                            <span class="c-stat-count text-warning">25</span>
-                            <span class="c-stat-amount text-warning">$100,000.00</span>
-                        </div>
-                        <div class="c-stat-box">
-                            <span class="c-stat-label">Failed</span>
-                            <span class="c-stat-count text-muted">15</span>
-                            <span class="c-stat-amount text-muted">$50,000.00</span>
-                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end;">
+                        <button class="btn btn-primary" onclick="window.openPayeeManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Payees</button>
                     </div>
                 </div>
             </div>
@@ -12309,8 +12592,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             contentBody.innerHTML = stablecoinVaultHTML;
         } else if (title === 'Conversion') {
             contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
-                
+            <div class="fade-in" style="display: grid; grid-template-columns: minmax(0, 560px) 260px; gap: 32px; align-items: start; padding-bottom: 40px;">
+
+                <!-- Left: Conversion Form -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+
                 <!-- Step 1: Input -->
                 <div id="pg-cv-step-1">
 
@@ -12457,10 +12743,119 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <button onclick="window.pgCvBackToStep1()" style="min-width: 140px; padding: 14px; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;">OK</button>
                     </div>
                 </div>
+                </div><!-- /form left column -->
 
-                </div>
+                <!-- Right: Market Rates Panel -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
 
-            </div>
+                    <!-- Stablecoin card -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 7px; height: 7px; background: #10B981; border-radius: 50%; box-shadow: 0 0 0 2px rgba(16,185,129,0.2);"></div>
+                                <span style="font-size: 12px; font-weight: 700; color: #1E293B;">Stablecoin Price</span>
+                            </div>
+                            <span style="font-size: 11px; color: #94A3B8;">Updated now</span>
+                        </div>
+                        <!-- USDT -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 9px;">
+                                <div style="width: 28px; height: 28px; background: #26A17B; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; color: white; flex-shrink: 0;">USDT</div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #1E293B;">USDT</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">Tether</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 700; color: #1E293B; font-family: monospace;">1.0001 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USD</span></div>
+                                <div style="font-size: 11px; font-weight: 600; color: #10B981;">▲ 0.01%</div>
+                            </div>
+                        </div>
+                        <!-- USDC -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 0 2px;">
+                            <div style="display: flex; align-items: center; gap: 9px;">
+                                <div style="width: 28px; height: 28px; background: #2775CA; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; color: white; flex-shrink: 0;">USDC</div>
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #1E293B;">USDC</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">USD Coin</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 700; color: #1E293B; font-family: monospace;">1.0003 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USD</span></div>
+                                <div style="font-size: 11px; font-weight: 600; color: #10B981;">▲ 0.03%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FX card -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <div style="width: 7px; height: 7px; background: #10B981; border-radius: 50%; box-shadow: 0 0 0 2px rgba(16,185,129,0.2);"></div>
+                                <span style="font-size: 12px; font-weight: 700; color: #1E293B;">FX Price</span>
+                            </div>
+                            <span style="font-size: 11px; color: #94A3B8;">Updated now</span>
+                        </div>
+                        <!-- USD -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px; line-height: 1;">🇺🇸</span>
+                                <div>
+                                    <div style="font-size: 12px; font-weight: 600; color: #334155;">USD</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">US Dollar</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">1.0001 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                            </div>
+                        </div>
+                        <!-- HKD -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px; line-height: 1;">🇭🇰</span>
+                                <div>
+                                    <div style="font-size: 12px; font-weight: 600; color: #334155;">HKD</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">Hong Kong Dollar</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">7.7860 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                            </div>
+                        </div>
+                        <!-- EUR -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px; line-height: 1;">🇪🇺</span>
+                                <div>
+                                    <div style="font-size: 12px; font-weight: 600; color: #334155;">EUR</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">Euro</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">0.9128 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                            </div>
+                        </div>
+                        <!-- BRL -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0 2px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px; line-height: 1;">🇧🇷</span>
+                                <div>
+                                    <div style="font-size: 12px; font-weight: 600; color: #334155;">BRL</div>
+                                    <div style="font-size: 10px; color: #94A3B8;">Brazilian Real</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">5.7240 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div style="font-size: 11px; color: #94A3B8; line-height: 1.6; padding: 0 2px;">仅供参考，实际汇率以成交时为准。</div>
+
+                </div><!-- /market rates right column -->
+
+            </div><!-- /grid wrapper -->
 
             <!-- Conversion Order List -->
             <div class="card fade-in" style="margin-top: 32px;">
