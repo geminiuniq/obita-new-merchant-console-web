@@ -6826,7 +6826,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <table class="data-table">
                         <thead><tr><th>Time</th><th>Order ID</th><th>Type</th><th>From</th><th>To</th><th class="text-right">Amount</th><th>Status</th></tr></thead>
                         <tbody id="fiat-vault-tx-table-body">
-                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="fv-20261025-0031 top up chase bank 4821 fiat vault 500,000 usd completed" onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="fv-20261025-0031 top up chase bank 4821 fiat vault 500,000 usd completed" onclick="window.openFiatVaultTxDetail('FV-20261025-0031')" style="cursor:pointer;">
                                 <td class="text-muted">Today, 11:30</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261025-0031</td>
                                 <td class="font-medium">Top Up</td>
@@ -6835,7 +6835,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td class="text-right font-medium text-success">+ 500,000.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="fv-20261024-0019 transfer fiat vault hsbc hk 9230 1,200,000 hkd completed" onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="fv-20261024-0019 transfer fiat vault hsbc hk 9230 1,200,000 hkd completed" onclick="window.openFiatVaultTxDetail('FV-20261024-0019')" style="cursor:pointer;">
                                 <td class="text-muted">Yesterday, 15:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261024-0019</td>
                                 <td class="font-medium">Transfer</td>
@@ -6844,8 +6844,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td class="text-right font-medium">- 1,200,000.00 <span class="currency">HKD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2025-10-23" data-type="top-up" data-status="confirming" data-search="fv-20261023-0007 top up deutsche bank 0130 fiat vault 100,000 eur confirming" onclick="alert('Viewing Order Details...')">
-                                <td class="text-muted">Oct 23, 09:05</td>
+                            <tr data-date="2026-04-04" data-type="top-up" data-status="confirming" data-search="fv-20261023-0007 top up deutsche bank 0130 fiat vault 100,000 eur confirming" onclick="window.openFiatVaultTxDetail('FV-20261023-0007')" style="cursor:pointer;">
+                                <td class="text-muted">Apr 4, 09:05</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261023-0007</td>
                                 <td class="font-medium">Top Up</td>
                                 <td style="font-size: 13px; color: var(--clr-text-muted);">Deutsche Bank ••0130</td>
@@ -6853,8 +6853,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td class="text-right font-medium text-success">+ 100,000.00 <span class="currency">EUR</span></td>
                                 <td><span class="status-badge status-warning" style="background-color: #FEF3C7; color: #D97706;">Confirming</span></td>
                             </tr>
-                            <tr data-date="2025-10-22" data-type="convert" data-status="completed" data-search="fv-20261022-0003 convert usd balance brl balance 980,000 brl completed" onclick="alert('Viewing Order Details...')">
-                                <td class="text-muted">Oct 22, 14:00</td>
+                            <tr data-date="2026-04-03" data-type="convert" data-status="completed" data-search="fv-20261022-0003 convert usd balance brl balance 980,000 brl completed" onclick="window.openFiatVaultTxDetail('FV-20261022-0003')" style="cursor:pointer;">
+                                <td class="text-muted">Apr 3, 14:00</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261022-0003</td>
                                 <td class="font-medium">Convert</td>
                                 <td style="font-size: 13px; color: var(--clr-text-muted);">USD Balance</td>
@@ -6872,6 +6872,554 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
         </div>
     `;
+
+    // ── FIAT VAULT TRANSACTION DETAIL ────────────────────────────────────────
+
+    let fiatVaultTxView = 'list';
+    let activeFiatVaultTxId = null;
+
+    const FIAT_VAULT_TX_DETAILS = {
+        'FV-20261025-0031': {
+            type: 'top-up', status: 'completed', currency: 'USD', amount: 500000.00, direction: 'credit',
+            createdAt: 'Apr 6, 2026  11:30:02 (UTC+8)', valueDate: 'Apr 6, 2026', settlementDate: 'Apr 6, 2026',
+            reference: 'REF-CHASE-20260406-0031', externalRef: 'CHASUS33-20260406-084421',
+            narrative: 'Wire Transfer — Operating Funds Q2',
+            remitter: { name: 'Nancy Technology Ltd.', bank: 'JPMorgan Chase Bank, N.A.', accountNo: '••••4821', swift: 'CHASUS33', aba: '021000021', bankAddress: '383 Madison Ave, New York, NY 10179, United States' },
+            beneficiary: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-USD-00192837', iban: 'HK62 0192 8374 6501 0000 01' },
+            processingBank: 'Obita Financial Services Ltd.', grossAmount: 500000.00, fee: 0.00, netAmount: 500000.00,
+            amlStatus: 'Cleared', complianceNote: 'AML screening passed. Remitter KYC verified.',
+            approvalRequired: false,
+            timeline: [
+                { time: 'Apr 6, 2026  09:14 UTC', status: 'Received',   note: 'Inbound wire received from JPMorgan Chase Bank, N.A. via SWIFT MT103.' },
+                { time: 'Apr 6, 2026  09:22 UTC', status: 'Verifying',  note: 'AML / KYC screening and account-matching in progress.' },
+                { time: 'Apr 6, 2026  10:05 UTC', status: 'Cleared',    note: 'Compliance checks passed. Funds cleared for posting.' },
+                { time: 'Apr 6, 2026  11:30 UTC', status: 'Completed',  note: 'USD 500,000.00 credited to Fiat Vault (USD balance). Confirmation sent to merchant.' }
+            ]
+        },
+        'FV-20261024-0019': {
+            type: 'transfer', status: 'completed', currency: 'HKD', amount: 1200000.00, direction: 'debit',
+            createdAt: 'Apr 5, 2026  15:20:44 (UTC+8)', valueDate: 'Apr 5, 2026', settlementDate: 'Apr 5, 2026',
+            reference: 'REF-OB-20260405-0019', externalRef: 'HSBCHKHH-20260405-071544',
+            narrative: 'Vendor Payment — Q1 Settlement',
+            debitAccount: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-HKD-00192838' },
+            beneficiary: { name: 'HSBC Holdings PLC — Treasury Desk', bank: 'HSBC Hong Kong', accountNo: '••••9230', swift: 'HSBCHKHHHKH', bankAddress: '1 Queen\'s Road Central, Hong Kong SAR' },
+            purpose: 'Vendor / Supplier Payment',
+            processingBank: 'Obita Financial Services Ltd.', grossAmount: 1200000.00, fee: 250.00, netDebit: 1200250.00,
+            approvalRequired: true,
+            approvers: [
+                { level: 'L1 Approver', name: 'Alice Wong', role: 'Finance Manager', decision: 'Approved', actedAt: 'Apr 5, 2026  14:52 UTC', comment: 'Verified against vendor invoice #VND-2026-0312.' },
+                { level: 'L2 Approver', name: 'Bob Lee',   role: 'Admin',           decision: 'Approved', actedAt: 'Apr 5, 2026  15:08 UTC', comment: 'Confirmed. Proceed with settlement.' }
+            ],
+            timeline: [
+                { time: 'Apr 5, 2026  14:30 UTC', status: 'Initiated',          note: 'Transfer order created by Nancy Admin.' },
+                { time: 'Apr 5, 2026  14:52 UTC', status: 'Partially Approved', note: 'L1 approval granted by Alice Wong (Finance Manager).' },
+                { time: 'Apr 5, 2026  15:08 UTC', status: 'Approved',           note: 'All approval tiers satisfied. Order submitted to processing queue.' },
+                { time: 'Apr 5, 2026  15:15 UTC', status: 'Processing',         note: 'Outbound wire submitted to HSBC Hong Kong via SWIFT MT103.' },
+                { time: 'Apr 5, 2026  15:20 UTC', status: 'Completed',          note: 'HKD 1,200,000.00 debited. SWIFT debit confirmation (MT910) received.' }
+            ]
+        },
+        'FV-20261023-0007': {
+            type: 'top-up', status: 'confirming', currency: 'EUR', amount: 100000.00, direction: 'credit',
+            createdAt: 'Apr 4, 2026  09:05:11 (UTC+8)', valueDate: 'Apr 4, 2026', settlementDate: 'Pending',
+            reference: 'REF-DB-20260404-0007', externalRef: 'DEUTDEDB-20260404-005511',
+            narrative: 'Capital Injection — EUR Operations Fund',
+            remitter: { name: 'Nancy Technology GmbH', bank: 'Deutsche Bank AG', accountNo: '••••0130', swift: 'DEUTDEDB', iban: 'DE89 3704 0044 0532 0130 00', bankAddress: 'Taunusanlage 12, 60325 Frankfurt am Main, Germany' },
+            beneficiary: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-EUR-00192839', iban: 'HK62 0192 8374 6501 0000 03' },
+            processingBank: 'Obita Financial Services Ltd.', grossAmount: 100000.00, fee: 0.00, netAmount: 100000.00,
+            amlStatus: 'In Progress', complianceNote: 'AML screening in progress. Estimated completion within 2 business hours.',
+            approvalRequired: false,
+            timeline: [
+                { time: 'Apr 4, 2026  08:40 UTC', status: 'Received',    note: 'Inbound SEPA Credit Transfer received from Deutsche Bank AG.' },
+                { time: 'Apr 4, 2026  09:05 UTC', status: 'Confirming',  note: 'AML / KYC screening in progress. Awaiting compliance clearance before crediting.' }
+            ]
+        },
+        'FV-20261022-0003': {
+            type: 'convert', status: 'completed', currency: 'BRL', amount: 980000.00, direction: 'credit',
+            createdAt: 'Apr 3, 2026  14:00:30 (UTC+8)', valueDate: 'Apr 3, 2026', settlementDate: 'Apr 3, 2026',
+            reference: 'REF-CV-20260403-0003', externalRef: 'OBFX-20260403-135822',
+            narrative: 'FX Conversion — BRL Payroll Settlement',
+            fromCurrency: 'USD', fromAmount: 188000.00,
+            toCurrency: 'BRL',   toAmount: 980000.00,
+            fxRate: 5.2128, inverseRate: 0.1918, rateTimestamp: 'Apr 3, 2026  13:58:22 UTC', rateSource: 'Obita FX Engine (Mid-Market Rate)',
+            processingBank: 'Obita Financial Services Ltd.', fee: 376.00, feeNote: '0.20% of source amount (USD 188,000.00)',
+            approvalRequired: false,
+            timeline: [
+                { time: 'Apr 3, 2026  13:58 UTC', status: 'Rate Locked', note: 'FX indicative rate locked at 1 USD = 5.2128 BRL. Rate valid for 60 seconds.' },
+                { time: 'Apr 3, 2026  13:59 UTC', status: 'Processing',  note: 'Conversion order confirmed. USD 188,000.00 debited from Fiat Vault (USD balance).' },
+                { time: 'Apr 3, 2026  14:00 UTC', status: 'Completed',   note: 'BRL 980,000.00 credited to Fiat Vault (BRL balance). Conversion settled at mid-market rate.' }
+            ]
+        }
+    };
+
+    function renderFiatVaultTxDetailPage(txId) {
+        const tx = FIAT_VAULT_TX_DETAILS[txId];
+        if (!tx) { fiatVaultTxView = 'list'; contentBody.innerHTML = fiatVaultHTML; lucide.createIcons(); return; }
+
+        const fmt = (n, c) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (c ? ' ' + c : '');
+
+        const typeLabel = { 'top-up': 'Top Up', 'transfer': 'Transfer', 'convert': 'Convert' }[tx.type];
+        const typeBg    = { 'top-up': '#EFF6FF', 'transfer': '#F5F3FF', 'convert': '#FFF7ED' }[tx.type];
+        const typeColor = { 'top-up': '#1D4ED8', 'transfer': '#7C3AED', 'convert': '#C2410C' }[tx.type];
+        const typeIcon  = { 'top-up': 'arrow-down-to-line', 'transfer': 'arrow-up-from-line', 'convert': 'arrow-left-right' }[tx.type];
+
+        const statusBg    = tx.status === 'completed' ? '#ECFDF5' : tx.status === 'confirming' ? '#FFF7ED' : '#F0F9FF';
+        const statusColor = tx.status === 'completed' ? '#059669'  : tx.status === 'confirming' ? '#D97706'  : '#0284C7';
+        const statusLabel = tx.status === 'completed' ? 'Completed' : tx.status === 'confirming' ? 'Confirming' : 'Processing';
+
+        const amountSign  = tx.direction === 'credit' ? '+' : '−';
+        const amountColor = tx.direction === 'credit' ? '#059669' : '#DC2626';
+        const directionLabel = tx.direction === 'credit' ? 'Inbound' : 'Outbound';
+        const directionBg    = tx.direction === 'credit' ? 'rgba(16,185,129,0.08)' : 'rgba(220,38,38,0.07)';
+        const directionColor = tx.direction === 'credit' ? '#059669' : '#DC2626';
+        const directionIcon  = tx.direction === 'credit' ? 'arrow-down-left' : 'arrow-up-right';
+
+        const amlBadge = tx.amlStatus ? `
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+                <i data-lucide="${tx.amlStatus === 'Cleared' ? 'shield-check' : 'shield-alert'}" style="width:13px;height:13px;color:${tx.amlStatus === 'Cleared' ? '#059669' : '#D97706'};flex-shrink:0;"></i>
+                <span style="font-size:12px;font-weight:600;color:${tx.amlStatus === 'Cleared' ? '#059669' : '#D97706'};">AML / KYC: ${tx.amlStatus}</span>
+                ${tx.complianceNote ? `<span style="font-size:12px;color:#64748B;margin-left:4px;">— ${tx.complianceNote}</span>` : ''}
+            </div>` : '';
+
+        const infoRow = (label, value, mono = false) => `
+            <div>
+                <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">${label}</div>
+                <div style="font-size:13px;font-weight:600;color:#0F172A;${mono ? 'font-family:monospace;' : ''}">${value}</div>
+            </div>`;
+
+        const sectionTitle = (icon, label, color = '#1E293B') => `
+            <div style="display:flex;align-items:center;gap:8px;padding:18px 24px;border-bottom:1px solid #F1F5F9;background:#FCFDFE;">
+                <i data-lucide="${icon}" style="width:15px;height:15px;color:${color};flex-shrink:0;"></i>
+                <span style="font-size:13px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.06em;">${label}</span>
+            </div>`;
+
+        // ── Transfer-specific party blocks ──────────────────────────────────
+        const topUpPartiesHTML = tx.type === 'top-up' ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('building-2', 'Remitter (Sender)', '#1D4ED8')}
+                <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                    ${infoRow('Account Holder', tx.remitter.name)}
+                    ${infoRow('Bank', tx.remitter.bank)}
+                    ${infoRow('Account / IBAN', tx.remitter.iban || tx.remitter.accountNo, true)}
+                    ${infoRow('SWIFT / BIC', tx.remitter.swift, true)}
+                    ${tx.remitter.aba ? infoRow('ABA / Routing No.', tx.remitter.aba, true) : ''}
+                    <div style="grid-column:1/-1;">${infoRow('Bank Address', tx.remitter.bankAddress)}</div>
+                </div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('landmark', 'Beneficiary (Receiving Account)', '#059669')}
+                <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                    ${infoRow('Account Name', tx.beneficiary.name)}
+                    ${infoRow('Custodian Bank', tx.beneficiary.bank)}
+                    ${infoRow('Account No.', tx.beneficiary.accountNo, true)}
+                    ${tx.beneficiary.iban ? infoRow('IBAN', tx.beneficiary.iban, true) : ''}
+                </div>
+            </div>` : '';
+
+        const transferPartiesHTML = tx.type === 'transfer' ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('landmark', 'Debit Account (Source)', '#7C3AED')}
+                <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                    ${infoRow('Account Name', tx.debitAccount.name)}
+                    ${infoRow('Custodian Bank', tx.debitAccount.bank)}
+                    ${infoRow('Account No.', tx.debitAccount.accountNo, true)}
+                </div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('building-2', 'Beneficiary (Recipient)', '#1D4ED8')}
+                <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                    ${infoRow('Beneficiary Name', tx.beneficiary.name)}
+                    ${infoRow('Bank', tx.beneficiary.bank)}
+                    ${infoRow('Account No.', tx.beneficiary.accountNo, true)}
+                    ${infoRow('SWIFT / BIC', tx.beneficiary.swift, true)}
+                    ${infoRow('Purpose of Payment', tx.purpose || '—')}
+                    <div style="grid-column:1/-1;">${infoRow('Bank Address', tx.beneficiary.bankAddress)}</div>
+                </div>
+            </div>` : '';
+
+        const convertPartiesHTML = tx.type === 'convert' ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('arrow-left-right', 'FX Conversion Details', '#C2410C')}
+                <div style="padding:20px 24px;">
+                    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;margin-bottom:20px;">
+                        <div style="background:linear-gradient(135deg,#FEF2F2,#FFF5F5);border:1px solid #FECACA;border-radius:14px;padding:20px;text-align:center;">
+                            <div style="font-size:11px;font-weight:700;color:#DC2626;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Source (Debit)</div>
+                            <div style="font-size:26px;font-weight:800;color:#DC2626;letter-spacing:-0.02em;">${fmt(tx.fromAmount)}</div>
+                            <div style="font-size:14px;font-weight:700;color:#991B1B;margin-top:4px;">${tx.fromCurrency}</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                            <i data-lucide="arrow-right" style="width:22px;height:22px;color:#94A3B8;"></i>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#F0FDF4,#F7FEF9);border:1px solid #BBF7D0;border-radius:14px;padding:20px;text-align:center;">
+                            <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Destination (Credit)</div>
+                            <div style="font-size:26px;font-weight:800;color:#059669;letter-spacing:-0.02em;">${fmt(tx.toAmount)}</div>
+                            <div style="font-size:14px;font-weight:700;color:#065F46;margin-top:4px;">${tx.toCurrency}</div>
+                        </div>
+                    </div>
+                    <div style="height:1px;background:#F1F5F9;margin-bottom:20px;"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                        ${infoRow('Exchange Rate', `1 ${tx.fromCurrency} = ${tx.fxRate} ${tx.toCurrency}`, true)}
+                        ${infoRow('Inverse Rate', `1 ${tx.toCurrency} = ${tx.inverseRate} ${tx.fromCurrency}`, true)}
+                        ${infoRow('Rate Locked At', tx.rateTimestamp)}
+                        ${infoRow('Rate Source', tx.rateSource)}
+                        ${infoRow('Conversion Fee', `${fmt(tx.fee)} USD`)}
+                        ${infoRow('Fee Basis', tx.feeNote)}
+                        ${infoRow('Processing Bank', tx.processingBank)}
+                    </div>
+                </div>
+            </div>` : '';
+
+        // ── Settlement & Reference section ──────────────────────────────────
+        const settlementHTML = `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('calendar-check', 'Settlement & Reference')}
+                <div style="padding:20px 24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 28px;">
+                    ${infoRow('Value Date', tx.valueDate)}
+                    ${infoRow('Settlement Date', tx.settlementDate)}
+                    ${infoRow('Internal Reference', tx.reference, true)}
+                    ${infoRow('External / SWIFT Ref.', tx.externalRef, true)}
+                    ${infoRow('Processing Institution', tx.processingBank)}
+                    <div style="grid-column:1/-1;">${infoRow('Narration / Purpose', tx.narrative)}</div>
+                </div>
+            </div>`;
+
+        // ── Fee Summary ─────────────────────────────────────────────────────
+        const feeHTML = tx.type !== 'convert' ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('receipt', 'Amount Breakdown')}
+                <div style="padding:0 24px 4px;">
+                    ${tx.type === 'top-up' ? `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F5F9;">
+                        <span style="font-size:13px;color:#475569;">Gross Amount Received</span>
+                        <span style="font-size:14px;font-weight:700;color:#0F172A;">${fmt(tx.grossAmount, tx.currency)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F5F9;">
+                        <span style="font-size:13px;color:#475569;">Incoming Wire Fee (charged to remitter)</span>
+                        <span style="font-size:13px;color:#64748B;">— ${fmt(tx.fee, tx.currency)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;">
+                        <span style="font-size:14px;font-weight:700;color:#0F172A;">Net Amount Credited to Vault</span>
+                        <span style="font-size:18px;font-weight:800;color:#059669;">${fmt(tx.netAmount, tx.currency)}</span>
+                    </div>` : `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F5F9;">
+                        <span style="font-size:13px;color:#475569;">Transfer Amount</span>
+                        <span style="font-size:14px;font-weight:700;color:#0F172A;">${fmt(tx.grossAmount, tx.currency)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #F1F5F9;">
+                        <span style="font-size:13px;color:#475569;">Outgoing Wire Fee</span>
+                        <span style="font-size:13px;color:#DC2626;">+ ${fmt(tx.fee, tx.currency)}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;">
+                        <span style="font-size:14px;font-weight:700;color:#0F172A;">Total Debit from Vault</span>
+                        <span style="font-size:18px;font-weight:800;color:#DC2626;">${fmt(tx.netDebit, tx.currency)}</span>
+                    </div>`}
+                </div>
+            </div>` : '';
+
+        // ── Approval Flow ───────────────────────────────────────────────────
+        const approvalHTML = tx.approvalRequired && tx.approvers ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('user-check', 'Approval Flow')}
+                <div style="padding:16px 24px;display:flex;flex-direction:column;gap:10px;">
+                    ${tx.approvers.map((ap, i) => {
+                        const apBg    = ap.decision === 'Approved' ? '#ECFDF5' : ap.decision === 'Rejected' ? '#FEF2F2' : '#FFF7ED';
+                        const apColor = ap.decision === 'Approved' ? '#059669'  : ap.decision === 'Rejected' ? '#DC2626'  : '#D97706';
+                        const apIcon  = ap.decision === 'Approved' ? 'check-circle-2' : ap.decision === 'Rejected' ? 'x-circle' : 'clock';
+                        return `
+                        <div style="display:grid;grid-template-columns:24px 1fr auto;gap:16px;align-items:start;padding:14px 16px;border:1px solid #E2E8F0;border-radius:12px;background:#FAFBFD;">
+                            <div style="font-size:12px;font-weight:800;color:#94A3B8;padding-top:2px;">${i + 1}</div>
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:#0F172A;">${ap.name}</div>
+                                <div style="font-size:12px;color:#64748B;margin-top:2px;">${ap.level} · ${ap.role}</div>
+                                ${ap.comment ? `<div style="font-size:12px;color:#475569;margin-top:6px;font-style:italic;">"${ap.comment}"</div>` : ''}
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <i data-lucide="${apIcon}" style="width:13px;height:13px;color:${apColor};flex-shrink:0;"></i>
+                                    <span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:${apBg};color:${apColor};">${ap.decision}</span>
+                                </div>
+                                <div style="font-size:11px;color:#94A3B8;text-align:right;">${ap.actedAt}</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>` : '';
+
+        // ── Status Timeline ──────────────────────────────────────────────────
+        const timelineStatusStyle = (s) => {
+            if (s === 'Completed') return { bg: '#ECFDF5', color: '#059669' };
+            if (s === 'Approved' || s === 'Cleared' || s === 'Rate Locked') return { bg: '#EFF6FF', color: '#2563EB' };
+            if (s === 'Confirming' || s === 'Verifying' || s === 'Processing' || s === 'Partially Approved') return { bg: '#FFF7ED', color: '#D97706' };
+            return { bg: '#F1F5F9', color: '#475569' };
+        };
+        const timelineHTML = `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionTitle('activity', 'Status History')}
+                <div style="padding:20px 24px;display:flex;flex-direction:column;gap:0;">
+                    ${tx.timeline.map((ev, i) => {
+                        const st = timelineStatusStyle(ev.status);
+                        const isLast = i === tx.timeline.length - 1;
+                        return `
+                        <div style="display:grid;grid-template-columns:20px 1fr;gap:14px;align-items:start;padding-bottom:${isLast ? '0' : '20px'};">
+                            <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                                <div style="width:10px;height:10px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
+                                ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:5px;min-height:24px;"></div>' : ''}
+                            </div>
+                            <div>
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+                                    <span style="font-size:12px;color:#64748B;">${ev.time}</span>
+                                    <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${st.bg};color:${st.color};">${ev.status}</span>
+                                </div>
+                                <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>`;
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:20px;padding-bottom:40px;">
+
+                <!-- Breadcrumb + Back -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button onclick="window.backToFiatVault()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;color:#64748B;font-size:13px;font-weight:600;padding:0;">
+                            <i data-lucide="chevron-left" style="width:15px;height:15px;"></i>
+                            Fiat Vault
+                        </button>
+                        <span style="color:#CBD5E1;font-size:13px;">/</span>
+                        <span style="font-size:13px;color:#94A3B8;font-family:monospace;">${txId}</span>
+                    </div>
+                    ${tx.type === 'transfer' ? `
+                    <button onclick="window.printFiatVaultReceipt('${txId}')" style="display:inline-flex;align-items:center;gap:7px;background:#0F172A;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.01em;">
+                        <i data-lucide="download" style="width:14px;height:14px;flex-shrink:0;"></i>
+                        Download Receipt
+                    </button>` : ''}
+                </div>
+
+                <!-- Header Card -->
+                <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                    <!-- Top stripe -->
+                    <div style="height:4px;background:linear-gradient(90deg,${typeColor},${typeColor}88);"></div>
+                    <div style="padding:24px 28px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                                <span style="background:${typeBg};color:${typeColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;text-transform:uppercase;letter-spacing:0.06em;">
+                                    <i data-lucide="${typeIcon}" style="width:11px;height:11px;"></i>${typeLabel}
+                                </span>
+                                <span style="background:${statusBg};color:${statusColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">${statusLabel}</span>
+                                <span style="background:${directionBg};color:${directionColor};font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;">
+                                    <i data-lucide="${directionIcon}" style="width:11px;height:11px;"></i>${directionLabel}
+                                </span>
+                            </div>
+                            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Transaction ID</div>
+                            <div style="font-family:monospace;font-size:18px;font-weight:800;color:#0F172A;letter-spacing:0.02em;">${txId}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Transaction Amount</div>
+                            <div style="font-size:32px;font-weight:900;color:${amountColor};letter-spacing:-0.03em;line-height:1;">${amountSign} ${fmt(tx.amount, tx.currency)}</div>
+                            <div style="font-size:12px;color:#94A3B8;margin-top:6px;">${tx.createdAt}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Type-specific party blocks -->
+                ${topUpPartiesHTML}
+                ${transferPartiesHTML}
+                ${convertPartiesHTML}
+
+                <!-- Settlement & Reference -->
+                ${settlementHTML}
+
+                <!-- Amount Breakdown -->
+                ${feeHTML}
+
+                <!-- Approval Flow -->
+                ${approvalHTML}
+
+                <!-- Status Timeline -->
+                ${timelineHTML}
+
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    window.openFiatVaultTxDetail = function(txId) {
+        fiatVaultTxView = 'detail';
+        activeFiatVaultTxId = txId;
+        renderFiatVaultTxDetailPage(txId);
+    };
+
+    window.backToFiatVault = function() {
+        fiatVaultTxView = 'list';
+        activeFiatVaultTxId = null;
+        contentBody.innerHTML = fiatVaultHTML;
+        lucide.createIcons();
+    };
+
+    window.printFiatVaultReceipt = function(txId) {
+        const tx = FIAT_VAULT_TX_DETAILS[txId];
+        if (!tx || tx.type !== 'transfer') return;
+
+        const fmt = (n, c) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (c ? ' ' + c : '');
+
+        const receiptHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Money Transfer Receipt — ${txId}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Calibri, 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #000; background: #fff; padding: 40px 50px; max-width: 760px; margin: 0 auto; }
+  h1 { font-size: 16pt; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .subtitle { font-size: 10pt; text-align: center; color: #444; margin-bottom: 24px; }
+  hr { border: none; border-top: 1.5px solid #000; margin: 14px 0; }
+  hr.thin { border-top: 0.75px solid #ccc; margin: 10px 0; }
+  .section-label { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #555; margin-bottom: 8px; margin-top: 16px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-bottom: 4px; }
+  .field { margin-bottom: 6px; }
+  .field-label { font-size: 8.5pt; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
+  .field-value { font-size: 11pt; color: #000; }
+  table.amounts { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  table.amounts td { padding: 7px 6px; font-size: 11pt; border-bottom: 0.75px solid #ddd; }
+  table.amounts td:first-child { color: #333; }
+  table.amounts td:last-child { text-align: right; font-weight: 600; }
+  table.amounts tr.total-row td { font-size: 12pt; font-weight: 700; border-top: 1.5px solid #000; border-bottom: none; padding-top: 10px; }
+  .disclosure-box { border: 1px solid #999; padding: 14px 16px; font-size: 9pt; color: #333; line-height: 1.6; margin-top: 20px; }
+  .disclosure-box p { margin-bottom: 8px; }
+  .disclosure-box p:last-child { margin-bottom: 0; }
+  .footer { margin-top: 28px; font-size: 8.5pt; color: #555; text-align: center; line-height: 1.6; }
+  .logo-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
+  .logo-mark { width: 32px; height: 32px; background: #0F172A; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
+  .logo-mark span { color: #fff; font-size: 13pt; font-weight: 900; }
+  .logo-text { font-size: 18pt; font-weight: 800; color: #0F172A; letter-spacing: -0.02em; }
+  @media print {
+    body { padding: 20px 30px; }
+    button { display: none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div style="text-align:center;margin-bottom:6px;">
+    <div class="logo-row">
+      <div class="logo-mark"><span>O</span></div>
+      <span class="logo-text">Obita</span>
+    </div>
+  </div>
+
+  <h1>Money Transfer Receipt</h1>
+  <div class="subtitle">Issued under South Dakota Money Transfer License (SD MTL)</div>
+  <hr>
+
+  <!-- Company Info -->
+  <div class="section-label">Sender Institution (Licensed Money Transmitter)</div>
+  <div class="two-col">
+    <div class="field"><div class="field-label">Company Name</div><div class="field-value">Obita Financial Services Ltd.</div></div>
+    <div class="field"><div class="field-label">License</div><div class="field-value">SD MTL No. 2024-MTL-0081</div></div>
+    <div class="field"><div class="field-label">Registered Address</div><div class="field-value">2101 Cedar Street, Suite 400, Sioux Falls, SD 57104, United States</div></div>
+    <div class="field"><div class="field-label">Customer Support</div><div class="field-value">+1 (888) 628-2468</div></div>
+    <div class="field"><div class="field-label">Email</div><div class="field-value">support@obita.com</div></div>
+    <div class="field"><div class="field-label">Website</div><div class="field-value">www.obita.com</div></div>
+  </div>
+  <hr class="thin">
+
+  <!-- Sender / Merchant info -->
+  <div class="section-label">Sender (Merchant)</div>
+  <div class="two-col">
+    <div class="field"><div class="field-label">Sender Name</div><div class="field-value">${tx.debitAccount.name}</div></div>
+    <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.debitAccount.accountNo}</div></div>
+    <div class="field"><div class="field-label">Custodian Bank</div><div class="field-value">${tx.debitAccount.bank}</div></div>
+    <div class="field"><div class="field-label">Purpose of Payment</div><div class="field-value">${tx.purpose || '—'}</div></div>
+  </div>
+  <hr class="thin">
+
+  <!-- Recipient info -->
+  <div class="section-label">Recipient (Beneficiary)</div>
+  <div class="two-col">
+    <div class="field"><div class="field-label">Recipient Name</div><div class="field-value">${tx.beneficiary.name}</div></div>
+    <div class="field"><div class="field-label">Recipient Bank</div><div class="field-value">${tx.beneficiary.bank}</div></div>
+    <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.accountNo}</div></div>
+    <div class="field"><div class="field-label">SWIFT / BIC</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.swift || '—'}</div></div>
+    <div class="field" style="grid-column:1/-1;"><div class="field-label">Bank Address</div><div class="field-value">${tx.beneficiary.bankAddress || '—'}</div></div>
+  </div>
+  <hr class="thin">
+
+  <!-- Transaction Details -->
+  <div class="section-label">Transaction Details</div>
+  <div class="two-col">
+    <div class="field"><div class="field-label">Transaction Number</div><div class="field-value" style="font-family:monospace;">${txId}</div></div>
+    <div class="field"><div class="field-label">Date &amp; Time</div><div class="field-value">${tx.createdAt}</div></div>
+    <div class="field"><div class="field-label">Value Date</div><div class="field-value">${tx.valueDate}</div></div>
+    <div class="field"><div class="field-label">Settlement Date</div><div class="field-value">${tx.settlementDate}</div></div>
+    <div class="field"><div class="field-label">Internal Reference</div><div class="field-value" style="font-family:monospace;">${tx.reference}</div></div>
+    <div class="field"><div class="field-label">SWIFT Reference</div><div class="field-value" style="font-family:monospace;">${tx.externalRef}</div></div>
+    <div class="field" style="grid-column:1/-1;"><div class="field-label">Narration</div><div class="field-value">${tx.narrative}</div></div>
+  </div>
+  <hr class="thin">
+
+  <!-- Amount Breakdown -->
+  <div class="section-label">Amount Breakdown</div>
+  <table class="amounts">
+    <tr>
+      <td>Total Amount Transferred</td>
+      <td>${fmt(tx.grossAmount, tx.currency)}</td>
+    </tr>
+    <tr>
+      <td>Total Fee Charged</td>
+      <td>${fmt(tx.fee, tx.currency)}</td>
+    </tr>
+    <tr class="total-row">
+      <td>Total Paid by Sender</td>
+      <td>${fmt(tx.netDebit, tx.currency)}</td>
+    </tr>
+    <tr>
+      <td>Exchange Rate (if applicable)</td>
+      <td>N/A — Same currency transfer</td>
+    </tr>
+    <tr>
+      <td>Transfer Amount (Recipient Currency)</td>
+      <td>${fmt(tx.grossAmount, tx.currency)}</td>
+    </tr>
+    <tr>
+      <td>Other Transfer Fees (Recipient Currency)</td>
+      <td>${fmt(0.00, tx.currency)}</td>
+    </tr>
+    <tr class="total-row">
+      <td>Total to be Received by Recipient</td>
+      <td>${fmt(tx.grossAmount, tx.currency)}</td>
+    </tr>
+  </table>
+
+  <!-- Disclosures -->
+  <div class="disclosure-box">
+    <p><strong>IMPORTANT DISCLOSURES</strong></p>
+    <p>Your recipient may receive less than the amount shown above due to fees charged by their bank, correspondent bank deductions, and any applicable foreign taxes or levies not controlled by Obita Financial Services Ltd.</p>
+    <p>You have a right to dispute errors or unauthorized transactions. If you think there is an error, contact us within 180 days at support@obita.com or +1 (888) 628-2468. You can also contact us for a written explanation of your rights.</p>
+    <p>You may cancel this transaction for a full refund within 30 minutes of payment, unless the funds have been picked up or deposited. To cancel, contact Customer Support immediately.</p>
+    <p>For consumer protection information, visit: <strong>www.consumerfinance.gov</strong></p>
+    <p>Obita Financial Services Ltd. is licensed as a Money Transmitter by the South Dakota Division of Banking. License verification: <strong>https://dlr.sd.gov/banking/money_transmitters/default.aspx</strong></p>
+  </div>
+
+  <div class="footer">
+    <p>This receipt is an official record of your money transfer transaction issued by Obita Financial Services Ltd.</p>
+    <p>Obita Financial Services Ltd. · 2101 Cedar Street, Suite 400, Sioux Falls, SD 57104 · support@obita.com · www.obita.com</p>
+  </div>
+
+  <div style="text-align:center;margin-top:28px;">
+    <button onclick="window.print()" style="background:#0F172A;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:12pt;font-weight:600;cursor:pointer;">Print / Save as PDF</button>
+  </div>
+
+</body>
+</html>`;
+
+        const blob = new Blob([receiptHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if (win) {
+            win.addEventListener('load', () => URL.revokeObjectURL(url));
+        }
+    };
 
     // Constant HTML for Stablecoin Vault
     const stablecoinVaultHTML = `
@@ -7130,7 +7678,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </tr>
                         </thead>
                         <tbody id="stable-vault-tx-table-body">
-                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="vt-20261025-0031 top up stablecoin vault 0x1234567890abcdef1234567890abcdef12345678 5,000 usdc completed" onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-06" data-type="top-up" data-status="completed" data-search="vt-20261025-0031 top up stablecoin vault 0x1234567890abcdef1234567890abcdef12345678 5,000 usdc completed" onclick="window.openStableVaultTxDetail('VT-20261025-0031')" style="cursor:pointer;">
                                 <td class="text-muted">Today, 09:12</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261025-0031</td>
                                 <td class="font-medium">Top Up</td>
@@ -7139,7 +7687,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td class="text-right font-medium text-success">+ 5,000.00 <span class="currency">USDC</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="vt-20261024-0018 transfer stablecoin vault 0xabcdef1234567890abcdef1234567890abcdef12 12,500 usdt completed" onclick="alert('Viewing Order Details...')">
+                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="vt-20261024-0018 transfer stablecoin vault 0xabcdef1234567890abcdef1234567890abcdef12 12,500 usdt completed" onclick="window.openStableVaultTxDetail('VT-20261024-0018')" style="cursor:pointer;">
                                 <td class="text-muted">Yesterday, 16:45</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261024-0018</td>
                                 <td class="font-medium">Transfer</td>
@@ -7148,8 +7696,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td class="text-right font-medium">- 12,500.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2025-10-23" data-type="top-up" data-status="confirming" data-search="vt-20261023-0004 top up stablecoin vault tr7nhqjekqxgtci8q8zy4pl8otszgjlj6t 100,000 usdt confirming" onclick="alert('Viewing Order Details...')">
-                                <td class="text-muted">Oct 23, 11:20</td>
+                            <tr data-date="2026-04-04" data-type="top-up" data-status="confirming" data-search="vt-20261023-0004 top up stablecoin vault tr7nhqjekqxgtci8q8zy4pl8otszgjlj6t 100,000 usdt confirming" onclick="window.openStableVaultTxDetail('VT-20261023-0004')" style="cursor:pointer;">
+                                <td class="text-muted">Apr 4, 11:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261023-0004</td>
                                 <td class="font-medium">Top Up</td>
                                 <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</td>
@@ -7167,6 +7715,361 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
         </div>
     `;
+
+    // ── STABLECOIN VAULT TRANSACTION DETAIL ──────────────────────────────────
+
+    let stableVaultTxView = 'list';
+    let activeStableVaultTxId = null;
+
+    const STABLE_VAULT_TX_DETAILS = {
+        'VT-20261025-0031': {
+            type: 'top-up', status: 'completed', asset: 'USDC', network: 'Ethereum', protocol: 'ERC-20',
+            networkColor: '#627EEA', amount: 5000.00, direction: 'credit',
+            createdAt: 'Apr 6, 2026  09:12:08 (UTC+8)', creditedAt: 'Apr 6, 2026  09:14:55 (UTC+8)',
+            orderId: 'VT-20261025-0031',
+            txHash: '0xa1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef12345678',
+            blockHeight: 19284721, confirmations: 64, requiredConfirmations: 12,
+            blockTimestamp: 'Apr 6, 2026  01:12:11 UTC',
+            tokenContract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+            fromAddress: '0x1234567890abcdef1234567890abcdef12345678',
+            fromLabel: 'Partner Treasury (Address Book)',
+            toAddress: '0x8F3A92bb4C91e4Df4E53B6C28D42cc231C43bE71',
+            toLabel: 'Obita Stablecoin Vault — Nancy_Test',
+            grossAmount: 5000.00, networkFee: 0.00, netAmount: 5000.00,
+            networkFeeNote: 'Network fee paid by sender',
+            aml: { provider: 'Chainalysis', score: 12, level: 'Low', label: 'Unhosted Wallet — No Known Risk' },
+            vasp: { name: 'Unhosted Wallet', category: 'Self-Custodied', known: false },
+            approvalRequired: false,
+            timeline: [
+                { time: 'Apr 6, 2026  01:12:11 UTC', status: 'Broadcast',   note: 'Transaction detected on Ethereum mempool. TxID confirmed on-chain at block 19,284,721.' },
+                { time: 'Apr 6, 2026  01:13:08 UTC', status: 'Confirming',  note: '4 / 12 block confirmations reached. AML screening initiated.' },
+                { time: 'Apr 6, 2026  01:14:22 UTC', status: 'AML Cleared', note: 'Chainalysis screening passed. Risk score 12 / 100 (Low). Source funds traced to unhosted wallet with no known risk exposure.' },
+                { time: 'Apr 6, 2026  01:14:55 UTC', status: 'Credited',    note: '12 / 12 confirmations reached. USDC 5,000.00 credited to Stablecoin Vault.' }
+            ]
+        },
+        'VT-20261024-0018': {
+            type: 'transfer', status: 'completed', asset: 'USDT', network: 'Ethereum', protocol: 'ERC-20',
+            networkColor: '#627EEA', amount: 12500.00, direction: 'debit',
+            createdAt: 'Apr 5, 2026  16:45:03 (UTC+8)', broadcastAt: 'Apr 5, 2026  16:52:31 (UTC+8)',
+            orderId: 'VT-20261024-0018',
+            txHash: '0xf6e5d4c3b2a1098765432109876543210fedcba9876543210fedcba9876543210fe',
+            blockHeight: 19283104, confirmations: 218, requiredConfirmations: 12,
+            blockTimestamp: 'Apr 5, 2026  08:52:39 UTC',
+            tokenContract: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+            fromAddress: '0x8F3A92bb4C91e4Df4E53B6C28D42cc231C43bE71',
+            fromLabel: 'Obita Stablecoin Vault — Nancy_Test',
+            toAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
+            toLabel: 'Vendor Binance (Address Book — Whitelisted)',
+            grossAmount: 12500.00, networkFee: 0.004128, networkFeeAsset: 'ETH', networkFeeUSD: 14.99, netAmount: 12500.00,
+            networkFeeNote: 'Gas fee paid from Obita operational wallet',
+            aml: { provider: 'Chainalysis', score: 8, level: 'Low', label: 'Binance Exchange — Tier 1 VASP' },
+            vasp: { name: 'Binance', category: 'Centralised Exchange', known: true },
+            whitelisted: true,
+            approvalRequired: true,
+            approvers: [
+                { level: 'L1 Approver', name: 'Alice Wong', role: 'Finance Manager', decision: 'Approved', actedAt: 'Apr 5, 2026  16:48 UTC', comment: 'Verified destination address matches vendor agreement.' },
+                { level: 'L2 Approver', name: 'Bob Lee',   role: 'Admin',           decision: 'Approved', actedAt: 'Apr 5, 2026  16:51 UTC', comment: 'Approved. Address is whitelisted.' }
+            ],
+            timeline: [
+                { time: 'Apr 5, 2026  08:45:03 UTC', status: 'Initiated',   note: 'Withdrawal order created by Nancy Admin. Destination address verified against whitelist.' },
+                { time: 'Apr 5, 2026  08:48:12 UTC', status: 'AML Checked', note: 'Destination address screened via Chainalysis. Risk score 8 / 100 (Low). Associated with Binance (Tier 1 VASP).' },
+                { time: 'Apr 5, 2026  08:48:30 UTC', status: 'Pending Approval', note: 'Approval request sent to L1 and L2 approvers per withdrawal policy.' },
+                { time: 'Apr 5, 2026  08:51:02 UTC', status: 'Approved',    note: 'All approval tiers satisfied. Transaction queued for broadcast.' },
+                { time: 'Apr 5, 2026  08:52:31 UTC', status: 'Broadcast',   note: 'Signed transaction submitted to Ethereum network. TxID confirmed at block 19,283,104.' },
+                { time: 'Apr 5, 2026  08:54:18 UTC', status: 'Completed',   note: '12 / 12 confirmations reached. USDT 12,500.00 successfully delivered to destination address.' }
+            ]
+        },
+        'VT-20261023-0004': {
+            type: 'top-up', status: 'confirming', asset: 'USDT', network: 'TRON', protocol: 'TRC-20',
+            networkColor: '#EF0027', amount: 100000.00, direction: 'credit',
+            createdAt: 'Apr 4, 2026  11:20:44 (UTC+8)', creditedAt: null,
+            orderId: 'VT-20261023-0004',
+            txHash: '8f9a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1',
+            blockHeight: 64812930, confirmations: 18, requiredConfirmations: 20,
+            blockTimestamp: 'Apr 4, 2026  03:20:51 UTC',
+            tokenContract: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+            fromAddress: 'TXjjQZBmLUYKs8RdMkbqsmEsPedxPXRqkD',
+            fromLabel: 'OKX Trading (Address Book)',
+            toAddress: 'TGzpNtNMdNqLFKxnRvLBmPh3cMBWbYJX1Z',
+            toLabel: 'Obita Stablecoin Vault — Nancy_Test',
+            grossAmount: 100000.00, networkFee: 0.00, netAmount: 100000.00,
+            networkFeeNote: 'Network fee paid by sender',
+            aml: { provider: 'Chainalysis', score: 5, level: 'Low', label: 'OKX Exchange — Tier 1 VASP' },
+            vasp: { name: 'OKX', category: 'Centralised Exchange', known: true },
+            approvalRequired: false,
+            timeline: [
+                { time: 'Apr 4, 2026  03:20:51 UTC', status: 'Broadcast',   note: 'Transaction detected on TRON network at block 64,812,930. Awaiting confirmation threshold.' },
+                { time: 'Apr 4, 2026  03:21:10 UTC', status: 'AML Checked', note: 'Chainalysis screening passed. Risk score 5 / 100 (Low). Source attributed to OKX (Tier 1 VASP).' },
+                { time: 'Apr 4, 2026  03:22:15 UTC', status: 'Confirming',  note: '18 / 20 block confirmations reached. Awaiting 2 more confirmations before crediting.' }
+            ]
+        }
+    };
+
+    function renderStableVaultTxDetailPage(txId) {
+        const tx = STABLE_VAULT_TX_DETAILS[txId];
+        if (!tx) { stableVaultTxView = 'list'; contentBody.innerHTML = stablecoinVaultHTML; lucide.createIcons(); return; }
+
+        const fmt = (n, decimals = 2) => n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        const truncAddr = (addr) => addr.length > 20 ? addr.slice(0, 10) + '...' + addr.slice(-8) : addr;
+
+        const isDeposit = tx.direction === 'credit';
+        const typeLabel = isDeposit ? 'Deposit (Top Up)' : 'Withdrawal (Transfer)';
+        const typeIcon  = isDeposit ? 'arrow-down-to-line' : 'arrow-up-from-line';
+        const typeBg    = isDeposit ? '#F0FDF4' : '#FFF7ED';
+        const typeColor = isDeposit ? '#059669'  : '#C2410C';
+
+        const statusMap = {
+            completed:  { bg: '#ECFDF5', color: '#059669', label: 'Completed'  },
+            confirming: { bg: '#FFF7ED', color: '#D97706', label: 'Confirming' },
+            pending:    { bg: '#EFF6FF', color: '#2563EB', label: 'Pending'    }
+        };
+        const st = statusMap[tx.status] || statusMap.pending;
+
+        const netColor  = tx.networkColor;
+        const amtSign   = isDeposit ? '+' : '−';
+        const amtColor  = isDeposit ? '#059669' : '#DC2626';
+
+        // AML risk gauge
+        const amlScore = tx.aml.score;
+        const amlColor = amlScore <= 25 ? '#059669' : amlScore <= 60 ? '#D97706' : '#DC2626';
+        const amlBg    = amlScore <= 25 ? '#ECFDF5' : amlScore <= 60 ? '#FFF7ED' : '#FEF2F2';
+        const amlBorder= amlScore <= 25 ? '#A7F3D0' : amlScore <= 60 ? '#FDE68A' : '#FECACA';
+        const amlHTML = `
+            <div style="background:${amlBg};border:1px solid ${amlBorder};border-radius:12px;padding:16px 20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:7px;">
+                        <i data-lucide="shield-check" style="width:14px;height:14px;color:${amlColor};flex-shrink:0;"></i>
+                        <span style="font-size:12px;font-weight:700;color:${amlColor};text-transform:uppercase;letter-spacing:0.06em;">AML / Compliance</span>
+                    </div>
+                    <span style="font-size:11px;font-weight:600;color:#94A3B8;">${tx.aml.provider}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+                    <div style="font-size:28px;font-weight:900;color:${amlColor};letter-spacing:-0.02em;">${amlScore}<span style="font-size:14px;font-weight:600;color:${amlColor};">/100</span></div>
+                    <div>
+                        <div style="font-size:13px;font-weight:700;color:${amlColor};">${tx.aml.level} Risk</div>
+                        <div style="font-size:12px;color:#64748B;margin-top:2px;">${tx.aml.label}</div>
+                    </div>
+                </div>
+                <div style="height:5px;background:rgba(0,0,0,0.06);border-radius:999px;overflow:hidden;">
+                    <div style="height:100%;width:${amlScore}%;background:${amlColor};border-radius:999px;"></div>
+                </div>
+            </div>`;
+
+        // VASP attribution
+        const vaspHTML = `
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px 18px;">
+                <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">VASP Attribution</div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    ${tx.vasp.known ? `<span style="background:#EFF6FF;color:#1D4ED8;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid #BFDBFE;">● ${tx.vasp.name}</span>` : `<span style="background:#F1F5F9;color:#475569;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;">Unhosted Wallet</span>`}
+                    <span style="font-size:12px;color:#64748B;">${tx.vasp.category}</span>
+                    ${tx.vasp.known ? `<span style="background:#ECFDF5;color:#059669;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;">Known VASP</span>` : ''}
+                </div>
+            </div>`;
+
+        // Address block helper
+        const addrBlock = (label, addr, addrLabel, iconName, color) => `
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+                    <i data-lucide="${iconName}" style="width:13px;height:13px;color:${color};flex-shrink:0;"></i>
+                    <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
+                </div>
+                <div style="font-family:monospace;font-size:12px;color:#0F172A;word-break:break-all;line-height:1.7;margin-bottom:6px;">${addr}</div>
+                <div style="font-size:12px;color:#64748B;">${addrLabel}</div>
+            </div>`;
+
+        // Token contract
+        const contractHTML = `
+            <div>
+                <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">Token Contract</div>
+                <div style="font-family:monospace;font-size:12px;color:#475569;word-break:break-all;">${tx.tokenContract}</div>
+            </div>`;
+
+        const infoRow = (label, value, mono = false) => `
+            <div>
+                <div style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;">${label}</div>
+                <div style="font-size:13px;font-weight:600;color:#0F172A;${mono ? 'font-family:monospace;word-break:break-all;' : ''}">${value}</div>
+            </div>`;
+
+        const sectionHead = (icon, label, color = '#1E293B') => `
+            <div style="display:flex;align-items:center;gap:8px;padding:16px 22px;border-bottom:1px solid #F1F5F9;background:#FCFDFE;">
+                <i data-lucide="${icon}" style="width:14px;height:14px;color:${color};flex-shrink:0;"></i>
+                <span style="font-size:12px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.06em;">${label}</span>
+            </div>`;
+
+        // Timeline status styles
+        const tlStyle = (s) => {
+            if (['Completed', 'Credited', 'AML Cleared'].includes(s)) return { bg: '#ECFDF5', color: '#059669' };
+            if (['Broadcast', 'Approved', 'AML Checked'].includes(s)) return { bg: '#EFF6FF', color: '#2563EB' };
+            if (['Confirming', 'Pending Approval'].includes(s)) return { bg: '#FFF7ED', color: '#D97706' };
+            return { bg: '#F1F5F9', color: '#475569' };
+        };
+
+        // Approval flow
+        const approvalHTML = tx.approvalRequired && tx.approvers ? `
+            <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                ${sectionHead('user-check', 'Approval Flow')}
+                <div style="padding:16px 22px;display:flex;flex-direction:column;gap:10px;">
+                    ${tx.approvers.map((ap, i) => {
+                        const ac = ap.decision === 'Approved' ? '#059669' : '#DC2626';
+                        const ab = ap.decision === 'Approved' ? '#ECFDF5' : '#FEF2F2';
+                        const ai = ap.decision === 'Approved' ? 'check-circle-2' : 'x-circle';
+                        return `<div style="display:grid;grid-template-columns:22px 1fr auto;gap:14px;align-items:start;padding:13px 15px;border:1px solid #E2E8F0;border-radius:12px;background:#FAFBFD;">
+                            <div style="font-size:12px;font-weight:800;color:#94A3B8;padding-top:1px;">${i+1}</div>
+                            <div>
+                                <div style="font-size:14px;font-weight:700;color:#0F172A;">${ap.name}</div>
+                                <div style="font-size:12px;color:#64748B;margin-top:2px;">${ap.level} · ${ap.role}</div>
+                                ${ap.comment ? `<div style="font-size:12px;color:#475569;margin-top:6px;font-style:italic;">"${ap.comment}"</div>` : ''}
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <i data-lucide="${ai}" style="width:13px;height:13px;color:${ac};flex-shrink:0;"></i>
+                                    <span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:${ab};color:${ac};">${ap.decision}</span>
+                                </div>
+                                <div style="font-size:11px;color:#94A3B8;">${ap.actedAt}</div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>` : '';
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width:1020px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:40px;">
+
+                <!-- Breadcrumb -->
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <button onclick="window.backToStableVault()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;color:#64748B;font-size:13px;font-weight:600;padding:0;">
+                        <i data-lucide="chevron-left" style="width:15px;height:15px;"></i>Stablecoin Vault
+                    </button>
+                    <span style="color:#CBD5E1;font-size:13px;">/</span>
+                    <span style="font-size:13px;color:#94A3B8;font-family:monospace;">${txId}</span>
+                </div>
+
+                <!-- Header Card -->
+                <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                    <div style="height:4px;background:linear-gradient(90deg,${typeColor},${typeColor}66);"></div>
+                    <div style="padding:22px 26px 20px;">
+                        <!-- Badges row -->
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                            <span style="display:inline-flex;align-items:center;gap:5px;background:${typeBg};color:${typeColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">
+                                <i data-lucide="${typeIcon}" style="width:11px;height:11px;"></i>${typeLabel}
+                            </span>
+                            <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">${st.label}</span>
+                            <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.04);border:1px solid #E2E8F0;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;color:#334155;">
+                                <span style="width:7px;height:7px;border-radius:50%;background:${netColor};display:inline-block;"></span>${tx.network} / ${tx.protocol}
+                            </span>
+                            ${tx.whitelisted ? `<span style="display:inline-flex;align-items:center;gap:5px;background:#EFF6FF;color:#1D4ED8;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid #BFDBFE;"><i data-lucide="shield-check" style="width:11px;height:11px;"></i>Whitelisted Address</span>` : ''}
+                        </div>
+                        <!-- Amount + meta -->
+                        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                            <div>
+                                <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Order ID</div>
+                                <div style="font-family:monospace;font-size:17px;font-weight:800;color:#0F172A;">${txId}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Amount</div>
+                                <div style="font-size:34px;font-weight:900;color:${amtColor};letter-spacing:-0.03em;line-height:1;">${amtSign} ${fmt(tx.amount)} <span style="font-size:18px;font-weight:700;">${tx.asset}</span></div>
+                                <div style="font-size:12px;color:#94A3B8;margin-top:5px;">${tx.createdAt}</div>
+                            </div>
+                        </div>
+                        ${tx.txHash ? `
+                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;flex-shrink:0;">TxID</span>
+                            <span style="font-family:monospace;font-size:12px;color:#334155;word-break:break-all;flex:1;">${tx.txHash}</span>
+                            <a href="${
+                                tx.network === 'Ethereum' ? `https://etherscan.io/tx/${tx.txHash}` :
+                                tx.network === 'TRON'     ? `https://tronscan.org/#/transaction/${tx.txHash}` :
+                                tx.network === 'BNB Chain'? `https://bscscan.com/tx/${tx.txHash}` :
+                                tx.network === 'Polygon'  ? `https://polygonscan.com/tx/${tx.txHash}` :
+                                tx.network === 'Solana'   ? `https://solscan.io/tx/${tx.txHash}` :
+                                `#`
+                            }" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2563EB;background:#EFF6FF;padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;text-decoration:none;border:1px solid #BFDBFE;">
+                                <i data-lucide="external-link" style="width:11px;height:11px;"></i>View on Explorer
+                            </a>
+                        </div>` : ''}
+                    </div>
+                </div>
+
+                <!-- Transfer Addresses -->
+                <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                    ${sectionHead('arrow-right-left', isDeposit ? 'Sender → Vault' : 'Vault → Recipient', '#475569')}
+                    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px;">
+                        ${addrBlock('From', tx.fromAddress, tx.fromLabel, isDeposit ? 'circle-arrow-out-up-right' : 'landmark', isDeposit ? '#64748B' : '#7C3AED')}
+                        <div style="display:flex;justify-content:center;">
+                            <div style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;">
+                                <i data-lucide="arrow-down" style="width:13px;height:13px;color:#94A3B8;"></i>
+                            </div>
+                        </div>
+                        ${addrBlock('To', tx.toAddress, tx.toLabel, isDeposit ? 'landmark' : 'circle-arrow-out-up-right', isDeposit ? '#7C3AED' : '#64748B')}
+                        <div style="padding-top:4px;">${contractHTML}</div>
+                    </div>
+                </div>
+
+                <!-- Fee Breakdown -->
+                <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                    ${sectionHead('receipt', 'Amount & Fee Breakdown')}
+                    <div style="padding:0 22px 2px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #F1F5F9;">
+                            <span style="font-size:13px;color:#475569;">${isDeposit ? 'Gross Amount Received' : 'Withdrawal Amount'}</span>
+                            <span style="font-size:14px;font-weight:700;color:#0F172A;">${fmt(tx.grossAmount)} ${tx.asset}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #F1F5F9;">
+                            <div>
+                                <span style="font-size:13px;color:#475569;">Network Fee (Gas)</span>
+                                <div style="font-size:11px;color:#94A3B8;margin-top:2px;">${tx.networkFeeNote}</div>
+                            </div>
+                            <span style="font-size:13px;color:#64748B;">${tx.networkFee > 0 ? `${tx.networkFee} ${tx.networkFeeAsset} (≈ USD ${fmt(tx.networkFeeUSD)})` : 'Nil'}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 0;">
+                            <span style="font-size:14px;font-weight:700;color:#0F172A;">${isDeposit ? 'Net Amount Credited' : 'Net Amount Delivered'}</span>
+                            <span style="font-size:18px;font-weight:800;color:${amtColor};">${fmt(tx.netAmount)} ${tx.asset}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approval Flow -->
+                ${approvalHTML}
+
+                <!-- Status Timeline -->
+                <div class="card" style="padding:0;overflow:hidden;margin:0;">
+                    ${sectionHead('activity', 'Status History')}
+                    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:0;">
+                        ${tx.timeline.map((ev, i) => {
+                            const s = tlStyle(ev.status);
+                            const isLast = i === tx.timeline.length - 1;
+                            return `<div style="display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;padding-bottom:${isLast ? '0' : '18px'};">
+                                <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                                    <div style="width:9px;height:9px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
+                                    ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:4px;min-height:22px;"></div>' : ''}
+                                </div>
+                                <div>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                        <span style="font-size:12px;color:#64748B;">${ev.time}</span>
+                                        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${s.bg};color:${s.color};">${ev.status}</span>
+                                    </div>
+                                    <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </div>
+
+            </div>
+        `;
+        lucide.createIcons();
+    }
+
+    window.openStableVaultTxDetail = function(txId) {
+        stableVaultTxView = 'detail';
+        activeStableVaultTxId = txId;
+        renderStableVaultTxDetailPage(txId);
+    };
+
+    window.backToStableVault = function() {
+        stableVaultTxView = 'list';
+        activeStableVaultTxId = null;
+        contentBody.innerHTML = stablecoinVaultHTML;
+        lucide.createIcons();
+    };
 
     const merchantProfileHTML = `
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 24px;">
@@ -12589,7 +13492,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             activeApprovalRuleId = null;
             renderApprovalRulesPage();
         } else if (title === 'Stablecoin Vault') {
-            contentBody.innerHTML = stablecoinVaultHTML;
+            if (stableVaultTxView === 'detail' && activeStableVaultTxId) {
+                renderStableVaultTxDetailPage(activeStableVaultTxId);
+            } else {
+                stableVaultTxView = 'list';
+                contentBody.innerHTML = stablecoinVaultHTML;
+            }
         } else if (title === 'Conversion') {
             contentBody.innerHTML = `
             <div class="fade-in" style="display: grid; grid-template-columns: minmax(0, 560px) 260px; gap: 32px; align-items: start; padding-bottom: 40px;">
@@ -13212,7 +14120,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             };
 
         } else if (title === 'Fiat Vault') {
-            contentBody.innerHTML = fiatVaultHTML;
+            if (fiatVaultTxView === 'detail' && activeFiatVaultTxId) {
+                renderFiatVaultTxDetailPage(activeFiatVaultTxId);
+            } else {
+                fiatVaultTxView = 'list';
+                contentBody.innerHTML = fiatVaultHTML;
+            }
         } else {
             contentBody.innerHTML = `
                 <div class="welcome-card fade-in">
