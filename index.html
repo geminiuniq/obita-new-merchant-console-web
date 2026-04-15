@@ -1308,6 +1308,24 @@
         </div>
     </div>
 
+    <div class="inbox-drawer" id="bank-account-transactions-drawer" style="width: 560px; right: -560px;">
+        <div class="drawer-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
+                    <i data-lucide="receipt-text" style="width: 14px; height: 14px; color: #0F172A;"></i>
+                </div>
+                <div>
+                    <h3 id="bank-account-transactions-title" style="margin: 0;">Bank Account Transactions</h3>
+                    <div id="bank-account-transactions-subtitle" style="font-size: 12px; color: #64748B; margin-top: 4px;">Recent activity under the selected bank account.</div>
+                </div>
+            </div>
+            <button class="icon-btn" id="close-bank-account-transactions-btn">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="drawer-body" style="padding: 24px; display: flex; flex-direction: column; gap: 16px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);" id="bank-account-transactions-body"></div>
+    </div>
+
     <!-- Manage Bank Accounts Drawer -->
     <div class="inbox-drawer" id="manage-bank-accounts-drawer" style="width: 560px; right: -560px;">
         <div class="drawer-header">

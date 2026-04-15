@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'fiat-transfer-drawer',
         'convert-drawer',
         'manage-addresses-drawer',
+        'bank-account-transactions-drawer',
         'manage-bank-accounts-drawer',
         'activities-drawer',
         'payee-form-drawer',
@@ -444,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-fiat-transfer-btn',
         'close-convert-btn',
         'close-addr-btn',
+        'close-bank-account-transactions-btn',
         'close-bank-accounts-btn',
         'close-activities-btn',
         'close-payee-form-btn',
@@ -472,6 +474,97 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Notification email sent to ' + input.value);
         input.value = '';
         btn.parentElement.parentElement.style.display = 'none';
+    };
+
+    const BANK_ACCOUNT_TRANSACTIONS = {
+        'Chase Bank|Corporate Account': [
+            { id: 'BAT-20260415-0011', time: 'Today, 11:30', type: 'Top Up', direction: 'Inbound', amount: '+500,000.00 USD', status: 'Completed', counterparty: 'Fiat Vault', note: 'Treasury funding from operating account.' },
+            { id: 'BAT-20260414-0008', time: 'Yesterday, 15:05', type: 'Top Up', direction: 'Inbound', amount: '+120,000.00 USD', status: 'Completed', counterparty: 'Fiat Vault', note: 'Daily sweep into merchant fiat vault.' },
+            { id: 'BAT-20260412-0003', time: 'Apr 12, 09:18', type: 'Transfer', direction: 'Outbound', amount: '-45,000.00 USD', status: 'Completed', counterparty: 'Vendor settlement', note: 'Treasury payment to same-name linked account.' }
+        ],
+        'HSBC Hong Kong|Operating Account': [
+            { id: 'BAT-20260414-0015', time: 'Yesterday, 16:42', type: 'Transfer', direction: 'Outbound', amount: '-1,200,000.00 HKD', status: 'Completed', counterparty: 'Merchant payout reserve', note: 'Operating transfer to approved receiving account.' },
+            { id: 'BAT-20260411-0009', time: 'Apr 11, 13:12', type: 'Top Up', direction: 'Inbound', amount: '+300,000.00 HKD', status: 'Completed', counterparty: 'Fiat Vault', note: 'Balance replenishment.' },
+            { id: 'BAT-20260410-0004', time: 'Apr 10, 10:25', type: 'Transfer', direction: 'Outbound', amount: '-85,000.00 HKD', status: 'In Progress', counterparty: 'Settlement account', note: 'Pending verification review.' }
+        ],
+        'Deutsche Bank|Euro Settlement': [
+            { id: 'BAT-20260413-0006', time: 'Apr 13, 17:05', type: 'Top Up', direction: 'Inbound', amount: '+100,000.00 EUR', status: 'In Progress', counterparty: 'Fiat Vault', note: 'Awaiting bank confirmation.' },
+            { id: 'BAT-20260408-0002', time: 'Apr 8, 11:14', type: 'Transfer', direction: 'Outbound', amount: '-42,500.00 EUR', status: 'Completed', counterparty: 'Treasury rebalancing', note: 'Internal European settlement.' }
+        ],
+        'Banco Bradesco|BRL Payments': [
+            { id: 'BAT-20260315-0009', time: 'Mar 15, 14:26', type: 'Transfer', direction: 'Outbound', amount: '-180,000.00 BRL', status: 'Completed', counterparty: 'Merchant collections reserve', note: 'Local BRL payout settlement.' },
+            { id: 'BAT-20260302-0003', time: 'Mar 2, 10:08', type: 'Top Up', direction: 'Inbound', amount: '+250,000.00 BRL', status: 'Completed', counterparty: 'Fiat Vault', note: 'Collection settlement funding.' }
+        ]
+    };
+
+    function getBankAccountTransactionKey(bankName, accountName) {
+        return `${bankName}|${accountName}`;
+    }
+
+    function renderBankAccountTransactionsDrawer(bankName, accountName) {
+        const drawerTitle = document.getElementById('bank-account-transactions-title');
+        const drawerSubtitle = document.getElementById('bank-account-transactions-subtitle');
+        const drawerBody = document.getElementById('bank-account-transactions-body');
+        if (!drawerTitle || !drawerSubtitle || !drawerBody) return;
+
+        const transactions = BANK_ACCOUNT_TRANSACTIONS[getBankAccountTransactionKey(bankName, accountName)] || [];
+        drawerTitle.textContent = `${bankName} Transactions`;
+        drawerSubtitle.textContent = `${accountName} · All activity under this connected bank account.`;
+        drawerBody.innerHTML = `
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                <div>
+                    <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Connected Bank Account</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #0F172A; margin-top: 6px;">${bankName}</div>
+                    <div style="font-size: 13px; color: #64748B; margin-top: 4px;">${accountName}</div>
+                </div>
+                <div style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 700;">
+                    ${transactions.length} Transactions
+                </div>
+            </div>
+            ${transactions.length ? transactions.map(transaction => `
+                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${transaction.type}</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 5px;">${transaction.id} · ${transaction.time}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                            <div style="font-size: 16px; font-weight: 800; color: ${transaction.direction === 'Inbound' ? '#059669' : '#0F172A'};">${transaction.amount}</div>
+                            <span style="background: ${transaction.status === 'Completed' ? '#ECFDF5' : '#EFF6FF'}; color: ${transaction.status === 'Completed' ? '#15803D' : '#1D4ED8'}; border: 1px solid ${transaction.status === 'Completed' ? '#BBF7D0' : '#BFDBFE'}; border-radius: 999px; padding: 4px 9px; font-size: 10px; font-weight: 700; text-transform: uppercase;">${transaction.status}</span>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Direction</div>
+                            <div style="font-size: 13px; color: #0F172A; margin-top: 4px;">${transaction.direction}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Counterparty</div>
+                            <div style="font-size: 13px; color: #0F172A; margin-top: 4px;">${transaction.counterparty}</div>
+                        </div>
+                    </div>
+                    <div style="padding-top: 12px; border-top: 1px solid #E2E8F0; font-size: 12px; color: #64748B; line-height: 1.6;">
+                        ${transaction.note}
+                    </div>
+                </div>
+            `).join('') : `
+                <div style="background: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 16px; padding: 40px 24px; text-align: center; color: #64748B; font-size: 14px;">
+                    No transactions have been recorded under this bank account yet.
+                </div>
+            `}
+        `;
+    }
+
+    window.openBankAccountTransactionsDrawer = function(bankName, accountName) {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        renderBankAccountTransactionsDrawer(bankName, accountName);
+        lucide.createIcons();
+        document.getElementById('bank-account-transactions-drawer').classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
     };
 
     // --- Wallet Verification Drawer Logic ---
@@ -6665,7 +6758,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
 
                         <!-- Chase Bank -->
-                        <div onclick="alert('Chase Bank transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
+                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
+                            <div onclick="window.openFiatVaultBankAccountDetail('Chase Bank', 'Corporate Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
                             </div>
@@ -6685,10 +6779,19 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Today</span>
                             </div>
+                            </div>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Chase Bank', 'Corporate Account')" style="width: 100%; border: none; border-top: 1px solid rgba(191,219,254,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+                                <span style="font-size: 12px; font-weight: 700; color: #1D4ED8;">交易记录</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
+                                    View Transactions
+                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                </span>
+                            </button>
                         </div>
 
                         <!-- HSBC -->
-                        <div onclick="alert('HSBC transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFF5F5); border: 1px solid #FECACA; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(220,38,38,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(220,38,38,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(220,38,38,0.06)'">
+                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFF5F5); border: 1px solid #FECACA; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(220,38,38,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(220,38,38,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(220,38,38,0.06)'">
+                            <div onclick="window.openFiatVaultBankAccountDetail('HSBC Hong Kong', 'Operating Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
                             </div>
@@ -6708,10 +6811,19 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Yesterday</span>
                             </div>
+                            </div>
+                            <button onclick="window.openBankAccountTransactionsDrawer('HSBC Hong Kong', 'Operating Account')" style="width: 100%; border: none; border-top: 1px solid rgba(254,202,202,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+                                <span style="font-size: 12px; font-weight: 700; color: #DC2626;">交易记录</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
+                                    View Transactions
+                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Deutsche Bank -->
-                        <div onclick="alert('Deutsche Bank transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
+                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
+                            <div onclick="window.openFiatVaultBankAccountDetail('Deutsche Bank', 'Euro Settlement')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
                             </div>
@@ -6732,6 +6844,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Oct 23</span>
                             </div>
+                            </div>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Deutsche Bank', 'Euro Settlement')" style="width: 100%; border: none; border-top: 1px solid rgba(221,214,254,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+                                <span style="font-size: 12px; font-weight: 700; color: #7C3AED;">交易记录</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
+                                    View Transactions
+                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                </span>
+                            </button>
                         </div>
 
                     </div>
@@ -6752,7 +6872,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
 
                         <!-- Banco Bradesco -->
-                        <div onclick="alert('Banco Bradesco transactions...')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
+                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
+                            <div onclick="window.openFiatVaultBankAccountDetail('Banco Bradesco', 'BRL Payments')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Transfer</span>
                             </div>
@@ -6772,6 +6893,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Sep 15</span>
                             </div>
+                            </div>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Banco Bradesco', 'BRL Payments')" style="width: 100%; border: none; border-top: 1px solid rgba(187,247,208,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
+                                <span style="font-size: 12px; font-weight: 700; color: #059669;">交易记录</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
+                                    View Transactions
+                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Add Account card -->
@@ -6877,6 +7006,182 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     let fiatVaultTxView = 'list';
     let activeFiatVaultTxId = null;
+    let fiatVaultBankAccountView = 'list';
+    let activeFiatVaultBankAccountKey = null;
+
+    const FIAT_VAULT_BANK_ACCOUNT_DETAILS = {
+        'Chase Bank|Corporate Account': {
+            bankName: 'Chase Bank',
+            accountName: 'Corporate Account',
+            legalOwner: 'Nancy_Test Company',
+            accountNumber: '•••• •••• •••• 4821',
+            settlementUse: 'USD treasury funding and same-name fiat top up',
+            branchRegion: 'New York, United States',
+            accountType: 'Corporate Checking',
+            status: 'Enabled',
+            lastUsed: 'Today',
+            currencies: ['USD']
+        },
+        'HSBC Hong Kong|Operating Account': {
+            bankName: 'HSBC Hong Kong',
+            accountName: 'Operating Account',
+            legalOwner: 'Nancy_Test Company',
+            accountNumber: '•••• •••• •••• 9230',
+            settlementUse: 'HKD operating transfer and merchant settlement flows',
+            branchRegion: 'Hong Kong SAR',
+            accountType: 'Operating Account',
+            status: 'Pending Verification',
+            lastUsed: 'Yesterday',
+            currencies: ['HKD']
+        },
+        'Deutsche Bank|Euro Settlement': {
+            bankName: 'Deutsche Bank',
+            accountName: 'Euro Settlement',
+            legalOwner: 'Nancy_Test Company',
+            accountNumber: 'IBAN DE89 •••• •••• 0130',
+            settlementUse: 'EUR treasury settlement and regional funding',
+            branchRegion: 'Frankfurt, Germany',
+            accountType: 'Settlement Account',
+            status: 'Enabled',
+            lastUsed: 'Oct 23',
+            currencies: ['EUR', 'USD']
+        },
+        'Banco Bradesco|BRL Payments': {
+            bankName: 'Banco Bradesco',
+            accountName: 'BRL Payments',
+            legalOwner: 'Nancy_Test Company',
+            accountNumber: '•••• •••• •••• 7712',
+            settlementUse: 'Local BRL merchant payout and collections settlement',
+            branchRegion: 'Sao Paulo, Brazil',
+            accountType: 'Payments Account',
+            status: 'Enabled',
+            lastUsed: 'Sep 15',
+            currencies: ['BRL']
+        }
+    };
+
+    function getFiatVaultBankAccountStatusMeta(status) {
+        const normalized = String(status || '').toLowerCase();
+        if (normalized === 'enabled') return { background: '#ECFDF5', color: '#15803D', border: '#BBF7D0', label: 'Enabled' };
+        if (normalized === 'pending verification') return { background: '#FEF3C7', color: '#B45309', border: '#FDE68A', label: 'Pending Verification' };
+        if (normalized === 'disabled') return { background: '#F1F5F9', color: '#64748B', border: '#E2E8F0', label: 'Disabled' };
+        return { background: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE', label: status || 'Verified' };
+    }
+
+    function renderFiatVaultBankAccountDetailPage(accountKey) {
+        const account = FIAT_VAULT_BANK_ACCOUNT_DETAILS[accountKey];
+        const transactions = BANK_ACCOUNT_TRANSACTIONS[accountKey] || [];
+        if (!account) {
+            fiatVaultBankAccountView = 'list';
+            activeFiatVaultBankAccountKey = null;
+            contentBody.innerHTML = fiatVaultHTML;
+            lucide.createIcons();
+            return;
+        }
+
+        const statusMeta = getFiatVaultBankAccountStatusMeta(account.status);
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button onclick="window.backToFiatVault()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;color:#64748B;font-size:13px;font-weight:600;padding:0;">
+                            <i data-lucide="chevron-left" style="width:15px;height:15px;"></i>
+                            Fiat Vault
+                        </button>
+                        <span style="color:#CBD5E1;font-size:13px;">/</span>
+                        <span style="font-size:13px;color:#94A3B8;">Connected Bank Account</span>
+                    </div>
+                </div>
+
+                <div class="card" style="padding: 28px; border: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:flex-start;gap:16px;">
+                            <div style="width:56px;height:56px;border-radius:16px;background:#EFF6FF;border:1px solid #BFDBFE;display:flex;align-items:center;justify-content:center;color:#2563EB;flex-shrink:0;">
+                                <i data-lucide="landmark" style="width:24px;height:24px;"></i>
+                            </div>
+                            <div>
+                                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                    <h2 style="font-size:28px;font-weight:800;color:#0F172A;margin:0;">${account.bankName}</h2>
+                                    <span style="background:${statusMeta.background};color:${statusMeta.color};border:1px solid ${statusMeta.border};font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;text-transform:uppercase;">${statusMeta.label}</span>
+                                </div>
+                                <div style="font-size:15px;color:#475569;margin-top:8px;">${account.accountName}</div>
+                                <div style="font-size:13px;color:#94A3B8;margin-top:6px;">${account.accountNumber} · Last used ${account.lastUsed}</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline" onclick="window.openBankAccountTransactionsDrawer('${account.bankName}', '${account.accountName}')" style="padding:10px 16px;font-size:13px;">View Transactions Drawer</button>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1.15fr 1fr;gap:20px;">
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div style="padding:20px 24px;border-bottom:1px solid #E2E8F0;background:#FCFDFE;">
+                            <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0;">Account Details</h3>
+                        </div>
+                        <div style="padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:18px 28px;">
+                            <div><div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;">Account Holder</div><div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:6px;">${account.legalOwner}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;">Account Type</div><div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:6px;">${account.accountType}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;">Branch / Region</div><div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:6px;">${account.branchRegion}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;">Supported Currency</div><div style="font-size:14px;font-weight:700;color:#0F172A;margin-top:6px;">${account.currencies.join(' / ')}</div></div>
+                            <div style="grid-column:1/-1;"><div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;">Primary Use</div><div style="font-size:14px;font-weight:600;color:#334155;margin-top:6px;line-height:1.7;">${account.settlementUse}</div></div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="padding:0;overflow:hidden;">
+                        <div style="padding:20px 24px;border-bottom:1px solid #E2E8F0;background:#FCFDFE;">
+                            <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0;">Activity Snapshot</h3>
+                        </div>
+                        <div style="padding:24px;display:flex;flex-direction:column;gap:14px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-size:13px;color:#64748B;">Transaction Count</span>
+                                <strong style="font-size:16px;color:#0F172A;">${transactions.length}</strong>
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-size:13px;color:#64748B;">Latest Activity</span>
+                                <strong style="font-size:14px;color:#0F172A;text-align:right;">${transactions[0]?.time || '-'}</strong>
+                            </div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;">
+                                <span style="font-size:13px;color:#64748B;">Latest Amount</span>
+                                <strong style="font-size:14px;color:#0F172A;text-align:right;">${transactions[0]?.amount || '-'}</strong>
+                            </div>
+                            <div style="padding:14px 16px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;font-size:12px;color:#64748B;line-height:1.6;">
+                                This connected bank account can be reviewed from both the Fiat Vault overview card and the transaction drawer.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="padding:0;overflow:hidden;">
+                    <div style="padding:20px 24px;border-bottom:1px solid #E2E8F0;background:#FCFDFE;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div>
+                            <h3 style="font-size:18px;font-weight:700;color:#0F172A;margin:0;">Transaction History</h3>
+                            <div style="font-size:13px;color:#64748B;margin-top:6px;">All recorded activity under this connected bank account.</div>
+                        </div>
+                        <button class="btn btn-outline" onclick="window.openBankAccountTransactionsDrawer('${account.bankName}', '${account.accountName}')" style="padding:8px 14px;font-size:12px;">Open Drawer View</button>
+                    </div>
+                    <div style="padding:0 24px 8px;">
+                        ${transactions.length ? transactions.map((transaction, index) => `
+                            <div style="display:grid;grid-template-columns:1.2fr 0.9fr 0.9fr 0.8fr 1fr;gap:16px;align-items:center;padding:18px 0;${index < transactions.length - 1 ? 'border-bottom:1px solid #F1F5F9;' : ''}">
+                                <div>
+                                    <div style="font-size:14px;font-weight:700;color:#0F172A;">${transaction.type}</div>
+                                    <div style="font-size:12px;color:#64748B;margin-top:6px;">${transaction.id} · ${transaction.time}</div>
+                                </div>
+                                <div style="font-size:13px;color:#334155;">${transaction.direction}</div>
+                                <div style="font-size:13px;color:#334155;">${transaction.counterparty}</div>
+                                <div><span style="background:${transaction.status === 'Completed' ? '#ECFDF5' : '#EFF6FF'};color:${transaction.status === 'Completed' ? '#15803D' : '#1D4ED8'};border:1px solid ${transaction.status === 'Completed' ? '#BBF7D0' : '#BFDBFE'};font-size:10px;font-weight:800;padding:4px 8px;border-radius:999px;text-transform:uppercase;">${transaction.status}</span></div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:14px;font-weight:800;color:${transaction.direction === 'Inbound' ? '#059669' : '#0F172A'};">${transaction.amount}</div>
+                                    <div style="font-size:12px;color:#94A3B8;margin-top:4px;">${transaction.note}</div>
+                                </div>
+                            </div>
+                        `).join('') : `
+                            <div style="padding:40px 0;text-align:center;color:#64748B;font-size:14px;">No transactions have been recorded under this account yet.</div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+    }
 
     const FIAT_VAULT_TX_DETAILS = {
         'FV-20261025-0031': {
@@ -7246,13 +7551,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     window.openFiatVaultTxDetail = function(txId) {
         fiatVaultTxView = 'detail';
+        fiatVaultBankAccountView = 'list';
+        activeFiatVaultBankAccountKey = null;
         activeFiatVaultTxId = txId;
         renderFiatVaultTxDetailPage(txId);
     };
 
-    window.backToFiatVault = function() {
+    window.openFiatVaultBankAccountDetail = function(bankName, accountName) {
+        fiatVaultBankAccountView = 'detail';
         fiatVaultTxView = 'list';
         activeFiatVaultTxId = null;
+        activeFiatVaultBankAccountKey = getBankAccountTransactionKey(bankName, accountName);
+        renderFiatVaultBankAccountDetailPage(activeFiatVaultBankAccountKey);
+    };
+
+    window.backToFiatVault = function() {
+        fiatVaultTxView = 'list';
+        fiatVaultBankAccountView = 'list';
+        activeFiatVaultTxId = null;
+        activeFiatVaultBankAccountKey = null;
         contentBody.innerHTML = fiatVaultHTML;
         lucide.createIcons();
     };
@@ -7276,6 +7593,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
   hr { border: none; border-top: 1.5px solid #000; margin: 14px 0; }
   hr.thin { border-top: 0.75px solid #ccc; margin: 10px 0; }
   .section-label { font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #555; margin-bottom: 8px; margin-top: 16px; }
+  .section-head { font-size: 10pt; font-weight: 700; color: #000; margin-top: 20px; margin-bottom: 4px; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-bottom: 4px; }
   .field { margin-bottom: 6px; }
   .field-label { font-size: 8.5pt; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -7297,6 +7615,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     body { padding: 20px 30px; }
     button { display: none !important; }
   }
+  @page {
+    margin: 0;
+    size: Letter;
+  }
 </style>
 </head>
 <body>
@@ -7309,39 +7631,36 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
   </div>
 
   <h1>Money Transfer Receipt</h1>
-  <div class="subtitle">Issued under South Dakota Money Transfer License (SD MTL)</div>
+  <div class="subtitle">Receipt Generated: ${new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</div>
   <hr>
 
   <!-- Company Info -->
-  <div class="section-label">Sender Institution (Licensed Money Transmitter)</div>
+  <div class="section-label">Money Transfer Operator</div>
   <div class="two-col">
-    <div class="field"><div class="field-label">Company Name</div><div class="field-value">Obita Financial Services Ltd.</div></div>
-    <div class="field"><div class="field-label">License</div><div class="field-value">SD MTL No. 2024-MTL-0081</div></div>
-    <div class="field"><div class="field-label">Registered Address</div><div class="field-value">2101 Cedar Street, Suite 400, Sioux Falls, SD 57104, United States</div></div>
-    <div class="field"><div class="field-label">Customer Support</div><div class="field-value">+1 (888) 628-2468</div></div>
+    <div class="field"><div class="field-label">Company Name</div><div class="field-value">Avalon Digital Inc</div></div>
     <div class="field"><div class="field-label">Email</div><div class="field-value">support@obita.com</div></div>
+    <div class="field"><div class="field-label">Address</div><div class="field-value">1207 DELAWARE AVE, WILMINGTON, New Castle, DE</div></div>
     <div class="field"><div class="field-label">Website</div><div class="field-value">www.obita.com</div></div>
   </div>
   <hr class="thin">
 
-  <!-- Sender / Merchant info -->
-  <div class="section-label">Sender (Merchant)</div>
-  <div class="two-col">
-    <div class="field"><div class="field-label">Sender Name</div><div class="field-value">${tx.debitAccount.name}</div></div>
-    <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.debitAccount.accountNo}</div></div>
-    <div class="field"><div class="field-label">Custodian Bank</div><div class="field-value">${tx.debitAccount.bank}</div></div>
-    <div class="field"><div class="field-label">Purpose of Payment</div><div class="field-value">${tx.purpose || '—'}</div></div>
-  </div>
-  <hr class="thin">
-
-  <!-- Recipient info -->
-  <div class="section-label">Recipient (Beneficiary)</div>
-  <div class="two-col">
-    <div class="field"><div class="field-label">Recipient Name</div><div class="field-value">${tx.beneficiary.name}</div></div>
-    <div class="field"><div class="field-label">Recipient Bank</div><div class="field-value">${tx.beneficiary.bank}</div></div>
-    <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.accountNo}</div></div>
-    <div class="field"><div class="field-label">SWIFT / BIC</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.swift || '—'}</div></div>
-    <div class="field" style="grid-column:1/-1;"><div class="field-label">Bank Address</div><div class="field-value">${tx.beneficiary.bankAddress || '—'}</div></div>
+  <!-- Sender & Recipient side by side -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #e2e8f0;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+    <div style="padding:12px 16px;border-right:1px solid #e2e8f0;">
+      <div class="section-label" style="margin-top:0;">Sender</div>
+      <div class="field"><div class="field-label">Sender Name</div><div class="field-value">${tx.debitAccount.name}</div></div>
+      <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.debitAccount.accountNo}</div></div>
+      <div class="field"><div class="field-label">Custodian Bank</div><div class="field-value">${tx.debitAccount.bank}</div></div>
+      <div class="field"><div class="field-label">Purpose of Payment</div><div class="field-value">${tx.purpose || '—'}</div></div>
+    </div>
+    <div style="padding:12px 16px;">
+      <div class="section-label" style="margin-top:0;">Recipient</div>
+      <div class="field"><div class="field-label">Recipient Name</div><div class="field-value">${tx.beneficiary.name}</div></div>
+      <div class="field"><div class="field-label">Recipient Bank</div><div class="field-value">${tx.beneficiary.bank}</div></div>
+      <div class="field"><div class="field-label">Account No.</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.accountNo}</div></div>
+      <div class="field"><div class="field-label">SWIFT / BIC</div><div class="field-value" style="font-family:monospace;">${tx.beneficiary.swift || '—'}</div></div>
+      <div class="field"><div class="field-label">Bank Address</div><div class="field-value">${tx.beneficiary.bankAddress || '—'}</div></div>
+    </div>
   </div>
   <hr class="thin">
 
@@ -7350,11 +7669,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
   <div class="two-col">
     <div class="field"><div class="field-label">Transaction Number</div><div class="field-value" style="font-family:monospace;">${txId}</div></div>
     <div class="field"><div class="field-label">Date &amp; Time</div><div class="field-value">${tx.createdAt}</div></div>
-    <div class="field"><div class="field-label">Value Date</div><div class="field-value">${tx.valueDate}</div></div>
-    <div class="field"><div class="field-label">Settlement Date</div><div class="field-value">${tx.settlementDate}</div></div>
     <div class="field"><div class="field-label">Internal Reference</div><div class="field-value" style="font-family:monospace;">${tx.reference}</div></div>
     <div class="field"><div class="field-label">SWIFT Reference</div><div class="field-value" style="font-family:monospace;">${tx.externalRef}</div></div>
-    <div class="field" style="grid-column:1/-1;"><div class="field-label">Narration</div><div class="field-value">${tx.narrative}</div></div>
+    <div class="field" style="grid-column:1/-1;"><div class="field-label">Remark</div><div class="field-value">${tx.narrative}</div></div>
   </div>
   <hr class="thin">
 
@@ -7392,18 +7709,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
   </table>
 
   <!-- Disclosures -->
+  <div class="section-head">Disclosures</div>
   <div class="disclosure-box">
-    <p><strong>IMPORTANT DISCLOSURES</strong></p>
-    <p>Your recipient may receive less than the amount shown above due to fees charged by their bank, correspondent bank deductions, and any applicable foreign taxes or levies not controlled by Obita Financial Services Ltd.</p>
-    <p>You have a right to dispute errors or unauthorized transactions. If you think there is an error, contact us within 180 days at support@obita.com or +1 (888) 628-2468. You can also contact us for a written explanation of your rights.</p>
-    <p>You may cancel this transaction for a full refund within 30 minutes of payment, unless the funds have been picked up or deposited. To cancel, contact Customer Support immediately.</p>
-    <p>For consumer protection information, visit: <strong>www.consumerfinance.gov</strong></p>
-    <p>Obita Financial Services Ltd. is licensed as a Money Transmitter by the South Dakota Division of Banking. License verification: <strong>https://dlr.sd.gov/banking/money_transmitters/default.aspx</strong></p>
+    <p>Your recipient may receive less due to fees charged by their bank and/or any applicable foreign taxes.</p>
+    <p>You have a right to dispute errors in your transaction. If you think there is an error, contact us within 180 days at <strong>support@obita.com</strong> . You can also contact us for a written explanation of your rights.</p>
+    <p>You can cancel this transaction for a full refund within 30 minutes of payment, unless the funds have been picked up or deposited.</p>
   </div>
 
+  <!-- Contact & Regulator block -->
+  <table style="width:100%;border-collapse:collapse;margin-top:20px;font-size:9pt;line-height:1.7;">
+    <tr>
+      <td style="width:50%;vertical-align:top;padding-right:24px;">
+        <p style="font-weight:700;margin-bottom:6px;">For questions or complaints about Obita, contact:</p>
+        <p><strong>Avalon Digital Inc</strong><br>
+        support@obita.com</p>
+        <p style="margin-top:10px;"><strong>Consumer Financial Protection Bureau</strong><br>
+        855-411-2372 &middot; 855-729-2372 (TTY/TDD)<br>
+        www.consumerfinance.gov</p>
+      </td>
+      <td style="width:50%;vertical-align:top;padding-left:24px;border-left:1px solid #ccc;">
+        <p style="font-weight:700;margin-bottom:6px;">State Regulator:</p>
+        <p><strong>Wyoming Division of Banking</strong><br>
+        Herschler Building East, Suite 201<br>
+        122 W. 25th Street, Cheyenne, WY 82002<br>
+        Phone: (307) 777-7797<br>
+        Website: wyomingbankingdivision.wyo.gov<br>
+        Email: wyomingbankingdivision@wyo.gov</p>
+      </td>
+    </tr>
+  </table>
+
   <div class="footer">
-    <p>This receipt is an official record of your money transfer transaction issued by Obita Financial Services Ltd.</p>
-    <p>Obita Financial Services Ltd. · 2101 Cedar Street, Suite 400, Sioux Falls, SD 57104 · support@obita.com · www.obita.com</p>
   </div>
 
   <div style="text-align:center;margin-top:28px;">
@@ -12219,6 +12555,24 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             </div>
         `;
         lucide.createIcons();
+
+        // ── Inbox message + push notification ──────────────────────────────
+        const _notifTitle = payeeDirectoryMode === 'payeeList'
+            ? 'New Payee Added'
+            : payeeDirectoryMode === 'invoicePayerList'
+            ? 'New Payer for Invoice Added'
+            : 'New Contact Created';
+        const _notifPreview = payeeDirectoryMode === 'invoicePayerList'
+            ? `${displayName} (${newPayee.id}) has been added to your Payer List for Invoice. Awaiting information collection.`
+            : `${displayName} (${newPayee.id}) has been added to your ${payeeDirectoryMode === 'payeeList' ? 'Payee List' : 'External Contacts'}. Awaiting information collection.`;
+        notifyOrderCreated(
+            _notifTitle,
+            _notifPreview,
+            'View',
+            () => {
+                window.editPayee(newPayee.id, payeeDirectoryMode === 'invoicePayerList' ? 'invoicePayer' : 'payee');
+            }
+        );
     };
 
     const PAYOUT_FEE_CONFIG = {
@@ -14120,10 +14474,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             };
 
         } else if (title === 'Fiat Vault') {
-            if (fiatVaultTxView === 'detail' && activeFiatVaultTxId) {
+            if (fiatVaultBankAccountView === 'detail' && activeFiatVaultBankAccountKey) {
+                renderFiatVaultBankAccountDetailPage(activeFiatVaultBankAccountKey);
+            } else if (fiatVaultTxView === 'detail' && activeFiatVaultTxId) {
                 renderFiatVaultTxDetailPage(activeFiatVaultTxId);
             } else {
                 fiatVaultTxView = 'list';
+                fiatVaultBankAccountView = 'list';
                 contentBody.innerHTML = fiatVaultHTML;
             }
         } else {
