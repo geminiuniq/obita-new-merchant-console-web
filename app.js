@@ -10781,6 +10781,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     let activeExternalContactsUsageFilter = 'payout';
     let payeeDirectoryMode = 'externalContacts';
     let detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
+    let invoicePayerAccounts = []; // Accounts added in the New Payer for Invoice form
 
     function getPayeeById(id) {
         return payeeList.find(p => p.id === id);
@@ -11289,11 +11290,20 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                         </div>
 
+                        ${isInvoicePayerForm ? `
+                        <!-- Payer Alias (Invoice Payer — replaces email and individual name fields) -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">Payer Alias *</label>
+                            <input id="payee-alias" class="bank-form-control" type="text" placeholder="e.g. ABC Corp, John D., Supplier A">
+                            <div style="font-size: 11px; color: #94A3B8;">Display name used to identify this payer in invoice orders and transactions.</div>
+                        </div>
+                        <div id="payee-individual-fields" style="display: none;"></div>
+                        ` : `
                         <!-- Email -->
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <label class="bank-form-label">${emailLabel}</label>
                             <input id="payee-email" class="bank-form-control" type="email" placeholder="e.g. john.doe@example.com" required>
-                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'}.</div>
+                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this ${isPayoutForm ? 'payee' : 'contact'}.</div>
                         </div>
 
                         <!-- Individual fields -->
@@ -11313,6 +11323,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                             </div>
                         </div>
+                        `}
 
                         <!-- Company fields -->
                         <div id="payee-company-fields" style="display: none; flex-direction: column; gap: 16px;">
@@ -11355,6 +11366,252 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
                 `}
 
+                ${isInvoicePayerForm ? `
+                <!-- SECTION 2: Payment Methods — Invoice Payer progressive UI -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Payment Methods</h3>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Register bank accounts or crypto wallet addresses for this payer.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+
+                        <!-- Added accounts list -->
+                        <div id="payee-accounts-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+                        <!-- Add account zone -->
+                        <div id="payee-add-account-zone" style="display: flex; flex-direction: column; gap: 14px;">
+
+                            <!-- Step 0: Add button -->
+                            <button type="button" id="payee-add-account-btn" onclick="window.onPayeeAddAccountClick()" style="width: 100%; padding: 14px 16px; background: white; border: 2px dashed #93C5FD; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: #2563EB; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+                                Add New Bank Account / Wallet Address
+                            </button>
+
+                            <!-- Step 1: Type selector (hidden initially) -->
+                            <div id="payee-account-type-zone" style="display: none; flex-direction: column; gap: 12px;">
+                                <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Select payment method type</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <button type="button" id="payee-type-bank-btn" onclick="window.onPayeeAccountTypeSelect('bank')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; background: #EFF6FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="landmark" style="width: 22px; height: 22px; color: #2563EB;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Bank Account</div>
+                                            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Wire / FPS / SWIFT</div>
+                                        </div>
+                                    </button>
+                                    <button type="button" id="payee-type-wallet-btn" onclick="window.onPayeeAccountTypeSelect('wallet')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; background: #F5F3FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="wallet" style="width: 22px; height: 22px; color: #7C3AED;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Wallet Address</div>
+                                            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">USDT / USDC stablecoin</div>
+                                        </div>
+                                    </button>
+                                </div>
+                                <button type="button" onclick="window.onPayeeCancelAddAccount()" style="align-self: flex-start; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 600; cursor: pointer;">Cancel</button>
+                            </div>
+
+                            <!-- Step 2a: Bank form (hidden initially) -->
+                            <div id="payee-bank-add-zone" style="display: none; flex-direction: column; gap: 16px; padding: 20px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
+                                <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #E2E8F0;">
+                                    <div style="width: 34px; height: 34px; background: #EFF6FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i data-lucide="landmark" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Bank Account Details</div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Bank Name *</label>
+                                        <input id="payee-new-bank-name" class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Account Number / IBAN *</label>
+                                        <input id="payee-new-bank-account" class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">SWIFT / BIC Code</label>
+                                        <input id="payee-new-bank-swift" class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Routing / FPS / Sort Code</label>
+                                        <input id="payee-new-bank-routing" class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">Account Currency</label>
+                                    <select id="payee-new-bank-currency" class="bank-form-control">
+                                        <option>USD</option><option>HKD</option><option>EUR</option><option>BRL</option>
+                                    </select>
+                                </div>
+                                <div style="display: flex; gap: 10px; justify-content: flex-end; padding-top: 4px; border-top: 1px solid #E2E8F0;">
+                                    <button type="button" onclick="window.onPayeeCancelAddAccount()" style="padding: 8px 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                    <button type="button" class="btn btn-primary" onclick="window.onPayeeSaveNewBank()" style="padding: 8px 18px; font-size: 13px;">
+                                        <i data-lucide="check" style="width: 14px; height: 14px; margin-right: 4px;"></i>
+                                        Add Bank Account
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Step 2b: Wallet form (hidden initially) -->
+                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 16px;">
+
+                                <!-- Declaration checkbox -->
+                                <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                                    <input type="checkbox" id="payee-invoice-wallet-claim" style="margin-top: 3px; accent-color: #7C3AED; flex-shrink: 0;" oninput="window.onPayeeInvoiceWalletClaimChange()">
+                                    <span style="font-size: 13px; color: #334155; line-height: 1.6;">${walletClaimText}</span>
+                                </label>
+
+                                <!-- Wallet inputs — hidden until declaration checked -->
+                                <div id="payee-invoice-wallet-inputs" style="display: none; flex-direction: column; gap: 16px; padding: 20px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #E2E8F0;">
+                                        <div style="width: 34px; height: 34px; background: #F5F3FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i data-lucide="wallet" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                                        </div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Wallet Address Details</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Wallet Address *</label>
+                                        <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
+                                    </div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Network / Chain *</label>
+                                            <select id="payee-invoice-wallet-network" class="bank-form-control">
+                                                <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                                <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                                <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                                <option value="Solana">Solana</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Wallet Label <span style="font-weight:400; text-transform:none; font-size:10px;">(optional)</span></label>
+                                            <input id="payee-invoice-wallet-label" class="bank-form-control" type="text" placeholder="e.g. Operations Wallet">
+                                        </div>
+                                    </div>
+
+                                    <!-- Verify Wallet button + zone -->
+                                    <div style="padding-top: 12px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px;">
+                                        <button type="button" id="payee-verify-wallet-btn" onclick="window.onPayeeVerifyWalletClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
+                                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+                                            验证钱包 (Verify Wallet)
+                                        </button>
+
+                                        <!-- Verification zone (hidden initially) -->
+                                        <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                                            <!-- Tab header -->
+                                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                                <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
+                                                <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                                            </div>
+
+                                            <!-- Micro transfer content (default) -->
+                                            <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                                                <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                                                    To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
+                                                </div>
+
+                                                <!-- Details card -->
+                                                <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                                                    <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                                                    <div style="display: flex; flex-direction: column;">
+                                                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                                            <div>
+                                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Amount to Send</div>
+                                                                <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                                            </div>
+                                                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                                            </button>
+                                                        </div>
+                                                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                                                            <div style="min-width: 0; flex: 1;">
+                                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Obita Verification Address</div>
+                                                                <div id="payee-verify-dest-addr" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; margin-top: 3px; word-break: break-all; line-height: 1.5;">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+                                                            </div>
+                                                            <button type="button" id="payee-verify-copy-addr" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-dest-addr').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                                            </button>
+                                                        </div>
+                                                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                                            <div>
+                                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                                                <div id="payee-verify-chain-display" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">TRON (TRC-20)</div>
+                                                            </div>
+                                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-chain-display').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Share section -->
+                                                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+                                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 7px;">
+                                                        <i data-lucide="share-2" style="width: 14px; height: 14px; color: #64748B;"></i>
+                                                        Share Verification Instructions
+                                                    </div>
+                                                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Forward these details to the wallet owner so they can complete the verification transfer.</div>
+                                                    <pre id="payee-verify-share-text" style="background: white; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; font-size: 11.5px; color: #475569; font-family: monospace; line-height: 1.75; white-space: pre-wrap; word-break: break-all; margin: 0;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE
+  Network: TRON (TRC-20)
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+                                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                        <button type="button" onclick="window.copyPayeeVerifyShareText(this)" style="padding: 8px 14px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                                            <i data-lucide="copy" style="width: 13px; height: 13px;"></i> Copy All
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                                    <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                                    <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. The wallet can be saved without completing verification — status can be updated later.</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Wallet sign content (hidden initially) -->
+                                            <div id="payee-verify-content-sign" style="padding: 20px; display: none; flex-direction: column; gap: 16px;">
+                                                <div style="font-size: 13px; color: #334155; line-height: 1.75;">Sign the message below using your wallet to prove ownership, then paste the signature in the field provided.</div>
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <label class="bank-form-label">Message to Sign</label>
+                                                    <div style="background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px; font-size: 12px; font-family: monospace; color: #475569; line-height: 1.7; word-break: break-all;">Obita Wallet Verification · Payer Registration · Nonce: OBT-2025-${Math.floor(Math.random() * 900000 + 100000)}</div>
+                                                </div>
+                                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                    <label class="bank-form-label">Paste Signature</label>
+                                                    <textarea class="bank-form-control" placeholder="0x..." style="font-family: monospace; min-height: 80px; resize: vertical;"></textarea>
+                                                </div>
+                                                <button type="button" class="btn btn-primary" style="padding: 9px 18px; font-size: 13px; font-weight: 700; align-self: flex-start;">Verify Signature</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Wallet Save / Cancel buttons -->
+                                    <div style="padding-top: 4px; border-top: 1px solid #E2E8F0; display: flex; gap: 10px; justify-content: flex-end;">
+                                        <button type="button" onclick="window.onPayeeCancelAddAccount()" style="padding: 8px 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                        <button type="button" class="btn btn-primary" onclick="window.onPayeeSaveNewWallet()" style="padding: 8px 18px; font-size: 13px; font-weight: 700;">
+                                            <i data-lucide="check" style="width: 14px; height: 14px; margin-right: 4px;"></i>
+                                            Add Wallet Address
+                                        </button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                ` : `
                 <!-- SECTION 2: Wallet Address (collapsible) -->
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-wallet-card">
                     <button type="button" onclick="window.togglePayeeSection('wallet')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
@@ -11401,7 +11658,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
                             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; font-size: 11px; color: #92400E; line-height: 1.5; margin-bottom: 4px;">
                                 <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
-                                Even if you provide the wallet details now, an email will still be sent to the ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'} asking them to verify and confirm the wallet address.
+                                Even if you provide the wallet details now, an email will still be sent to the ${isPayoutForm ? 'payee' : 'contact'} asking them to verify and confirm the wallet address.
                             </div>
                             <div id="payee-wallet-list" style="display: flex; flex-direction: column; gap: 12px;">
                                 ${renderWalletEntry(1)}
@@ -11459,13 +11716,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
                     </div>
                 </div>
+                `}
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-outline" onclick="${inDrawer ? 'window.closePayeeFormDrawer()' : 'window.backToPayeeList()'}" style="padding: 10px 18px;">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="window.savePayee('')" style="padding: 10px 22px; font-weight: 700;">
-                        <i data-lucide="send" style="width: 14px; height: 14px; margin-right: 6px;"></i>
-                        Send Invitation & Save
+                        <i data-lucide="${isInvoicePayerForm ? 'save' : 'send'}" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                        ${isInvoicePayerForm ? 'Save Payer' : 'Send Invitation & Save'}
                     </button>
                 </div>
         `;
@@ -11814,6 +12072,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.openAddPayeePage = function() {
+        invoicePayerAccounts = [];
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
         activePayeeId = null;
@@ -12058,16 +12317,223 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         refreshPayeeEntryLabels('[data-bank-entry]', 'Bank Account');
     };
 
+    // ===== Invoice Payer Form — Progressive Payment Method UI =====
+
+    const OBITA_VERIFY_ADDRESSES = {
+        'TRON (TRC-20)':     'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+        'Ethereum (ERC-20)': '0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+        'BNB Chain (BEP-20)':'0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+        'Solana':            '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7ViJoyW2'
+    };
+
+    window.onPayeeAddAccountClick = function() {
+        const btn = document.getElementById('payee-add-account-btn');
+        const zone = document.getElementById('payee-account-type-zone');
+        if (!zone) return;
+        if (btn) btn.style.display = 'none';
+        zone.style.display = 'flex';
+        lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.onPayeeAccountTypeSelect = function(type) {
+        const typeZone  = document.getElementById('payee-account-type-zone');
+        const bankZone  = document.getElementById('payee-bank-add-zone');
+        const walletZone = document.getElementById('payee-wallet-add-zone');
+        if (typeZone) typeZone.style.display = 'none';
+        if (type === 'bank') {
+            if (bankZone) { bankZone.style.display = 'flex'; lucide.createIcons(); setTimeout(() => bankZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }
+        } else {
+            if (walletZone) { walletZone.style.display = 'flex'; lucide.createIcons(); setTimeout(() => walletZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }
+        }
+    };
+
+    window.onPayeeInvoiceWalletClaimChange = function() {
+        const claimed = document.getElementById('payee-invoice-wallet-claim')?.checked;
+        const inputsZone = document.getElementById('payee-invoice-wallet-inputs');
+        if (!inputsZone) return;
+        inputsZone.style.display = claimed ? 'flex' : 'none';
+        if (claimed) {
+            lucide.createIcons();
+            setTimeout(() => inputsZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+    };
+
+    window.onPayeeVerifyWalletClick = function() {
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
+        if (!verifyZone) return;
+        const network  = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destEl   = document.getElementById('payee-verify-dest-addr');
+        const chainEl  = document.getElementById('payee-verify-chain-display');
+        const shareEl  = document.getElementById('payee-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
+        verifyZone.style.display = 'flex';
+        lucide.createIcons();
+        const btn = document.getElementById('payee-verify-wallet-btn');
+        if (btn) { btn.style.background = '#ECFDF5'; btn.style.borderColor = '#A7F3D0'; btn.style.color = '#059669'; }
+        setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.setPayeeVerifyMethod = function(method) {
+        const microTab     = document.getElementById('payee-verify-tab-micro');
+        const signTab      = document.getElementById('payee-verify-tab-sign');
+        const microContent = document.getElementById('payee-verify-content-micro');
+        const signContent  = document.getElementById('payee-verify-content-sign');
+        if (method === 'micro') {
+            if (microTab)     { microTab.style.background = 'white'; microTab.style.color = '#7C3AED'; microTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (signTab)      { signTab.style.background  = 'transparent'; signTab.style.color = '#64748B'; signTab.style.boxShadow = 'none'; }
+            if (microContent) microContent.style.display = 'flex';
+            if (signContent)  signContent.style.display  = 'none';
+        } else {
+            if (signTab)      { signTab.style.background  = 'white'; signTab.style.color = '#7C3AED'; signTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (microTab)     { microTab.style.background = 'transparent'; microTab.style.color = '#64748B'; microTab.style.boxShadow = 'none'; }
+            if (signContent)  { signContent.style.display = 'flex'; lucide.createIcons(); }
+            if (microContent) microContent.style.display = 'none';
+        }
+    };
+
+    window.copyPayeeVerifyShareText = function(btn) {
+        const shareEl = document.getElementById('payee-verify-share-text');
+        if (!shareEl) return;
+        const text = shareEl.textContent.trim();
+        const origHTML = btn.innerHTML;
+        navigator.clipboard.writeText(text).then(() => {
+            btn.innerHTML = '<i data-lucide="check" style="width:13px;height:13px;"></i> Copied!';
+            btn.style.color = '#059669';
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = origHTML; btn.style.color = ''; lucide.createIcons(); }, 1800);
+        }).catch(() => {
+            const range = document.createRange();
+            range.selectNode(shareEl);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+        });
+    };
+
+    window.onPayeeSaveNewBank = function() {
+        const bankName = document.getElementById('payee-new-bank-name')?.value?.trim();
+        const account  = document.getElementById('payee-new-bank-account')?.value?.trim();
+        if (!bankName || !account) { alert('Please enter the bank name and account number.'); return; }
+        const swift    = document.getElementById('payee-new-bank-swift')?.value?.trim()    || '';
+        const routing  = document.getElementById('payee-new-bank-routing')?.value?.trim()  || '';
+        const currency = document.getElementById('payee-new-bank-currency')?.value?.trim() || 'USD';
+        invoicePayerAccounts.push({ type: 'bank', bankName, account, swift, routing, currency });
+        window._renderPayeeAccountsList();
+        window.onPayeeCancelAddAccount();
+    };
+
+    window.onPayeeSaveNewWallet = function() {
+        const addr    = document.getElementById('payee-invoice-wallet-addr')?.value?.trim();
+        if (!addr) { alert('Please enter the wallet address.'); return; }
+        const claimed = document.getElementById('payee-invoice-wallet-claim')?.checked;
+        if (!claimed) { alert('Please confirm the wallet ownership declaration.'); return; }
+        const network = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const label   = document.getElementById('payee-invoice-wallet-label')?.value?.trim() || '';
+        invoicePayerAccounts.push({ type: 'wallet', address: addr, network, label, verified: false });
+        window._renderPayeeAccountsList();
+        window.onPayeeCancelAddAccount();
+    };
+
+    window._renderPayeeAccountsList = function() {
+        const listEl = document.getElementById('payee-accounts-list');
+        if (!listEl) return;
+        listEl.innerHTML = invoicePayerAccounts.map((acct, idx) => {
+            if (acct.type === 'wallet') {
+                return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border:1px solid #E2E8F0;border-radius:10px;">
+                        <div style="width:36px;height:36px;background:#F5F3FF;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="wallet" style="width:16px;height:16px;color:#7C3AED;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="font-size:13px;font-weight:700;color:#0F172A;">${acct.network}</div>
+                                ${acct.label ? `<div style="font-size:11px;color:#94A3B8;">${acct.label}</div>` : ''}
+                            </div>
+                            <div style="font-size:12px;font-family:monospace;color:#475569;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acct.address}</div>
+                        </div>
+                        <button type="button" onclick="window.removePayeeAccount(${idx})" style="border:none;background:none;color:#DC2626;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Remove</button>
+                    </div>`;
+            } else {
+                return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border:1px solid #E2E8F0;border-radius:10px;">
+                        <div style="width:36px;height:36px;background:#EFF6FF;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="landmark" style="width:16px;height:16px;color:#2563EB;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:700;color:#0F172A;">${acct.bankName}</div>
+                            <div style="font-size:12px;font-family:monospace;color:#475569;margin-top:2px;">${acct.account}${acct.currency ? ' · ' + acct.currency : ''}</div>
+                        </div>
+                        <button type="button" onclick="window.removePayeeAccount(${idx})" style="border:none;background:none;color:#DC2626;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Remove</button>
+                    </div>`;
+            }
+        }).join('');
+        lucide.createIcons();
+    };
+
+    window.removePayeeAccount = function(idx) {
+        invoicePayerAccounts.splice(idx, 1);
+        window._renderPayeeAccountsList();
+    };
+
+    window.onPayeeCancelAddAccount = function() {
+        const typeZone   = document.getElementById('payee-account-type-zone');
+        const bankZone   = document.getElementById('payee-bank-add-zone');
+        const walletZone = document.getElementById('payee-wallet-add-zone');
+        const btn        = document.getElementById('payee-add-account-btn');
+        if (typeZone)   { typeZone.style.display = 'none'; }
+        if (bankZone)   { bankZone.style.display = 'none'; }
+        if (walletZone) { walletZone.style.display = 'none'; }
+        if (btn)        { btn.style.display = 'flex'; }
+        // Reset wallet sub-zones
+        const claimChk   = document.getElementById('payee-invoice-wallet-claim');
+        const inputsZone = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
+        if (claimChk)   claimChk.checked = false;
+        if (inputsZone) inputsZone.style.display = 'none';
+        if (verifyZone) verifyZone.style.display = 'none';
+        // Clear field values
+        ['payee-new-bank-name','payee-new-bank-account','payee-new-bank-swift','payee-new-bank-routing',
+         'payee-invoice-wallet-addr','payee-invoice-wallet-label'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    };
+
     window.savePayee = function(existingId) {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
-        const email      = document.getElementById('payee-email')?.value?.trim();
-        const entityLabel = payeeDirectoryMode === 'payeeList' ? 'payee' : payeeDirectoryMode === 'invoicePayerList' ? 'payer' : 'contact';
-        const entityLabelUpper = payeeDirectoryMode === 'payeeList' ? 'PAYEE' : payeeDirectoryMode === 'invoicePayerList' ? 'PAYER' : 'CONTACT';
+        const isInvoicePayer = payeeDirectoryMode === 'invoicePayerList';
+        const email      = isInvoicePayer ? '' : (document.getElementById('payee-email')?.value?.trim() || '');
+        const entityLabel = payeeDirectoryMode === 'payeeList' ? 'payee' : isInvoicePayer ? 'payer' : 'contact';
+        const entityLabelUpper = payeeDirectoryMode === 'payeeList' ? 'PAYEE' : isInvoicePayer ? 'PAYER' : 'CONTACT';
 
-        if (!email) { alert(`Please enter the ${entityLabel} email address.`); return; }
+        if (!isInvoicePayer && !email) { alert(`Please enter the ${entityLabel} email address.`); return; }
 
         let displayName = '';
-        if (personType === 'individual') {
+        if (isInvoicePayer) {
+            if (personType === 'individual') {
+                const alias = document.getElementById('payee-alias')?.value?.trim();
+                if (!alias) { alert('Please enter the Payer Alias.'); return; }
+                displayName = alias;
+            } else {
+                const cname = document.getElementById('payee-company-name')?.value?.trim();
+                if (!cname) { alert('Please enter the Company Name.'); return; }
+                displayName = cname;
+            }
+        } else if (personType === 'individual') {
             const fname = document.getElementById('payee-fname')?.value?.trim();
             const lname = document.getElementById('payee-lname')?.value?.trim();
             if (!fname || !lname) { alert(`Please enter the ${entityLabel} First Name and Surname.`); return; }
@@ -12118,26 +12584,33 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
 
-        const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
-        const bankModeNow = document.getElementById('payee-bank-now')?.checked;
-        const walletClaimed = Boolean(document.getElementById('payee-wallet-claim')?.checked);
-        const walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
-        const bankEntries = bankModeNow ? collectPayeeBankEntries() : [];
-        if (walletEntries === null || bankEntries === null) return;
-
-        if ((walletModeNow || walletEntries.length) && !walletClaimed) {
-            alert('Please confirm the wallet ownership declaration before wallet information can be collected.');
-            return;
+        let walletEntries, bankEntries;
+        if (isInvoicePayer) {
+            walletEntries = invoicePayerAccounts.filter(a => a.type === 'wallet').map(a => ({ network: a.network, address: a.address, label: a.label, verified: a.verified }));
+            bankEntries   = invoicePayerAccounts.filter(a => a.type === 'bank').map(a => ({ bankName: a.bankName, account: a.account, swift: a.swift, routing: a.routing, currency: a.currency }));
+        } else {
+            const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
+            const bankModeNow   = document.getElementById('payee-bank-now')?.checked;
+            const walletClaimed = Boolean(document.getElementById('payee-wallet-claim')?.checked);
+            walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
+            bankEntries   = bankModeNow   ? collectPayeeBankEntries()   : [];
+            if (walletEntries === null || bankEntries === null) return;
+            if ((walletModeNow || walletEntries.length) && !walletClaimed) {
+                alert('Please confirm the wallet ownership declaration before wallet information can be collected.');
+                return;
+            }
+            if (walletModeNow && walletEntries.length) newPayee.wallets = walletEntries;
+            if (bankModeNow   && bankEntries.length)   newPayee.banks   = bankEntries;
         }
 
-        if (walletModeNow && walletEntries.length) {
+        if (walletEntries.length) {
             newPayee.wallets = walletEntries;
             newPayee.type = 'Crypto Wallet';
         }
 
-        if (bankModeNow && bankEntries.length) {
+        if (bankEntries.length) {
             newPayee.banks = bankEntries;
-            if (!walletModeNow) newPayee.type = 'Bank Account';
+            if (!walletEntries.length) newPayee.type = 'Bank Account';
         }
 
         payeeList.unshift(newPayee);
@@ -12173,12 +12646,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             <div class="fade-in" style="max-width: 640px; margin: 60px auto; display: flex; flex-direction: column; align-items: center; gap: 0;">
                 <div class="card" style="padding: 0; overflow: hidden; width: 100%;">
                     <!-- Success banner -->
-                    <div style="padding: 40px 40px 32px; background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%); border-bottom: 1px solid #E2E8F0; text-align: center;">
-                        <div style="width: 64px; height: 64px; border-radius: 999px; background: linear-gradient(135deg, #2563EB, #059669); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(37,99,235,0.25);">
-                            <i data-lucide="send" style="width: 28px; height: 28px; color: white;"></i>
+                    <div style="padding: 40px 40px 32px; background: linear-gradient(135deg, ${isInvoicePayer ? '#F5F3FF 0%, #EFF6FF' : '#EFF6FF 0%, #F0FDF4'} 100%); border-bottom: 1px solid #E2E8F0; text-align: center;">
+                        <div style="width: 64px; height: 64px; border-radius: 999px; background: linear-gradient(135deg, ${isInvoicePayer ? '#7C3AED, #2563EB' : '#2563EB, #059669'}); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(37,99,235,0.25);">
+                            <i data-lucide="${isInvoicePayer ? 'user-check' : 'send'}" style="width: 28px; height: 28px; color: white;"></i>
                         </div>
-                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invite Sent!</h2>
-                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.</div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">${isInvoicePayer ? 'Payer Saved!' : 'Invite Sent!'}</h2>
+                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">
+                            ${isInvoicePayer
+                                ? `Payer <strong>${displayName}</strong> has been registered. ${walletEntries.length || bankEntries.length ? 'Payment method(s) have been linked.' : 'No payment methods were added — you can add them later from the payer profile.'}`
+                                : `${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.`}
+                        </div>
                     </div>
 
                     <!-- Details -->
@@ -12188,13 +12665,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper}</span>
                                 <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${displayName}</span>
                             </div>
+                            ${!isInvoicePayer ? `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">EMAIL</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #2563EB;">${email}</span>
                             </div>
+                            ` : ''}
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">STATUS</span>
-                                <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>
+                                ${isInvoicePayer
+                                    ? `<span style="background: #ECFDF5; color: #059669; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">✓ Active</span>`
+                                    : `<span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>`}
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper} ID</span>
@@ -12202,14 +12683,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                         </div>
 
+                        ${!isInvoicePayer ? `
                         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
                             <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
                             <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                ${payeeDirectoryMode === 'invoicePayerList'
-                                    ? 'Invoice workflows <strong>cannot proceed</strong> until the payer completes the information collection process and their identity / account details are verified by the compliance team.'
-                                    : 'Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.'}
+                                Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.
                             </div>
                         </div>
+                        ` : ''}
 
                         <button class="btn btn-primary" onclick="window.backToPayeeList()" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 700;">
                             ${payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : payeeDirectoryMode === 'invoicePayerList' ? 'Back to Payer List for Invoice' : 'Back to External Contacts'}
