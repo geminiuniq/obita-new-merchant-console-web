@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "portal",
+      "runtimeExecutable": "ruby",
+      "runtimeArgs": ["-run", "-e", "httpd", "--", "--port=3847", "--document-root=."],
+      "port": 3847
+    }
+  ]
+}

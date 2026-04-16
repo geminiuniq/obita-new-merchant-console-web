@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.ENTITY_CONFIG = {
         TCSP:  { name: '华信科技有限公司', label: 'via Obita TCSP', accent: '#2563EB', icon: 'building-2' },
         MSO:   { name: '华信汇款有限公司', label: 'via Obita MSO',  accent: '#7C3AED', icon: 'building-2' },
-        GROUP: { name: 'ABC Trading Group', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
+        GROUP: { name: '华信集团 HWA-CHIN GROUP', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
     };
 
     window.switchEntity = function(mode) {
@@ -1289,6 +1289,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) el.classList.remove('drawer-active');
         });
 
+        // Hide currency picker step if it was shown
+        const pickerStep = document.getElementById('fiat-transfer-step-currency');
+        if (pickerStep) pickerStep.style.display = 'none';
+
         currentFiatTransferCurrency = currency;
         document.getElementById('fiat-transfer-drawer-title').textContent = `Transfer ${currency}`;
         document.getElementById('fiat-transfer-step-1').style.display = 'flex';
@@ -1496,10 +1500,172 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) el.classList.remove('drawer-active');
         });
 
+        // Hide currency picker step if it was shown
+        const pickerStep = document.getElementById('fiat-topup-step-currency');
+        if (pickerStep) pickerStep.style.display = 'none';
+
         resetFiatTopUpDrawer(currency);
         lucide.createIcons();
         document.getElementById('fiat-topup-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
+    };
+
+    // MSO mode: open fiat top up drawer with currency selection as first step
+    window.openMsoTopUpCurrencyPicker = function() {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        const drawer = document.getElementById('fiat-topup-drawer');
+        const titleEl = document.getElementById('fiat-topup-drawer-title');
+        if (titleEl) titleEl.textContent = 'Top Up';
+
+        // Hide all steps, show currency picker
+        document.getElementById('fiat-topup-step-1').style.display = 'none';
+        document.getElementById('fiat-topup-step-2').style.display = 'none';
+        document.getElementById('fiat-topup-step-3').style.display = 'none';
+
+        // Create or update currency picker step
+        let pickerStep = document.getElementById('fiat-topup-step-currency');
+        if (!pickerStep) {
+            pickerStep = document.createElement('div');
+            pickerStep.id = 'fiat-topup-step-currency';
+            pickerStep.style.cssText = 'display: flex; flex-direction: column; height: 100%;';
+            const step1 = document.getElementById('fiat-topup-step-1');
+            step1.parentElement.insertBefore(pickerStep, step1);
+        }
+
+        const fiatCurrencies = ['USD', 'HKD', 'EUR', 'BRL'].filter(c => (TRANSFER_BALANCES[c] || 0) > 0);
+
+        pickerStep.innerHTML = `
+            <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Select Currency</div>
+                    <div style="font-size: 12px; color: #94A3B8; line-height: 1.5;">Choose the fiat currency you want to top up. You will then provide the bank transfer details.</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    ${fiatCurrencies.map(c => {
+                        const balance = TRANSFER_BALANCES[c] || 0;
+                        const icons = { USD: '$', HKD: 'HK$', EUR: '€', BRL: 'R$' };
+                        const colors = { USD: '#0F172A', HKD: '#DC2626', EUR: '#1D4ED8', BRL: '#15803D' };
+                        const bgs = { USD: '#F1F5F9', HKD: '#FEF2F2', EUR: '#EFF6FF', BRL: '#F0FDF4' };
+                        const names = { USD: 'US Dollar', HKD: 'Hong Kong Dollar', EUR: 'Euro', BRL: 'Brazilian Real' };
+                        return `
+                        <button onclick="window.selectMsoTopUpCurrency('${c}')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: ${bgs[c]}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: ${colors[c]}; flex-shrink: 0;">${icons[c]}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${c}</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${names[c]}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">Current Balance</div>
+                            </div>
+                            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                        </button>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+
+        pickerStep.style.display = 'flex';
+        lucide.createIcons();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.selectMsoTopUpCurrency = function(currency) {
+        const pickerStep = document.getElementById('fiat-topup-step-currency');
+        if (pickerStep) pickerStep.style.display = 'none';
+        resetFiatTopUpDrawer(currency);
+        document.getElementById('fiat-topup-step-1').style.display = 'flex';
+        lucide.createIcons();
+    };
+
+    // MSO mode: open fiat transfer drawer with currency selection as first step
+    window.openMsoTransferCurrencyPicker = function() {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        const drawer = document.getElementById('fiat-transfer-drawer');
+        const titleEl = document.getElementById('fiat-transfer-drawer-title');
+        if (titleEl) titleEl.textContent = 'Transfer';
+
+        // Hide all steps
+        document.getElementById('fiat-transfer-step-1').style.display = 'none';
+        document.getElementById('fiat-transfer-step-2').style.display = 'none';
+        document.getElementById('fiat-transfer-step-3').style.display = 'none';
+
+        // Create or update currency picker step
+        let pickerStep = document.getElementById('fiat-transfer-step-currency');
+        if (!pickerStep) {
+            pickerStep = document.createElement('div');
+            pickerStep.id = 'fiat-transfer-step-currency';
+            pickerStep.style.cssText = 'display: flex; flex-direction: column; height: 100%;';
+            const step1 = document.getElementById('fiat-transfer-step-1');
+            step1.parentElement.insertBefore(pickerStep, step1);
+        }
+
+        const fiatCurrencies = ['USD', 'HKD', 'EUR', 'BRL'].filter(c => (TRANSFER_BALANCES[c] || 0) > 0);
+
+        pickerStep.innerHTML = `
+            <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Select Currency</div>
+                    <div style="font-size: 12px; color: #94A3B8; line-height: 1.5;">Choose the fiat currency you want to transfer out. Only currencies with available balance are shown.</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    ${fiatCurrencies.map(c => {
+                        const balance = TRANSFER_BALANCES[c] || 0;
+                        const icons = { USD: '$', HKD: 'HK$', EUR: '€', BRL: 'R$' };
+                        const colors = { USD: '#0F172A', HKD: '#DC2626', EUR: '#1D4ED8', BRL: '#15803D' };
+                        const bgs = { USD: '#F1F5F9', HKD: '#FEF2F2', EUR: '#EFF6FF', BRL: '#F0FDF4' };
+                        const names = { USD: 'US Dollar', HKD: 'Hong Kong Dollar', EUR: 'Euro', BRL: 'Brazilian Real' };
+                        return `
+                        <button onclick="window.selectMsoTransferCurrency('${c}')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: ${bgs[c]}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: ${colors[c]}; flex-shrink: 0;">${icons[c]}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${c}</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${names[c]}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">Available</div>
+                            </div>
+                            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                        </button>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+
+        pickerStep.style.display = 'flex';
+        lucide.createIcons();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.selectMsoTransferCurrency = function(currency) {
+        const pickerStep = document.getElementById('fiat-transfer-step-currency');
+        if (pickerStep) pickerStep.style.display = 'none';
+
+        currentFiatTransferCurrency = currency;
+        document.getElementById('fiat-transfer-drawer-title').textContent = 'Transfer ' + currency;
+        document.getElementById('fiat-transfer-step-1').style.display = 'flex';
+        document.getElementById('fiat-transfer-step-2').style.display = 'none';
+        document.getElementById('fiat-transfer-step-3').style.display = 'none';
+        document.getElementById('fiat-transfer-target-account').value = '';
+        document.getElementById('fiat-transfer-amount').value = '';
+        document.getElementById('fiat-transfer-purpose').value = '';
+        document.getElementById('fiat-transfer-notes').value = '';
+        populateFiatTransferAccountOptions();
+        populateFiatTransferCurrencyOptions(currency);
+        renderFiatTransferReceivingInfo(null);
+        window.updateFiatTransferAmounts();
+        lucide.createIcons();
     };
 
     window.goToFiatTopUpStep2 = function() {
@@ -2374,29 +2540,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderApprovalDecisionPanel(requestId, compact = false) {
         const isExpanded = expandedApprovalActionId === requestId;
         const isReject = activeApprovalDecision === 'rejected';
-        const isApprove = activeApprovalDecision === 'approved';
 
         return `
             <div id="approval-action-panel-${requestId}" style="display: ${isExpanded ? 'block' : 'none'}; ${compact ? '' : 'padding: 0 24px 18px 24px;'}">
-                <div style="padding: ${compact ? '0' : '16px 18px'}; border: 1px solid #E2E8F0; border-radius: 14px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); display: flex; flex-direction: column; gap: 14px;">
-                    <div>
-                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Submit Review</div>
-                        <div style="font-size: 12px; color: #64748B; margin-top: 4px; line-height: 1.5;">Choose your decision first. Review notes are required only when rejecting.</div>
-                    </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn ${isApprove ? 'btn-primary' : 'btn-outline'}" onclick="window.selectApprovalDecision('${requestId}', 'approved'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Approve</button>
-                        <button class="btn ${isReject ? 'btn-primary' : 'btn-outline text-danger'}" onclick="window.selectApprovalDecision('${requestId}', 'rejected'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Reject</button>
-                    </div>
+                <div style="padding: ${compact ? '0' : '14px 18px'}; border: 1px solid ${isReject ? '#FECACA' : '#E2E8F0'}; border-radius: 12px; background: ${isReject ? '#FFFBFB' : '#FCFDFE'}; display: flex; flex-direction: column; gap: 12px; transition: all 0.15s;">
                     ${isReject ? `
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="font-size: 12px; font-weight: 700; color: #475569;">Review Notes *</label>
-                            <textarea id="approval-review-notes-${requestId}" class="bank-form-control" style="min-height: ${compact ? '96px' : '84px'}; padding: 12px 14px; background: #FFFFFF;" placeholder="Explain why this request is being rejected."></textarea>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="x-circle" style="width: 14px; height: 14px; color: #DC2626;"></i>
+                            <span style="font-size: 13px; font-weight: 700; color: #DC2626;">Reject this request</span>
                         </div>
-                    ` : ''}
-                    <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-outline" onclick="window.toggleApprovalActionMenu('${requestId}'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Cancel</button>
-                        <button class="btn btn-primary" onclick="window.submitApprovalDecision('${requestId}'); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;" ${activeApprovalDecision ? '' : 'disabled'}>${isReject ? 'Submit Rejection' : 'Submit Review'}</button>
-                    </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 11px; font-weight: 700; color: #475569;">Reason for rejection *</label>
+                            <textarea id="approval-review-notes-${requestId}" class="bank-form-control" style="min-height: ${compact ? '80px' : '68px'}; padding: 10px 12px; background: #FFFFFF; font-size: 13px;" placeholder="Explain why this request is being rejected."></textarea>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                            <button class="btn btn-outline" onclick="window.selectApprovalDecision('${requestId}', null); event.stopPropagation();" style="padding: 8px 14px; font-size: 12px;">Back</button>
+                            <button class="btn" onclick="window.submitApprovalDecision('${requestId}'); event.stopPropagation();" style="padding: 8px 16px; font-size: 12px; background: #DC2626; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">Confirm Rejection</button>
+                        </div>
+                    ` : `
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <span style="font-size: 12px; color: #64748B;">Review this request:</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn" onclick="window.selectApprovalDecision('${requestId}', 'approved'); window.submitApprovalDecision('${requestId}'); event.stopPropagation();" style="padding: 8px 20px; font-size: 12px; font-weight: 700; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="check" style="width: 13px; height: 13px;"></i> Approve</button>
+                                <button class="btn btn-outline" onclick="window.selectApprovalDecision('${requestId}', 'rejected'); event.stopPropagation();" style="padding: 8px 16px; font-size: 12px; font-weight: 700; color: #DC2626; border-color: #FECACA;">Reject</button>
+                                <button class="btn btn-outline" onclick="window.toggleApprovalActionMenu('${requestId}'); event.stopPropagation();" style="padding: 8px 12px; font-size: 12px; color: #94A3B8;">Cancel</button>
+                            </div>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
@@ -6450,7 +6620,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <i data-lucide="layers" style="width: 22px; height: 22px; color: white;"></i>
                         </div>
                         <div>
-                            <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">ABC Trading Group</h2>
+                            <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">华信集团 HWA-CHIN GROUP</h2>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">Consolidated overview &middot; Read-only</div>
                         </div>
                     </div>
@@ -6614,8 +6784,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <h3 class="balance-amount">$1,234,567.89 <span class="currency">USD</span></h3>
                             </div>
                             <div class="action-buttons">
-                                <button class="btn btn-primary"><i data-lucide="plus"></i> Top Up</button>
-                                <button class="btn btn-outline"><i data-lucide="send"></i> Transfer</button>
+                                ${window.currentLicenseMode === 'MSO'
+                                    ? '<button class="btn btn-primary" onclick="window.openMsoTopUpCurrencyPicker()"><i data-lucide="plus"></i> Top Up</button>'
+                                    : '<button class="btn btn-primary"><i data-lucide="plus"></i> Top Up</button>'}
+                                ${window.currentLicenseMode === 'MSO'
+                                    ? '<button class="btn btn-outline" onclick="window.openMsoTransferCurrencyPicker()"><i data-lucide="send"></i> Transfer</button>'
+                                    : '<button class="btn btn-outline"><i data-lucide="send"></i> Transfer</button>'}
                                 <button class="btn btn-outline"><i data-lucide="refresh-cw"></i> Convert</button>
                             </div>
                         </div>
@@ -16174,6 +16348,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 <!-- Right: Market Rates Panel -->
                 <div style="display: flex; flex-direction: column; gap: 12px;">
 
+                    ${window.currentLicenseMode !== 'MSO' ? `
                     <!-- Stablecoin card -->
                     <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
@@ -16211,7 +16386,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <div style="font-size: 11px; font-weight: 600; color: #10B981;">▲ 0.03%</div>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
 
                     <!-- FX card -->
                     <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
@@ -16232,7 +16407,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">1.0001 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">${window.currentLicenseMode === 'MSO' ? '<span style="font-size: 11px; color: #94A3B8;">Base currency</span>' : '1.0001 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span>'}</div>
                             </div>
                         </div>
                         <!-- HKD -->
@@ -16245,7 +16420,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">7.7860 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">7.7860 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">${window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT'}</span></div>
                             </div>
                         </div>
                         <!-- EUR -->
@@ -16258,7 +16433,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">0.9128 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">0.9128 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">${window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT'}</span></div>
                             </div>
                         </div>
                         <!-- BRL -->
@@ -16271,7 +16446,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">5.7240 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">USDT</span></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; font-family: monospace;">5.7240 <span style="font-size: 11px; font-weight: 500; color: #94A3B8;">${window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT'}</span></div>
                             </div>
                         </div>
                     </div>
@@ -16313,6 +16488,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             </tr>
                         </thead>
                         <tbody id="cv-order-list-body">
+                            ${window.currentLicenseMode !== 'MSO' ? `
                             <tr style="border-bottom: 1px solid #F1F5F9;">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261025-009</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Today, 11:30</td>
@@ -16352,7 +16528,27 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">400,800.00 BRL</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 5.01 BRL</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
+                            </tr>` : `
+                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260410-003</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 10, 14:22</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">2,000,000.00 HKD</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">256,000.00 USD</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 HKD = 0.128 USD</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
                             </tr>
+                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB;">
+                                <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260409-002</td>
+                                <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 9, 10:05</td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">50,000.00 USD</td>
+                                <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">46,000.00 EUR</td>
+                                <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 0.92 EUR</td>
+                                <td style="padding: 14px; text-align: center;"><span style="background: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Processing</span></td>
+                            </tr>`}
                             <tr>
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261022-001</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 22, 10:05</td>
