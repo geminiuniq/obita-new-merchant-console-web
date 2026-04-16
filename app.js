@@ -21,15 +21,133 @@ document.addEventListener('DOMContentLoaded', () => {
         'checkout-demo-drawer'
     ];
 
-    const RECENT_ACTIVITY_ITEMS = [
-        { icon: 'clock', iconClass: 'bg-warning', title: 'Stablecoin withdrawal pending', time: 'Just now', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Checking Approval Tasks...' },
-        { icon: 'arrow-down', iconClass: 'bg-success', title: 'Received Checkout payment', time: '2 hours ago', meta: '+1,000 USDT', metaClass: 'text-success', action: 'View Tx', actionHint: 'Navigating to Order Details...' },
-        { icon: 'user-plus', iconClass: 'bg-info', title: 'New member Alex joined', time: 'Yesterday', meta: 'Member Update', metaClass: 'text-info', action: 'Manage', actionHint: 'Manage User Roles...' },
-        { icon: 'arrow-up-right', iconClass: 'bg-slate', title: 'Payment to supplier successful', time: 'Feb 14, 2026', meta: '-20,000 HKD', action: 'Receipt', actionHint: 'Downloading Receipt...' },
-        { icon: 'landmark', iconClass: 'bg-info', title: 'Fiat top up submitted', time: 'Apr 6, 2026', meta: 'In Progress', metaClass: 'text-info', action: 'View', actionHint: 'Opening Fiat Top Up Order...' },
-        { icon: 'refresh-cw', iconClass: 'bg-success', title: 'USD to USDC conversion completed', time: 'Apr 5, 2026', meta: 'Completed', metaClass: 'text-success', action: 'Details', actionHint: 'Opening Conversion Order...' },
-        { icon: 'shield-check', iconClass: 'bg-warning', title: 'Approval request assigned to you', time: 'Apr 4, 2026', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Opening Approval Request...' }
-    ];
+    function getRecentActivityItems() {
+        if (window.currentLicenseMode === 'MSO') {
+            return [
+                { icon: 'clock', iconClass: 'bg-warning', title: 'Fiat payout pending approval', time: 'Just now', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Checking Approval Tasks...' },
+                { icon: 'arrow-down', iconClass: 'bg-success', title: 'Received Invoice payment', time: '2 hours ago', meta: '+7,800 HKD', metaClass: 'text-success', action: 'View Tx', actionHint: 'Navigating to Order Details...' },
+                { icon: 'user-plus', iconClass: 'bg-info', title: 'New member Alex joined', time: 'Yesterday', meta: 'Member Update', metaClass: 'text-info', action: 'Manage', actionHint: 'Manage User Roles...' },
+                { icon: 'arrow-up-right', iconClass: 'bg-slate', title: 'Payment to supplier successful', time: 'Feb 14, 2026', meta: '-20,000 HKD', action: 'Receipt', actionHint: 'Downloading Receipt...' },
+                { icon: 'landmark', iconClass: 'bg-info', title: 'Fiat top up submitted', time: 'Apr 6, 2026', meta: 'In Progress', metaClass: 'text-info', action: 'View', actionHint: 'Opening Fiat Top Up Order...' },
+                { icon: 'refresh-cw', iconClass: 'bg-success', title: 'HKD to USD conversion completed', time: 'Apr 5, 2026', meta: 'Completed', metaClass: 'text-success', action: 'Details', actionHint: 'Opening Conversion Order...' },
+                { icon: 'shield-check', iconClass: 'bg-warning', title: 'Approval request assigned to you', time: 'Apr 4, 2026', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Opening Approval Request...' }
+            ];
+        }
+        return [
+            { icon: 'clock', iconClass: 'bg-warning', title: 'Stablecoin withdrawal pending', time: 'Just now', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Checking Approval Tasks...' },
+            { icon: 'arrow-down', iconClass: 'bg-success', title: 'Received Checkout payment', time: '2 hours ago', meta: '+1,000 USDT', metaClass: 'text-success', action: 'View Tx', actionHint: 'Navigating to Order Details...' },
+            { icon: 'user-plus', iconClass: 'bg-info', title: 'New member Alex joined', time: 'Yesterday', meta: 'Member Update', metaClass: 'text-info', action: 'Manage', actionHint: 'Manage User Roles...' },
+            { icon: 'arrow-up-right', iconClass: 'bg-slate', title: 'Payment to supplier successful', time: 'Feb 14, 2026', meta: '-20,000 HKD', action: 'Receipt', actionHint: 'Downloading Receipt...' },
+            { icon: 'landmark', iconClass: 'bg-info', title: 'Fiat top up submitted', time: 'Apr 6, 2026', meta: 'In Progress', metaClass: 'text-info', action: 'View', actionHint: 'Opening Fiat Top Up Order...' },
+            { icon: 'refresh-cw', iconClass: 'bg-success', title: 'USD to USDC conversion completed', time: 'Apr 5, 2026', meta: 'Completed', metaClass: 'text-success', action: 'Details', actionHint: 'Opening Conversion Order...' },
+            { icon: 'shield-check', iconClass: 'bg-warning', title: 'Approval request assigned to you', time: 'Apr 4, 2026', meta: 'Awaiting Approval', action: 'Review', actionHint: 'Opening Approval Request...' }
+        ];
+    }
+    const RECENT_ACTIVITY_ITEMS = getRecentActivityItems();
+
+    // ============================================
+    // Entity Switching System
+    // ============================================
+    window.currentLicenseMode = 'TCSP'; // 'TCSP' | 'MSO' | 'GROUP'
+
+    window.ENTITY_CONFIG = {
+        TCSP:  { name: '华信科技有限公司', label: 'TCSP License', accent: '#2563EB', icon: 'building-2' },
+        MSO:   { name: '华信汇款有限公司', label: 'MSO License',  accent: '#7C3AED', icon: 'building-2' },
+        GROUP: { name: 'ABC Trading Group', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
+    };
+
+    window.switchEntity = function(mode) {
+        if (!window.ENTITY_CONFIG[mode]) return;
+        window.currentLicenseMode = mode;
+        const config = window.ENTITY_CONFIG[mode];
+
+        // Update body license class
+        document.body.classList.remove('license-tcsp', 'license-mso', 'license-group');
+        document.body.classList.add('license-' + mode.toLowerCase());
+
+        // Update header entity display
+        const nameEl = document.getElementById('entity-switcher-name');
+        const labelEl = document.getElementById('entity-switcher-label');
+        if (nameEl) nameEl.textContent = config.name;
+        if (labelEl) labelEl.textContent = config.label;
+
+        // Update dropdown active state
+        document.querySelectorAll('.entity-switcher-item').forEach(item => {
+            const isActive = item.dataset.entity === mode;
+            item.classList.toggle('active', isActive);
+            const check = item.querySelector('.entity-check');
+            if (check) check.style.display = isActive ? '' : 'none';
+        });
+
+        // Close entity switcher dropdown
+        const switcher = document.getElementById('entity-switcher-toggle');
+        if (switcher) switcher.classList.remove('open');
+
+        // Close all open drawers
+        ALL_DRAWER_IDS.forEach(id => {
+            const drawer = document.getElementById(id);
+            if (drawer) drawer.classList.remove('open');
+        });
+        const overlay = document.getElementById('drawer-overlay');
+        if (overlay) overlay.classList.remove('visible');
+
+        // Transition effect: fade out, switch, fade in
+        const contentBody = document.getElementById('content-body');
+        if (contentBody) {
+            contentBody.classList.add('switching');
+            setTimeout(() => {
+                // Reset to Overview
+                document.querySelectorAll('.sidebar-nav .nav-item, .sidebar-nav .nav-subitem').forEach(el => el.classList.remove('active'));
+                const overviewNav = document.querySelector('.sidebar-nav .nav-item[data-target="overview"]');
+                if (overviewNav) overviewNav.classList.add('active');
+                renderPlaceholderContent('Overview');
+                window.applyLicenseConstraints();
+                lucide.createIcons();
+                contentBody.classList.remove('switching');
+            }, 200);
+        }
+    };
+
+    window.applyLicenseConstraints = function() {
+        const mode = window.currentLicenseMode;
+
+        // Handle <option> elements that can't be hidden by CSS (Safari issue)
+        const clientSafeguardingOpt = document.querySelector('#fiat-transfer-purpose option[value="Client Safeguarding"]');
+        if (clientSafeguardingOpt) {
+            clientSafeguardingOpt.hidden = (mode === 'MSO');
+            clientSafeguardingOpt.disabled = (mode === 'MSO');
+        }
+
+        // Convert Assets drawer: hide stablecoin options in MSO
+        const cvTargetSelect = document.getElementById('cv-target-coin');
+        if (cvTargetSelect) {
+            Array.from(cvTargetSelect.options).forEach(opt => {
+                if (mode === 'MSO' && ['USDT', 'USDC'].includes(opt.value)) {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+        }
+
+        // Re-init Lucide icons for any newly visible elements
+        lucide.createIcons();
+    };
+
+    // Entity switcher toggle
+    document.addEventListener('click', (e) => {
+        const switcher = document.getElementById('entity-switcher-toggle');
+        const menu = document.getElementById('entity-switcher-menu');
+        if (!switcher || !menu) return;
+
+        if (switcher.contains(e.target) && !menu.contains(e.target)) {
+            switcher.classList.toggle('open');
+        } else if (!switcher.contains(e.target)) {
+            switcher.classList.remove('open');
+        }
+    });
 
     function formatWalletListAddress(address = '', network = '') {
         const raw = String(address).trim();
@@ -306,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('activities-drawer-list');
         if (!container) return;
 
-        container.innerHTML = RECENT_ACTIVITY_ITEMS.map(item => `
+        container.innerHTML = getRecentActivityItems().map(item => `
             <div style="border: 1px solid #E2E8F0; border-radius: 16px; background: linear-gradient(180deg, #FFFFFF 0%, #FCFDFE 100%); padding: 16px 18px; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 14px; align-items: start;">
                 <div class="activity-icon ${item.iconClass}" style="width: 36px; height: 36px;">
                     <i data-lucide="${item.icon}" style="width: 16px; height: 16px;"></i>
@@ -821,18 +939,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         window.resetConvertDrawer();
-        
+
+        // In MSO mode, filter out stablecoin options from the target selector
+        const targetSelect = document.getElementById('cv-target-coin');
+        if (targetSelect) {
+            Array.from(targetSelect.options).forEach(opt => {
+                if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(opt.value)) {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                } else {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                }
+            });
+        }
+
         document.getElementById('cv-source-coin').textContent = coin;
         document.getElementById('cv-amount').value = '';
-        const defaultTargets = {
-            USDT: 'USDC',
-            USDC: 'USDT',
-            USD: 'USDT',
-            HKD: 'USDT',
-            EUR: 'USDT',
-            BRL: 'USDT'
-        };
-        document.getElementById('cv-target-coin').value = defaultTargets[coin] || 'USDT';
+        const defaultTargets = window.currentLicenseMode === 'MSO'
+            ? { USD: 'HKD', HKD: 'USD', EUR: 'USD', BRL: 'USD' }
+            : { USDT: 'USDC', USDC: 'USDT', USD: 'USDT', HKD: 'USDT', EUR: 'USDT', BRL: 'USDT' };
+        document.getElementById('cv-target-coin').value = defaultTargets[coin] || (window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT');
         document.getElementById('cv-error').style.display = 'none';
         
         const avail = TRANSFER_BALANCES[coin] || 0;
@@ -2112,6 +2239,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
+                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>' : ''}
+
                 <div style="display: flex; justify-content: flex-end; gap: 10px; padding-bottom: 4px;">
                     <button type="button" class="btn btn-outline" onclick="window.closeMemberFormDrawer()" style="padding: 10px 16px;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="padding: 10px 18px;">${member ? 'Save Changes' : 'Add Member'}</button>
@@ -2181,6 +2310,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .slice()
             .sort((a, b) => b.submittedAtValue - a.submittedAtValue)
             .filter(request => {
+                // In MSO mode, hide stablecoin-related approvals
+                if (window.currentLicenseMode === 'MSO') {
+                    if (['USDT', 'USDC'].includes(request.currency)) return false;
+                    if (/stablecoin/i.test(request.scope || '')) return false;
+                    if (/stablecoin|USDT|USDC/i.test(request.subject || '')) return false;
+                }
                 if (scopeFilter !== 'all' && request.scope !== scopeFilter) return false;
                 if (statusFilter !== 'all' && request.status !== statusFilter) return false;
                 if (!keyword) return true;
@@ -2210,6 +2345,12 @@ document.addEventListener('DOMContentLoaded', () => {
             .slice()
             .sort((a, b) => b.submittedAtValue - a.submittedAtValue)
             .filter(request => {
+                // In MSO mode, hide stablecoin-related approvals
+                if (window.currentLicenseMode === 'MSO') {
+                    if (['USDT', 'USDC'].includes(request.currency)) return false;
+                    if (/stablecoin/i.test(request.scope || '')) return false;
+                    if (/stablecoin|USDT|USDC/i.test(request.subject || '')) return false;
+                }
                 // My Requests: submitted by me OR pending (needs my approval)
                 if (request.requester !== currentUserName && request.status !== 'pending') return false;
                 if (scopeFilter !== 'all' && request.scope !== scopeFilter) return false;
@@ -2344,8 +2485,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'Payout',
             'Fiat Vault - Transfer',
             'Fiat Vault - Bank Account',
-            'Stablecoin Vault - Transfer',
-            'Stablecoin Vault - Address Book',
+            ...(window.currentLicenseMode !== 'MSO' ? ['Stablecoin Vault - Transfer', 'Stablecoin Vault - Address Book'] : []),
             'Conversion',
             'Collection - Cancel Order'
         ];
@@ -2368,7 +2508,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 2px;">
                                     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75;">Needs Attention</div>
-                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => request.status === 'pending').length} Awaiting Approval</div>
+                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => {
+                                        if (request.status !== 'pending') return false;
+                                        if (window.currentLicenseMode === 'MSO') {
+                                            if (['USDT', 'USDC'].includes(request.currency)) return false;
+                                            if (/stablecoin/i.test(request.scope || '')) return false;
+                                        }
+                                        return true;
+                                    }).length} Awaiting Approval</div>
                                 </div>
                             </div>
                         </div>
@@ -2718,8 +2865,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                         <option value="Payout" ${editingRule && editingRule.scope === 'Payout' ? 'selected' : ''}>Payout</option>
                                         <option value="Fiat Vault - Transfer" ${editingRule && editingRule.scope === 'Fiat Vault - Transfer' ? 'selected' : ''}>Fiat Vault - Transfer</option>
                                         <option value="Fiat Vault - Bank Account" ${editingRule && editingRule.scope === 'Fiat Vault - Bank Account' ? 'selected' : ''}>Fiat Vault - Bank Account</option>
-                                        <option value="Stablecoin Vault - Transfer" ${editingRule && editingRule.scope === 'Stablecoin Vault - Transfer' ? 'selected' : ''}>Stablecoin Vault - Transfer</option>
-                                        <option value="Stablecoin Vault - Address Book" ${editingRule && editingRule.scope === 'Stablecoin Vault - Address Book' ? 'selected' : ''}>Stablecoin Vault - Address Book</option>
+                                        ${window.currentLicenseMode !== 'MSO' ? `<option value="Stablecoin Vault - Transfer" ${editingRule && editingRule.scope === 'Stablecoin Vault - Transfer' ? 'selected' : ''}>Stablecoin Vault - Transfer</option>
+                                        <option value="Stablecoin Vault - Address Book" ${editingRule && editingRule.scope === 'Stablecoin Vault - Address Book' ? 'selected' : ''}>Stablecoin Vault - Address Book</option>` : ''}
                                         <option value="Conversion" ${editingRule && editingRule.scope === 'Conversion' ? 'selected' : ''}>Conversion</option>
                                         <option value="Collection - Cancel Order" ${editingRule && editingRule.scope === 'Collection - Cancel Order' ? 'selected' : ''}>Collection - Cancel Order</option>
                                     </select>
@@ -2816,7 +2963,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="text-align: right;">Actions</div>
                     </div>
                     <div>
-                        ${approvalRules.map(rule => `
+                        ${approvalRules.filter(rule => {
+                            if (window.currentLicenseMode === 'MSO' && /stablecoin/i.test(rule.scope || '')) return false;
+                            return true;
+                        }).map(rule => `
                             <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); display: grid; grid-template-columns: 1.4fr 1fr 1.2fr 0.8fr 1fr; gap: 16px; align-items: center;">
                                 <div onclick="window.openApprovalRuleDetail('${rule.id}')" style="cursor: pointer;">
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${rule.name}</div>
@@ -3159,7 +3309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const recipient = getInvoiceDraftRecipient(recipientId);
         activeInvoiceDraft.payerEmail = recipient?.email || '';
         activeInvoiceDraft.buyerName = recipient?.name || '';
-        activeInvoiceDraft.settlementCurrency = activeInvoiceDraft.settlementCurrency || 'USDT';
+        activeInvoiceDraft.settlementCurrency = activeInvoiceDraft.settlementCurrency || (window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT');
         renderInvoiceOrdersPage();
     };
 
@@ -3226,9 +3376,9 @@ document.addEventListener('DOMContentLoaded', () => {
         INVOICE_ORDER_DETAILS[invoiceNo] = {
             externalInvoiceId: activeInvoiceDraft.externalInvoiceId,
             invoiceLink,
-            collectionChannel: 'Stablecoin Invoice',
+            collectionChannel: window.currentLicenseMode === 'MSO' ? 'Fiat Invoice' : 'Stablecoin Invoice',
             recipientEntity: invoiceReceivingEntityName,
-            settlementDestination: 'Merchant Stablecoin Settlement Wallet',
+            settlementDestination: window.currentLicenseMode === 'MSO' ? 'Merchant Fiat Settlement Account' : 'Merchant Stablecoin Settlement Wallet',
             settlementTerms: 'Service fee deducted from collected amount',
             lineItems: activeInvoiceDraft.lineItems.map(item => ({
                 item: item.description,
@@ -6109,6 +6259,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                 </div>
 
+                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; padding-top: 8px;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>' : ''}
+
                 <div style="display: flex; justify-content: flex-end; padding-top: 10px;">
                     <button class="btn btn-primary" onclick="window.submitKybForm()" style="padding: 13px 32px; font-size: 15px; font-weight: 800;">Review & Submit</button>
                 </div>
@@ -6286,7 +6438,124 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         }
     };
 
+    function getGroupOverviewHTML() {
+        return `
+        <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+            <!-- Group View Banner -->
+            <div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 14px; padding: 28px 32px; color: white;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <i data-lucide="layers" style="width: 24px; height: 24px; opacity: 0.7;"></i>
+                    <h2 style="font-size: 22px; font-weight: 700; margin: 0;">ABC Trading Group</h2>
+                </div>
+                <p style="font-size: 13px; color: #94A3B8; margin: 0;">Consolidated overview across all subsidiaries. Switch to a subsidiary to perform operations.</p>
+            </div>
+
+            <!-- Entity Cards -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- TCSP Entity -->
+                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #2563EB;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #2563EB;"></div>
+                        <div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
+                            <div style="font-size: 11px; color: #94A3B8;">TCSP License</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Total Assets</span>
+                            <span style="font-weight: 700; color: #0F172A;">$24,050,000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Stablecoin Vault</span>
+                            <span style="font-weight: 600; color: #334155;">$14,000,000 USDT + $10,050,000 USDC</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Fiat Vault</span>
+                            <span style="font-weight: 600; color: #334155;">$2,500,000 USD + HK$8,400,000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Pending Approvals</span>
+                            <span style="font-weight: 600; color: #D97706;">3</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">KYB Status</span>
+                            <span style="font-weight: 600; color: #059669; display: flex; align-items: center; gap: 4px;"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Verified</span>
+                        </div>
+                    </div>
+                    <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 10px; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">View TCSP Entity &rarr;</button>
+                </div>
+
+                <!-- MSO Entity -->
+                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #7C3AED;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #7C3AED;"></div>
+                        <div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
+                            <div style="font-size: 11px; color: #94A3B8;">MSO License</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Total Assets</span>
+                            <span style="font-weight: 700; color: #0F172A;">$9,180,000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Fiat Vault</span>
+                            <span style="font-weight: 600; color: #334155;">$1,500,000 USD + HK$8,200,000</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">Pending Approvals</span>
+                            <span style="font-weight: 600; color: #D97706;">1</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #64748B;">KYB Status</span>
+                            <span style="font-weight: 600; color: #059669; display: flex; align-items: center; gap: 4px;"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Verified</span>
+                        </div>
+                        <div style="height: 13px;"></div>
+                    </div>
+                    <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">View MSO Entity &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Consolidated Summary -->
+            <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 20px;">Consolidated Summary</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Total Assets</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 6px;">$33.2M</div>
+                    </div>
+                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">30d Volume</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 6px;">$12.4M</div>
+                    </div>
+                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Pending Approvals</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #D97706; margin-top: 6px;">4</div>
+                    </div>
+                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
+                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Entities</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #059669; margin-top: 6px;">2 / 2</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">All Verified</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Read-only notice -->
+            <div style="text-align: center; padding: 16px; color: #94A3B8; font-size: 13px;">
+                <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+                Group View is read-only. Switch to a subsidiary to perform operations.
+            </div>
+        </div>`;
+    }
+
     function getOverviewHTML() {
+        if (window.currentLicenseMode === 'GROUP') {
+            return getGroupOverviewHTML();
+        }
         return `
         <div class="overview-grid fade-in">
             <!-- Main Column -->
@@ -6311,6 +6580,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     
                     <!-- Stablecoin & Fiat Area -->
                     <div class="asset-grid" style="padding: 24px;">
+                        ${window.currentLicenseMode !== 'MSO' ? `
                         <div class="asset-card-inner">
                             <div class="asset-header">
                                 <h2 class="card-title">Stablecoins</h2>
@@ -6332,8 +6602,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <span class="asset-balance">200,000.00</span>
                                 </div>
                             </div>
-                        </div>
-                        
+                        </div>` : `
+                        <div class="asset-card-inner">
+                            <div class="asset-header">
+                                <h2 class="card-title">Fiat Account Summary</h2>
+                                <span class="asset-total">≈ $784,567.89 USD</span>
+                            </div>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 4px; margin-bottom: 12px;">Bank account balances overview</div>
+                            <div class="asset-list">
+                                <div class="asset-item" style="cursor:pointer;" onclick="window.renderPlaceholderContent('Fiat Vault')">
+                                    <div class="asset-info">
+                                        <div class="asset-icon usd">$</div>
+                                        <div>
+                                            <span class="asset-name">USD Account</span>
+                                            <div style="font-size:11px;color:#94A3B8;">HSBC ••••3842</div>
+                                        </div>
+                                    </div>
+                                    <span class="asset-balance">500,000.00</span>
+                                </div>
+                                <div class="asset-item" style="cursor:pointer;" onclick="window.renderPlaceholderContent('Fiat Vault')">
+                                    <div class="asset-info">
+                                        <div class="asset-icon hkd">HK$</div>
+                                        <div>
+                                            <span class="asset-name">HKD Account</span>
+                                            <div style="font-size:11px;color:#94A3B8;">Hang Seng ••••1057</div>
+                                        </div>
+                                    </div>
+                                    <span class="asset-balance">1,500,000.00</span>
+                                </div>
+                            </div>
+                        </div>`}
+
                         <div class="asset-card-inner">
                             <div class="asset-header">
                                 <h2 class="card-title">Fiat</h2>
@@ -6590,8 +6889,35 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
                     </div>
                     ${(() => {
-                        const pendingApprovals = approvalRequests.filter(request => request.status === 'pending').slice(0, 2);
-                        const exceptions = [
+                        const pendingApprovals = approvalRequests.filter(request => {
+                            if (request.status !== 'pending') return false;
+                            if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(request.currency)) return false;
+                            if (window.currentLicenseMode === 'MSO' && (request.scope || '').toLowerCase().includes('stablecoin')) return false;
+                            return true;
+                        }).slice(0, 2);
+                        const isMSO = window.currentLicenseMode === 'MSO';
+                        const exceptions = isMSO ? [
+                            {
+                                title: 'Underpaid invoice detected',
+                                meta: 'INV-20260408-0321 · 1,200.00 HKD short',
+                                toneBg: '#FFF7ED',
+                                toneBorder: '#FED7AA',
+                                toneColor: '#C2410C',
+                                pill: 'Exception',
+                                action: 'View Invoice',
+                                handler: "window.openInvoiceOrderDetail('INV-20260408-0321')"
+                            },
+                            {
+                                title: 'Payout bank transfer returned',
+                                meta: 'PAY-20260407-0055 · 8,500.00 USD · Incorrect account',
+                                toneBg: '#FEF2F2',
+                                toneBorder: '#FECACA',
+                                toneColor: '#DC2626',
+                                pill: 'Exception',
+                                action: 'View Payout',
+                                handler: "alert('Opening Payout Order...')"
+                            }
+                        ] : [
                             {
                                 title: 'Underpaid checkout detected',
                                 meta: 'CKO-20260406-0179 · 280.00 USDT short',
@@ -6677,7 +7003,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <i data-lucide="clock"></i>
                             </div>
                             <div class="activity-content">
-                                <p class="activity-text">Stablecoin withdrawal pending</p>
+                                <p class="activity-text">${window.currentLicenseMode === 'MSO' ? 'Fiat payout pending approval' : 'Stablecoin withdrawal pending'}</p>
                                 <span class="activity-time">Just now</span>
                             </div>
                             <div class="activity-amount" style="color: #B45309;">Awaiting Approval</div>
@@ -6692,10 +7018,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <i data-lucide="arrow-down"></i>
                             </div>
                             <div class="activity-content">
-                                <p class="activity-text">Received Checkout payment</p>
+                                <p class="activity-text">Received ${window.currentLicenseMode === 'MSO' ? 'Invoice' : 'Checkout'} payment</p>
                                 <span class="activity-time">2 hours ago</span>
                             </div>
-                            <div class="activity-amount text-success">+1,000 USDT</div>
+                            <div class="activity-amount text-success">${window.currentLicenseMode === 'MSO' ? '+7,800 HKD' : '+1,000 USDT'}</div>
                             <div class="activity-actions">
                                 <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Navigating to Order Details...');">View Tx</button>
                             </div>
@@ -9294,7 +9620,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             buyerName: '',
             payerEmail: primaryRecipient?.email || '',
             recipientId: primaryRecipient?.id || '',
-            settlementCurrency: 'USDT',
+            settlementCurrency: window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT',
             dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
             lineItems: [
                 { description: 'Treasury settlement service', quantity: '1', amount: '12000' }
@@ -9477,7 +9803,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">Settlement Currency *</label>
                                         <select id="invoice-currency" class="bank-form-control" onchange="window.updateInvoiceDraftField('settlementCurrency', this.value, 'invoice-currency')">
-                                            ${['USDT', 'USDC'].map(currency => `<option value="${currency}" ${activeInvoiceDraft.settlementCurrency === currency ? 'selected' : ''}>${currency}</option>`).join('')}
+                                            ${(window.currentLicenseMode === 'MSO' ? ['USD', 'HKD', 'EUR', 'BRL'] : ['USDT', 'USDC']).map(currency => `<option value="${currency}" ${activeInvoiceDraft.settlementCurrency === currency ? 'selected' : ''}>${currency}</option>`).join('')}
                                         </select>
                                     </div>
                                 </div>
@@ -9817,6 +10143,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const endDate = effectiveEndDateValue ? new Date(`${effectiveEndDateValue}T23:59:59`) : null;
         const summary = INVOICE_SUMMARY_BY_DURATION[activeInvoiceOrdersDuration] || INVOICE_SUMMARY_BY_DURATION['1m'];
         const filteredRows = INVOICE_ORDER_LIST_DATA.filter(row => {
+            // In MSO mode, hide invoices settled in stablecoins
+            if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(row.settlementCurrency)) return false;
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             const matchesMethod = methodValue === 'all' || row.method === methodValue;
@@ -9930,7 +10258,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <option value="all">All Methods</option>
                             <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                             <option value="Card Payment" ${methodValue === 'Card Payment' ? 'selected' : ''}>Card Payment</option>
-                            <option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>
+                            ${window.currentLicenseMode !== 'MSO' ? `<option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>` : ''}
                         </select>
                         <div style="position: relative; min-width: 260px;">
                             <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
@@ -10127,6 +10455,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const endDate = effectiveEndDateValue ? new Date(`${effectiveEndDateValue}T23:59:59`) : null;
 
         const filteredRows = CHECKOUT_ORDER_LIST_DATA.filter(row => {
+            // In MSO mode, hide checkout orders settled in stablecoins
+            if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(row.settlementAsset)) return false;
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             const matchesMethod = methodValue === 'all' || row.paymentMethod === methodValue;
@@ -10263,7 +10593,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </select>
                         <select id="checkout-orders-method" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Payment Methods</option>
-                            <option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>
+                            ${window.currentLicenseMode !== 'MSO' ? `<option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>` : ''}
                             <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                             <option value="Bank Card" ${methodValue === 'Bank Card' ? 'selected' : ''}>Bank Card</option>
                         </select>
@@ -10418,9 +10748,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const endDateValue = document.getElementById('order-reports-end-date')?.value || '';
         
         const rows = ORDER_REPORT_DATA[activeTab.id].filter(row => {
+            // In MSO mode, filter out stablecoin-related entries across all report tabs
+            if (window.currentLicenseMode === 'MSO') {
+                const rowValues = Object.values(row).join(' ');
+                if (/\bUSDT\b|\bUSDC\b|Stablecoin|Wallet Transfer|Wallet Pay/.test(rowValues)) return false;
+            }
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
-            
+
             // For simple demo, we check if the row date/time string roughly matches a date range if provided
             // In a real app, row.time would be a timestamp.
             let matchesDate = true;
@@ -10986,7 +11321,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div style="display: flex; align-items: center; gap: 12px;">
                                     <span style="font-size: 13px; font-weight: 600; color: #64748B; white-space: nowrap; width: 76px;">Vault</span>
                                     <div style="display: flex; gap: 8px; flex: 1;">
-                                        ${['Stablecoin Vault','Fiat Vault'].map(vt => `
+                                        ${(window.currentLicenseMode === 'MSO' ? ['Fiat Vault'] : ['Stablecoin Vault','Fiat Vault']).map(vt => `
                                         <button onclick="window.setStatementVaultType('${vt}')" style="flex: 1; padding: 9px 10px; border-radius: 10px; border: 1px solid ${sel.vaultType === vt ? '#0072F7' : '#E2E8F0'}; background: ${sel.vaultType === vt ? '#EFF6FF' : '#FFFFFF'}; color: ${sel.vaultType === vt ? '#0072F7' : '#94A3B8'}; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; white-space: nowrap;">${vt}</button>
                                         `).join('')}
                                     </div>
@@ -11300,11 +11635,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     function getPayeeTypePill(type) {
         if (type === 'Pending') return { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' };
+        // In MSO mode, all payees are treated as Bank Account type
+        const effectiveType = (window.currentLicenseMode === 'MSO' && type === 'Crypto Wallet') ? 'Bank Account' : type;
         const map = {
             'Bank Account':   { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' },
             'Crypto Wallet':  { bg: '#F5F3FF', color: '#7C3AED', border: '#DDD6FE' }
         };
-        return map[type] || { bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0' };
+        return map[effectiveType] || { bg: '#F8FAFC', color: '#64748B', border: '#E2E8F0' };
     }
 
     function getPayeeStatusPill(status) {
@@ -11358,6 +11695,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 })
             : payeeList.filter(usageFilterPredicate);
         const filtered = scopedContacts.filter(p => {
+            // In MSO mode, hide contacts that have no bank account (wallet-only contacts are useless in MSO)
+            if (window.currentLicenseMode === 'MSO') {
+                if (!p.banks || p.banks.length === 0) {
+                    // Keep pending_collection contacts (they may add bank later)
+                    if (p.status !== 'pending_collection') return false;
+                }
+            }
             if (typeFilter !== 'all'   && p.type   !== typeFilter)   return false;
             if (statusFilter !== 'all' && p.status !== statusFilter) return false;
             if (keyword && ![ p.name, p.alias, p.currency, p.bankName, p.accountNumber, p.country, p.purpose, p.id, p.email ].join(' ').toLowerCase().includes(keyword)) return false;
@@ -11384,7 +11728,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                         <div>
                             <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${isPayoutPayeeMode ? 'Payee List' : isInvoicePayerMode ? 'Payer List for Invoice' : isContactManagementMode ? 'Contact Management' : 'External Contacts'}</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${isPayoutPayeeMode ? 'Manage payout-ready payees and their saved wallet or bank destinations.' : isInvoicePayerMode ? 'Manage invoice payers and their saved wallet or bank destinations.' : isContactManagementMode ? 'View the combined directory of payout payees and invoice payers in one place.' : 'Manage all registered external contacts for payouts, collections, and refunds.'}</div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${isPayoutPayeeMode ? (window.currentLicenseMode === 'MSO' ? 'Manage payout-ready payees and their saved bank account destinations.' : 'Manage payout-ready payees and their saved wallet or bank destinations.') : isInvoicePayerMode ? (window.currentLicenseMode === 'MSO' ? 'Manage invoice payers and their saved bank account destinations.' : 'Manage invoice payers and their saved wallet or bank destinations.') : isContactManagementMode ? 'View the combined directory of payout payees and invoice payers in one place.' : 'Manage all registered external contacts for payouts, collections, and refunds.'}</div>
                         </div>
                         <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700;">
                             <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
@@ -11461,7 +11805,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <select id="payee-type-filter" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all"      ${typeFilter === 'all'           ? 'selected' : ''}>All Types</option>
                             <option value="Bank Account"  ${typeFilter === 'Bank Account'  ? 'selected' : ''}>Bank Account</option>
-                            <option value="Crypto Wallet" ${typeFilter === 'Crypto Wallet' ? 'selected' : ''}>Crypto Wallet</option>
+                            ${window.currentLicenseMode !== 'MSO' ? `<option value="Crypto Wallet" ${typeFilter === 'Crypto Wallet' ? 'selected' : ''}>Crypto Wallet</option>` : ''}
                             <option value="Pending" ${typeFilter === 'Pending' ? 'selected' : ''}>Pending</option>
                         </select>
                         ${isCompactDirectoryMode ? '' : `
@@ -11495,14 +11839,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </tr>
                                 ` : `
                                 <tr>
-                                    <th style="width: 19%;">Contact</th>
-                                    <th style="width: 9%;">Profile</th>
-                                    <th style="width: 15%;">Wallet Summary</th>
-                                    <th style="width: 15%;">Bank Summary</th>
+                                    <th style="width: ${window.currentLicenseMode === 'MSO' ? '22%' : '19%'};">Contact</th>
+                                    <th style="width: ${window.currentLicenseMode === 'MSO' ? '10%' : '9%'};">Profile</th>
+                                    ${window.currentLicenseMode !== 'MSO' ? '<th style="width: 15%;">Wallet Summary</th>' : ''}
+                                    <th style="width: ${window.currentLicenseMode === 'MSO' ? '22%' : '15%'};">Bank Summary</th>
                                     <th style="width: 16%;">Usage Scope</th>
                                     <th style="width: 10%;">Status</th>
                                     <th class="text-center" style="width: 8%;">Linked Orders</th>
-                                    <th class="text-right" style="width: 18%;">Actions</th>
+                                    <th class="text-right" style="width: ${window.currentLicenseMode === 'MSO' ? '12%' : '18%'};">Actions</th>
                                 </tr>
                                 `}
                             </thead>
@@ -11543,7 +11887,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
                             let destinationSummary;
                             if (isInvoicePayerMode || isPayoutPayeeMode) {
-                                const w = p.wallets?.[0];
+                                const w = (window.currentLicenseMode !== 'MSO') ? p.wallets?.[0] : null;
                                 const b = p.banks?.[0];
                                 if (w) {
                                     const verifBadge = w.verified === true
@@ -11592,12 +11936,13 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             } else {
                                 destinationSummary = `
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    ${window.currentLicenseMode !== 'MSO' ? `
                                     <div style="display: flex; align-items: center; gap: 8px; min-height: 18px;">
                                         <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; font-size: 10px; font-weight: 700;">Wallet</span>
                                         <span style="font-size: 12px; color: ${p.wallets?.length ? '#334155' : '#94A3B8'}; font-weight: ${p.wallets?.length ? '600' : '500'};">
                                             ${p.wallets?.length ? `${p.wallets.length} saved` : 'Not added'}
                                         </span>
-                                    </div>
+                                    </div>` : ''}
                                     <div style="display: flex; align-items: center; gap: 8px; min-height: 18px;">
                                         <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px; border-radius: 999px; background: #F8FAFC; color: #475569; font-size: 10px; font-weight: 700;">Bank</span>
                                         <span style="font-size: 12px; color: ${p.banks?.length ? '#334155' : '#94A3B8'}; font-weight: ${p.banks?.length ? '600' : '500'};">
@@ -11669,7 +12014,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <td>
                                     <span style="display:inline-block; padding: 3px 8px; border-radius: 4px; background: ${p.personType === 'company' ? '#F1F5F9' : '#EFF6FF'}; color: ${p.personType === 'company' ? '#475569' : '#1D4ED8'}; font-size: 10px; font-weight: 700; text-transform: uppercase;">${p.personType === 'company' ? 'Company' : 'Individual'}</span>
                                 </td>
-                                <td style="vertical-align: top;">${walletHtml}</td>
+                                ${window.currentLicenseMode !== 'MSO' ? `<td style="vertical-align: top;">${walletHtml}</td>` : ''}
                                 <td style="vertical-align: top;">${bankHtml}</td>
                                 <td style="vertical-align: top;">${scopeHtml}</td>
                                 <td>
@@ -11699,7 +12044,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     }
 
     function renderPayeeFormContent(inDrawer = false) {
-        const isPayoutForm = !inDrawer && payeeDirectoryMode === 'payeeList';
+        const isPayoutBatchDrawer = inDrawer && payeeFormContext.mode === 'payout-batch';
+        const isPayoutForm = (!inDrawer && payeeDirectoryMode === 'payeeList') || isPayoutBatchDrawer;
         const isInvoicePayerForm = !inDrawer && payeeDirectoryMode === 'invoicePayerList';
         const isEnhancedPayeeForm = isInvoicePayerForm || isPayoutForm; // Both use the progressive Payment Methods UI
         const isRestrictedUsageForm = isPayoutForm || isInvoicePayerForm;
@@ -11958,7 +12304,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <!-- Step 1: Type selector (hidden initially) -->
                             <div id="payee-account-type-zone" style="display: none; flex-direction: column; gap: 12px;">
                                 <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Select payment method type</div>
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? '1fr' : '1fr 1fr'}; gap: 12px;">
                                     <button type="button" id="payee-type-bank-btn" onclick="window.onPayeeAccountTypeSelect('bank')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
                                         <div style="width: 44px; height: 44px; background: #EFF6FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                                             <i data-lucide="landmark" style="width: 22px; height: 22px; color: #2563EB;"></i>
@@ -11968,6 +12314,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                             <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Wire / FPS / SWIFT</div>
                                         </div>
                                     </button>
+                                    ${window.currentLicenseMode !== 'MSO' ? `
                                     <button type="button" id="payee-type-wallet-btn" onclick="window.onPayeeAccountTypeSelect('wallet')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
                                         <div style="width: 44px; height: 44px; background: #F5F3FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                                             <i data-lucide="wallet" style="width: 22px; height: 22px; color: #7C3AED;"></i>
@@ -11976,7 +12323,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                             <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Wallet Address</div>
                                             <div style="font-size: 11px; color: #64748B; margin-top: 2px;">USDT / USDC stablecoin</div>
                                         </div>
-                                    </button>
+                                    </button>` : ''}
                                 </div>
                                 <button type="button" onclick="window.onPayeeCancelAddAccount()" style="align-self: flex-start; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 600; cursor: pointer;">Cancel</button>
                             </div>
@@ -12038,7 +12385,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                             </div>
 
-                            <!-- Step 2b: Wallet form (hidden initially) -->
+                            <!-- Step 2b: Wallet form (hidden initially; unreachable in MSO since wallet type button is hidden) -->
                             <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 16px;">
 
                                 <!-- Declaration checkbox -->
@@ -12385,6 +12732,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                     </div>
                 </div>
                 `}
+
+                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>' : ''}
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -12970,7 +13319,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                     </div>
                     
                     ${isDetailEnhancedView ? (() => {
-                        const w = payee.wallets?.[0];
+                        const w = (window.currentLicenseMode !== 'MSO') ? payee.wallets?.[0] : null;
                         const b = payee.banks?.[0];
                         const _pmHeader = `
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
@@ -13072,6 +13421,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                             </div>`;
                         }
                     })() : `
+                    ${window.currentLicenseMode !== 'MSO' ? `
                     <div class="card" style="padding: 24px;">
                         <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Crypto Wallets</h3>
                         ${payee.wallets?.length ? payee.wallets.map((w, index) => `
@@ -13140,6 +13490,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                             </div>
                         ` : '<div style="margin-top: 12px;"><button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit(\'addWallet\')">+ Add New Wallet</button></div>'}
                     </div>
+                    ` : ''}
 
                     <div class="card" style="padding: 24px;">
                         <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Bank Accounts</h3>
@@ -13354,9 +13705,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
         if (!drawer || !drawerBody || !drawerTitle || !drawerSubtitle) return;
 
+        activePayoutNewPayeeRowId = rowId;
         payeeFormContext = { mode: 'payout-batch', payoutRowId: rowId };
-        drawerTitle.textContent = 'New Contact';
-        drawerSubtitle.textContent = 'Create a new external contact and return to the current payout batch row.';
+        invoicePayerAccounts = [];
+        drawerTitle.textContent = 'New Payee';
+        drawerSubtitle.textContent = 'Create a new payee. After saving, the payee will be automatically selected in your payout batch.';
         drawerBody.innerHTML = renderPayeeFormContent(true);
         closeAllDrawers();
         drawer.classList.add('drawer-active');
@@ -14218,7 +14571,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             const row = batch.requests.find(item => item.id === payeeFormContext.payoutRowId);
             if (row) {
                 row.payeeId = newPayee.id;
-                if (isStablecoinCurrency(row.payoutCurrency)) {
+                if (window.currentLicenseMode !== 'MSO' && isStablecoinCurrency(row.payoutCurrency)) {
                     row.destinationKey = newPayee.wallets.length ? 'wallet-0' : '';
                 } else {
                     row.destinationKey = newPayee.banks.length ? 'bank-0' : '';
@@ -14339,7 +14692,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     function getPayoutSourceOptions() {
         return Object.entries(TRANSFER_BALANCES)
-            .filter(([, balance]) => balance > 0)
+            .filter(([currency, balance]) => {
+                if (balance <= 0) return false;
+                // In MSO mode, only fiat currencies
+                if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(currency)) return false;
+                return true;
+            })
             .map(([currency, balance]) => ({ currency, balance }));
     }
 
@@ -14388,7 +14746,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     function getPayeeDestinationOptions(payee, payoutCurrency) {
         if (!payee || !payoutCurrency) return [];
 
-        if (isStablecoinCurrency(payoutCurrency)) {
+        // In MSO mode, only bank destinations are available
+        if (window.currentLicenseMode !== 'MSO' && isStablecoinCurrency(payoutCurrency)) {
             return (payee.wallets || []).map((wallet, index) => ({
                 key: `wallet-${index}`,
                 label: `${wallet.network} - ${wallet.address}`,
@@ -14438,6 +14797,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     }
 
     function getPayoutPurposeLabel(row) {
+        if (window.currentLicenseMode === 'MSO') return 'Bank Transfer';
         return isStablecoinCurrency(row.payoutCurrency) ? 'Wallet Transfer' : 'Bank Transfer';
     }
 
@@ -14507,53 +14867,44 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const payee = getPayeeById(row.payeeId);
         const destinationOptions = getPayeeDestinationOptions(payee, row.payoutCurrency || batch.sourceCurrency);
         const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
-        const destinationTypeLabel = isStablecoinCurrency(row.payoutCurrency) ? 'Wallet Address / Chain' : 'Bank Account';
+        const destinationTypeLabel = (window.currentLicenseMode !== 'MSO' && isStablecoinCurrency(row.payoutCurrency)) ? 'Wallet Address / Chain' : 'Bank Account';
 
+        const rowIndex = batch.requests.indexOf(row);
         return `
-            <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.95fr 52px; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #F1F5F9; align-items: start;">
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">Payee</label>
-                    <select data-focus-key="payout-payee-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payeeId', this.value)">
+            <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #F1F5F9; align-items: center;">
+                <div style="font-size: 13px; font-weight: 700; color: #CBD5E1; text-align: center;">${String(rowIndex + 1).padStart(2, '0')}</div>
+                <div>
+                    <select data-focus-key="payout-payee-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payeeId', this.value)" aria-label="Payee">
                         ${payeeOptions}
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">Currency</label>
-                    <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)">
+                <div>
+                    <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
                         ${currencyOptions}
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">Amount</label>
-                    <input data-focus-key="payout-amount-${row.id}" class="bank-form-control" type="number" min="0" step="0.01" value="${row.amount}" placeholder="0.00" oninput="window.updatePayoutRequestField('${row.id}', 'amount', this.value)">
+                <div>
+                    <input data-focus-key="payout-amount-${row.id}" class="bank-form-control" type="number" min="0" step="0.01" value="${row.amount}" placeholder="0.00" oninput="window.updatePayoutRequestField('${row.id}', 'amount', this.value)" aria-label="Amount">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">Required from Source</label>
-                    <div class="bank-form-control" data-role="source-amount" style="display: flex; align-items: center; justify-content: space-between; font-weight: 800; color: #0F172A; background: #F8FAFC;">
+                <div>
+                    <div class="bank-form-control" data-role="source-amount" style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; color: #0F172A; background: #F8FAFC;">
                         <span>${batch.sourceCurrency ? formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency) : '0.00'}</span>
-                        <span style="font-size: 11px; color: #94A3B8;">Source</span>
                     </div>
-                    <div data-role="fx-rate" style="font-size: 11px; color: #64748B;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : 'Select source of fund first'}</div>
+                    <div data-role="fx-rate" style="font-size: 10px; color: #94A3B8; margin-top: 4px;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : ''}</div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">${destinationTypeLabel}</label>
-                    <select data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)">
+                <div>
+                    <select data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
                         <option value="">Select destination</option>
                         ${destinationOptions.length
                             ? destinationOptions.map(option => `<option value="${option.key}" ${row.destinationKey === option.key ? 'selected' : ''}>${option.label}</option>`).join('')
-                            : `<option value="" disabled>${payee ? `No ${isStablecoinCurrency(row.payoutCurrency) ? 'wallet address' : 'bank account'} available` : 'Select payee first'}</option>`
+                            : `<option value="" disabled>${payee ? 'No bank account available' : 'Select payee first'}</option>`
                         }
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label class="bank-form-label" style="margin: 0;">Note</label>
-                    <input data-focus-key="payout-note-${row.id}" class="bank-form-control" type="text" value="${row.note || ''}" placeholder="Optional" oninput="window.updatePayoutRequestField('${row.id}', 'note', this.value)">
+                <div>
+                    <input data-focus-key="payout-note-${row.id}" class="bank-form-control" type="text" value="${row.note || ''}" placeholder="Note" oninput="window.updatePayoutRequestField('${row.id}', 'note', this.value)" aria-label="Note" style="font-size: 12px;">
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-                    <label class="bank-form-label" style="margin: 0; visibility: hidden;">Action</label>
-                    <button class="btn btn-outline" onclick="window.addPayoutRequestRow('${row.id}')" style="width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center;">
-                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                    </button>
+                <div style="display: flex; align-items: center; justify-content: center;">
                     ${batch.requests.length > 1 ? `
                         <button class="btn btn-outline" onclick="window.removePayoutRequestRow('${row.id}')" style="width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: #DC2626; border-color: #FECACA;">
                             <i data-lucide="trash-2" style="width: 15px; height: 15px;"></i>
@@ -14631,7 +14982,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         if (!row) return '';
 
         const currency = row.payoutCurrency || payoutBatchDraft.sourceCurrency;
-        const stablecoin = isStablecoinCurrency(currency);
+        const stablecoin = (window.currentLicenseMode !== 'MSO') && isStablecoinCurrency(currency);
 
         return `
             <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #BFDBFE; box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);">
@@ -14703,12 +15054,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const selectedVisual = getPayoutCurrencyVisual(batch.sourceCurrency);
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 36px;">
-                <div class="card" style="padding: 24px 28px;">
+            <div class="fade-in" style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 36px;">
+                <div class="card" style="padding: 20px 24px;">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
                         <div>
-                            <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">New Payout Batch</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6; max-width: 760px;">Select the source of fund first, then add one or more payout requests. The batch will calculate the required source amount, FX rate, fees, and submit the whole batch into review after execution.</div>
+                            <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px;">New Payout Batch</h2>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5; max-width: 700px;">Select the source of funds first, then add payout requests. The batch calculates source amounts, FX rates, and fees automatically.</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;">
                             <div>
@@ -14722,42 +15073,38 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 <div class="card" style="padding: 0; overflow: hidden;">
                     <div style="padding: 22px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
                         <div>
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">Source of Fund</div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Asset Vault</div>
+                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">${window.currentLicenseMode === 'MSO' && batch.sourceCurrency ? 'Fiat Vault - ' + batch.sourceCurrency : 'Asset Vault'}</div>
                         </div>
-                        <div style="display: grid; grid-template-columns: minmax(280px, 360px) minmax(320px, 1fr); gap: 16px; margin-top: 18px; align-items: stretch;">
-                            <div style="display: flex; flex-direction: column; gap: 8px;">
-                                <label class="bank-form-label" style="margin: 0;">Source Asset *</label>
-                                <select id="payout-source-currency" data-focus-key="payout-source-currency" class="bank-form-control" onchange="window.updatePayoutSourceCurrency(this.value)" style="height: 52px;">
+                        <div style="display: grid; grid-template-columns: minmax(260px, 340px) minmax(300px, 1fr); gap: 16px; margin-top: 16px; align-items: stretch;">
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <label class="bank-form-label" style="margin: 0;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Asset'} *</label>
+                                <select id="payout-source-currency" data-focus-key="payout-source-currency" class="bank-form-control" onchange="window.updatePayoutSourceCurrency(this.value)" style="height: 48px;">
                                     <option value="">Select source asset</option>
                                     ${sourceOptions.map(option => `<option value="${option.currency}" ${option.currency === batch.sourceCurrency ? 'selected' : ''}>${option.currency} - Available ${option.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</option>`).join('')}
                                 </select>
                             </div>
-                            <div style="padding: 14px 18px; border-radius: 18px; background: #0F172A; color: white; box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14); display: flex; align-items: center; justify-content: space-between; gap: 18px;">
-                                <div style="display: flex; align-items: center; gap: 14px;">
-                                    <div style="width: 46px; height: 46px; border-radius: 16px; background: ${batch.sourceCurrency ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)'}; color: white; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900;">
-                                        ${batch.sourceCurrency || '--'}
-                                    </div>
-                                    <div>
-                                        <div style="font-size: 11px; color: rgba(255,255,255,0.62); text-transform: uppercase; letter-spacing: 0.08em;">Available Balance</div>
-                                        <div style="font-size: 16px; font-weight: 800; color: white; margin-top: 5px;">${batch.sourceCurrency || 'No asset selected'}</div>
-                                    </div>
+                            <div style="padding: 14px 20px; border-radius: 12px; background: ${batch.sourceCurrency ? '#F0FDF4' : '#F8FAFC'}; border: 1px solid ${batch.sourceCurrency ? '#BBF7D0' : '#E2E8F0'}; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.2s;">
+                                <div>
+                                    <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Available Balance</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: ${batch.sourceCurrency ? '#15803D' : '#94A3B8'}; margin-top: 4px;">${batch.sourceCurrency ? batch.sourceCurrency + ' Account' : 'No asset selected'}</div>
                                 </div>
                                 <div style="text-align: right;">
-                                    <div style="font-size: 28px; font-weight: 900; color: white; letter-spacing: -0.03em; line-height: 1;">${batch.sourceCurrency ? availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--'}</div>
-                                    <div style="font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.72); margin-top: 6px;">${batch.sourceCurrency || ''}</div>
+                                    <div style="font-size: 22px; font-weight: 800; color: ${batch.sourceCurrency ? '#0F172A' : '#CBD5E1'}; letter-spacing: -0.02em; line-height: 1;">${batch.sourceCurrency ? availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '--'}</div>
+                                    <div style="font-size: 12px; font-weight: 700; color: ${batch.sourceCurrency ? '#64748B' : '#CBD5E1'}; margin-top: 4px;">${batch.sourceCurrency || ''}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.95fr 52px; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                    <div style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div>#</div>
                         <div>Payee</div>
                         <div>Currency</div>
                         <div>Amount</div>
                         <div>Source Amount</div>
                         <div>Destination</div>
-                        <div>Notes</div>
+                        <div>Note</div>
                         <div></div>
                     </div>
 
@@ -14765,19 +15112,26 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         ${renderPayoutBatchRows(batch)}
                     </div>
 
-                    <div style="padding: 24px; border-top: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;">
-                        <div style="min-width: 360px; flex: 1; max-width: 520px; border-radius: 20px; border: 1px solid #CBD5E1; background: #FFFFFF; box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06); overflow: hidden;">
-                            <div style="padding: 16px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
-                                <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Batch Totals</div>
+                    <!-- Add Payee Row -->
+                    <div onclick="window.addPayoutRequestRow()" style="padding: 14px 18px; border-bottom: 1px solid #E2E8F0; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #94A3B8; font-size: 13px; font-weight: 600; transition: all 0.15s; background: white;" onmouseover="this.style.background='#F8FAFC';this.style.color='#2563EB'" onmouseout="this.style.background='white';this.style.color='#94A3B8'">
+                        <i data-lucide="plus" style="width: 15px; height: 15px;"></i>
+                        Add Payee Row
+                    </div>
+
+                    <div style="padding: 20px 24px; border-top: 1px solid #E2E8F0; background: #FCFDFE; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap;">
+                        <div style="min-width: 340px; flex: 1; max-width: 520px; border-radius: 14px; border: 1px solid #E2E8F0; background: #FFFFFF; overflow: hidden;">
+                            <div style="padding: 12px 18px; border-bottom: 1px solid #F1F5F9; background: #F8FAFC; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Batch Totals</div>
+                                ${batch.sourceCurrency ? `<div style="font-size: 11px; color: #94A3B8;">Remaining: <strong style="color: ${(availableBalance - totals.total) >= 0 ? '#15803D' : '#DC2626'};">${(availableBalance - totals.total).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${batch.sourceCurrency}</strong></div>` : ''}
                             </div>
-                            <div style="padding: 18px;">
-                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
+                            <div style="padding: 14px 18px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;">
                                     <span style="font-size: 13px; color: #64748B;">Net Payout</span>
-                                    <strong id="payout-batch-net-total" style="font-size: 19px; color: #0F172A; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.netSource, batch.sourceCurrency) : '0.00'}</strong>
+                                    <strong id="payout-batch-net-total" style="font-size: 17px; color: #0F172A; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.netSource, batch.sourceCurrency) : '0.00'}</strong>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 0; border-bottom: 1px solid #F1F5F9;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid #F1F5F9;">
                                     <span style="font-size: 13px; color: #64748B;">Fee</span>
-                                    <strong id="payout-batch-fee-total" style="font-size: 18px; color: #B45309; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.fee, batch.sourceCurrency) : '0.00'}</strong>
+                                    <strong id="payout-batch-fee-total" style="font-size: 16px; color: #B45309; letter-spacing: -0.01em;">${batch.sourceCurrency ? formatTransferMoney(totals.fee, batch.sourceCurrency) : '0.00'}</strong>
                                 </div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-top: 16px;">
                                     <div>
@@ -14795,7 +15149,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div id="payout-batch-balance-warning" style="font-size: 12px; color: #DC2626; font-weight: 700; display: ${insufficient ? 'block' : 'none'};">${insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : ''}</div>
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
-                                <button class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px;">Confirm</button>
+                                <button class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px; ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'opacity: 0.45; cursor: not-allowed;' : ''}" ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'disabled' : ''}>Confirm</button>
                             </div>
                         </div>
                     </div>
@@ -14824,8 +15178,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
                         <div style="display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
                             <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source of Fund</div>
-                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${batch.sourceCurrency} Asset Vault</div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</div>
+                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${window.currentLicenseMode === 'MSO' ? 'Fiat Vault - ' + batch.sourceCurrency : batch.sourceCurrency + ' Asset Vault'}</div>
                             </div>
                             <div>
                                 <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Net Payout</div>
@@ -14930,7 +15284,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Payout Batch Details</h3>
                     </div>
                     <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 14px;">
-                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Source of Fund</span><strong style="font-size: 14px; color: #0F172A;">${batch.sourceCurrency} Asset Vault</strong></div>
+                        <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</span><strong style="font-size: 14px; color: #0F172A;">${window.currentLicenseMode === 'MSO' ? 'Fiat Vault - ' + batch.sourceCurrency : batch.sourceCurrency + ' Asset Vault'}</strong></div>
                         <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Created At</span><strong style="font-size: 14px; color: #0F172A;">${batch.createdAt}</strong></div>
                         <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Payout Requests</span><strong style="font-size: 14px; color: #0F172A;">${batch.requests.length}</strong></div>
                         <div style="display: flex; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid #F1F5F9;"><span style="font-size: 12px; color: #64748B;">Net Payout</span><strong style="font-size: 14px; color: #0F172A;">${formatTransferMoney(totals.netSource, batch.sourceCurrency)}</strong></div>
@@ -14993,7 +15347,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Beneficiary</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.beneficiary}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.method}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Purpose</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.purpose}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source Account</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.source}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Account'}</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.source}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approval Progress</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.approval}</div></div>
                             ${order.payoutCount ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Requests</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.payoutCount}</div></div>` : ''}
                         </div>
@@ -15094,6 +15448,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const searchValue = document.getElementById('payout-orders-search')?.value?.trim().toLowerCase() || '';
         const statusValue = document.getElementById('payout-orders-status')?.value || 'all';
         const rows = ORDER_REPORT_DATA['payout'].filter(row => {
+            if (window.currentLicenseMode === 'MSO') {
+                const rowValues = Object.values(row).join(' ');
+                if (/\bUSDT\b|\bUSDC\b|Stablecoin|Wallet Transfer/.test(rowValues)) return false;
+            }
             const matchesSearch = !searchValue || Object.values(row).join(' ').toLowerCase().includes(searchValue);
             const matchesStatus = statusValue === 'all' || normalizeOrderStatus(row.status) === statusValue;
             return matchesSearch && matchesStatus;
@@ -15232,7 +15590,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                     <th>Beneficiary</th>
                                     <th>Payout Method</th>
                                     <th>Purpose</th>
-                                    <th>Source Account</th>
+                                    <th>${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Account'}</th>
                                     <th class="text-right">Amount</th>
                                     <th>Status</th>
                                 </tr>
@@ -15313,11 +15671,18 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     window.addPayoutRequestRow = function(rowId) {
         const batch = ensurePayoutBatchDraft();
-        const currentRow = batch.requests.find(item => item.id === rowId);
-        const insertIndex = batch.requests.findIndex(item => item.id === rowId);
         const newRow = createEmptyPayoutRequest(batch.sourceCurrency);
-        if (currentRow?.payoutCurrency) newRow.payoutCurrency = currentRow.payoutCurrency;
-        batch.requests.splice(insertIndex + 1, 0, newRow);
+        if (rowId) {
+            const currentRow = batch.requests.find(item => item.id === rowId);
+            const insertIndex = batch.requests.findIndex(item => item.id === rowId);
+            if (currentRow?.payoutCurrency) newRow.payoutCurrency = currentRow.payoutCurrency;
+            batch.requests.splice(insertIndex + 1, 0, newRow);
+        } else {
+            // Append to end (from "Add Payee Row" button)
+            const lastRow = batch.requests[batch.requests.length - 1];
+            if (lastRow?.payoutCurrency) newRow.payoutCurrency = lastRow.payoutCurrency;
+            batch.requests.push(newRow);
+        }
         renderPayoutOrdersPage();
     };
 
@@ -15619,7 +15984,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
                         <label style="display:block; font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Asset Vault</label>
                         <select id="pg-cv-vault" onchange="window.pgCvOnVaultChange()" style="width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; font-weight: 600; color: #1E293B; background: #F8FAFC;">
-                            <option value="stablecoin">Stablecoin Vault</option>
+                            ${window.currentLicenseMode !== 'MSO' ? '<option value="stablecoin">Stablecoin Vault</option>' : ''}
                             <option value="fiat">Fiat Vault</option>
                         </select>
                     </div>
@@ -15629,8 +15994,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">FROM</div>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="pg-cv-from-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 20px; font-weight: 700; color: #1E293B; border: none; background: transparent; outline: none; cursor: pointer; padding: 4px 0;">
-                                <option value="USDT">USDT</option>
-                                <option value="USDC">USDC</option>
+                                ${window.currentLicenseMode === 'MSO' ?
+                                    '<option value="HKD">HKD</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="BRL">BRL</option>' :
+                                    '<option value="USDT">USDT</option><option value="USDC">USDC</option>'}
                             </select>
                             <input type="number" id="pg-cv-amount" placeholder="0.00" oninput="window.pgCvUpdateQuote()" style="flex: 1; border: none; background: transparent; font-size: 28px; font-weight: 600; text-align: right; outline: none; color: #1E293B; padding: 4px 0;">
                         </div>
@@ -15653,7 +16019,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="pg-cv-to-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 16px; font-weight: 600; color: #1E293B; padding: 8px 10px; border: 1px solid var(--clr-border); border-radius: 6px; background: #F8FAFC; outline: none; cursor: pointer; flex-shrink:0;">
                                 <option value="USD">USD - US Dollar</option>
-                                <option value="USDC">USDC - USD Coin</option>
+                                ${window.currentLicenseMode !== 'MSO' ? '<option value="USDC">USDC - USD Coin</option>' : ''}
                                 <option value="HKD">HKD - Hong Kong Dollar</option>
                                 <option value="EUR">EUR - Euro</option>
                                 <option value="BRL">BRL - Brazilian Real</option>
@@ -15670,10 +16036,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
                             <span style="color: #64748B;">Conversion Fee</span>
-                            <span style="font-weight: 500; color: #10B981;">0.00 (Zero Fee)</span>
+                            ${window.currentLicenseMode === 'MSO'
+                                ? '<span style="font-weight: 500; color: #10B981;">0.00 <i data-lucide="info" style="width:12px;height:12px;cursor:help;vertical-align:middle;color:#94A3B8;" title="Obita 不收取额外手续费。实际兑换汇率与市场中间价存在差价，该差价为本平台服务收益。"></i></span>'
+                                : '<span style="font-weight: 500; color: #10B981;">0.00 (Zero Fee)</span>'}
                         </div>
                         <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 11px; color: #D97706; font-weight: 600;">
-                            <i data-lucide="timer" style="width: 13px; height: 13px;"></i> Rate guaranteed for 15s
+                            <i data-lucide="timer" style="width: 13px; height: 13px;"></i> ${window.currentLicenseMode === 'MSO' ? 'Rate locked for 15s &middot; Subject to availability' : 'Rate guaranteed for 15s'}
                         </div>
                     </div>
 
@@ -16036,7 +16404,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 const remainingMs = window.pgCvQuoteDeadline - Date.now();
                 if (remainingMs <= 0) {
                     window.pgCvQuoteExpired = true;
-                    quoteEl.innerHTML = `<button onclick="window.pgCvRefreshStep2Quote()" style="border: none; background: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; cursor: pointer;">Refresh</button>`;
+                    if (window.currentLicenseMode === 'MSO') {
+                        quoteEl.innerHTML = `<span style="color:#DC2626;font-size:11px;font-weight:600;">汇率已更新，请重新获取报价</span> <button onclick="window.pgCvRefreshStep2Quote()" style="border: none; background: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; cursor: pointer; margin-left: 6px;">Refresh Rate</button>`;
+                    } else {
+                        quoteEl.innerHTML = `<button onclick="window.pgCvRefreshStep2Quote()" style="border: none; background: #EFF6FF; color: #1D4ED8; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 800; cursor: pointer;">Refresh</button>`;
+                    }
                     pgCvSetConfirmEnabled(false);
                     if (window.pgCvQuoteTimer) {
                         clearInterval(window.pgCvQuoteTimer);
@@ -16250,8 +16622,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         
         // Re-initialize icons for newly added HTML
         lucide.createIcons();
+        // Apply license-mode constraints to dynamically rendered content
+        window.applyLicenseConstraints();
     }
-    
+
     function initFundFlowChart() {
         const ctx = document.getElementById('fundFlowChart');
         if (!ctx || typeof Chart === 'undefined') return;

@@ -1524,3 +1524,195 @@ body.drawer-open .drawer-active {
     border-color: #94A3B8;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
+
+/* ============================================
+   License Mode: Entity Switching System
+   ============================================ */
+
+/* --- Entity Switcher Dropdown --- */
+.entity-switcher {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.entity-switcher-chevron {
+    transition: transform 0.2s ease;
+}
+
+.entity-switcher.open .entity-switcher-chevron {
+    transform: rotate(180deg);
+}
+
+.entity-switcher-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 280px;
+    background: white;
+    border: 1px solid var(--clr-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    padding: 6px;
+    animation: entityDropdownIn 0.15s ease;
+}
+
+@keyframes entityDropdownIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.entity-switcher.open .entity-switcher-dropdown {
+    display: block;
+}
+
+.entity-switcher-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.entity-switcher-item:hover {
+    background-color: #F8FAFC;
+}
+
+.entity-switcher-item.active {
+    background-color: #F1F5F9;
+}
+
+.entity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.entity-item-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.entity-item-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--clr-text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.entity-item-label {
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 1px;
+}
+
+.entity-check {
+    color: var(--clr-accent);
+    flex-shrink: 0;
+}
+
+.entity-switcher-divider {
+    height: 1px;
+    background-color: var(--clr-border);
+    margin: 4px 12px;
+}
+
+/* --- License Mode Visibility --- */
+.mso-only { display: none !important; }
+.group-only { display: none !important; }
+
+body.license-mso .mso-only { display: revert !important; }
+body.license-mso span.mso-only { display: inline !important; }
+body.license-mso div.mso-only { display: block !important; }
+body.license-mso .tcsp-only { display: none !important; }
+
+body.license-group .group-only { display: revert !important; }
+body.license-group .tcsp-only { display: none !important; }
+body.license-group .mso-only { display: none !important; }
+
+/* --- MSO Accent (Purple) --- */
+body.license-mso {
+    --clr-accent: #7C3AED;
+    --clr-sidebar-active-bg: #F5F3FF;
+    --clr-sidebar-active-text: #7C3AED;
+}
+
+body.license-mso .header-merchant-logo {
+    background: linear-gradient(180deg, #F3E8FF 0%, #EDE9FE 100%);
+    border-color: #C4B5FD;
+    color: #7C3AED;
+    box-shadow: 0 10px 22px rgba(124, 58, 237, 0.12);
+}
+
+body.license-mso::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #7C3AED, #8B5CF6);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+}
+
+/* --- GROUP Accent (Slate) --- */
+body.license-group {
+    --clr-accent: #0F172A;
+    --clr-sidebar-active-bg: #F1F5F9;
+    --clr-sidebar-active-text: #0F172A;
+}
+
+body.license-group .header-merchant-logo {
+    background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
+    border-color: #CBD5E1;
+    color: #0F172A;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+body.license-group::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #0F172A, #334155);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+}
+
+/* Offset body content for accent bar */
+body.license-mso .dashboard-layout,
+body.license-group .dashboard-layout {
+    margin-top: 3px;
+    height: calc(100vh - 3px);
+}
+
+/* --- Group View: Disable operational nav --- */
+body.license-group .sidebar-nav .nav-group,
+body.license-group .sidebar-nav .nav-item:not([data-target="overview"]):not(.has-submenu) {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+body.license-group .sidebar-nav .nav-item[data-target="overview"] {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* --- Entity Switch Transition --- */
+.main-content .content-body {
+    transition: opacity 0.2s ease;
+}
+
+.main-content .content-body.switching {
+    opacity: 0;
+}
