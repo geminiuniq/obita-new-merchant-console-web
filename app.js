@@ -723,11 +723,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const ownerRadio = document.querySelector('input[name="ownerType"][value="individual"]');
         if (ownerRadio) ownerRadio.checked = true;
 
-        // Reset wallet inputs and verification zone
+        // Reset wallet inputs
         const walletAddr = document.getElementById('v-wallet-addr');
         if (walletAddr) walletAddr.value = '';
-        const verifyZone = document.getElementById('v-wallet-verify-zone');
-        if (verifyZone) { verifyZone.innerHTML = ''; verifyZone.style.display = ''; }
+
+        // Render verification tabs immediately
+        window.renderVerifyDrawerTabs();
 
         lucide.createIcons();
         document.getElementById('verify-drawer').classList.add('drawer-active');
@@ -745,12 +746,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.goToVerifyStep2 = function() {
-        const addr = document.getElementById('v-wallet-addr')?.value?.trim();
+    window.renderVerifyDrawerTabs = function() {
         const network = document.getElementById('v-wallet-network')?.value || 'TRON (TRC-20)';
-        if (!addr) { alert('Please enter the wallet address first.'); return; }
-
-        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destAddr = (typeof OBITA_VERIFY_ADDRESSES !== 'undefined' && OBITA_VERIFY_ADDRESSES[network])
+            ? OBITA_VERIFY_ADDRESSES[network]
+            : 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE';
+        const addrPreview = (document.getElementById('v-wallet-addr')?.value?.trim() || 'your-wallet').slice(0, 10);
         const zone = document.getElementById('v-wallet-verify-zone');
         if (!zone) return;
 
@@ -795,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership.</div>
                     <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Message to be signed</div>
-                        <div style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;">Obita Wallet Verification · Address: ${addr.slice(0, 10)}... · Nonce: OBT-${Date.now().toString(36).toUpperCase()}</div>
+                        <div style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;">Obita Wallet Verification · Address: ${addrPreview}... · Nonce: OBT-${Date.now().toString(36).toUpperCase()}</div>
                     </div>
                     <div id="vd-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <button type="button" onclick="window.vdSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">

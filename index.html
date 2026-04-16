@@ -691,7 +691,7 @@
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
                             <label style="font-size: 12px; font-weight: 600; color: #64748B;">Network / Chain *</label>
-                            <select id="v-wallet-network" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 8px; font-size: 13px; background: white;">
+                            <select id="v-wallet-network" class="form-input" onchange="window.renderVerifyDrawerTabs()" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 8px; font-size: 13px; background: white;">
                                 <option value="TRON (TRC-20)">TRON (TRC-20)</option>
                                 <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
                                 <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
@@ -700,14 +700,12 @@
                         </div>
                     </div>
 
-                    <!-- Verification Zone (populated by JS) -->
+                    <!-- Verification Tabs (populated by JS on drawer open) -->
                     <div id="v-wallet-verify-zone"></div>
 
                 </div>
-                <!-- Footer Verify Button -->
-                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button onclick="window.goToVerifyStep2()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Verify & Proceed</button>
-                </div>
+                <!-- Footer -->
+                <div id="v-footer-btn" style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white; display: none;"></div>
             </div>
 
             <!-- STEP 2: SUMMARY -->
