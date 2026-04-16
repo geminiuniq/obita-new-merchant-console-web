@@ -740,53 +740,128 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.selectWalletMethod = function(method) {
-        if (method === 'custodial') {
-            document.getElementById('verify-custodial-input').style.display = 'block';
+    window.goToVerifyStep2 = function() {
+        const addr = document.getElementById('v-wallet-addr')?.value?.trim();
+        const network = document.getElementById('v-wallet-network')?.value || 'TRON (TRC-20)';
+        if (!addr) { alert('Please enter the wallet address first.'); return; }
+
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const zone = document.getElementById('v-wallet-verify-zone');
+        if (!zone) return;
+
+        zone.innerHTML = `
+            <div style="border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                    <button type="button" id="vd-verify-tab-micro" onclick="window.setVerifyDrawerTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Micro Transfer Verification</button>
+                    <button type="button" id="vd-verify-tab-sign" onclick="window.setVerifyDrawerTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Wallet Signature Verification</button>
+                </div>
+                <!-- Micro transfer -->
+                <div id="vd-verify-micro" style="padding: 20px; display: none; flex-direction: column; gap: 16px;">
+                    <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                        To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address to the Obita Verification Address below. Verification completes automatically once detected on-chain.
+                    </div>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                        <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center;">
+                            <div><div style="font-size: 11px; color: #94A3B8;">Amount</div><div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div></div>
+                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                        </div>
+                        <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                            <div style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Obita Verification Address</div>
+                            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}" width="110" height="110" alt="QR" style="border: 1px solid #E2E8F0; border-radius: 8px;">
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.6;">${destAddr}</div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('${destAddr}')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <div><div style="font-size: 11px; color: #94A3B8;">Network</div><div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">${network}</div></div>
+                        </div>
+                    </div>
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                        <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. You can save the address first and complete verification later.</span>
+                    </div>
+                </div>
+                <!-- Wallet signature (default) -->
+                <div id="vd-verify-sign" style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                    <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership.</div>
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Message to be signed</div>
+                        <div style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;">Obita Wallet Verification · Address: ${addr.slice(0, 10)}... · Nonce: OBT-${Date.now().toString(36).toUpperCase()}</div>
+                    </div>
+                    <div id="vd-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" onclick="window.vdSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                            <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                        </button>
+                        <button type="button" onclick="window.vdSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                            <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                        </button>
+                    </div>
+                    <div id="vd-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                        <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                        <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                        <button type="button" onclick="window.vdSignReset()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                    </div>
+                    <div id="vd-sign-result" style="display: none; flex-direction: column; gap: 14px;">
+                        <div id="vd-sign-ok" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                            <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                            <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed</div></div>
+                        </div>
+                        <div id="vd-sign-fail" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                            <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i></div>
+                            <div><div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div><div id="vd-sign-fail-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div></div>
+                        </div>
+                        <button type="button" onclick="window.vdSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
+                    </div>
+                </div>
+            </div>`;
+        zone.style.display = 'block';
+        lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    // Tab switching for verify drawer
+    window.setVerifyDrawerTab = function(tab) {
+        const micro = document.getElementById('vd-verify-micro');
+        const sign  = document.getElementById('vd-verify-sign');
+        const tabM  = document.getElementById('vd-verify-tab-micro');
+        const tabS  = document.getElementById('vd-verify-tab-sign');
+        if (tab === 'micro') {
+            if (micro) micro.style.display = 'flex';
+            if (sign)  sign.style.display  = 'none';
+            if (tabM) { tabM.style.background = 'white'; tabM.style.color = '#7C3AED'; tabM.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabS) { tabS.style.background = 'transparent'; tabS.style.color = '#64748B'; tabS.style.boxShadow = 'none'; }
         } else {
-            document.getElementById('verify-custodial-input').style.display = 'none';
+            if (sign)  sign.style.display  = 'flex';
+            if (micro) micro.style.display = 'none';
+            if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
         }
     };
 
-    window.goToVerifyStep2 = function() {
-        // Collect Data
-        const isIndividual = document.querySelector('input[name="ownerType"][value="individual"]').checked;
-        const method = document.querySelector('input[name="walletMethod"]:checked').value;
-        
-        let name = '';
-        let details = '';
-        
-        if (isIndividual) {
-            const fname = document.getElementById('v-fname').value || 'John';
-            const mname = document.getElementById('v-mname').value || '';
-            const lname = document.getElementById('v-lname').value || 'Doe';
-            const addr = document.getElementById('v-iaddr').value || '123 Main St';
-            name = (fname + ' ' + mname + ' ' + lname).trim();
-            details = addr;
-        } else {
-            name = document.getElementById('v-orgname').value || 'Example Corp';
-            details = document.getElementById('v-orgaddr').value || '456 Business Rd';
-        }
-        
-        let wallet = '';
-        if (method === 'custodial') {
-            wallet = document.getElementById('v-wallet-addr').value || '0x...';
-            document.getElementById('s2-wallet-badge').style.display = 'none';
-        } else {
-            // Mock wallet address generated from extension
-            wallet = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
-            document.getElementById('s2-wallet-badge').style.display = 'flex';
-        }
-        
-        // Map to Step 2 Summary
-        document.getElementById('s2-name').textContent = name;
-        document.getElementById('s2-details').textContent = details;
-        document.getElementById('s2-wallet').textContent = wallet;
-        
-        // Transition UI
-        document.getElementById('verify-step-1').style.display = 'none';
-        document.getElementById('verify-step-2').style.display = 'flex';
-        lucide.createIcons();
+    // Wallet signature flow for verify drawer
+    window.vdSignMetaMask = function() {
+        document.getElementById('vd-sign-select').style.display = 'none';
+        document.getElementById('vd-sign-pending').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('vd-sign-pending').style.display = 'none';
+            document.getElementById('vd-sign-result').style.display = 'flex';
+            document.getElementById('vd-sign-ok').style.display = 'flex';
+            lucide.createIcons();
+        }, 2000);
+    };
+    window.vdSignWC = window.vdSignMetaMask;
+    window.vdSignReset = function() {
+        document.getElementById('vd-sign-select').style.display = 'grid';
+        document.getElementById('vd-sign-pending').style.display = 'none';
+        document.getElementById('vd-sign-result').style.display = 'none';
+        document.getElementById('vd-sign-ok').style.display = 'none';
+        document.getElementById('vd-sign-fail').style.display = 'none';
     };
 
     window.confirmVerification = function() {

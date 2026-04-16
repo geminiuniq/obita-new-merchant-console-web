@@ -680,28 +680,28 @@
                         </label>
                     </div>
 
-                    <!-- Wallet Connection selection -->
+                    <!-- Wallet Verification Methods -->
                     <h4 style="font-size: 14px; color: #1E293B; margin-bottom: 16px;">Wallet Verification</h4>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('metamask')">
-                            <input type="radio" name="walletMethod" value="metamask" checked style="margin-right: 12px;" />
-                            <span style="flex: 1; font-weight: 500; font-size: 14px;">MetaMask</span>
-                        </label>
-                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('walletconnect')">
-                            <input type="radio" name="walletMethod" value="walletconnect" style="margin-right: 12px;" />
-                            <span style="flex: 1; font-weight: 500; font-size: 14px;">WalletConnect</span>
-                        </label>
-                        <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer;" onclick="window.selectWalletMethod('custodial')">
-                            <input type="radio" name="walletMethod" value="custodial" style="margin-right: 12px;" />
-                            <span style="flex: 1; font-weight: 500; font-size: 14px;">Exchange / Custodial Wallet</span>
-                        </label>
+
+                    <!-- Wallet Address Input -->
+                    <div style="margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #64748B;">Wallet Address *</label>
+                            <input type="text" id="v-wallet-addr" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px;" />
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 12px; font-weight: 600; color: #64748B;">Network / Chain *</label>
+                            <select id="v-wallet-network" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 8px; font-size: 13px; background: white;">
+                                <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                <option value="Solana">Solana</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <!-- Custodial Address Input -->
-                    <div id="verify-custodial-input" style="display: none; margin-top: 16px; padding: 16px; background: #F8FAFC; border-radius: 8px;">
-                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 4px;">Wallet Address</label>
-                        <input type="text" id="v-wallet-addr" placeholder="0x..." class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px; font-family: monospace;" />
-                    </div>
+                    <!-- Verification Zone (populated by JS) -->
+                    <div id="v-wallet-verify-zone"></div>
 
                 </div>
                 <!-- Footer Verify Button -->
