@@ -16189,7 +16189,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             }
         } else if (title === 'Conversion') {
             contentBody.innerHTML = `
-            <div class="fade-in" style="display: grid; grid-template-columns: minmax(0, 560px) 260px; gap: 32px; align-items: start; padding-bottom: 40px;">
+            <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 520px) minmax(220px, 280px)' : 'minmax(0, 560px) 260px'}; gap: 24px; align-items: start; padding-bottom: 40px;">
 
                 <!-- Left: Conversion Form -->
                 <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -16249,7 +16249,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; padding: 16px 20px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
                             <span style="color: #64748B;">Exchange Rate</span>
-                            <span id="pg-cv-rate-text" style="font-weight: 600; color: #1E293B;">1 USDT = 1 USD</span>
+                            <span id="pg-cv-rate-text" style="font-weight: 600; color: #1E293B;">${window.currentLicenseMode === 'MSO' ? '1 HKD = 0.128 USD' : '1 USDT = 1 USD'}</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; font-size: 13px;">
                             <span style="color: #64748B;">Conversion Fee</span>
@@ -16346,7 +16346,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 </div><!-- /form left column -->
 
                 <!-- Right: Market Rates Panel -->
-                <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 12px; position: sticky; top: 24px;">
 
                     ${window.currentLicenseMode !== 'MSO' ? `
                     <!-- Stablecoin card -->
@@ -16454,12 +16454,43 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <!-- Disclaimer -->
                     <div style="font-size: 11px; color: #94A3B8; line-height: 1.6; padding: 0 2px;">仅供参考，实际汇率以成交时为准。</div>
 
+                    ${window.currentLicenseMode === 'MSO' ? `
+                    <!-- MSO: How Conversion Works -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 18px; margin-top: 4px;">
+                        <div style="font-size: 12px; font-weight: 700; color: #1E293B; margin-bottom: 14px;">How it works</div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; gap: 10px;">
+                                <div style="width: 22px; height: 22px; border-radius: 6px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #2563EB; flex-shrink: 0;">1</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Select source and target currencies from your Fiat Vault</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <div style="width: 22px; height: 22px; border-radius: 6px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #2563EB; flex-shrink: 0;">2</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Enter the amount and review the quoted exchange rate</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <div style="width: 22px; height: 22px; border-radius: 6px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #2563EB; flex-shrink: 0;">3</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Confirm within 15 seconds to lock the rate and execute</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MSO: Conversion Info -->
+                    <div style="background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                            <i data-lucide="info" style="width: 14px; height: 14px; color: #94A3B8;"></i>
+                            <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Fee Structure</span>
+                        </div>
+                        <div style="font-size: 12px; color: #64748B; line-height: 1.7;">
+                            Obita does not charge an explicit conversion fee. The exchange rate includes a spread from the mid-market rate, which constitutes the platform's service revenue.
+                        </div>
+                    </div>` : ''}
+
                 </div><!-- /market rates right column -->
 
             </div><!-- /grid wrapper -->
 
             <!-- Conversion Order List -->
-            <div class="card fade-in" style="margin-top: 32px;">
+            <div class="card fade-in" style="margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <h2 class="card-title" style="margin: 0;">Conversion Order List</h2>
                     <div style="display: flex; gap: 8px; align-items: center;">
@@ -16565,7 +16596,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                 <!-- Pagination -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--clr-border); font-size: 13px; color: #64748B;">
-                    <div>Showing 5 of 5 orders</div>
+                    <div>Showing ${window.currentLicenseMode === 'MSO' ? '3 of 3' : '5 of 5'} orders</div>
                     <div style="display: flex; gap: 4px;">
                         <button style="padding: 6px 12px; border: 1px solid var(--clr-border); border-radius: 4px; background: white; color: #64748B; font-size: 12px; cursor: pointer;">← Prev</button>
                         <button style="padding: 6px 12px; border: 1px solid #2563EB; border-radius: 4px; background: #2563EB; color: white; font-size: 12px; font-weight: 600; cursor: pointer;">1</button>
