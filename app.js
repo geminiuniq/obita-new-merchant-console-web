@@ -39,6 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return network ? `${short}（${network}）` : short;
     }
 
+    // First 6 + bullet mask + last 4 — used for wallet addresses and bank accounts
+    function formatMaskedAddress(value = '') {
+        const raw = String(value).trim();
+        if (!raw) return '-';
+        if (raw.length <= 10) return raw;
+        return `${raw.slice(0, 6)}••••${raw.slice(-4)}`;
+    }
+
     function parseVaultFilterDate(value) {
         if (!value) return null;
         return new Date(`${value}T00:00:00`);
@@ -5509,13 +5517,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         document.getElementById('na-form-organization').style.display = 'none';
         const ownerRadios = document.querySelectorAll('input[name="newAddrOwnerType"]');
         if(ownerRadios[0]) ownerRadios[0].checked = true;
-        
-        const methodRadios = document.querySelectorAll('input[name="newAddrMethod"]');
-        if(methodRadios[0]) methodRadios[0].checked = true;
-        document.getElementById('na-custodial-input').style.display = 'none';
-        
+
+        // Reset wallet fields
+        const addrInput = document.getElementById('na-wallet-addr');
+        if (addrInput) addrInput.value = '';
+        const verifyZone = document.getElementById('na-wallet-verify-zone');
+        if (verifyZone) { verifyZone.style.display = 'none'; verifyZone.innerHTML = ''; }
+        window._addrBookVerified = false;
+
         document.getElementById('addr-list-view').style.display = 'none';
         document.getElementById('add-addr-view').style.display = 'flex';
+        lucide.createIcons();
     };
 
     window.switchToListAddressView = function() {
@@ -5533,12 +5545,172 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         }
     };
 
-    window.selectNewAddrMethod = function(method) {
-        if (method === 'custodial') {
-            document.getElementById('na-custodial-input').style.display = 'flex';
+    // Address Book: wallet verification flow (reuses the same verify zone UI)
+    window._addrBookVerified = false;
+
+    window.onAddrBookVerifyClick = function() {
+        const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
+        const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
+        if (!addr) { alert('Please enter the wallet address first.'); return; }
+
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const zone = document.getElementById('na-wallet-verify-zone');
+        if (!zone) return;
+
+        // Render the verification zone inline (unique IDs with "na-" prefix to avoid collision)
+        zone.innerHTML = `
+            <div style="border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                    <button type="button" id="na-verify-tab-micro" onclick="window.setAddrBookVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro Transfer Verification</button>
+                    <button type="button" id="na-verify-tab-sign" onclick="window.setAddrBookVerifyTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature Verification</button>
+                </div>
+                <!-- Micro transfer -->
+                <div id="na-verify-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                        To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address to the Obita Verification Address below. Verification completes automatically once detected on-chain.
+                    </div>
+                    <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                        <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center;">
+                            <div><div style="font-size: 11px; color: #94A3B8;">Amount</div><div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div></div>
+                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                        </div>
+                        <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                            <div style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Obita Verification Address</div>
+                            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}" width="110" height="110" alt="QR" style="border: 1px solid #E2E8F0; border-radius: 8px;">
+                                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.6;">${destAddr}</div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('${destAddr}')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <div><div style="font-size: 11px; color: #94A3B8;">Network</div><div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">${network}</div></div>
+                        </div>
+                    </div>
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                        <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. You can save the address first and complete verification later.</span>
+                    </div>
+                </div>
+                <!-- Wallet signature -->
+                <div id="na-verify-sign" style="padding: 20px; display: none; flex-direction: column; gap: 14px;">
+                    <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership.</div>
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Message to be signed</div>
+                        <div id="na-sign-message" style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;">Obita Address Book Verification · Address: ${addr.slice(0, 10)}... · Nonce: OBT-${Date.now().toString(36).toUpperCase()}</div>
+                    </div>
+                    <!-- Sign panels -->
+                    <div id="na-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button type="button" onclick="window.addrBookSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                            <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                        </button>
+                        <button type="button" onclick="window.addrBookSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                            <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                        </button>
+                    </div>
+                    <div id="na-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                        <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                        <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                        <button type="button" onclick="window.addrBookSignReset()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                    </div>
+                    <div id="na-sign-result" style="display: none; flex-direction: column; gap: 14px;">
+                        <div id="na-sign-ok" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                            <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                            <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed</div></div>
+                        </div>
+                        <div id="na-sign-fail" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                            <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i></div>
+                            <div><div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div><div id="na-sign-fail-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div></div>
+                        </div>
+                        <button type="button" onclick="window.addrBookSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
+                    </div>
+                </div>
+            </div>`;
+        zone.style.display = 'block';
+        lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.setAddrBookVerifyTab = function(tab) {
+        const micro = document.getElementById('na-verify-micro');
+        const sign  = document.getElementById('na-verify-sign');
+        const tabM  = document.getElementById('na-verify-tab-micro');
+        const tabS  = document.getElementById('na-verify-tab-sign');
+        if (tab === 'micro') {
+            if (micro) micro.style.display = 'flex';
+            if (sign)  sign.style.display  = 'none';
+            if (tabM) { tabM.style.background = 'white'; tabM.style.color = '#7C3AED'; tabM.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabS) { tabS.style.background = 'transparent'; tabS.style.color = '#64748B'; tabS.style.boxShadow = 'none'; }
         } else {
-            document.getElementById('na-custodial-input').style.display = 'none';
+            if (sign)  sign.style.display  = 'flex';
+            if (micro) micro.style.display = 'none';
+            if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
+            window.addrBookSignReset();
         }
+    };
+
+    window.addrBookSignReset = function() {
+        ['na-sign-select','na-sign-pending','na-sign-result'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+        const sel = document.getElementById('na-sign-select');
+        if (sel) sel.style.display = 'grid';
+        lucide.createIcons();
+    };
+
+    window.addrBookSignMetaMask = async function() {
+        if (!window.ethereum) {
+            document.getElementById('na-sign-select').style.display = 'none';
+            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
+            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
+            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
+            const msg = document.getElementById('na-sign-fail-msg'); if (msg) msg.textContent = 'MetaMask not detected. Please install the browser extension.';
+            lucide.createIcons();
+            return;
+        }
+        document.getElementById('na-sign-select').style.display = 'none';
+        const pend = document.getElementById('na-sign-pending'); if (pend) pend.style.display = 'flex';
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const message = document.getElementById('na-sign-message')?.textContent?.trim() || 'Obita Address Book Verification';
+            await window.ethereum.request({ method: 'personal_sign', params: [message, accounts[0]] });
+            if (pend) pend.style.display = 'none';
+            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
+            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'flex';
+            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'none';
+            const vab = document.getElementById('na-sign-result')?.querySelector('button');
+            if (vab) vab.style.display = 'none'; // hide Verify Again on success
+            window._addrBookVerified = true;
+        } catch (err) {
+            if (pend) pend.style.display = 'none';
+            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
+            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
+            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
+            const msg = document.getElementById('na-sign-fail-msg');
+            if (msg) msg.textContent = err.code === 4001 ? 'Signature request was rejected.' : (err.message || 'Signing failed.');
+        }
+        lucide.createIcons();
+    };
+
+    window.addrBookSignWC = function() {
+        document.getElementById('na-sign-select').style.display = 'none';
+        const pend = document.getElementById('na-sign-pending'); if (pend) pend.style.display = 'flex';
+        // In production, WalletConnect QR would render here. For demo, show pending briefly then simulate success.
+        setTimeout(() => {
+            if (pend) pend.style.display = 'none';
+            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
+            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'flex';
+            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'none';
+            const vab = document.getElementById('na-sign-result')?.querySelector('button');
+            if (vab) vab.style.display = 'none';
+            window._addrBookVerified = true;
+            lucide.createIcons();
+        }, 2000);
     };
 
     window.toggleAddressStatus = function(btn) {
@@ -5568,31 +5740,34 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     window.submitNewAddress = function() {
         const isIndividual = document.querySelector('input[name="newAddrOwnerType"][value="individual"]').checked;
-        const method = document.querySelector('input[name="newAddrMethod"]:checked').value;
-        
-        let name = isIndividual ? 
-            ((document.getElementById('na-fname').value || 'New') + ' ' + (document.getElementById('na-lname').value || 'User')) : 
+        const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
+        const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
+        const walletType = document.querySelector('input[name="na-wallet-type"]:checked')?.value || 'private';
+
+        if (!addr) { alert('Please enter the wallet address.'); return; }
+
+        let name = isIndividual ?
+            ((document.getElementById('na-fname').value || 'New') + ' ' + (document.getElementById('na-lname').value || 'User')) :
             (document.getElementById('na-orgname').value || 'New Organization');
-            
-        let network = 'ETH';
-        let addr = '0x' + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join('');
-        
-        if (method === 'custodial') {
-            addr = document.getElementById('na-wallet-addr').value || addr;
-            network = document.getElementById('na-wallet-net').value || 'ETH';
-        } else {
-            network = (Math.random() > 0.5) ? 'ETH' : 'TRON';
-        }
-        
+
+        const verified = window._addrBookVerified;
+        const verificationAttr = verified ? 'verified' : 'pending';
+        const statusLabel = verified ? 'Verified' : 'Pending Verification';
+        const statusBg = verified ? '#DCFCE7' : '#FEF3C7';
+        const statusColor = verified ? '#15803D' : '#B45309';
+        const walletTypeBadge = walletType === 'exchange'
+            ? '<span style="background:#FFF7ED;color:#EA580C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Exchange</span>'
+            : '<span style="background:#F5F3FF;color:#7C3AED;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Private</span>';
         const shortAddr = formatWalletListAddress(addr, network);
-        
+
         const newHtml = `
-        <div class="addr-item" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
+        <div class="addr-item" data-verification="${verificationAttr}" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
             <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
                     <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${name}</div>
                     <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${network}</span>
-                    <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Pending Verification</span>
+                    ${walletTypeBadge}
+                    <span data-role="entity-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${statusLabel}</span>
                 </div>
                 <div style="font-family: monospace; font-size: 12px; color: #64748B;">${shortAddr}</div>
             </div>
@@ -5601,11 +5776,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
             </div>
         </div>`;
-        
+
         document.getElementById('addr-list-container').insertAdjacentHTML('beforeend', newHtml);
         applyManagedEntityCardState(document.querySelector('#addr-list-container .addr-item:last-child'));
         lucide.createIcons();
-        alert('Address added. Verification is now in progress.');
+        alert(verified ? 'Address added and verified.' : 'Address added. Verification is pending.');
         window.switchToListAddressView();
     };
 
@@ -6761,7 +6936,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Chase Bank', 'Corporate Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
+                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
                                 <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #1D4ED8, #2563EB); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
@@ -6793,7 +6968,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFF5F5); border: 1px solid #FECACA; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(220,38,38,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(220,38,38,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(220,38,38,0.06)'">
                             <div onclick="window.openFiatVaultBankAccountDetail('HSBC Hong Kong', 'Operating Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
+                                <span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
                                 <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B91C1C, #DC2626); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,38,38,0.3);">
@@ -6825,7 +7000,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Deutsche Bank', 'Euro Settlement')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
+                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
                                 <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
@@ -6875,7 +7050,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Banco Bradesco', 'BRL Payments')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Transfer</span>
+                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
                                 <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #047857, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
@@ -11117,6 +11292,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     let activeExternalContactsUsageFilter = 'payout';
     let payeeDirectoryMode = 'externalContacts';
     let detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
+    let invoicePayerAccounts = []; // Accounts added in the New Payer for Invoice form
 
     function getPayeeById(id) {
         return payeeList.find(p => p.id === id);
@@ -11310,12 +11486,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <thead>
                                 ${isCompactDirectoryMode ? `
                                 <tr>
-                                    <th style="width: 24%;">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
+                                    <th style="width: ${isContactManagementMode ? '24%' : '28%'};">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
                                     ${isContactManagementMode ? '<th style="width: 16%;">Type</th>' : ''}
-                                    <th style="width: ${isContactManagementMode ? '24%' : '30%'};">Saved Destinations</th>
-                                    <th style="width: 12%;">Status</th>
-                                    <th class="text-center" style="width: 10%;">Linked Orders</th>
-                                    <th class="text-right" style="width: ${isContactManagementMode ? '14%' : '18%'};">Actions</th>
+                                    <th style="width: ${isContactManagementMode ? '24%' : '40%'};">Payment Method</th>
+                                    <th style="width: ${isContactManagementMode ? '12%' : '16%'};">Status</th>
+                                    <th class="text-center" style="width: ${isContactManagementMode ? '10%' : '16%'};">${isInvoicePayerMode ? 'Linked Invoices' : isPayoutPayeeMode ? 'Linked Payouts' : 'Linked Orders'}</th>
+                                    ${isContactManagementMode ? `<th class="text-right" style="width: 14%;">Actions</th>` : ''}
                                 </tr>
                                 ` : `
                                 <tr>
@@ -11365,7 +11541,56 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             if (p.usageScope?.refund) scopeHtml += '<span style="background: #DCFCE7; color: #15803D; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;">Refund</span>';
                             scopeHtml += '</div>';
 
-                            const destinationSummary = `
+                            let destinationSummary;
+                            if (isInvoicePayerMode || isPayoutPayeeMode) {
+                                const w = p.wallets?.[0];
+                                const b = p.banks?.[0];
+                                if (w) {
+                                    const verifBadge = w.verified === true
+                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DCFCE7;color:#16A34A;">Verified</span>'
+                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FEF9C3;color:#A16207;">Pending Verification</span>';
+                                    const kindBadge = w.walletKind === 'exchange'
+                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FFF7ED;color:#EA580C;">Exchange</span>'
+                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#F5F3FF;color:#7C3AED;">Private</span>';
+                                    destinationSummary = `
+                                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                                            <div style="width:30px;height:30px;border-radius:8px;background:#F5F3FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                <i data-lucide="wallet" style="width:15px;height:15px;color:#7C3AED;"></i>
+                                            </div>
+                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+                                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                                    <span style="font-size:12px;font-weight:700;color:#0F172A;">${w.network}</span>
+                                                    ${kindBadge}${verifBadge}
+                                                </div>
+                                                <div style="font-size:11.5px;font-family:monospace;color:#475569;letter-spacing:0.3px;">${formatMaskedAddress(w.address)}</div>
+                                            </div>
+                                        </div>`;
+                                } else if (b) {
+                                    const bStat = window._computeBankStatus(p);
+                                    const bStatBadge = bStat === 'verified'
+                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DCFCE7;color:#16A34A;">Verified</span>'
+                                        : bStat === 'failed'
+                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FEE2E2;color:#DC2626;">Failed</span>'
+                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DBEAFE;color:#1D4ED8;">New</span>';
+                                    destinationSummary = `
+                                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                                            <div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                <i data-lucide="landmark" style="width:15px;height:15px;color:#2563EB;"></i>
+                                            </div>
+                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+                                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                                    <span style="font-size:12px;font-weight:700;color:#0F172A;">${b.bankName}</span>
+                                                    ${b.currency ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DBEAFE;color:#1D4ED8;">${b.currency}</span>` : ''}
+                                                    ${bStatBadge}
+                                                </div>
+                                                <div style="font-size:11.5px;font-family:monospace;color:#475569;letter-spacing:0.3px;">${formatMaskedAddress(b.account)}${b.accountName ? ` <span style="font-family:inherit;color:#94A3B8;">· ${b.accountName}</span>` : ''}</div>
+                                            </div>
+                                        </div>`;
+                                } else {
+                                    destinationSummary = `<span style="font-size:12px;color:#94A3B8;font-style:italic;">No payment method</span>`;
+                                }
+                            } else {
+                                destinationSummary = `
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div style="display: flex; align-items: center; gap: 8px; min-height: 18px;">
                                         <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 54px; padding: 3px 8px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; font-size: 10px; font-weight: 700;">Wallet</span>
@@ -11379,8 +11604,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                             ${p.banks?.length ? `${p.banks.length} saved` : 'Not added'}
                                         </span>
                                     </div>
-                                </div>
-                            `;
+                                </div>`;
+                            }
 
                             const contactTypeBadge = p.directoryType === 'invoicePayer' ? 'Payer for Invoice' : 'Payee';
                             const contactTypeBadgeStyle = p.directoryType === 'invoicePayer'
@@ -11397,13 +11622,19 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 : (p.linkedPayouts || 0);
 
                             if (isCompactDirectoryMode) {
+                                const rowName = isInvoicePayerMode
+                                    ? `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
+                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Institution' : 'Individual'} · ${p.id}</div>`
+                                    : isPayoutPayeeMode
+                                    ? `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
+                                       <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email || ''}</div>
+                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>`
+                                    : `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
+                                       <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
+                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>`;
                                 return `
-                                <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" style="cursor: pointer; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
-                                    <td>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
-                                        <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
-                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>
-                                    </td>
+                                <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''" style="cursor: pointer; transition: background 0.12s ease; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                                    <td>${rowName}</td>
                                     ${isContactManagementMode ? `
                                     <td>
                                         <span style="display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>
@@ -11416,6 +11647,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <td class="text-center">
                                         <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${linkedOrderCount}</span>
                                     </td>
+                                    ${isContactManagementMode ? `
                                     <td>
                                         <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
                                         <button class="btn btn-outline" onclick="window.editPayee('${p.id}', '${detailTypeArg}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">Edit</button>
@@ -11423,6 +11655,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; color: #DC2626; border-color: #FECACA; white-space: nowrap;">Delete</button>
                                         </div>
                                     </td>
+                                    ` : ''}
                                 </tr>`;
                             }
 
@@ -11454,7 +11687,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </td>
                             </tr>`;
                         }).join('') : `
-                            <tr><td colspan="${isContactManagementMode ? 6 : isCompactDirectoryMode ? 5 : 8}" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">${isPayoutPayeeMode ? 'No payees matched your current filters.' : isInvoicePayerMode ? 'No payers matched your current filters.' : isContactManagementMode ? 'No contacts matched your current filters.' : 'No external contacts matched your current filters.'}</td></tr>`
+                            <tr><td colspan="${isContactManagementMode ? 6 : (isInvoicePayerMode || isPayoutPayeeMode) ? 4 : 8}" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">${isPayoutPayeeMode ? 'No payees matched your current filters.' : isInvoicePayerMode ? 'No payers matched your current filters.' : isContactManagementMode ? 'No contacts matched your current filters.' : 'No external contacts matched your current filters.'}</td></tr>`
                         }
                             </tbody>
                         </table>
@@ -11468,13 +11701,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     function renderPayeeFormContent(inDrawer = false) {
         const isPayoutForm = !inDrawer && payeeDirectoryMode === 'payeeList';
         const isInvoicePayerForm = !inDrawer && payeeDirectoryMode === 'invoicePayerList';
+        const isEnhancedPayeeForm = isInvoicePayerForm || isPayoutForm; // Both use the progressive Payment Methods UI
         const isRestrictedUsageForm = isPayoutForm || isInvoicePayerForm;
         const pageTitle = isPayoutForm ? 'New Payee' : isInvoicePayerForm ? 'New Payer for Invoice' : 'New Contact';
         const backLabel = isPayoutForm ? 'Back to Payee List' : isInvoicePayerForm ? 'Back to Payer List for Invoice' : 'Back to External Contacts';
         const pageDescription = isPayoutForm
-            ? 'Register a new payee. An email invitation will be sent to collect basic information and complete identity verification before this payee can be used in any payout order or transaction.'
+            ? 'Register a new payee. Provide a display alias and an optional payment method (wallet or bank account) to enable payout transactions.'
             : isInvoicePayerForm
-                ? 'Register a new payer for invoice. An email invitation will be sent to collect basic information and complete identity verification before this payer can be used in any invoice order or transaction.'
+                ? 'Register a new payer for invoice. Provide a display alias and an optional payment method (wallet or bank account) to enable invoice transactions.'
             : 'Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.';
         const basicInfoDescription = isRestrictedUsageForm
             ? ''
@@ -11618,18 +11852,27 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <label id="payee-corp-label" onclick="window.setPayeePersonType('company')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
                                     <input type="radio" name="payee-person-type" value="company" style="accent-color: #2563EB;">
                                     <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Company</div>
-                                        <div style="font-size: 11px; color: #64748B;">Legal entity / organisation</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${isInvoicePayerForm ? 'Institution' : 'Company'}</div>
+                                        <div style="font-size: 11px; color: #64748B;">${isInvoicePayerForm ? 'Company / organisation / entity' : 'Legal entity / organisation'}</div>
                                     </div>
                                 </label>
                             </div>
                         </div>
 
+                        ${isEnhancedPayeeForm ? `
+                        <!-- Alias (replaces email and individual name fields) -->
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label class="bank-form-label">${isInvoicePayerForm ? 'Payer' : 'Payee'} Alias *</label>
+                            <input id="payee-alias" class="bank-form-control" type="text" placeholder="e.g. ABC Corp, John D., Supplier A">
+                            <div style="font-size: 11px; color: #94A3B8;">Display name used to identify this ${isInvoicePayerForm ? 'payer in invoice orders' : 'payee in payout orders'} and transactions.</div>
+                        </div>
+                        <div id="payee-individual-fields" style="display: none;"></div>
+                        ` : `
                         <!-- Email -->
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <label class="bank-form-label">${emailLabel}</label>
                             <input id="payee-email" class="bank-form-control" type="email" placeholder="e.g. john.doe@example.com" required>
-                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'}.</div>
+                            <div style="font-size: 11px; color: #94A3B8;">An information-collection email will be sent to this ${isPayoutForm ? 'payee' : 'contact'}.</div>
                         </div>
 
                         <!-- Individual fields -->
@@ -11649,8 +11892,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                             </div>
                         </div>
+                        `}
 
-                        <!-- Company fields -->
+                        <!-- Company fields (hidden for enhanced forms — alias is used instead) -->
+                        ${isEnhancedPayeeForm ? `
+                        <div id="payee-company-fields" style="display: none;"></div>
+                        ` : `
                         <div id="payee-company-fields" style="display: none; flex-direction: column; gap: 16px;">
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 <label class="bank-form-label">Company / Legal Entity Name *</label>
@@ -11661,14 +11908,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <input id="payee-company-country" class="bank-form-control" type="text" placeholder="e.g. Singapore">
                             </div>
                         </div>
-
-                        <!-- EDD note -->
-                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
-                            <i data-lucide="info" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
-                            <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                <strong>Additional due diligence information</strong> (for example date of birth or residential / registered address) is not collected at this stage and will be requested by email if needed.
-                            </div>
-                        </div>
+                        `}
 
                     </div>
                 </div>
@@ -11691,6 +11931,355 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
                 `}
 
+                ${isEnhancedPayeeForm ? `
+                <!-- SECTION 2: Payment Methods — Progressive UI -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 28px; height: 28px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <div>
+                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Payment Methods</h3>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Register bank accounts or crypto wallet addresses for this ${isInvoicePayerForm ? 'payer' : 'payee'}.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+
+                        <!-- Added accounts list -->
+                        <div id="payee-accounts-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+                        <!-- Add account zone -->
+                        <div id="payee-add-account-zone" style="display: flex; flex-direction: column; gap: 14px;">
+
+                            <!-- Step 0: Add button -->
+                            <button type="button" id="payee-add-account-btn" onclick="window.onPayeeAddAccountClick()" style="width: 100%; padding: 14px 16px; background: white; border: 2px dashed #93C5FD; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: #2563EB; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s;">
+                                <i data-lucide="plus-circle" style="width: 16px; height: 16px;"></i>
+                                Add New Bank Account / Wallet Address
+                            </button>
+
+                            <!-- Step 1: Type selector (hidden initially) -->
+                            <div id="payee-account-type-zone" style="display: none; flex-direction: column; gap: 12px;">
+                                <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Select payment method type</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <button type="button" id="payee-type-bank-btn" onclick="window.onPayeeAccountTypeSelect('bank')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; background: #EFF6FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="landmark" style="width: 22px; height: 22px; color: #2563EB;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Bank Account</div>
+                                            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Wire / FPS / SWIFT</div>
+                                        </div>
+                                    </button>
+                                    <button type="button" id="payee-type-wallet-btn" onclick="window.onPayeeAccountTypeSelect('wallet')" style="padding: 18px 14px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; background: #F5F3FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                            <i data-lucide="wallet" style="width: 22px; height: 22px; color: #7C3AED;"></i>
+                                        </div>
+                                        <div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Wallet Address</div>
+                                            <div style="font-size: 11px; color: #64748B; margin-top: 2px;">USDT / USDC stablecoin</div>
+                                        </div>
+                                    </button>
+                                </div>
+                                <button type="button" onclick="window.onPayeeCancelAddAccount()" style="align-self: flex-start; background: none; border: none; color: #94A3B8; font-size: 12px; font-weight: 600; cursor: pointer;">Cancel</button>
+                            </div>
+
+                            <!-- Step 2a: Bank form (hidden initially) -->
+                            <div id="payee-bank-add-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden; background: white;">
+                                <!-- Header strip -->
+                                <div style="padding: 16px 20px; background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 60%, #FFFFFF 100%); border-bottom: 1px solid #DBEAFE; display: flex; align-items: center; gap: 12px; position: relative;">
+                                    <div style="position: absolute; top: -20px; right: -20px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(37,99,235,0.10) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 3px 10px rgba(37,99,235,0.25);">
+                                        <i data-lucide="landmark" style="width: 19px; height: 19px; color: white;"></i>
+                                    </div>
+                                    <div style="position: relative;">
+                                        <div style="font-size: 14px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Bank Account Details</div>
+                                        <div style="font-size: 11px; color: #64748B; margin-top: 2px;">All fields are required</div>
+                                    </div>
+                                </div>
+
+                                <!-- Form body -->
+                                <div style="padding: 22px 20px; display: flex; flex-direction: column; gap: 16px;">
+
+                                    <!-- Row 1: Bank Name -->
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Bank Name *</label>
+                                        <input id="payee-new-bank-name" class="bank-form-control" type="text" placeholder="e.g. HSBC Hong Kong">
+                                    </div>
+
+                                    <!-- Row 2: Bank Account Name -->
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Bank Account Name *</label>
+                                        <input id="payee-new-bank-account-name" class="bank-form-control" type="text" placeholder="Registered name on the account">
+                                    </div>
+
+                                    <!-- Row 3: Account Number + Currency -->
+                                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px;">
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Account Number / IBAN *</label>
+                                            <input id="payee-new-bank-account" class="bank-form-control" type="text" placeholder="Enter account number or IBAN">
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Currency *</label>
+                                            <select id="payee-new-bank-currency" class="bank-form-control">
+                                                <option>USD</option><option>HKD</option><option>EUR</option><option>BRL</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Row 4: SWIFT + Routing -->
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">SWIFT / BIC Code *</label>
+                                            <input id="payee-new-bank-swift" class="bank-form-control" type="text" placeholder="e.g. HSBCHKHH">
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                                            <label class="bank-form-label">Routing / FPS / Sort Code *</label>
+                                            <input id="payee-new-bank-routing" class="bank-form-control" type="text" placeholder="e.g. FPS: 92837461">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2b: Wallet form (hidden initially) -->
+                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 16px;">
+
+                                <!-- Declaration checkbox -->
+                                <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                                    <input type="checkbox" id="payee-invoice-wallet-claim" style="margin-top: 3px; accent-color: #7C3AED; flex-shrink: 0;" oninput="window.onPayeeInvoiceWalletClaimChange()">
+                                    <span style="font-size: 13px; color: #334155; line-height: 1.6;">${walletClaimText}</span>
+                                </label>
+
+                                <!-- Wallet type selector — hidden until declaration checked -->
+                                <div id="payee-invoice-wallet-type-zone" style="display: none; flex-direction: column; gap: 12px;">
+                                    <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Wallet Type</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                        <button type="button" id="payee-wallet-type-private-btn" onclick="window.onPayeeWalletTypeSelect('private')" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                            <div style="width: 44px; height: 44px; background: #F5F3FF; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                                <i data-lucide="key-round" style="width: 22px; height: 22px; color: #7C3AED;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
+                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Self-custodied (MetaMask, TrustWallet, etc.)</div>
+                                            </div>
+                                        </button>
+                                        <button type="button" id="payee-wallet-type-exchange-btn" onclick="window.onPayeeWalletTypeSelect('exchange')" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                            <div style="width: 44px; height: 44px; background: #FFF7ED; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                                <i data-lucide="building-2" style="width: 22px; height: 22px; color: #EA580C;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
+                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Binance, OKX, Coinbase, etc.</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Wallet inputs — hidden until type selected -->
+                                <div id="payee-invoice-wallet-inputs" style="display: none; flex-direction: column; gap: 16px; padding: 20px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #E2E8F0;">
+                                        <div style="width: 34px; height: 34px; background: #F5F3FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <i data-lucide="wallet" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                                        </div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Wallet Address Details</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Wallet Address *</label>
+                                        <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Network / Chain *</label>
+                                        <select id="payee-invoice-wallet-network" class="bank-form-control">
+                                            <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                            <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                            <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                            <option value="Solana">Solana</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Verify Wallet button + zone -->
+                                    <div style="padding-top: 12px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px;">
+                                        <button type="button" id="payee-verify-wallet-btn" onclick="window.onPayeeVerifyWalletClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
+                                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+                                            验证钱包 (Verify Wallet)
+                                        </button>
+
+                                        <!-- Verification zone (hidden initially) -->
+                                        <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                                            <!-- Tab header -->
+                                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                                <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
+                                                <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                                            </div>
+
+                                            <!-- Micro transfer content (default) -->
+                                            <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                                                <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                                                    To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
+                                                </div>
+
+                                                <!-- Details card -->
+                                                <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                                                    <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                                                    <div style="display: flex; flex-direction: column;">
+
+                                                        <!-- Amount row -->
+                                                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                                            <div>
+                                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Amount to Send</div>
+                                                                <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                                            </div>
+                                                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                                            </button>
+                                                        </div>
+
+                                                        <!-- QR + Address row -->
+                                                        <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                                                            <div style="font-size: 11px; color: #94A3B8; font-weight: 500; margin-bottom: 12px;">Obita Verification Address</div>
+                                                            <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                                                <!-- QR code -->
+                                                                <div style="flex-shrink: 0; width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; background: white; display: flex; align-items: center; justify-content: center;">
+                                                                    <img id="payee-verify-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE" width="120" height="120" alt="QR Code" style="display: block;">
+                                                                </div>
+                                                                <!-- Address text + copy -->
+                                                                <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+                                                                    <div id="payee-verify-dest-addr" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.6;">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+                                                                    <button type="button" id="payee-verify-copy-addr" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-dest-addr').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;">
+                                                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy Address
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Chain row -->
+                                                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                                            <div>
+                                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                                                <div id="payee-verify-chain-display" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">TRON (TRC-20)</div>
+                                                            </div>
+                                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-chain-display').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Share button -->
+                                                <button type="button" id="payee-verify-share-btn" onclick="window.sharePayeeVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;">
+                                                    <i data-lucide="share-2" style="width: 15px; height: 15px;"></i>
+                                                    Share
+                                                </button>
+
+                                                <!-- Hidden share text (used by share/copy) -->
+                                                <pre id="payee-verify-share-text" style="display:none;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE
+  Network: TRON (TRC-20)
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+
+                                                <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                                    <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                                    <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. The wallet can be saved without completing verification — status can be updated later.</span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Wallet sign content (hidden initially) -->
+                                            <div id="payee-verify-content-sign" style="padding: 20px; display: none; flex-direction: column; gap: 0;">
+
+                                                <!-- Panel 1: Wallet selector -->
+                                                <div id="payee-sign-select-panel" style="display: flex; flex-direction: column; gap: 14px;">
+                                                    <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership of this address.</div>
+                                                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
+                                                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Message to be signed</div>
+                                                        <div id="payee-sign-message" style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;"></div>
+                                                    </div>
+                                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                                        <!-- MetaMask -->
+                                                        <button type="button" onclick="window.signWithMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                                            <div>
+                                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div>
+                                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div>
+                                                            </div>
+                                                        </button>
+                                                        <!-- WalletConnect -->
+                                                        <button type="button" onclick="window.signWithWalletConnect()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                                            <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.1 8.4C9.4 5.1 14.6 5.1 17.9 8.4L18.3 8.8C18.5 9 18.5 9.3 18.3 9.5L17.1 10.7C17 10.8 16.9 10.8 16.8 10.8 16.7 10.8 16.6 10.8 16.5 10.7L16 10.2C13.8 8 10.2 8 8 10.2L7.5 10.7C7.4 10.8 7.3 10.8 7.2 10.8 7.1 10.8 7 10.8 6.9 10.7L5.7 9.5C5.5 9.3 5.5 9 5.7 8.8L6.1 8.4ZM20.7 11.1L21.8 12.2C22 12.4 22 12.7 21.8 12.9L16.8 17.9C16.6 18.1 16.3 18.1 16.1 17.9L12.6 14.4C12.55 14.35 12.45 14.35 12.4 14.4L8.9 17.9C8.7 18.1 8.4 18.1 8.2 17.9L3.2 12.9C3 12.7 3 12.4 3.2 12.2L4.3 11.1C4.5 10.9 4.8 10.9 5 11.1L8.5 14.6C8.55 14.65 8.65 14.65 8.7 14.6L12.2 11.1C12.4 10.9 12.7 10.9 12.9 11.1L16.4 14.6C16.45 14.65 16.55 14.65 16.6 14.6L20.1 11.1C20.2 10.9 20.5 10.9 20.7 11.1Z" fill="#3B99FC"/></svg>
+                                                            </div>
+                                                            <div>
+                                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div>
+                                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div>
+                                                            </div>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Panel 2: Signing pending -->
+                                                <div id="payee-sign-pending-panel" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                                                    <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                                                    <div>
+                                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div>
+                                                        <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm the request in your wallet</div>
+                                                    </div>
+                                                    <button type="button" onclick="window.resetWalletSign()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                                </div>
+
+                                                <!-- Panel 3: WalletConnect QR -->
+                                                <div id="payee-sign-wc-panel" style="display: none; flex-direction: column; align-items: center; gap: 14px; padding: 8px 0; text-align: center;">
+                                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Scan with your wallet app</div>
+                                                    <div style="font-size: 12px; color: #64748B;">Open a WalletConnect-compatible app and scan this QR code</div>
+                                                    <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; background: white;">
+                                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=wc%3A00e46b69-d0cc-4035-8192-5e19eb8a7014%401%3Fbridge%3Dhttps%3A%2F%2Fbridge.walletconnect.org%26key%3Dobita-verify" width="160" height="160" alt="WalletConnect QR">
+                                                    </div>
+                                                    <div style="font-size: 11px; color: #94A3B8;">Demo QR — replace with live WalletConnect URI in production</div>
+                                                    <button type="button" onclick="window.resetWalletSign()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                                </div>
+
+                                                <!-- Panel 4: Result -->
+                                                <div id="payee-sign-result-panel" style="display: none; flex-direction: column; gap: 14px; padding: 4px 0;">
+                                                    <!-- Verified state -->
+                                                    <div id="payee-sign-verified-state" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                                        <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;">
+                                                            <i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div>
+                                                            <div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership successfully confirmed</div>
+                                                        </div>
+                                                        <div id="payee-sign-verified-addr" style="font-size: 11px; font-family: monospace; color: #166534; background: white; border: 1px solid #BBF7D0; border-radius: 6px; padding: 6px 10px; word-break: break-all;"></div>
+                                                    </div>
+                                                    <!-- Failed state -->
+                                                    <div id="payee-sign-failed-state" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                                                        <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;">
+                                                            <i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div>
+                                                            <div id="payee-sign-failed-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div>
+                                                        </div>
+                                                    </div>
+                                                    <!-- Verify Again button (hidden on success) -->
+                                                    <button type="button" id="payee-sign-verify-again-btn" onclick="window.resetWalletSign()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;">
+                                                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                                                        Verify Again
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                ` : `
                 <!-- SECTION 2: Wallet Address (collapsible) -->
                 <div class="card" style="padding: 0; overflow: hidden;" id="payee-wallet-card">
                     <button type="button" onclick="window.togglePayeeSection('wallet')" style="width:100%; text-align:left; background: none; border: none; cursor: pointer; padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; justify-content: space-between;">
@@ -11737,7 +12326,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div id="payee-wallet-inputs" style="display: none; flex-direction: column; gap: 14px; padding: 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
                             <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; font-size: 11px; color: #92400E; line-height: 1.5; margin-bottom: 4px;">
                                 <i data-lucide="info" style="width: 14px; height: 14px; display: inline-block; vertical-align: -3px; margin-right: 4px;"></i>
-                                Even if you provide the wallet details now, an email will still be sent to the ${isPayoutForm ? 'payee' : isInvoicePayerForm ? 'payer' : 'contact'} asking them to verify and confirm the wallet address.
+                                Even if you provide the wallet details now, an email will still be sent to the ${isPayoutForm ? 'payee' : 'contact'} asking them to verify and confirm the wallet address.
                             </div>
                             <div id="payee-wallet-list" style="display: flex; flex-direction: column; gap: 12px;">
                                 ${renderWalletEntry(1)}
@@ -11795,13 +12384,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
                     </div>
                 </div>
+                `}
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" class="btn btn-outline" onclick="${inDrawer ? 'window.closePayeeFormDrawer()' : 'window.backToPayeeList()'}" style="padding: 10px 18px;">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="window.savePayee('')" style="padding: 10px 22px; font-weight: 700;">
-                        <i data-lucide="send" style="width: 14px; height: 14px; margin-right: 6px;"></i>
-                        Send Invitation & Save
+                        <i data-lucide="${isEnhancedPayeeForm ? 'save' : 'send'}" style="width: 14px; height: 14px; margin-right: 6px;"></i>
+                        ${isInvoicePayerForm ? 'Save Payer' : isPayoutForm ? 'Save Payee' : 'Send Invitation & Save'}
                     </button>
                 </div>
         `;
@@ -11876,12 +12466,260 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         } else {
             const payee = getPayeeById(activePayeeId);
             const isDetailPayer = activePayeeDetailType === 'invoicePayer' || payeeDirectoryMode === 'invoicePayerList';
+            const isDetailPayee = !isDetailPayer && payeeDirectoryMode === 'payeeList';
+            const isDetailEnhancedView = isDetailPayer || isDetailPayee; // Enhanced layout for both Payer & Payee; Contact Management keeps legacy
             const detailEntityLabel = isDetailPayer ? 'Payer' : 'Payee';
             const detailBackLabel = isDetailPayer ? 'Back to Payer List for Invoice' : payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : 'Back to Contact Management';
             const detailIdentityLabel = isDetailPayer ? 'Payer Type' : 'Payee Type';
             const detailEmailLabel = isDetailPayer ? 'Payer Email' : 'Payee Email';
+
+            // ---- Invoice Payer visual helpers ----
+            const payerInitials = (payee.name || '?').split(/\s+/).map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?';
+            const payerStatusMeta = payee.status === 'disabled'
+                ? { label: 'Disabled', bg: '#F1F5F9', color: '#64748B', icon: 'pause-circle' }
+                : payee.status === 'pending_collection'
+                ? { label: 'Pending Info', bg: '#FEF3C7', color: '#B45309', icon: 'clock' }
+                : { label: 'Active', bg: '#DCFCE7', color: '#15803D', icon: 'check-circle-2' };
+            // Seeded mock stats (stable per payer id)
+            let _seed = 0;
+            for (let i = 0; i < payee.id.length; i++) _seed = (_seed * 31 + payee.id.charCodeAt(i)) & 0xffff;
+            const _rand = () => { _seed = (_seed * 1103515245 + 12345) & 0x7fffffff; return _seed / 0x7fffffff; };
+            const pmW = payee.wallets?.[0], pmB = payee.banks?.[0];
+            const hasPM = !!(pmW || pmB);
+            const txN = hasPM ? (3 + Math.floor(_rand() * 4)) : 0;
+            let totalVol = 0, lastActivityDays = null;
+            for (let i = 0; i < txN; i++) {
+                totalVol += (Math.floor(_rand() * 95000) + 500) / 10;
+                const d = Math.floor(_rand() * 120) + 1;
+                if (lastActivityDays === null || d < lastActivityDays) lastActivityDays = d;
+            }
+            const lastActivityText = lastActivityDays === null
+                ? '—'
+                : lastActivityDays === 1 ? '1 day ago' : lastActivityDays + ' days ago';
+            const volCurrency = pmW ? 'USDT' : (pmB?.currency || 'USD');
+            const volFormatted = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(totalVol);
+            const pmKindLabel = pmW ? 'Crypto Wallet' : pmB ? 'Bank Account' : 'Not Configured';
+            const pmKindIcon  = pmW ? 'wallet' : pmB ? 'landmark' : 'x-circle';
+            const pmKindColor = pmW ? '#7C3AED' : pmB ? '#2563EB' : '#94A3B8';
+
+            // Reusable wallet verification zone HTML (used by Verify Again on detail page)
+            // Shares DOM IDs with the payer-form version — the two pages are never rendered simultaneously.
+            const detailVerifyZoneHtml = `
+                <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden; margin-top: 14px;">
+                    <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
+                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                    </div>
+                    <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                        <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                            To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
+                        </div>
+                        <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                            <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                            <div style="display: flex; flex-direction: column;">
+                                <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Amount to Send</div>
+                                        <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                    </button>
+                                </div>
+                                <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 11px; color: #94A3B8; font-weight: 500; margin-bottom: 12px;">Obita Verification Address</div>
+                                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                                        <div style="flex-shrink: 0; width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; overflow: hidden; background: white; display: flex; align-items: center; justify-content: center;">
+                                            <img id="payee-verify-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE" width="120" height="120" alt="QR Code" style="display: block;">
+                                        </div>
+                                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+                                            <div id="payee-verify-dest-addr" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.6;">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-dest-addr').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;">
+                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy Address
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                        <div id="payee-verify-chain-display" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">TRON (TRC-20)</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('payee-verify-chain-display').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="payee-verify-share-btn" onclick="window.sharePayeeVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;">
+                            <i data-lucide="share-2" style="width: 15px; height: 15px;"></i>
+                            Share
+                        </button>
+                        <pre id="payee-verify-share-text" style="display:none;"></pre>
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                            <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                            <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised.</span>
+                        </div>
+                    </div>
+                    <div id="payee-verify-content-sign" style="padding: 20px; display: none; flex-direction: column; gap: 0;">
+                        <div id="payee-sign-select-panel" style="display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership of this address.</div>
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 14px;">
+                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Message to be signed</div>
+                                <div id="payee-sign-message" style="font-size: 11.5px; font-family: monospace; color: #475569; line-height: 1.65; word-break: break-all;"></div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="button" onclick="window.signWithMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div>
+                                        <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div>
+                                    </div>
+                                </button>
+                                <button type="button" onclick="window.signWithWalletConnect()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div>
+                                        <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="payee-sign-pending-panel" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                            <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm the request in your wallet</div>
+                            </div>
+                            <button type="button" onclick="window.resetWalletSign()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                        </div>
+                        <div id="payee-sign-wc-panel" style="display: none; flex-direction: column; align-items: center; gap: 14px; padding: 8px 0; text-align: center;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Scan with your wallet app</div>
+                            <div style="font-size: 12px; color: #64748B;">Open a WalletConnect-compatible app and scan this QR code</div>
+                            <div style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 12px; background: white;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=wc%3A00e46b69-d0cc-4035-8192-5e19eb8a7014%401%3Fbridge%3Dhttps%3A%2F%2Fbridge.walletconnect.org%26key%3Dobita-verify" width="160" height="160" alt="WalletConnect QR">
+                            </div>
+                            <div style="font-size: 11px; color: #94A3B8;">Demo QR — replace with live WalletConnect URI in production</div>
+                            <button type="button" onclick="window.resetWalletSign()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                        </div>
+                        <div id="payee-sign-result-panel" style="display: none; flex-direction: column; gap: 14px; padding: 4px 0;">
+                            <div id="payee-sign-verified-state" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div>
+                                    <div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership successfully confirmed</div>
+                                </div>
+                                <div id="payee-sign-verified-addr" style="font-size: 11px; font-family: monospace; color: #166534; background: white; border: 1px solid #BBF7D0; border-radius: 6px; padding: 6px 10px; word-break: break-all;"></div>
+                            </div>
+                            <div id="payee-sign-failed-state" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                                <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i>
+                                </div>
+                                <div>
+                                    <div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div>
+                                    <div id="payee-sign-failed-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div>
+                                </div>
+                            </div>
+                            <button type="button" id="payee-sign-verify-again-btn" onclick="window.resetWalletSign()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;">
+                                <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                                Verify Again
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+
             contentBody.innerHTML = `
-                <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 32px;">
+                <div class="fade-in" style="max-width: ${isDetailEnhancedView ? '920px' : '760px'}; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; padding-bottom: 32px;">
+                    ${isDetailEnhancedView ? `
+                    <!-- Back button (outside hero) -->
+                    <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;">
+                        <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
+                        ${detailBackLabel}
+                    </button>
+
+                    <!-- HERO CARD -->
+                    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid ${isDetailPayer ? '#F3E8FF' : '#DBEAFE'};">
+                        <div style="background: linear-gradient(135deg, ${isDetailPayer ? '#FDF2F8 0%, #FCE7F3 50%, #FAE8FF 100%' : '#EFF6FF 0%, #DBEAFE 50%, #E0E7FF 100%'}); padding: 28px 32px; position: relative;">
+                            <!-- Decorative accents -->
+                            <div style="position: absolute; top: -24px; right: -24px; width: 140px; height: 140px; background: radial-gradient(circle, ${isDetailPayer ? 'rgba(236,72,153,0.10)' : 'rgba(37,99,235,0.10)'} 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                            <div style="position: absolute; bottom: -40px; left: 20%; width: 120px; height: 120px; background: radial-gradient(circle, ${isDetailPayer ? 'rgba(168,85,247,0.08)' : 'rgba(99,102,241,0.08)'} 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+
+                            <div style="display: flex; align-items: flex-start; gap: 20px; position: relative;">
+                                <!-- Avatar -->
+                                <div style="width: 68px; height: 68px; border-radius: 18px; background: linear-gradient(135deg, ${isDetailPayer ? '#EC4899, #BE185D' : '#3B82F6, #1D4ED8'}); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: white; letter-spacing: 0.5px; box-shadow: 0 6px 16px ${isDetailPayer ? 'rgba(190,24,93,0.28)' : 'rgba(29,78,216,0.28)'}; flex-shrink: 0;">
+                                    ${payerInitials}
+                                </div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,0.7); backdrop-filter: blur(6px); border: 1px solid ${isDetailPayer ? 'rgba(190,24,93,0.15)' : 'rgba(29,78,216,0.15)'}; font-size: 10px; font-weight: 700; color: ${isDetailPayer ? '#BE185D' : '#1D4ED8'}; text-transform: uppercase; letter-spacing: 0.06em;">
+                                            <i data-lucide="${isDetailPayer ? 'file-text' : 'send'}" style="width: 11px; height: 11px;"></i>
+                                            ${isDetailPayer ? 'Payer for Invoice' : 'Payee'}
+                                        </span>
+                                        <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: ${payerStatusMeta.bg}; color: ${payerStatusMeta.color}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">
+                                            <i data-lucide="${payerStatusMeta.icon}" style="width: 11px; height: 11px;"></i>
+                                            ${payerStatusMeta.label}
+                                        </span>
+                                    </div>
+                                    <h2 style="font-size: 26px; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.01em; line-height: 1.2;">${payee.alias || payee.name}</h2>
+                                </div>
+
+                                <!-- Action buttons (top right) -->
+                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                    <button onclick="window.togglePayeeStatusFromDetail('${payee.id}')" style="padding: 8px 14px; background: white; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='#CBD5E1';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                                        <i data-lucide="${payee.status === 'disabled' ? 'play-circle' : 'pause-circle'}" style="width: 13px; height: 13px;"></i>
+                                        ${payee.status === 'disabled' ? 'Enable' : 'Disable'} ${detailEntityLabel}
+                                    </button>
+                                    <button onclick="window.deletePayeeFromDetail('${payee.id}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 9px; font-size: 12px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                                        <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+                                        Delete ${detailEntityLabel}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stats strip inside hero card -->
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; background: white; border-top: 1px solid ${isDetailPayer ? '#F3E8FF' : '#DBEAFE'};">
+                            <div style="padding: 16px 20px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                                    <i data-lucide="file-text" style="width: 11px; height: 11px;"></i>
+                                    ${isDetailPayer ? 'Linked Invoices' : 'Linked Payouts'}
+                                </div>
+                                <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">${isDetailPayer ? txN : (payee.linkedPayouts || txN)}</div>
+                            </div>
+                            <div style="padding: 16px 20px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                                    <i data-lucide="trending-up" style="width: 11px; height: 11px;"></i>
+                                    Total Volume
+                                </div>
+                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">
+                                    ${volFormatted}
+                                    <span style="font-size: 11px; font-weight: 700; color: #94A3B8; margin-left: 4px;">${volCurrency}</span>
+                                </div>
+                            </div>
+                            <div style="padding: 16px 20px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                                    <i data-lucide="clock" style="width: 11px; height: 11px;"></i>
+                                    Last Activity
+                                </div>
+                                <div style="font-size: 15px; font-weight: 700; color: #0F172A;">${lastActivityText}</div>
+                            </div>
+                            <div style="padding: 16px 20px;">
+                                <div style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+                                    <i data-lucide="credit-card" style="width: 11px; height: 11px;"></i>
+                                    Payment Method
+                                </div>
+                                <div style="font-size: 13px; font-weight: 700; color: ${pmKindColor}; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i data-lucide="${pmKindIcon}" style="width: 14px; height: 14px;"></i>
+                                    ${pmKindLabel}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
                     <div class="card" style="padding: 24px;">
                         <button onclick="window.backToPayeeList()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 600; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
                             <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
@@ -11892,17 +12730,149 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${payee.name}</h2>
                                 <div style="font-size: 13px; color: #64748B; line-height: 1.6;">ID: ${payee.id} &bull; ${payee.personType === 'company' ? 'Company' : 'Individual'}</div>
                             </div>
-                            <span style="display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; ${isDetailPayer ? 'background: #FCE7F3; color: #BE185D;' : 'background: #EFF6FF; color: #1D4ED8;'}">${isDetailPayer ? 'Payer for Invoice' : 'Payee'}</span>
+                            <span style="display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; background: #EFF6FF; color: #1D4ED8;">Payee</span>
                         </div>
                     </div>
-                    
+                    `}
+
                     <div class="card" style="padding: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 32px; height: 32px; border-radius: 9px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="user-circle" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                            </div>
                             ${!detailEditState.profile ? `<button class="btn btn-outline" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;">Edit Profile</button>` : `<div style="display:flex; gap:8px;"><button class="btn" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; background: transparent; color: #64748B;">Cancel</button><button class="btn btn-primary" onclick="window.saveDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px;">Save Profile</button></div>`}
                         </div>
                         ${detailEditState.profile ? `
                             <div style="display: flex; flex-direction: column; gap: 16px;">
+                                ${isDetailPayer ? `
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label" style="color: #94A3B8;">Payer Type</label>
+                                        <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <label class="bank-form-label">Payer Alias</label>
+                                        <input id="detail-edit-alias" class="bank-form-control" type="text" value="${payee.alias || payee.name || ''}">
+                                    </div>
+                                </div>
+                                <!-- More Information toggle + Notify button -->
+                                ${payee.eddEmailSentTo ? `
+                                <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;">
+                                    <i data-lucide="mail-check" style="width:18px;height:18px;color:#D97706;flex-shrink:0;"></i>
+                                    <div style="flex:1;min-width:0;">
+                                        <div style="font-size:13px;font-weight:700;color:#92400E;">信息收集进行中</div>
+                                        <div style="font-size:12px;color:#A16207;margin-top:2px;">邮件已发送至 <strong>${payee.eddEmailSentTo}</strong></div>
+                                    </div>
+                                    <button type="button" onclick="window.showEddEmailInput()" style="padding:7px 14px;background:white;border:1px solid #FDE68A;border-radius:8px;font-size:12px;font-weight:700;color:#B45309;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;transition:background 0.15s;" onmouseover="this.style.background='#FFFBEB'" onmouseout="this.style.background='white'">
+                                        <i data-lucide="send" style="width:12px;height:12px;"></i>
+                                        再次发送
+                                    </button>
+                                </div>
+                                <!-- Resend email input (hidden) -->
+                                <div id="detail-edd-email-zone" style="display:none;flex-direction:column;gap:10px;padding:14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+                                    <div style="font-size:12px;font-weight:600;color:#475569;">重新发送 EDD 信息收集邮件</div>
+                                    <div style="font-size:11px;color:#94A3B8;line-height:1.6;margin-top:2px;">发送后，此区域的字段将继续锁定，需等待${isDetailPayer ? '付款人' : '收款人'}完成填写。</div>
+                                    <div style="display:flex;gap:8px;margin-top:6px;">
+                                        <input id="detail-edd-email" class="bank-form-control" type="email" value="${payee.eddEmailSentTo || ''}" placeholder="Enter email address" style="flex:1;">
+                                        <button type="button" onclick="window.sendEddEmail()" class="btn btn-primary" style="padding:8px 18px;font-size:12px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">
+                                            <i data-lucide="send" style="width:12px;height:12px;"></i> Send
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('detail-edd-email-zone').style.display='none'" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;background:white;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;">Cancel</button>
+                                    </div>
+                                </div>
+                                ` : `
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+                                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:12px 14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;flex:1;min-width:0;">
+                                        <input type="checkbox" id="detail-more-info-chk" style="accent-color:#2563EB;width:15px;height:15px;" ${payee.moreInfo ? 'checked' : ''} onchange="document.getElementById('detail-more-info-fields').style.display=this.checked?'flex':'none'">
+                                        <span style="font-size:13px;font-weight:600;color:#334155;">More Information</span>
+                                        <span style="font-size:11px;color:#94A3B8;margin-left:4px;">Required for EDD</span>
+                                    </label>
+                                    <button type="button" onclick="window.showEddEmailInput()" style="padding:8px 14px;background:white;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-weight:700;color:#2563EB;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;transition:all 0.15s;" onmouseover="this.style.background='#EFF6FF';this.style.borderColor='#BFDBFE'" onmouseout="this.style.background='white';this.style.borderColor='#E2E8F0'">
+                                        <i data-lucide="mail" style="width:13px;height:13px;"></i>
+                                        Request ${isDetailPayer ? 'Payer' : 'Payee'} to Complete
+                                    </button>
+                                </div>
+                                <!-- Email input zone (hidden) -->
+                                <div id="detail-edd-email-zone" style="display:none;flex-direction:column;gap:10px;padding:14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+                                    <div style="font-size:12px;font-weight:600;color:#475569;">邮件通知${isDetailPayer ? '付款人' : '收款人'}自行填写 EDD 信息</div>
+                                    <div style="font-size:11px;color:#94A3B8;line-height:1.6;margin-top:2px;">发送后，此区域的字段将锁定为只读，需等待${isDetailPayer ? '付款人' : '收款人'}完成填写后方可查看或修改。</div>
+                                    <div style="display:flex;gap:8px;margin-top:6px;">
+                                        <input id="detail-edd-email" class="bank-form-control" type="email" placeholder="Enter email address" style="flex:1;">
+                                        <button type="button" onclick="window.sendEddEmail()" class="btn btn-primary" style="padding:8px 18px;font-size:12px;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;">
+                                            <i data-lucide="send" style="width:12px;height:12px;"></i> Send
+                                        </button>
+                                        <button type="button" onclick="document.getElementById('detail-edd-email-zone').style.display='none'" style="padding:8px 12px;border:1px solid #E2E8F0;border-radius:8px;background:white;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;">Cancel</button>
+                                    </div>
+                                </div>
+                                `}
+                                <div id="detail-more-info-fields" style="display:${payee.moreInfo ? 'flex' : 'none'};flex-direction:column;gap:14px;padding:18px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;${payee.eddEmailSentTo ? 'opacity:0.5;pointer-events:none;' : ''}">
+                                    ${payee.personType === 'individual' ? `
+                                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">First Name</label>
+                                            <input id="detail-edit-fname" class="bank-form-control" type="text" value="${payee.moreInfo?.firstName || ''}">
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Middle Name <span style="font-weight:400;text-transform:none;font-size:10px;">(optional)</span></label>
+                                            <input id="detail-edit-mname" class="bank-form-control" type="text" value="${payee.moreInfo?.middleName || ''}">
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Surname</label>
+                                            <input id="detail-edit-lname" class="bank-form-control" type="text" value="${payee.moreInfo?.lastName || ''}">
+                                        </div>
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Date of Birth</label>
+                                            <input id="detail-edit-dob" class="bank-form-control" type="date" value="${payee.moreInfo?.dob || ''}">
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Country of Residence</label>
+                                            <select id="detail-edit-country" class="bank-form-control">
+                                                <option value="">— Select country —</option>
+                                                ${['Hong Kong','China','United States','United Kingdom','Singapore','Japan','South Korea','Australia','Canada','Germany','France','Netherlands','Switzerland','UAE','India','Brazil','Mexico','Thailand','Vietnam','Malaysia','Indonesia','Philippines'].map(c=>`<option value="${c}" ${payee.moreInfo?.country===c?'selected':''}>${c}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;gap:8px;">
+                                        <label class="bank-form-label">Residential Address</label>
+                                        <input id="detail-edit-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${payee.moreInfo?.address || ''}">
+                                    </div>
+                                    ` : `
+                                    <div style="display:flex;flex-direction:column;gap:8px;">
+                                        <label class="bank-form-label">Company Full Name</label>
+                                        <input id="detail-edit-company-name" class="bank-form-control" type="text" placeholder="Full registered company name" value="${payee.moreInfo?.companyName || ''}">
+                                    </div>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Industry</label>
+                                            <select id="detail-edit-industry" class="bank-form-control">
+                                                <option value="">— Select industry —</option>
+                                                ${['Technology / Software','E-commerce / Retail','Financial Services','Manufacturing','Logistics / Shipping','Trading / Import-Export','Professional Services','Media / Advertising','Real Estate','Healthcare','Education','Hospitality / F&B','Construction','Energy','Telecommunications','Other'].map(i=>`<option value="${i}" ${payee.moreInfo?.industry===i?'selected':''}>${i}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div style="display:flex;flex-direction:column;gap:8px;">
+                                            <label class="bank-form-label">Country of Registration</label>
+                                            <select id="detail-edit-country" class="bank-form-control">
+                                                <option value="">— Select country —</option>
+                                                ${['Hong Kong','China','United States','United Kingdom','Singapore','Japan','South Korea','Australia','Canada','Germany','France','Netherlands','Switzerland','UAE','India','Brazil','Mexico','Thailand','Vietnam','Malaysia','Indonesia','Philippines'].map(c=>`<option value="${c}" ${payee.moreInfo?.country===c?'selected':''}>${c}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;gap:8px;">
+                                        <label class="bank-form-label">Company Address</label>
+                                        <input id="detail-edit-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${payee.moreInfo?.address || ''}">
+                                    </div>
+                                    <div style="display:flex;flex-direction:column;gap:8px;">
+                                        <label class="bank-form-label">Tax ID / Business Registration Number</label>
+                                        <input id="detail-edit-taxid" class="bank-form-control" type="text" placeholder="e.g. BR-123456789" value="${payee.moreInfo?.taxId || ''}">
+                                    </div>
+                                    `}
+                                </div>
+                                ` : `
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label" style="color: #94A3B8;">${detailIdentityLabel}</label>
@@ -11917,8 +12887,72 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <label class="bank-form-label" style="color: #94A3B8;">Entity Name</label>
                                     <input class="bank-form-control" type="text" value="${payee.name}" style="background: #F8FAFC; color: #64748B;" disabled>
                                 </div>
+                                `}
                             </div>
                         ` : `
+                            ${isDetailEnhancedView ? `
+                            ${payee.eddEmailSentTo ? `
+                            <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;margin-bottom:16px;">
+                                <i data-lucide="mail-check" style="width:18px;height:18px;color:#D97706;flex-shrink:0;"></i>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-size:13px;font-weight:700;color:#92400E;">信息收集进行中</div>
+                                    <div style="font-size:12px;color:#A16207;margin-top:2px;">邮件已发送至 <strong>${payee.eddEmailSentTo}</strong></div>
+                                </div>
+                                <button type="button" onclick="window.toggleDetailEdit('profile')" style="padding:7px 14px;background:white;border:1px solid #FDE68A;border-radius:8px;font-size:12px;font-weight:700;color:#B45309;cursor:pointer;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;">
+                                    <i data-lucide="send" style="width:12px;height:12px;"></i>
+                                    再次发送
+                                </button>
+                            </div>
+                            ` : ''}
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 20px;">
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">${isDetailPayer ? 'Payer Alias' : 'Payee Name'}</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 5px;">${payee.alias || payee.name || '—'}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">${detailIdentityLabel}</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 5px; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="${payee.personType === 'company' ? 'building-2' : 'user'}" style="width: 14px; height: 14px; color: #64748B;"></i>
+                                        ${payee.personType === 'company' ? 'Company' : 'Individual'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Status</div>
+                                    ${payee.status === 'active' ? '<div style="font-size: 14px; font-weight: 600; color: #15803D; margin-top: 5px;">Active</div>'
+                                    : payee.status === 'disabled' ? '<div style="font-size: 14px; font-weight: 600; color: #64748B; margin-top: 5px;">Disabled</div>'
+                                    : '<div style="font-size: 14px; font-weight: 600; color: #D97706; margin-top: 5px;">Pending Info</div>'}
+                                </div>
+                                ${isDetailPayee ? `
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Email</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 5px;">${payee.email || '—'}</div>
+                                </div>
+                                ` : ''}
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">${detailEntityLabel} ID</div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 5px; font-family: monospace;">${payee.id}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Date Added</div>
+                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 5px;">${payee.createdAt || '—'}</div>
+                                </div>
+                            </div>
+                            ${payee.moreInfo ? `
+                            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #F1F5F9;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                ${payee.personType === 'company' ? `
+                                    ${payee.moreInfo.companyName ? `<div style="grid-column:span 2;"><div style="font-size:11px;color:#94A3B8;">Company Full Name</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.companyName}</div></div>` : ''}
+                                    ${payee.moreInfo.industry ? `<div><div style="font-size:11px;color:#94A3B8;">Industry</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.industry}</div></div>` : ''}
+                                    ${payee.moreInfo.country ? `<div><div style="font-size:11px;color:#94A3B8;">Country</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.country}</div></div>` : ''}
+                                    ${payee.moreInfo.address ? `<div style="grid-column:span 2;"><div style="font-size:11px;color:#94A3B8;">Company Address</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.address}</div></div>` : ''}
+                                    ${payee.moreInfo.taxId ? `<div><div style="font-size:11px;color:#94A3B8;">Tax ID / BR No.</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.taxId}</div></div>` : ''}
+                                ` : `
+                                    ${payee.moreInfo.firstName ? `<div><div style="font-size:11px;color:#94A3B8;">Full Name</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${[payee.moreInfo.firstName,payee.moreInfo.middleName,payee.moreInfo.lastName].filter(Boolean).join(' ')}</div></div>` : ''}
+                                    ${payee.moreInfo.dob ? `<div><div style="font-size:11px;color:#94A3B8;">Date of Birth</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.dob}</div></div>` : ''}
+                                    ${payee.moreInfo.country ? `<div><div style="font-size:11px;color:#94A3B8;">Country of Residence</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.country}</div></div>` : ''}
+                                    ${payee.moreInfo.address ? `<div style="grid-column:span 2;"><div style="font-size:11px;color:#94A3B8;">Residential Address</div><div style="font-size:13px;font-weight:600;color:#0F172A;margin-top:3px;">${payee.moreInfo.address}</div></div>` : ''}
+                                `}
+                            </div>` : ''}
+                            ` : `
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                 <div>
                                     <div style="font-size: 12px; color: #64748B;">${detailEmailLabel}</div>
@@ -11926,14 +12960,118 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>
                                 <div>
                                     <div style="font-size: 12px; color: #64748B;">Status</div>
-                                    ${payee.status === 'active' ? '<div style="font-size: 14px; font-weight: 600; color: #15803D; margin-top: 4px;">Active</div>' 
-                                    : payee.status === 'disabled' ? '<div style="font-size: 14px; font-weight: 600; color: #64748B; margin-top: 4px;">Disabled</div>' 
+                                    ${payee.status === 'active' ? '<div style="font-size: 14px; font-weight: 600; color: #15803D; margin-top: 4px;">Active</div>'
+                                    : payee.status === 'disabled' ? '<div style="font-size: 14px; font-weight: 600; color: #64748B; margin-top: 4px;">Disabled</div>'
                                     : '<div style="font-size: 14px; font-weight: 600; color: #D97706; margin-top: 4px;">Pending Info</div>'}
                                 </div>
                             </div>
+                            `}
                         `}
                     </div>
                     
+                    ${isDetailEnhancedView ? (() => {
+                        const w = payee.wallets?.[0];
+                        const b = payee.banks?.[0];
+                        const _pmHeader = `
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 32px; height: 32px; border-radius: 9px; background: #F5F3FF; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="credit-card" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                                    </div>
+                                    <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Payment Method</h3>
+                                </div>
+                            </div>`;
+                        if (w) {
+                            const verifBadge = w.verified === true
+                                ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><i data-lucide="shield-check" style="width:11px;height:11px;"></i>Verified</span>'
+                                : '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FEF9C3;color:#A16207;"><i data-lucide="clock" style="width:11px;height:11px;"></i>Pending Verification</span>';
+                            const kindBadge = w.walletKind === 'exchange'
+                                ? '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FFF7ED;color:#EA580C;">Exchange / Custodial</span>'
+                                : '<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#F5F3FF;color:#7C3AED;">Private Wallet</span>';
+                            return `
+                            <div class="card" style="padding: 24px;">
+                                ${_pmHeader}
+                                <div style="border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden;">
+                                    <div style="background: linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 60%, #FFFFFF 100%); padding: 20px 22px; display: flex; align-items: center; gap: 14px; position: relative;">
+                                        <div style="position: absolute; top: -24px; right: -24px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #7C3AED, #6D28D9); border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(124,58,237,0.3);">
+                                            <i data-lucide="wallet" style="width: 24px; height: 24px; color: white;"></i>
+                                        </div>
+                                        <div style="flex: 1; min-width: 0; position: relative;">
+                                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">${w.network}</div>
+                                            <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                                                ${kindBadge} ${verifBadge}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 16px 22px; background: white; border-top: 1px solid #F3E8FF;">
+                                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Wallet Address</div>
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="flex: 1; padding: 10px 14px; background: #FAFAFA; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12.5px; font-family: monospace; color: #334155; word-break: break-all; line-height: 1.6;">${w.address}</div>
+                                            <button onclick="navigator.clipboard.writeText('${w.address}')" style="padding: 10px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; cursor: pointer; color: #64748B; display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; flex-shrink: 0;" onmouseover="this.style.borderColor='#CBD5E1';this.style.color='#334155'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'">
+                                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+                                                Copy
+                                            </button>
+                                        </div>
+                                        ${w.verified !== true ? `
+                                        <button type="button" data-network="${w.network}" data-address="${w.address}" onclick="window.onDetailVerifyAgainClick(this)" style="margin-top: 14px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F5F3FF'">
+                                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+                                            Verify Again
+                                        </button>
+                                        ${detailVerifyZoneHtml}
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>`;
+                        } else if (b) {
+                            const bankStatus = window._computeBankStatus(payee);
+                            const bankStatusBadge = bankStatus === 'verified'
+                                ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><i data-lucide="shield-check" style="width:11px;height:11px;"></i>Verified</span>'
+                                : bankStatus === 'failed'
+                                ? '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><i data-lucide="x-circle" style="width:11px;height:11px;"></i>Failed</span>'
+                                : '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:#DBEAFE;color:#1D4ED8;"><i data-lucide="sparkles" style="width:11px;height:11px;"></i>New</span>';
+                            return `
+                            <div class="card" style="padding: 24px;">
+                                ${_pmHeader}
+                                <div style="border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden;">
+                                    <div style="background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 60%, #FFFFFF 100%); padding: 20px 22px; display: flex; align-items: center; gap: 14px; position: relative;">
+                                        <div style="position: absolute; top: -24px; right: -24px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(37,99,235,0.10) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                        <div style="width: 52px; height: 52px; background: linear-gradient(135deg, #2563EB, #1D4ED8); border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                                            <i data-lucide="landmark" style="width: 24px; height: 24px; color: white;"></i>
+                                        </div>
+                                        <div style="flex: 1; min-width: 0; position: relative;">
+                                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">${b.bankName}</div>
+                                            ${b.accountName ? `<div style="font-size: 12px; color: #64748B; margin-top: 2px;">${b.accountName}</div>` : ''}
+                                            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap;">
+                                                ${b.currency ? `<span style="font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #DBEAFE; color: #1D4ED8;">${b.currency}</span>` : ''}
+                                                ${bankStatusBadge}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 18px 22px; background: white; border-top: 1px solid #DBEAFE; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                        <div>
+                                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Account Number / IBAN</div>
+                                            <div style="font-size: 13px; font-family: monospace; color: #0F172A; font-weight: 600;">${b.account}</div>
+                                        </div>
+                                        ${b.swift ? `<div><div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">SWIFT / BIC</div><div style="font-size: 13px; font-family: monospace; color: #0F172A; font-weight: 600;">${b.swift}</div></div>` : ''}
+                                        ${b.routing ? `<div><div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;">Routing / FPS</div><div style="font-size: 13px; font-family: monospace; color: #0F172A; font-weight: 600;">${b.routing}</div></div>` : ''}
+                                    </div>
+                                </div>
+                            </div>`;
+                        } else {
+                            return `
+                            <div class="card" style="padding: 24px;">
+                                ${_pmHeader}
+                                <div style="border: 2px dashed #E2E8F0; border-radius: 14px; padding: 32px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+                                    <div style="width: 44px; height: 44px; background: #F8FAFC; border-radius: 11px; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="credit-card" style="width: 20px; height: 20px; color: #94A3B8;"></i>
+                                    </div>
+                                    <div style="font-size: 13px; font-weight: 600; color: #64748B;">No payment method registered</div>
+                                    <div style="font-size: 11px; color: #94A3B8;">This payer has no wallet address or bank account on file yet.</div>
+                                </div>
+                            </div>`;
+                        }
+                    })() : `
                     <div class="card" style="padding: 24px;">
                         <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 16px;">Crypto Wallets</h3>
                         ${payee.wallets?.length ? payee.wallets.map((w, index) => `
@@ -11944,7 +13082,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         ${w.verified ? '<span style="background: #ECFDF5; color: #059669; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="check-circle-2" style="width: 10px; height: 10px;"></i> Verified</span>' : ''}
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                        <span style="font-size: 12px; color: #64748B;">${w.label || `Wallet ${index + 1}`}</span>
+                                        <span style="font-size: 12px; color: #64748B;">${w.label || 'Wallet ' + (index + 1)}</span>
                                         <button class="btn btn-outline" style="padding: 4px 8px; font-size: 11px; color: #DC2626; border-color: #FECACA;" onclick="alert('Wallet removed')">Delete</button>
                                     </div>
                                 </div>
@@ -12000,11 +13138,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <button class="btn btn-primary" onclick="window.saveDetailEdit('addWallet')" style="padding: 8px 16px; font-size: 13px; font-weight: 700;">Submit Wallet</button>
                                 </div>
                             </div>
-                        ` : `
-                        <div style="margin-top: 12px;">
-                            <button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit('addWallet')">+ Add New Wallet</button>
-                        </div>
-                        `}
+                        ` : '<div style="margin-top: 12px;"><button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit(\'addWallet\')">+ Add New Wallet</button></div>'}
                     </div>
 
                     <div class="card" style="padding: 24px;">
@@ -12022,12 +13156,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     </div>
                                 </div>
                                 <div style="font-size: 13px; font-family: monospace; color: #475569; margin-bottom: 12px;">${b.account}</div>
-                                ${(b.swift || b.routing || b.currency) ? `
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9;">
-                                    ${b.swift ? `<div><div style="font-size: 11px; color: #94A3B8;">SWIFT</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.swift}</div></div>` : ''}
-                                    ${b.routing ? `<div><div style="font-size: 11px; color: #94A3B8;">Routing</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.routing}</div></div>` : ''}
-                                    ${b.currency ? `<div><div style="font-size: 11px; color: #94A3B8;">Currency</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">${b.currency}</div></div>` : ''}
-                                </div>` : ''}
+                                ${(b.swift || b.routing || b.currency) ? '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 12px; border-top: 1px solid #F1F5F9;">' + (b.swift ? '<div><div style="font-size: 11px; color: #94A3B8;">SWIFT</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">' + b.swift + '</div></div>' : '') + (b.routing ? '<div><div style="font-size: 11px; color: #94A3B8;">Routing</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">' + b.routing + '</div></div>' : '') + (b.currency ? '<div><div style="font-size: 11px; color: #94A3B8;">Currency</div><div style="font-size: 13px; color: #0F172A; margin-top: 2px;">' + b.currency + '</div></div>' : '') + '</div>' : ''}
                             </div>
                         `).join('') : '<div style="font-size: 13px; color: #94A3B8; margin-bottom: 12px;">No bank accounts.</div>'}
                         ${detailEditState.addBank ? `
@@ -12080,12 +13209,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <button class="btn btn-primary" onclick="window.saveDetailEdit('addBank')" style="padding: 8px 16px; font-size: 13px; font-weight: 700;">Submit Bank Account</button>
                                 </div>
                             </div>
-                        ` : `
-                        <div style="margin-top: 12px;">
-                            <button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit('addBank')">+ Add New Bank Account</button>
-                        </div>
-                        `}
+                        ` : '<div style="margin-top: 12px;"><button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 600;" onclick="window.toggleDetailEdit(\'addBank\')">+ Add New Bank Account</button></div>'}
                     </div>
+                    `}
+                    ${isDetailEnhancedView ? window._renderPayerTransactionHistory(payee) : ''}
                 </div>
             `;
             lucide.createIcons();
@@ -12095,6 +13222,30 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     window.renderPayeeListPage = function() {
         payeeListView = 'list';
         renderPayeeListPage();
+    };
+
+    // EDD email notification flow
+    window.showEddEmailInput = function() {
+        const zone = document.getElementById('detail-edd-email-zone');
+        if (!zone) return;
+        zone.style.display = 'flex';
+        lucide.createIcons();
+        const input = document.getElementById('detail-edd-email');
+        if (input) input.focus();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.sendEddEmail = function() {
+        const input = document.getElementById('detail-edd-email');
+        const email = input?.value?.trim();
+        if (!email) { alert('Please enter an email address.'); return; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Please enter a valid email address.'); return; }
+        if (!activePayeeId) return;
+        const payee = getPayeeById(activePayeeId);
+        if (!payee) return;
+        payee.eddEmailSentTo = email;
+        // Re-render the detail page to show the "pending" banner and lock More Info fields
+        renderPayeeFormPage();
     };
 
     window.toggleDetailEdit = function(section) {
@@ -12107,8 +13258,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const payee = getPayeeById(activePayeeId);
         
         if (section === 'profile') {
+            const isInvoicePayerDetail = activePayeeDetailType === 'invoicePayer' || payeeDirectoryMode === 'invoicePayerList';
+            if (isInvoicePayerDetail) {
+                const aliasInput = document.getElementById('detail-edit-alias');
+                if (aliasInput) { payee.alias = aliasInput.value.trim() || payee.alias; payee.name = payee.alias; }
+                const moreInfoChk = document.getElementById('detail-more-info-chk');
+                if (moreInfoChk?.checked) {
+                    if (payee.personType === 'company') {
+                        payee.moreInfo = {
+                            companyName: document.getElementById('detail-edit-company-name')?.value.trim() || '',
+                            industry:    document.getElementById('detail-edit-industry')?.value            || '',
+                            country:     document.getElementById('detail-edit-country')?.value             || '',
+                            address:     document.getElementById('detail-edit-address')?.value.trim()      || '',
+                            taxId:       document.getElementById('detail-edit-taxid')?.value.trim()        || '',
+                        };
+                    } else {
+                        payee.moreInfo = {
+                            firstName:  document.getElementById('detail-edit-fname')?.value.trim()   || '',
+                            middleName: document.getElementById('detail-edit-mname')?.value.trim()   || '',
+                            lastName:   document.getElementById('detail-edit-lname')?.value.trim()   || '',
+                            dob:        document.getElementById('detail-edit-dob')?.value            || '',
+                            country:    document.getElementById('detail-edit-country')?.value        || '',
+                            address:    document.getElementById('detail-edit-address')?.value.trim() || '',
+                        };
+                    }
+                } else {
+                    payee.moreInfo = null;
+                }
+            } else {
             const emailInput = document.getElementById('detail-edit-email');
             if (emailInput) payee.email = emailInput.value.trim() || payee.email;
+            }
         } else if (section === 'usage') {
             if (!payee.usageScope) payee.usageScope = {};
             payee.usageScope.payout = document.getElementById('detail-edit-usage-payout')?.checked;
@@ -12150,6 +13330,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.openAddPayeePage = function() {
+        invoicePayerAccounts = [];
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
         activePayeeId = null;
@@ -12217,11 +13398,138 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         renderPayeeListPage();
     };
 
+    window.togglePayeeStatusFromDetail = function(id) {
+        const p = getPayeeById(id);
+        if (!p) return;
+        if (p.status === 'active' || p.status === 'pending_collection') {
+            p.status = 'disabled';
+        } else {
+            p.status = 'active';
+        }
+        renderPayeeFormPage();
+    };
+
+    window.deletePayeeFromDetail = function(id) {
+        if (!confirm('Are you sure you want to delete this payer? This action cannot be undone.')) return;
+        const idx = payeeList.findIndex(p => p.id === id);
+        if (idx !== -1) payeeList.splice(idx, 1);
+        activePayeeId = null;
+        activePayeeDetailType = null;
+        payeeListView = 'list';
+        renderPayeeListPage();
+    };
+
     window.deletePayee = function(id) {
         if (!confirm('Are you sure you want to delete this payee? This action cannot be undone.')) return;
         const idx = payeeList.findIndex(p => p.id === id);
         if (idx !== -1) payeeList.splice(idx, 1);
         renderPayeeListPage();
+    };
+
+    // Mock transaction history per invoice payer (stable across re-renders by using payee.id as seed)
+    // Shared mock transaction generator — stable per payer id
+    window._generatePayerTxs = function(payee) {
+        const w = payee.wallets?.[0];
+        const b = payee.banks?.[0];
+        if (!w && !b) return [];
+        let seed = 0;
+        for (let i = 0; i < payee.id.length; i++) seed = (seed * 31 + payee.id.charCodeAt(i)) & 0xffff;
+        const rand = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+        const txCount = 3 + Math.floor(rand() * 4);
+        const currencies = w ? ['USDT', 'USDC'] : ['USD', 'HKD', 'EUR', 'BRL'];
+        const statuses = [
+            { label: 'Completed', bg: '#DCFCE7', color: '#15803D', success: true },
+            { label: 'Completed', bg: '#DCFCE7', color: '#15803D', success: true },
+            { label: 'Completed', bg: '#DCFCE7', color: '#15803D', success: true },
+            { label: 'Failed',    bg: '#FEE2E2', color: '#DC2626', success: false }
+        ];
+        const txs = [];
+        for (let i = 0; i < txCount; i++) {
+            const daysAgo = Math.floor(rand() * 120) + 1;
+            const d = new Date(); d.setDate(d.getDate() - daysAgo);
+            const amount = (Math.floor(rand() * 95000) + 500) / 10;
+            const currency = currencies[Math.floor(rand() * currencies.length)];
+            const status = statuses[Math.floor(rand() * statuses.length)];
+            const invId = 'INV-' + (2400 + Math.floor(rand() * 500)).toString();
+            txs.push({ date: d, invId, amount, currency, status });
+        }
+        txs.sort((a, b) => b.date - a.date);
+        return txs;
+    };
+
+    // Derive bank account verification status from transaction outcomes
+    // verified = any successful tx, failed = only failed txs, new = no txs at all
+    window._computeBankStatus = function(payee) {
+        const txs = window._generatePayerTxs(payee);
+        if (txs.length === 0) return 'new';
+        if (txs.some(t => t.status.success)) return 'verified';
+        return 'failed';
+    };
+
+    window._renderPayerTransactionHistory = function(payee) {
+        const w = payee.wallets?.[0];
+        const b = payee.banks?.[0];
+        const hasMethod = !!(w || b);
+        const methodKind = w ? 'wallet' : b ? 'bank' : null;
+        const txs = window._generatePayerTxs(payee);
+
+        const fmt = d => d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+        const fmtAmt = (a, c) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(a) + ' ' + c;
+
+        if (!hasMethod) {
+            return `
+            <div class="card" style="padding: 24px;">
+                <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 12px;">Transaction History</h3>
+                <div style="font-size:13px;color:#94A3B8;font-style:italic;">No transaction history. This payer has no payment method registered yet.</div>
+            </div>`;
+        }
+
+        const methodLabel = w
+            ? `${w.network} · ${w.address.slice(0, 6)}…${w.address.slice(-4)}`
+            : `${b.bankName} · •••• ${b.account.slice(-4)}`;
+        const methodIcon = w ? 'wallet' : 'landmark';
+        const methodColor = w ? '#7C3AED' : '#2563EB';
+        const methodBg = w ? '#F5F3FF' : '#EFF6FF';
+
+        return `
+        <div class="card" style="padding: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 32px; height: 32px; border-radius: 9px; background: #F0FDF4; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="receipt" style="width: 16px; height: 16px; color: #16A34A;"></i>
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Transaction History</h3>
+                </div>
+                <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 12px;background:${methodBg};border:1px solid #E2E8F0;border-radius:999px;">
+                    <i data-lucide="${methodIcon}" style="width:13px;height:13px;color:${methodColor};"></i>
+                    <span style="font-size:11px;font-weight:700;color:${methodColor};">${methodLabel}</span>
+                </div>
+            </div>
+            <div style="border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;">
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr style="background:#F8FAFC;">
+                            <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;">Date</th>
+                            <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;">Invoice ID</th>
+                            <th style="text-align:right;padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;">Amount</th>
+                            <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;">Method</th>
+                            <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.06em;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txs.map(t => `
+                        <tr style="border-top:1px solid #F1F5F9;">
+                            <td style="padding:12px 14px;color:#334155;white-space:nowrap;">${fmt(t.date)}</td>
+                            <td style="padding:12px 14px;"><span style="font-family:monospace;font-size:12px;color:#0F172A;font-weight:600;">${t.invId}</span></td>
+                            <td style="padding:12px 14px;text-align:right;font-family:monospace;font-weight:700;color:#0F172A;">${fmtAmt(t.amount, t.currency)}</td>
+                            <td style="padding:12px 14px;"><span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#64748B;"><i data-lucide="${methodIcon}" style="width:12px;height:12px;color:${methodColor};"></i>${methodKind === 'wallet' ? 'Crypto' : 'Bank'}</span></td>
+                            <td style="padding:12px 14px;"><span style="background:${t.status.bg};color:${t.status.color};font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;">${t.status.label}</span></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px;font-size:11px;color:#94A3B8;">Showing ${txs.length} transactions linked to this payment method.</div>
+        </div>`;
     };
 
     window.setPayeePersonType = function(type) {
@@ -12394,16 +13702,396 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         refreshPayeeEntryLabels('[data-bank-entry]', 'Bank Account');
     };
 
+    // ===== Invoice Payer Form — Progressive Payment Method UI =====
+
+    let walletVerifyNonce = '';
+
+    const OBITA_VERIFY_ADDRESSES = {
+        'TRON (TRC-20)':     'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+        'Ethereum (ERC-20)': '0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+        'BNB Chain (BEP-20)':'0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+        'Solana':            '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7ViJoyW2'
+    };
+
+    window.onPayeeAddAccountClick = function() {
+        const btn = document.getElementById('payee-add-account-btn');
+        const zone = document.getElementById('payee-account-type-zone');
+        if (!zone) return;
+        if (btn) btn.style.display = 'none';
+        zone.style.display = 'flex';
+        lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.onPayeeAccountTypeSelect = function(type) {
+        const typeZone  = document.getElementById('payee-account-type-zone');
+        const bankZone  = document.getElementById('payee-bank-add-zone');
+        const walletZone = document.getElementById('payee-wallet-add-zone');
+        if (typeZone) typeZone.style.display = 'none';
+        if (type === 'bank') {
+            if (bankZone) { bankZone.style.display = 'flex'; lucide.createIcons(); setTimeout(() => bankZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }
+        } else {
+            if (walletZone) { walletZone.style.display = 'flex'; lucide.createIcons(); setTimeout(() => walletZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50); }
+        }
+    };
+
+    window.onPayeeInvoiceWalletClaimChange = function() {
+        const claimed    = document.getElementById('payee-invoice-wallet-claim')?.checked;
+        const typeZone   = document.getElementById('payee-invoice-wallet-type-zone');
+        const inputsZone = document.getElementById('payee-invoice-wallet-inputs');
+        if (!typeZone) return;
+        if (claimed) {
+            typeZone.style.display = 'flex';
+            if (inputsZone) inputsZone.style.display = 'none'; // reset if unchecked and re-checked
+            lucide.createIcons();
+            setTimeout(() => typeZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        } else {
+            typeZone.style.display   = 'none';
+            if (inputsZone) inputsZone.style.display = 'none';
+        }
+    };
+
+    window.onPayeeWalletTypeSelect = function(type) {
+        const privateBtn  = document.getElementById('payee-wallet-type-private-btn');
+        const exchangeBtn = document.getElementById('payee-wallet-type-exchange-btn');
+        const inputsZone  = document.getElementById('payee-invoice-wallet-inputs');
+        // Highlight selected button
+        if (type === 'private') {
+            if (privateBtn)  { privateBtn.style.border = '2px solid #7C3AED'; privateBtn.style.background = '#F5F3FF'; }
+            if (exchangeBtn) { exchangeBtn.style.border = '2px solid #E2E8F0'; exchangeBtn.style.background = 'white'; }
+        } else {
+            if (exchangeBtn) { exchangeBtn.style.border = '2px solid #EA580C'; exchangeBtn.style.background = '#FFF7ED'; }
+            if (privateBtn)  { privateBtn.style.border = '2px solid #E2E8F0'; privateBtn.style.background = 'white'; }
+        }
+        if (inputsZone) {
+            inputsZone.style.display = 'flex';
+            lucide.createIcons();
+            setTimeout(() => inputsZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+    };
+
+    // Triggered from the Payer detail page Payment Method card for pending-verification wallets.
+    // Populates the shared verify zone with the wallet's existing network/address and opens it.
+    window.onDetailVerifyAgainClick = function(btn) {
+        const network = btn?.dataset?.network || 'TRON (TRC-20)';
+        const address = btn?.dataset?.address || '';
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
+        if (!verifyZone) return;
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destEl  = document.getElementById('payee-verify-dest-addr');
+        const chainEl = document.getElementById('payee-verify-chain-display');
+        const qrEl    = document.getElementById('payee-verify-qr');
+        const shareEl = document.getElementById('payee-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
+        // Reset to micro tab each time
+        window.setPayeeVerifyMethod?.('micro');
+        verifyZone.style.display = 'flex';
+        lucide.createIcons();
+        setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.onPayeeVerifyWalletClick = function() {
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
+        if (!verifyZone) return;
+        const network  = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destEl   = document.getElementById('payee-verify-dest-addr');
+        const chainEl  = document.getElementById('payee-verify-chain-display');
+        const qrEl     = document.getElementById('payee-verify-qr');
+        const shareEl  = document.getElementById('payee-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
+        verifyZone.style.display = 'flex';
+        lucide.createIcons();
+        const btn = document.getElementById('payee-verify-wallet-btn');
+        if (btn) { btn.style.background = '#ECFDF5'; btn.style.borderColor = '#A7F3D0'; btn.style.color = '#059669'; }
+        setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.sharePayeeVerification = function(btn) {
+        const shareEl = document.getElementById('payee-verify-share-text');
+        const text = shareEl ? shareEl.textContent.trim() : '';
+        const origHTML = btn.innerHTML;
+        const showFeedback = (label, color) => {
+            btn.innerHTML = `<i data-lucide="check" style="width:15px;height:15px;"></i> ${label}`;
+            btn.style.background = color;
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = origHTML; btn.style.background = '#0F172A'; lucide.createIcons(); }, 2000);
+        };
+        if (navigator.share) {
+            navigator.share({ title: 'Obita Wallet Verification', text }).catch(() => {});
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => showFeedback('Copied!', '#059669'))
+                .catch(() => showFeedback('Copied!', '#059669'));
+        }
+    };
+
+    window.setPayeeVerifyMethod = function(method) {
+        const microTab     = document.getElementById('payee-verify-tab-micro');
+        const signTab      = document.getElementById('payee-verify-tab-sign');
+        const microContent = document.getElementById('payee-verify-content-micro');
+        const signContent  = document.getElementById('payee-verify-content-sign');
+        if (method === 'micro') {
+            if (microTab)     { microTab.style.background = 'white'; microTab.style.color = '#7C3AED'; microTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (signTab)      { signTab.style.background  = 'transparent'; signTab.style.color = '#64748B'; signTab.style.boxShadow = 'none'; }
+            if (microContent) microContent.style.display = 'flex';
+            if (signContent)  signContent.style.display  = 'none';
+        } else {
+            if (signTab)      { signTab.style.background  = 'white'; signTab.style.color = '#7C3AED'; signTab.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (microTab)     { microTab.style.background = 'transparent'; microTab.style.color = '#64748B'; microTab.style.boxShadow = 'none'; }
+            if (signContent)  {
+                signContent.style.display = 'flex';
+                // Generate a fresh nonce and populate the sign message
+                walletVerifyNonce = 'OBT-' + Date.now().toString(36).toUpperCase();
+                const msgEl = document.getElementById('payee-sign-message');
+                if (msgEl) msgEl.textContent = `Obita Wallet Verification · Payer Registration · Nonce: ${walletVerifyNonce}`;
+                window.resetWalletSign();
+                lucide.createIcons();
+            }
+            if (microContent) microContent.style.display = 'none';
+        }
+    };
+
+    window._showWalletSignState = function(state, address, errorOrSig) {
+        const selectPanel  = document.getElementById('payee-sign-select-panel');
+        const pendingPanel = document.getElementById('payee-sign-pending-panel');
+        const wcPanel      = document.getElementById('payee-sign-wc-panel');
+        const resultPanel  = document.getElementById('payee-sign-result-panel');
+        const verifiedState = document.getElementById('payee-sign-verified-state');
+        const failedState   = document.getElementById('payee-sign-failed-state');
+        [selectPanel, pendingPanel, wcPanel, resultPanel].forEach(el => { if (el) el.style.display = 'none'; });
+        if (state === 'select')  { if (selectPanel)  selectPanel.style.display  = 'flex'; }
+        if (state === 'pending') { if (pendingPanel) pendingPanel.style.display = 'flex'; }
+        if (state === 'wc')      { if (wcPanel)      wcPanel.style.display      = 'flex'; }
+        const verifyAgainBtn = document.getElementById('payee-sign-verify-again-btn');
+        if (state === 'verified' || state === 'failed') {
+            if (resultPanel) resultPanel.style.display = 'flex';
+            if (state === 'verified') {
+                if (verifiedState) verifiedState.style.display = 'flex';
+                if (failedState)   failedState.style.display   = 'none';
+                const addrEl = document.getElementById('payee-sign-verified-addr');
+                if (addrEl && address) addrEl.textContent = address;
+                // Hide "Verify Again" and update wallet status
+                if (verifyAgainBtn) verifyAgainBtn.style.display = 'none';
+                if (activePayeeId) {
+                    // Detail page context — update the payee object directly and re-render
+                    setTimeout(() => {
+                        const p = getPayeeById(activePayeeId);
+                        if (p && p.wallets?.[0]) {
+                            p.wallets[0].verified = true;
+                        }
+                        renderPayeeFormPage();
+                    }, 1200);
+                } else {
+                    // New form context — push to invoicePayerAccounts
+                    setTimeout(() => window._saveWalletAutoVerified(address), 1200);
+                }
+            } else {
+                if (failedState)   failedState.style.display   = 'flex';
+                if (verifiedState) verifiedState.style.display = 'none';
+                const msgEl = document.getElementById('payee-sign-failed-msg');
+                if (msgEl) msgEl.textContent = errorOrSig || 'Signature could not be verified.';
+                if (verifyAgainBtn) verifyAgainBtn.style.display = 'flex';
+            }
+        } else {
+            // select / pending / wc states — restore Verify Again visibility for next time
+            if (verifyAgainBtn) verifyAgainBtn.style.display = 'flex';
+        }
+        lucide.createIcons();
+    };
+
+    window.resetWalletSign = function() {
+        window._showWalletSignState('select');
+    };
+
+    window.signWithMetaMask = async function() {
+        if (!window.ethereum) {
+            window._showWalletSignState('failed', null, 'MetaMask not detected. Please install the MetaMask browser extension.');
+            return;
+        }
+        window._showWalletSignState('pending');
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const account  = accounts[0];
+            const msgEl    = document.getElementById('payee-sign-message');
+            const message  = msgEl ? msgEl.textContent.trim() : `Obita Wallet Verification · Nonce: ${walletVerifyNonce}`;
+            await window.ethereum.request({ method: 'personal_sign', params: [message, account] });
+            window._showWalletSignState('verified', account);
+        } catch (err) {
+            const msg = err.code === 4001
+                ? 'Signature request was rejected.'
+                : (err.message || 'Signing failed. Please try again.');
+            window._showWalletSignState('failed', null, msg);
+        }
+    };
+
+    window.signWithWalletConnect = function() {
+        window._showWalletSignState('wc');
+        lucide.createIcons();
+    };
+
+
+    window.onPayeeSaveNewBank = function() {
+        const bankName    = document.getElementById('payee-new-bank-name')?.value?.trim();
+        const accountName = document.getElementById('payee-new-bank-account-name')?.value?.trim();
+        const account     = document.getElementById('payee-new-bank-account')?.value?.trim();
+        const swift       = document.getElementById('payee-new-bank-swift')?.value?.trim();
+        const routing     = document.getElementById('payee-new-bank-routing')?.value?.trim();
+        if (!bankName || !accountName || !account || !swift || !routing) {
+            alert('Please complete all bank account fields: Bank Name, Bank Account Name, Account Number, SWIFT / BIC, and Routing / FPS / Sort Code.');
+            return;
+        }
+        const currency = document.getElementById('payee-new-bank-currency')?.value?.trim() || 'USD';
+        invoicePayerAccounts.push({ type: 'bank', bankName, accountName, account, swift, routing, currency });
+        window._renderPayeeAccountsList();
+        window.onPayeeCancelAddAccount();
+    };
+
+    window._saveWalletAutoVerified = function(verifiedAddress) {
+        const network    = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const privateBtn = document.getElementById('payee-wallet-type-private-btn');
+        const walletKind = privateBtn?.style.border?.includes('#7C3AED') ? 'private' : 'exchange';
+        invoicePayerAccounts.push({ type: 'wallet', address: verifiedAddress, network, walletKind, verified: true });
+        window._renderPayeeAccountsList();
+        window.onPayeeCancelAddAccount();
+    };
+
+    window.onPayeeSaveNewWallet = function() {
+        const addr    = document.getElementById('payee-invoice-wallet-addr')?.value?.trim();
+        if (!addr) { alert('Please enter the wallet address.'); return; }
+        const claimed = document.getElementById('payee-invoice-wallet-claim')?.checked;
+        if (!claimed) { alert('Please confirm the wallet ownership declaration.'); return; }
+        const network    = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const privateBtn = document.getElementById('payee-wallet-type-private-btn');
+        const walletKind = privateBtn?.style.border?.includes('#7C3AED') ? 'private' : 'exchange';
+        // If verify zone is visible the user has seen the micro-transfer instructions → Pending Verification
+        const verifyZone     = document.getElementById('payee-wallet-verify-zone');
+        const verifiedStatus = (verifyZone && verifyZone.style.display !== 'none') ? 'pending' : false;
+        invoicePayerAccounts.push({ type: 'wallet', address: addr, network, walletKind, verified: verifiedStatus });
+        window._renderPayeeAccountsList();
+        window.onPayeeCancelAddAccount();
+    };
+
+    window._renderPayeeAccountsList = function() {
+        const listEl = document.getElementById('payee-accounts-list');
+        if (!listEl) return;
+        listEl.innerHTML = invoicePayerAccounts.map((acct, idx) => {
+            if (acct.type === 'wallet') {
+                const statusBadge = acct.verified === true
+                    ? '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:#DCFCE7;color:#16A34A;">Verified</span>'
+                    : '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;background:#FEF9C3;color:#A16207;">Pending Verification</span>';
+                return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border:1px solid #E2E8F0;border-radius:10px;">
+                        <div style="width:36px;height:36px;background:#F5F3FF;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="wallet" style="width:16px;height:16px;color:#7C3AED;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <div style="font-size:13px;font-weight:700;color:#0F172A;">${acct.network}</div>
+                                ${acct.walletKind === 'exchange' ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FFF7ED;color:#EA580C;">Exchange</span>' : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#F5F3FF;color:#7C3AED;">Private</span>'}
+                                ${statusBadge}
+                            </div>
+                            <div style="font-size:12px;font-family:monospace;color:#475569;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${acct.address}</div>
+                        </div>
+                        <button type="button" onclick="window.removePayeeAccount(${idx})" style="border:none;background:none;color:#DC2626;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Remove</button>
+                    </div>`;
+            } else {
+                return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:white;border:1px solid #E2E8F0;border-radius:10px;">
+                        <div style="width:36px;height:36px;background:#EFF6FF;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i data-lucide="landmark" style="width:16px;height:16px;color:#2563EB;"></i>
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:700;color:#0F172A;">${acct.bankName}</div>
+                            <div style="font-size:12px;font-family:monospace;color:#475569;margin-top:2px;">${acct.account}${acct.currency ? ' · ' + acct.currency : ''}</div>
+                        </div>
+                        <button type="button" onclick="window.removePayeeAccount(${idx})" style="border:none;background:none;color:#DC2626;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">Remove</button>
+                    </div>`;
+            }
+        }).join('');
+        lucide.createIcons();
+        // Only allow one payment method per invoice payer
+        const addBtn = document.getElementById('payee-add-account-btn');
+        if (addBtn) addBtn.style.display = invoicePayerAccounts.length >= 1 ? 'none' : 'flex';
+    };
+
+    window.removePayeeAccount = function(idx) {
+        invoicePayerAccounts.splice(idx, 1);
+        window._renderPayeeAccountsList();
+    };
+
+    window.onPayeeCancelAddAccount = function() {
+        const typeZone   = document.getElementById('payee-account-type-zone');
+        const bankZone   = document.getElementById('payee-bank-add-zone');
+        const walletZone = document.getElementById('payee-wallet-add-zone');
+        const btn        = document.getElementById('payee-add-account-btn');
+        if (typeZone)   { typeZone.style.display = 'none'; }
+        if (bankZone)   { bankZone.style.display = 'none'; }
+        if (walletZone) { walletZone.style.display = 'none'; }
+        if (btn)        { btn.style.display = invoicePayerAccounts.length >= 1 ? 'none' : 'flex'; }
+        // Reset wallet sub-zones
+        const claimChk       = document.getElementById('payee-invoice-wallet-claim');
+        const walletTypeZone = document.getElementById('payee-invoice-wallet-type-zone');
+        const inputsZone     = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone     = document.getElementById('payee-wallet-verify-zone');
+        const privateBtn     = document.getElementById('payee-wallet-type-private-btn');
+        const exchangeBtn    = document.getElementById('payee-wallet-type-exchange-btn');
+        if (claimChk)       claimChk.checked = false;
+        if (walletTypeZone) walletTypeZone.style.display = 'none';
+        if (inputsZone)  inputsZone.style.display = 'none';
+        if (verifyZone)  verifyZone.style.display  = 'none';
+        if (privateBtn)  { privateBtn.style.border = '2px solid #E2E8F0'; privateBtn.style.background = 'white'; }
+        if (exchangeBtn) { exchangeBtn.style.border = '2px solid #E2E8F0'; exchangeBtn.style.background = 'white'; }
+        // Clear field values
+        ['payee-new-bank-name','payee-new-bank-account-name','payee-new-bank-account','payee-new-bank-swift','payee-new-bank-routing',
+         'payee-invoice-wallet-addr'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    };
+
     window.savePayee = function(existingId) {
         const personType = document.querySelector('input[name="payee-person-type"]:checked')?.value || 'individual';
-        const email      = document.getElementById('payee-email')?.value?.trim();
-        const entityLabel = payeeDirectoryMode === 'payeeList' ? 'payee' : payeeDirectoryMode === 'invoicePayerList' ? 'payer' : 'contact';
-        const entityLabelUpper = payeeDirectoryMode === 'payeeList' ? 'PAYEE' : payeeDirectoryMode === 'invoicePayerList' ? 'PAYER' : 'CONTACT';
+        const isInvoicePayer = payeeDirectoryMode === 'invoicePayerList';
+        const isPayoutPayee  = payeeDirectoryMode === 'payeeList';
+        const isEnhancedSave = isInvoicePayer || isPayoutPayee;
+        const email      = isEnhancedSave ? '' : (document.getElementById('payee-email')?.value?.trim() || '');
+        const entityLabel = isPayoutPayee ? 'payee' : isInvoicePayer ? 'payer' : 'contact';
+        const entityLabelUpper = isPayoutPayee ? 'PAYEE' : isInvoicePayer ? 'PAYER' : 'CONTACT';
 
-        if (!email) { alert(`Please enter the ${entityLabel} email address.`); return; }
+        if (!isEnhancedSave && !email) { alert(`Please enter the ${entityLabel} email address.`); return; }
 
         let displayName = '';
-        if (personType === 'individual') {
+        if (isEnhancedSave) {
+            // Enhanced forms always use the alias field regardless of Individual / Company
+            const alias = document.getElementById('payee-alias')?.value?.trim();
+            if (!alias) { alert(`Please enter the ${isInvoicePayer ? 'Payer' : 'Payee'} Alias.`); return; }
+            displayName = alias;
+        } else if (personType === 'individual') {
             const fname = document.getElementById('payee-fname')?.value?.trim();
             const lname = document.getElementById('payee-lname')?.value?.trim();
             if (!fname || !lname) { alert(`Please enter the ${entityLabel} First Name and Surname.`); return; }
@@ -12454,26 +14142,73 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         };
 
-        const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
-        const bankModeNow = document.getElementById('payee-bank-now')?.checked;
-        const walletClaimed = Boolean(document.getElementById('payee-wallet-claim')?.checked);
-        const walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
-        const bankEntries = bankModeNow ? collectPayeeBankEntries() : [];
-        if (walletEntries === null || bankEntries === null) return;
+        let walletEntries, bankEntries;
+        if (isEnhancedSave) {
+            // If the wallet or bank add zone is still open (user filled in fields but hasn't explicitly saved),
+            // auto-collect it now so Save Payer captures it.
+            if (invoicePayerAccounts.length === 0) {
+                const walletZoneEl = document.getElementById('payee-wallet-add-zone');
+                const bankZoneEl   = document.getElementById('payee-bank-add-zone');
+                const walletOpen   = walletZoneEl && walletZoneEl.style.display !== 'none';
+                const bankOpen     = bankZoneEl && bankZoneEl.style.display !== 'none';
 
-        if ((walletModeNow || walletEntries.length) && !walletClaimed) {
-            alert('Please confirm the wallet ownership declaration before wallet information can be collected.');
-            return;
+                if (walletOpen) {
+                    const addr      = document.getElementById('payee-invoice-wallet-addr')?.value?.trim();
+                    const claimedEl = document.getElementById('payee-invoice-wallet-claim');
+                    if (addr) {
+                        if (!claimedEl?.checked) {
+                            alert('Please confirm the wallet ownership declaration before saving.');
+                            return;
+                        }
+                        const network    = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+                        const privateBtn = document.getElementById('payee-wallet-type-private-btn');
+                        const walletKind = privateBtn?.style.border?.includes('#7C3AED') ? 'private' : 'exchange';
+                        const verifyZone = document.getElementById('payee-wallet-verify-zone');
+                        const verified   = (verifyZone && verifyZone.style.display !== 'none') ? 'pending' : false;
+                        invoicePayerAccounts.push({ type: 'wallet', address: addr, network, walletKind, verified });
+                    }
+                } else if (bankOpen) {
+                    const bankName    = document.getElementById('payee-new-bank-name')?.value?.trim();
+                    const accountName = document.getElementById('payee-new-bank-account-name')?.value?.trim();
+                    const account     = document.getElementById('payee-new-bank-account')?.value?.trim();
+                    const swift       = document.getElementById('payee-new-bank-swift')?.value?.trim();
+                    const routing     = document.getElementById('payee-new-bank-routing')?.value?.trim();
+                    const currency    = document.getElementById('payee-new-bank-currency')?.value?.trim() || 'USD';
+                    // Only treat as "being added" if at least one field is filled
+                    if (bankName || accountName || account || swift || routing) {
+                        if (!bankName || !accountName || !account || !swift || !routing) {
+                            alert('Please complete all bank account fields: Bank Name, Bank Account Name, Account Number, SWIFT / BIC, and Routing / FPS / Sort Code.');
+                            return;
+                        }
+                        invoicePayerAccounts.push({ type: 'bank', bankName, accountName, account, swift, routing, currency });
+                    }
+                }
+            }
+            walletEntries = invoicePayerAccounts.filter(a => a.type === 'wallet').map(a => ({ network: a.network, address: a.address, walletKind: a.walletKind, verified: a.verified }));
+            bankEntries   = invoicePayerAccounts.filter(a => a.type === 'bank').map(a => ({ bankName: a.bankName, accountName: a.accountName, account: a.account, swift: a.swift, routing: a.routing, currency: a.currency }));
+        } else {
+            const walletModeNow = document.getElementById('payee-wallet-now')?.checked;
+            const bankModeNow   = document.getElementById('payee-bank-now')?.checked;
+            const walletClaimed = Boolean(document.getElementById('payee-wallet-claim')?.checked);
+            walletEntries = walletModeNow ? collectPayeeWalletEntries() : [];
+            bankEntries   = bankModeNow   ? collectPayeeBankEntries()   : [];
+            if (walletEntries === null || bankEntries === null) return;
+            if ((walletModeNow || walletEntries.length) && !walletClaimed) {
+                alert('Please confirm the wallet ownership declaration before wallet information can be collected.');
+                return;
+            }
+            if (walletModeNow && walletEntries.length) newPayee.wallets = walletEntries;
+            if (bankModeNow   && bankEntries.length)   newPayee.banks   = bankEntries;
         }
 
-        if (walletModeNow && walletEntries.length) {
+        if (walletEntries.length) {
             newPayee.wallets = walletEntries;
             newPayee.type = 'Crypto Wallet';
         }
 
-        if (bankModeNow && bankEntries.length) {
+        if (bankEntries.length) {
             newPayee.banks = bankEntries;
-            if (!walletModeNow) newPayee.type = 'Bank Account';
+            if (!walletEntries.length) newPayee.type = 'Bank Account';
         }
 
         payeeList.unshift(newPayee);
@@ -12505,16 +14240,24 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         }
 
         // Show confirmation page
+        const successEntityLabel = isInvoicePayer ? 'Payer' : isPayoutPayee ? 'Payee' : entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1);
+        const successGradient = isInvoicePayer ? '#F5F3FF 0%, #EFF6FF' : isPayoutPayee ? '#EFF6FF 0%, #E0E7FF' : '#EFF6FF 0%, #F0FDF4';
+        const successIconGradient = isInvoicePayer ? '#7C3AED, #2563EB' : isPayoutPayee ? '#3B82F6, #1D4ED8' : '#2563EB, #059669';
+        const hasPM = walletEntries.length || bankEntries.length;
         contentBody.innerHTML = `
             <div class="fade-in" style="max-width: 640px; margin: 60px auto; display: flex; flex-direction: column; align-items: center; gap: 0;">
                 <div class="card" style="padding: 0; overflow: hidden; width: 100%;">
                     <!-- Success banner -->
-                    <div style="padding: 40px 40px 32px; background: linear-gradient(135deg, #EFF6FF 0%, #F0FDF4 100%); border-bottom: 1px solid #E2E8F0; text-align: center;">
-                        <div style="width: 64px; height: 64px; border-radius: 999px; background: linear-gradient(135deg, #2563EB, #059669); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(37,99,235,0.25);">
-                            <i data-lucide="send" style="width: 28px; height: 28px; color: white;"></i>
+                    <div style="padding: 40px 40px 32px; background: linear-gradient(135deg, ${successGradient} 100%); border-bottom: 1px solid #E2E8F0; text-align: center;">
+                        <div style="width: 64px; height: 64px; border-radius: 999px; background: linear-gradient(135deg, ${successIconGradient}); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 10px 30px rgba(37,99,235,0.25);">
+                            <i data-lucide="user-check" style="width: 28px; height: 28px; color: white;"></i>
                         </div>
-                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invite Sent!</h2>
-                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">${entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1)} <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.</div>
+                        <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">${isEnhancedSave ? successEntityLabel + ' Saved!' : 'Invite Sent!'}</h2>
+                        <div style="font-size: 14px; color: #475569; line-height: 1.6;">
+                            ${isEnhancedSave
+                                ? `${successEntityLabel} <strong>${displayName}</strong> has been registered. ${hasPM ? 'Payment method(s) have been linked.' : 'No payment methods were added — you can add them later from the ' + successEntityLabel.toLowerCase() + ' profile.'}`
+                                : `${successEntityLabel} <strong>${displayName}</strong> has been created and an information-collection email has been sent to <strong>${email}</strong>.`}
+                        </div>
                     </div>
 
                     <!-- Details -->
@@ -12524,13 +14267,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper}</span>
                                 <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${displayName}</span>
                             </div>
+                            ${!isEnhancedSave ? `
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">EMAIL</span>
                                 <span style="font-size: 13px; font-weight: 600; color: #2563EB;">${email}</span>
                             </div>
+                            ` : ''}
+                            ${hasPM ? `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
+                                <span style="font-size: 12px; color: #64748B; font-weight: 600;">PAYMENT METHOD</span>
+                                <span style="font-size: 13px; font-weight: 600; color: #0F172A;">${walletEntries.length ? walletEntries[0].network + ' Wallet' : bankEntries[0].bankName}</span>
+                            </div>
+                            ` : ''}
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">STATUS</span>
-                                <span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>
+                                ${isEnhancedSave
+                                    ? `<span style="background: #ECFDF5; color: #059669; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">✓ Active</span>`
+                                    : `<span style="background: #FEF3C7; color: #D97706; padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;">⏳ Pending Information Collection</span>`}
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #F8FAFC; border-radius: 8px;">
                                 <span style="font-size: 12px; color: #64748B; font-weight: 600;">${entityLabelUpper} ID</span>
@@ -12538,14 +14291,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                         </div>
 
+                        ${!isEnhancedSave ? `
                         <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 16px; display: flex; gap: 10px;">
                             <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #D97706; flex-shrink: 0; margin-top: 1px;"></i>
                             <div style="font-size: 12px; color: #92400E; line-height: 1.6;">
-                                ${payeeDirectoryMode === 'invoicePayerList'
-                                    ? 'Invoice workflows <strong>cannot proceed</strong> until the payer completes the information collection process and their identity / account details are verified by the compliance team.'
-                                    : 'Payout instructions <strong>cannot be executed</strong> until the payee completes the information collection process and their identity / account details are verified by the compliance team.'}
+                                Instructions <strong>cannot be executed</strong> until the ${entityLabel} completes the information collection process and their identity / account details are verified by the compliance team.
                             </div>
                         </div>
+                        ` : ''}
 
                         <button class="btn btn-primary" onclick="window.backToPayeeList()" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 700;">
                             ${payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : payeeDirectoryMode === 'invoicePayerList' ? 'Back to Payer List for Invoice' : 'Back to External Contacts'}

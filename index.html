@@ -1276,32 +1276,60 @@
 
                     <div style="height: 1px; background: var(--clr-border);"></div>
 
-                    <!-- Connect Mode -->
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <div style="font-size: 13px; font-weight: 600; color: #334155;">Wallet Connection Method</div>
-                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="newAddrMethod" value="metamask" checked onchange="window.selectNewAddrMethod('metamask')"> MetaMask
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="newAddrMethod" value="walletconnect" onchange="window.selectNewAddrMethod('walletconnect')"> WalletConnect
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="newAddrMethod" value="custodial" onchange="window.selectNewAddrMethod('custodial')"> Exchange / Custodial Wallet
-                        </label>
+                    <!-- Wallet Address Details -->
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #334155;">Wallet Address Details</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Address *</label>
+                            <input type="text" id="na-wallet-addr" class="form-input" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; font-family: monospace;">
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Network / Chain *</label>
+                            <select id="na-wallet-net" class="form-input" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
+                                <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                <option value="Solana">Solana</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div id="na-custodial-input" style="display: none; flex-direction: column; gap: 8px;">
-                        <input type="text" id="na-wallet-addr" class="form-input" placeholder="Enter Wallet Address (e.g. 0x... or TR...)" style="width: 100%; font-family: monospace;">
-                        <select class="form-input" id="na-wallet-net" style="width: 100%;">
-                            <option value="TRON">TRON</option>
-                            <option value="ETH">Ethereum (ERC-20)</option>
-                        </select>
+                    <!-- Wallet Type Selector -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="font-size: 13px; font-weight: 700; color: #334155;">Wallet Type</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <label style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onclick="this.style.border='2px solid #7C3AED';this.style.background='#F5F3FF';this.parentElement.children[1].style.border='2px solid #E2E8F0';this.parentElement.children[1].style.background='white'">
+                                <input type="radio" name="na-wallet-type" value="private" checked style="accent-color: #7C3AED;">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
+                                    <div style="font-size: 11px; color: #64748B;">MetaMask, TrustWallet, etc.</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onclick="this.style.border='2px solid #EA580C';this.style.background='#FFF7ED';this.parentElement.children[0].style.border='2px solid #E2E8F0';this.parentElement.children[0].style.background='white'">
+                                <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C;">
+                                <div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
+                                    <div style="font-size: 11px; color: #64748B;">Binance, OKX, Coinbase, etc.</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="height: 1px; background: var(--clr-border);"></div>
+
+                    <!-- Verify Wallet button + zone -->
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <button type="button" id="na-verify-wallet-btn" onclick="window.onAddrBookVerifyClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
+                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
+                            Verify Wallet Address
+                        </button>
+                        <div id="na-wallet-verify-zone" style="display: none;"></div>
                     </div>
 
                 </div>
                 <!-- Footer Submit Button -->
                 <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button onclick="window.submitNewAddress()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Verify & Add Address</button>
+                    <button onclick="window.submitNewAddress()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Add Address</button>
                 </div>
             </div>
 
@@ -1643,6 +1671,6 @@
         <div class="drawer-body" id="checkout-demo-drawer-body" style="padding: 0; height: calc(100% - 75px); overflow-y: auto; background: #F1F5F9;"></div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20260416m"></script>
 </body>
 </html>
