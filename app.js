@@ -712,18 +712,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('drawer-active');
         });
-        
+
         // Reset to Step 1
         document.getElementById('verify-step-1').style.display = 'flex';
         document.getElementById('verify-step-2').style.display = 'none';
-        
+
         // Reset forms
         document.getElementById('form-individual').style.display = 'flex';
         document.getElementById('form-organization').style.display = 'none';
-        document.querySelector('input[name="ownerType"][value="individual"]').checked = true;
-        document.querySelector('input[name="walletMethod"][value="metamask"]').checked = true;
-        document.getElementById('verify-custodial-input').style.display = 'none';
-        
+        const ownerRadio = document.querySelector('input[name="ownerType"][value="individual"]');
+        if (ownerRadio) ownerRadio.checked = true;
+
+        // Reset wallet inputs and verification zone
+        const walletAddr = document.getElementById('v-wallet-addr');
+        if (walletAddr) walletAddr.value = '';
+        const verifyZone = document.getElementById('v-wallet-verify-zone');
+        if (verifyZone) { verifyZone.innerHTML = ''; verifyZone.style.display = ''; }
+
         lucide.createIcons();
         document.getElementById('verify-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
