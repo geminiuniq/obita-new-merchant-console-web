@@ -988,6 +988,10 @@ body.drawer-open .drawer-active {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes payee-spin {
+    to { transform: rotate(360deg); }
+}
+
 /* Overview Layout */
 .overview-grid {
     display: grid;
