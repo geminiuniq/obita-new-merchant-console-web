@@ -136,6 +136,19 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     };
 
+    // Navigate to a page by title (used by Overview action buttons)
+    window.navigateToPage = function(title) {
+        // Update sidebar active state
+        document.querySelectorAll('.sidebar-nav .nav-item, .sidebar-nav .nav-subitem').forEach(el => el.classList.remove('active'));
+        const target = document.querySelector(`.sidebar-nav [data-target="${title.toLowerCase().replace(/\s+/g, '-')}"]`);
+        if (target) target.classList.add('active');
+        // Update page title
+        const pageTitleEl = document.getElementById('page-title');
+        if (pageTitleEl) pageTitleEl.textContent = title;
+        // Render the page
+        renderPlaceholderContent(title);
+    };
+
     // Entity switcher toggle
     document.addEventListener('click', (e) => {
         const switcher = document.getElementById('entity-switcher-toggle');
@@ -6790,7 +6803,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 ${window.currentLicenseMode === 'MSO'
                                     ? '<button class="btn btn-outline" onclick="window.openMsoTransferCurrencyPicker()"><i data-lucide="send"></i> Transfer</button>'
                                     : '<button class="btn btn-outline"><i data-lucide="send"></i> Transfer</button>'}
-                                <button class="btn btn-outline"><i data-lucide="refresh-cw"></i> Convert</button>
+                                <button class="btn btn-outline" onclick="window.navigateToPage('Conversion')"><i data-lucide="refresh-cw"></i> Convert</button>
                             </div>
                         </div>
                     </div>
