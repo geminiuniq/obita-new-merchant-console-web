@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentLicenseMode = 'TCSP'; // 'TCSP' | 'MSO' | 'GROUP'
 
     window.ENTITY_CONFIG = {
-        TCSP:  { name: '华信科技有限公司', label: 'TCSP License', accent: '#2563EB', icon: 'building-2' },
-        MSO:   { name: '华信汇款有限公司', label: 'MSO License',  accent: '#7C3AED', icon: 'building-2' },
+        TCSP:  { name: '华信科技有限公司', label: 'via Obita TCSP', accent: '#2563EB', icon: 'building-2' },
+        MSO:   { name: '华信汇款有限公司', label: 'via Obita MSO',  accent: '#7C3AED', icon: 'building-2' },
         GROUP: { name: 'ABC Trading Group', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
     };
 
@@ -6440,114 +6440,157 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     function getGroupOverviewHTML() {
         return `
-        <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-            <!-- Group View Banner -->
-            <div style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 14px; padding: 28px 32px; color: white;">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                    <i data-lucide="layers" style="width: 24px; height: 24px; opacity: 0.7;"></i>
-                    <h2 style="font-size: 22px; font-weight: 700; margin: 0;">ABC Trading Group</h2>
+        <div class="fade-in" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
+
+            <!-- Header: Group name + consolidated KPIs -->
+            <div style="background: white; border: 1px solid var(--clr-border); border-radius: 14px; padding: 0; overflow: hidden;">
+                <div style="padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 44px; height: 44px; border-radius: 12px; background: #0F172A; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="layers" style="width: 22px; height: 22px; color: white;"></i>
+                        </div>
+                        <div>
+                            <h2 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">ABC Trading Group</h2>
+                            <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">Consolidated overview &middot; Read-only</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 11px; font-weight: 700; color: #059669; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:12px;height:12px;"></i> All Entities Verified</span>
+                    </div>
                 </div>
-                <p style="font-size: 13px; color: #94A3B8; margin: 0;">Consolidated overview across all subsidiaries. Switch to a subsidiary to perform operations.</p>
+                <!-- KPI Strip -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--clr-border);">
+                    <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$33.2M</div>
+                    </div>
+                    <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">30d Volume</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$12.4M</div>
+                    </div>
+                    <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #D97706; margin-top: 4px;">4</div>
+                    </div>
+                    <div style="padding: 18px 20px; text-align: center;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Subsidiaries</div>
+                        <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px;">2</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Entity Cards -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+
                 <!-- TCSP Entity -->
-                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #2563EB;"></div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #2563EB;"></div>
-                        <div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
-                            <div style="font-size: 11px; color: #94A3B8;">TCSP License</div>
+                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    <!-- Card Header -->
+                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #EFF6FF; border: 1px solid #BFDBFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
+                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">via Obita TCSP</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
+                    </div>
+                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
+                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$24,050,000</div>
+                        </div>
+                        <div style="padding: 16px 22px;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
+                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">3</span>
+                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Total Assets</span>
-                            <span style="font-weight: 700; color: #0F172A;">$24,050,000</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Stablecoin Vault</span>
-                            <span style="font-weight: 600; color: #334155;">$14,000,000 USDT + $10,050,000 USDC</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Fiat Vault</span>
-                            <span style="font-weight: 600; color: #334155;">$2,500,000 USD + HK$8,400,000</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Pending Approvals</span>
-                            <span style="font-weight: 600; color: #D97706;">3</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">KYB Status</span>
-                            <span style="font-weight: 600; color: #059669; display: flex; align-items: center; gap: 4px;"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Verified</span>
+                    <!-- Asset Breakdown -->
+                    <div style="padding: 14px 22px 8px; flex: 1;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${[
+                                { symbol: 'USDT', icon: '₮', color: '#26A17B', bg: '#ECFDF5', amount: '14,000,000' },
+                                { symbol: 'USDC', icon: 'C', color: '#2775CA', bg: '#EFF6FF', amount: '10,050,000' },
+                                { symbol: 'USD',  icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '2,500,000' },
+                                { symbol: 'HKD',  icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,400,000' }
+                            ].map(a => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
+                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
+                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                            </div>`).join('')}
                         </div>
                     </div>
-                    <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 10px; background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">View TCSP Entity &rarr;</button>
+                    <!-- CTA -->
+                    <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
+                        <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 11px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(37,99,235,0.2);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">Enter TCSP Portal &rarr;</button>
+                    </div>
                 </div>
 
                 <!-- MSO Entity -->
-                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: #7C3AED;"></div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #7C3AED;"></div>
-                        <div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
-                            <div style="font-size: 11px; color: #94A3B8;">MSO License</div>
+                <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
+                    <!-- Card Header -->
+                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #F5F3FF; border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
+                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">via Obita MSO</div>
+                            </div>
+                        </div>
+                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
+                    </div>
+                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
+                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$9,180,000</div>
+                        </div>
+                        <div style="padding: 16px 22px;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
+                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">1</span>
+                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Total Assets</span>
-                            <span style="font-weight: 700; color: #0F172A;">$9,180,000</span>
+                    <!-- Asset Breakdown -->
+                    <div style="padding: 14px 22px 8px; flex: 1;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${[
+                                { symbol: 'USD', icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '1,500,000' },
+                                { symbol: 'HKD', icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,200,000' },
+                                { symbol: 'EUR', icon: '\u20AC', color: '#1D4ED8', bg: '#EFF6FF', amount: '320,000' },
+                                { symbol: 'BRL', icon: 'R$', color: '#15803D', bg: '#F0FDF4', amount: '980,000' }
+                            ].map(a => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
+                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
+                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                            </div>`).join('')}
                         </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Fiat Vault</span>
-                            <span style="font-weight: 600; color: #334155;">$1,500,000 USD + HK$8,200,000</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Pending Approvals</span>
-                            <span style="font-weight: 600; color: #D97706;">1</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">KYB Status</span>
-                            <span style="font-weight: 600; color: #059669; display: flex; align-items: center; gap: 4px;"><i data-lucide="check-circle" style="width:13px;height:13px;"></i> Verified</span>
-                        </div>
-                        <div style="height: 13px;"></div>
                     </div>
-                    <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;">View MSO Entity &rarr;</button>
-                </div>
-            </div>
-
-            <!-- Consolidated Summary -->
-            <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; padding: 24px;">
-                <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0 0 20px;">Consolidated Summary</h3>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
-                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Total Assets</div>
-                        <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 6px;">$33.2M</div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">30d Volume</div>
-                        <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 6px;">$12.4M</div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Pending Approvals</div>
-                        <div style="font-size: 24px; font-weight: 800; color: #D97706; margin-top: 6px;">4</div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: #F8FAFC; border-radius: 10px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.05em;">Entities</div>
-                        <div style="font-size: 24px; font-weight: 800; color: #059669; margin-top: 6px;">2 / 2</div>
-                        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">All Verified</div>
+                    <!-- CTA -->
+                    <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
+                        <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 11px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(124,58,237,0.2);" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">Enter MSO Portal &rarr;</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Read-only notice -->
-            <div style="text-align: center; padding: 16px; color: #94A3B8; font-size: 13px;">
-                <i data-lucide="info" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
-                Group View is read-only. Switch to a subsidiary to perform operations.
+            <!-- Read-only footer -->
+            <div style="text-align: center; padding: 12px; color: #CBD5E1; font-size: 12px;">
+                <i data-lucide="lock" style="width: 12px; height: 12px; vertical-align: middle; margin-right: 4px;"></i>
+                Read-only view. Switch to a subsidiary to perform operations.
             </div>
         </div>`;
     }
