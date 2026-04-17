@@ -16123,69 +16123,93 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         };
 
         const summaryHTML = `
-            <div style="display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.95fr); gap: 20px; align-items: stretch;">
-                <div class="card payouts-summary-card" style="margin: 0;">
-                    <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
-                    <div class="collection-card-inner">
-                        <div class="collection-header">
-                            <div class="time-selector">
-                                <span class="time-option">1d</span>
-                                <span class="time-option">1w</span>
-                                <span class="time-option active">1m</span>
-                                <span class="time-option">6m</span>
-                                <span class="time-option">1y</span>
-                            </div>
+            <!-- Page Header -->
+            <div class="card" style="padding: 22px 28px;">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                    <div>
+                        <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Payout Orders</h1>
+                        <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Manage and track all payout transactions across your ${window.currentLicenseMode === 'MSO' ? 'fiat accounts' : 'asset vaults'}.</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()" style="padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i> New Payout</button>
+                </div>
+            </div>
+
+            <!-- KPI Row: Summary hero + payee side panel -->
+            <div style="display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(250px, 0.9fr); gap: 16px; align-items: stretch;">
+                <!-- Payouts Summary with hero + breakdown -->
+                <div class="card" style="margin: 0; padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 22px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Payouts Summary</div>
+                        <div class="time-selector" style="display: inline-flex; gap: 4px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 3px;">
+                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">1w</span>
+                            <span class="time-option active" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; background: white; color: #0F172A; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">1m</span>
+                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">6m</span>
+                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">1y</span>
                         </div>
-                        <div class="collection-stats-grid">
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Created Orders</span>
-                                <span class="c-stat-count">350</span>
-                                <span class="c-stat-amount">$2,550,000.00</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
+                        <!-- Hero: Total Volume -->
+                        <div style="padding: 18px 22px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
+                            <div style="font-size: 10px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
+                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 6px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">$2.55M</div>
+                            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">350 orders</div>
+                        </div>
+                        <!-- Completed -->
+                        <div style="padding: 18px 20px; border-right: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Completed</div>
                             </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Successful</span>
-                                <span class="c-stat-count text-success">310</span>
-                                <span class="c-stat-amount text-success">$2,400,000.00</span>
+                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">310</div>
+                            <div style="font-size: 11px; color: #15803D; margin-top: 3px; font-weight: 600;">$2.40M</div>
+                        </div>
+                        <!-- In-Transit -->
+                        <div style="padding: 18px 20px; border-right: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">In-Transit</div>
                             </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Settled</span>
-                                <span class="c-stat-count" style="color: #3B82F6;">290</span>
-                                <span class="c-stat-amount" style="color: #3B82F6;">$2,250,000.00</span>
+                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">25</div>
+                            <div style="font-size: 11px; color: #B45309; margin-top: 3px; font-weight: 600;">$100,000</div>
+                        </div>
+                        <!-- Failed -->
+                        <div style="padding: 18px 20px;">
+                            <div style="display: flex; align-items: center; gap: 5px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Failed</div>
                             </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">In-Transit</span>
-                                <span class="c-stat-count text-warning">25</span>
-                                <span class="c-stat-amount text-warning">$100,000.00</span>
-                            </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Failed</span>
-                                <span class="c-stat-count text-muted">15</span>
-                                <span class="c-stat-amount text-muted">$50,000.00</span>
-                            </div>
+                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">15</div>
+                            <div style="font-size: 11px; color: #B91C1C; margin-top: 3px; font-weight: 600;">$50,000</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card" style="margin: 0; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06);">
-                    <div style="min-height: 42px; display: flex; align-items: center;">
-                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Payee List</div>
+                <!-- Payees side panel (compact) -->
+                <div class="card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Payees</div>
+                        <button onclick="window.openPayeeManagementPage()" style="background: none; border: none; padding: 0; font-size: 12px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i></button>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                        <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; justify-content: space-between;">
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Payees</div>
-                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${payoutPayeeSummary.total}</div>
-                            <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${payoutPayeeSummary.active} active</div>
+                    <div style="flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                            <div style="font-size: 11px; color: #64748B;">Total</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">${payoutPayeeSummary.total}</div>
                         </div>
-                        <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Pending Setup</div>
-                                <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${payoutPayeeSummary.pending}</div>
+                        <div style="height: 1px; background: #F1F5F9;"></div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="width: 6px; height: 6px; border-radius: 999px; background: #16A34A;"></span>
+                                <span style="font-size: 11px; color: #64748B;">Active</span>
                             </div>
-                            <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${payoutPayeeSummary.lastUpdated}</div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.active}</div>
                         </div>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button class="btn btn-primary" onclick="window.openPayeeManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Payees</button>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="width: 6px; height: 6px; border-radius: 999px; background: #B45309;"></span>
+                                <span style="font-size: 11px; color: #64748B;">Pending Setup</span>
+                            </div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.pending}</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -16196,58 +16220,61 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
-        const listHTML = rows.length ? rows.map(row => `
-            <tr onclick="window.openPayoutOrderDetail('${row.orderId}')">
-                <td class="text-muted">${row.time}</td>
-                <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.orderId}</td>
-                <td class="font-medium">${row.beneficiary}</td>
-                <td>${row.method}</td>
-                <td>${row.purpose}</td>
-                <td>${row.source}</td>
-                <td class="text-right font-medium">${row.amount}</td>
+        const listHTML = rows.length ? rows.map(row => {
+            const normalizedStatus = normalizeOrderStatus(row.status);
+            const isAwaiting = normalizedStatus === 'Awaiting Approval';
+            const rowBg = isAwaiting ? 'background: rgba(254, 243, 199, 0.28);' : '';
+            const rowHoverBg = isAwaiting ? '#FFFBEB' : '#F8FAFC';
+            return `
+            <tr onclick="window.openPayoutOrderDetail('${row.orderId}')" onmouseover="this.style.background='${rowHoverBg}'" onmouseout="this.style.background='${isAwaiting ? 'rgba(254, 243, 199, 0.28)' : ''}'" style="cursor: pointer; ${rowBg}">
+                <td>
+                    <div style="font-family: monospace; font-size: 12px; color: #2563EB; font-weight: 600;">${row.orderId}</div>
+                    <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${row.time}</div>
+                </td>
+                <td>
+                    <div class="font-medium">${row.beneficiary}</div>
+                    <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${row.method}</div>
+                </td>
+                <td style="color: #475569;">${row.purpose}</td>
+                <td style="color: #475569;">${row.source}</td>
+                <td class="text-right font-medium" style="font-variant-numeric: tabular-nums;">${row.amount}</td>
                 <td>${renderStatus(row.status)}</td>
-            </tr>
-        `).join('') : '<tr><td colspan="8" style="padding: 48px 24px; text-align: center; color: #64748B;">No orders matched your current filters.</td></tr>';
+            </tr>`;
+        }).join('') : '<tr><td colspan="6" style="padding: 48px 24px; text-align: center; color: #64748B;">No orders matched your current filters.</td></tr>';
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
+            <div class="fade-in" style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
                 ${summaryHTML}
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between;">
-                        <h2 class="card-title" style="margin-bottom: 0px; font-size: 16px;">Payout Order List</h2>
-                        <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()"><i data-lucide="plus"></i> New Payout</button>
-                    </div>
-                    
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 14px; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; gap: 14px; flex-grow: 1;">
-                            <div style="position: relative; width: 300px;">
-                                <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                                <input id="payout-orders-search" type="text" value="${searchValue}" oninput="window.renderPlaceholderContent('Payout Orders')" placeholder="Search by order ID, beneficiary..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
-                                <input id="payout-orders-start-date" type="date" value="${document.getElementById('payout-orders-start-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
-                                <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
-                                <input id="payout-orders-end-date" type="date" value="${document.getElementById('payout-orders-end-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 11px 0; width: 110px;">
-                            </div>
-                            <select id="payout-orders-status" onchange="window.renderPlaceholderContent('Payout Orders')" style="width: 200px; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
-                                <option value="all">All Statuses</option>
-                                <option value="Awaiting Approval" ${statusValue === 'Awaiting Approval' ? 'selected' : ''}>Awaiting Approval</option>
-                                <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
-                                <option value="Failed" ${statusValue === 'Failed' ? 'selected' : ''}>Failed</option>
-                            </select>
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div style="position: relative; flex: 1; min-width: 240px; max-width: 340px;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="payout-orders-search" type="text" value="${searchValue}" oninput="window.renderPlaceholderContent('Payout Orders')" placeholder="Search by order ID, beneficiary..." style="width: 100%; padding: 10px 14px 10px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                         </div>
+                        <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 0 12px;">
+                            <input id="payout-orders-start-date" type="date" value="${document.getElementById('payout-orders-start-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
+                            <span style="color: #94A3B8; font-size: 12px; font-weight: 600;">to</span>
+                            <input id="payout-orders-end-date" type="date" value="${document.getElementById('payout-orders-end-date')?.value || ''}" onchange="window.renderPlaceholderContent('Payout Orders')" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
+                        </div>
+                        <select id="payout-orders-status" onchange="window.renderPlaceholderContent('Payout Orders')" style="min-width: 180px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Statuses</option>
+                            <option value="Awaiting Approval" ${statusValue === 'Awaiting Approval' ? 'selected' : ''}>Awaiting Approval</option>
+                            <option value="In Progress" ${statusValue === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                            <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
+                            <option value="Failed" ${statusValue === 'Failed' ? 'selected' : ''}>Failed</option>
+                            <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
+                            <option value="Cancelled" ${statusValue === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
                     </div>
-                    
+
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Time</th>
-                                    <th>Order ID</th>
+                                    <th>Order</th>
                                     <th>Beneficiary</th>
-                                    <th>Payout Method</th>
                                     <th>Purpose</th>
-                                    <th>${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Account'}</th>
+                                    <th>${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source'}</th>
                                     <th class="text-right">Amount</th>
                                     <th>Status</th>
                                 </tr>
