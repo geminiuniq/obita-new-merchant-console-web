@@ -12562,9 +12562,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payee</div>
                             <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${payeeCount}</div>
                         </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
+                        <div class="card" style="padding: 20px; text-align: center;${window.currentLicenseMode === 'MSO' ? ' opacity: 0.7;' : ''}">
                             <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payer for Invoice</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${invoicePayerCount}</div>
+                            ${window.currentLicenseMode === 'MSO'
+                                ? '<div style="font-size: 14px; font-weight: 700; color: #94A3B8; margin-top: 14px; letter-spacing: 0.02em;">Coming Soon</div>'
+                                : `<div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${invoicePayerCount}</div>`}
                         </div>
                     </div>
                 `}
