@@ -13428,17 +13428,34 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                         </div>
                         ${detailEditState.profile ? `
                             <div style="display: flex; flex-direction: column; gap: 16px;">
-                                ${isDetailPayer ? `
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label" style="color: #94A3B8;">Payer Type</label>
-                                        <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Payer Alias</label>
+                                <!-- Unified 3-column identity grid (same fields as read-only view) -->
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px;">
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label">${isDetailPayer ? 'Payer Alias' : 'Payee Alias'}</label>
                                         <input id="detail-edit-alias" class="bank-form-control" type="text" value="${payee.alias || payee.name || ''}">
                                     </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label" style="color: #94A3B8;">${detailIdentityLabel}</label>
+                                        <div class="bank-form-control" style="background: #F8FAFC; color: #64748B; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="${payee.personType === 'company' ? 'building-2' : 'user'}" style="width: 14px; height: 14px;"></i>${payee.personType === 'company' ? 'Company' : 'Individual'}</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label" style="color: #94A3B8;">Status</label>
+                                        <div class="bank-form-control" style="background: #F8FAFC; color: ${payee.status === 'active' ? '#15803D' : payee.status === 'disabled' ? '#64748B' : '#D97706'}; font-weight: 600;">${payee.status === 'active' ? 'Active' : payee.status === 'disabled' ? 'Disabled' : 'Pending Info'}</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label">${detailEmailLabel}</label>
+                                        <input id="detail-edit-email" class="bank-form-control" type="email" value="${payee.email || ''}" placeholder="email@example.com">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label" style="color: #94A3B8;">${detailEntityLabel} ID</label>
+                                        <div class="bank-form-control" style="background: #F8FAFC; color: #64748B; font-family: monospace;">${payee.id}</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label class="bank-form-label" style="color: #94A3B8;">Date Added</label>
+                                        <div class="bank-form-control" style="background: #F8FAFC; color: #64748B;">${payee.createdAt || '—'}</div>
+                                    </div>
                                 </div>
+                                ${isDetailPayer ? `
                                 <!-- More Information toggle + Notify button -->
                                 ${payee.eddEmailSentTo ? `
                                 <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;">
@@ -13553,26 +13570,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                     </div>
                                     `}
                                 </div>
-                                ` : `
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label" style="color: #94A3B8;">${detailIdentityLabel}</label>
-                                        <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Payee Alias</label>
-                                        <input id="detail-edit-alias" class="bank-form-control" type="text" value="${payee.alias || payee.name || ''}">
-                                    </div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label">${detailEmailLabel}</label>
-                                    <input id="detail-edit-email" class="bank-form-control" type="text" value="${payee.email || ''}">
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <label class="bank-form-label" style="color: #94A3B8;">Entity Name</label>
-                                    <input class="bank-form-control" type="text" value="${payee.name}" style="background: #F8FAFC; color: #64748B;" disabled>
-                                </div>
-                                `}
+                                ` : ''}
                             </div>
                         ` : `
                             ${isDetailEnhancedView ? `
@@ -13949,6 +13947,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             if (isInvoicePayerDetail) {
                 const aliasInput = document.getElementById('detail-edit-alias');
                 if (aliasInput) { payee.alias = aliasInput.value.trim() || payee.alias; payee.name = payee.alias; }
+                const emailInputP = document.getElementById('detail-edit-email');
+                if (emailInputP) payee.email = emailInputP.value.trim() || payee.email;
                 const moreInfoChk = document.getElementById('detail-more-info-chk');
                 if (moreInfoChk?.checked) {
                     if (payee.personType === 'company') {
