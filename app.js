@@ -7636,7 +7636,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <span style="font-size: 11px; color: #94A3B8;">平台代开，合规托管</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
 
                         <!-- Chase Bank -->
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
@@ -7750,7 +7750,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <span style="font-size: 11px; color: #94A3B8;">需经 Obita 审核后激活</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
 
                         <!-- Banco Bradesco -->
                         <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
