@@ -12172,9 +12172,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <thead>
                                 ${isCompactDirectoryMode ? `
                                 <tr>
-                                    <th style="width: 28%;">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
-                                    <th style="width: 40%;">Payment Method</th>
-                                    <th style="width: 16%;">Status</th>
+                                    <th style="width: ${isContactManagementMode ? '24%' : '28%'};">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
+                                    ${isContactManagementMode ? '<th style="width: 14%;">Type</th>' : ''}
+                                    <th style="width: ${isContactManagementMode ? '32%' : '40%'};">Payment Method</th>
+                                    <th style="width: 14%;">Status</th>
                                     <th class="text-center" style="width: 16%;">${isInvoicePayerMode ? 'Linked Invoices' : isPayoutPayeeMode ? 'Linked Payouts' : 'Linked Orders'}</th>
                                 </tr>
                                 ` : `
@@ -12226,7 +12227,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             scopeHtml += '</div>';
 
                             let destinationSummary;
-                            if (isInvoicePayerMode || isPayoutPayeeMode) {
+                            if (isInvoicePayerMode || isPayoutPayeeMode || isContactManagementMode) {
                                 const w = (window.currentLicenseMode !== 'MSO') ? p.wallets?.[0] : null;
                                 const b = p.banks?.[0];
                                 if (w) {
@@ -12307,23 +12308,22 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 : (p.linkedPayouts || 0);
 
                             if (isCompactDirectoryMode) {
-                                // Inline type tag for Contact Management rows
-                                const inlineTypeTag = isContactManagementMode
-                                    ? `<span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; margin-left: 8px; vertical-align: middle; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>`
-                                    : '';
                                 const personTypeLabel = isInvoicePayerMode
                                     ? (p.personType === 'company' ? 'Institution' : 'Individual')
                                     : (p.personType === 'company' ? 'Company' : 'Individual');
                                 const rowName = `
-                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: flex; align-items: center; flex-wrap: wrap;">
-                                        <span>${p.alias || p.name}</span>${inlineTypeTag}
-                                    </div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
                                     ${p.email ? `<div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>` : ''}
                                     <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${personTypeLabel} · ${p.id}</div>
                                 `;
                                 return `
                                 <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''" style="cursor: pointer; transition: background 0.12s ease; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                     <td>${rowName}</td>
+                                    ${isContactManagementMode ? `
+                                    <td>
+                                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>
+                                    </td>
+                                    ` : ''}
                                     <td style="vertical-align: top;">${destinationSummary}</td>
                                     <td>
                                         <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
@@ -12362,7 +12362,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </td>
                             </tr>`;
                         }).join('') : `
-                            <tr><td colspan="${isContactManagementMode ? 6 : (isInvoicePayerMode || isPayoutPayeeMode) ? 4 : 8}" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">${isPayoutPayeeMode ? 'No payees matched your current filters.' : isInvoicePayerMode ? 'No payers matched your current filters.' : isContactManagementMode ? 'No contacts matched your current filters.' : 'No external contacts matched your current filters.'}</td></tr>`
+                            <tr><td colspan="${isContactManagementMode ? 5 : (isInvoicePayerMode || isPayoutPayeeMode) ? 4 : 8}" style="padding: 56px 24px; text-align: center; color: #64748B; font-size: 14px;">${isPayoutPayeeMode ? 'No payees matched your current filters.' : isInvoicePayerMode ? 'No payers matched your current filters.' : isContactManagementMode ? 'No contacts matched your current filters.' : 'No external contacts matched your current filters.'}</td></tr>`
                         }
                             </tbody>
                         </table>
