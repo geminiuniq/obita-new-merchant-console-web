@@ -16729,9 +16729,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         const tooltipIcon = (txt) => `<i data-lucide="info" style="width:12px;height:12px;color:#CBD5E1;cursor:help;vertical-align:middle;margin-left:4px;" title="${txt}"></i>`;
 
-        // Action buttons: Download Receipt always; Retry (Failed) / Refresh (Processing)
+        // Action buttons: Download Receipt only when Completed; Retry (Failed) / Refresh (Processing)
+        const isCompleted = order.status === 'Completed';
         const actionButtons = `
-            <button onclick="window.downloadConversionReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+            ${isCompleted ? `
+                <button onclick="window.downloadConversionReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+            ` : ''}
             ${isFailed ? `
                 <button onclick="window.retryConversion()" style="padding: 7px 14px; background: #2563EB; border: 1px solid #2563EB; border-radius: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>Retry Conversion</button>
             ` : ''}
@@ -16858,11 +16861,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <div style="font-size: 12px; color: #166534; margin-top: 3px;">${order.settledAt} · Funds credited to <strong>${order.destinationVault}</strong></div>
                             </div>
                         </div>` : order.status === 'Processing' ? `
-                        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;">
-                            <div style="width: 30px; height: 30px; border-radius: 999px; background: #B45309; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(180,83,9,0.25);"><i data-lucide="clock" style="width: 16px; height: 16px; color: white;"></i></div>
+                        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;">
+                            <div style="width: 30px; height: 30px; border-radius: 999px; background: #64748B; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(100,116,139,0.2);"><i data-lucide="clock" style="width: 16px; height: 16px; color: white;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 14px; font-weight: 800; color: #92400E;">Settlement in Progress</div>
-                                <div style="font-size: 12px; color: #78350F; margin-top: 3px;">Awaiting settlement to <strong>${order.destinationVault}</strong></div>
+                                <div style="font-size: 14px; font-weight: 800; color: #334155;">Settlement in Progress</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px;">Awaiting settlement to <strong style="color: #475569;">${order.destinationVault}</strong></div>
                             </div>
                         </div>` : `
                         <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px;">
