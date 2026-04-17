@@ -12019,6 +12019,30 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             return true;
         });
 
+        // Sorting (Contact Management mode)
+        const sortValue = document.getElementById('payee-sort')?.value || 'updated-desc';
+        const linkedCount = (p) => {
+            if (p.directoryType === 'invoicePayer') return p.linkedInvoices || 0;
+            if (p.directoryType === 'payee') return p.linkedPayouts || 0;
+            return (p.linkedPayouts || 0) + (p.linkedInvoices || 0);
+        };
+        const parseDate = (s) => {
+            if (!s) return 0;
+            const t = Date.parse(s);
+            return isNaN(t) ? 0 : t;
+        };
+        filtered.sort((a, b) => {
+            switch (sortValue) {
+                case 'name-asc':     return (a.alias || a.name || '').localeCompare(b.alias || b.name || '');
+                case 'name-desc':    return (b.alias || b.name || '').localeCompare(a.alias || a.name || '');
+                case 'updated-asc':  return parseDate(a.createdAt) - parseDate(b.createdAt);
+                case 'updated-desc': return parseDate(b.createdAt) - parseDate(a.createdAt);
+                case 'linked-desc':  return linkedCount(b) - linkedCount(a);
+                case 'linked-asc':   return linkedCount(a) - linkedCount(b);
+                default: return 0;
+            }
+        });
+
         // Summary Calculations
         const totalContacts = scopedContacts.length;
         const totalPayout = scopedContacts.filter(p => p.usageScope?.payout).length;
@@ -12108,7 +12132,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <div class="card" style="padding: 0; overflow: hidden;">
 
                     <!-- Filter bar -->
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: ${isCompactDirectoryMode ? '1.8fr 0.9fr 0.8fr' : '1.6fr 0.8fr 0.9fr 0.8fr'}; gap: 14px; align-items: center;">
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: ${isCompactDirectoryMode ? '1.5fr 0.8fr 0.8fr 1fr' : '1.4fr 0.8fr 0.9fr 0.8fr 1fr'}; gap: 12px; align-items: center;">
                         <div style="position: relative;">
                             <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
                             <input id="payee-search" type="text" value="${document.getElementById('payee-search')?.value || ''}" oninput="window.renderPayeeListPage()" placeholder="Search by name, account, country..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
@@ -12133,6 +12157,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <option value="active"   ${statusFilter === 'active'   ? 'selected' : ''}>Active</option>
                             <option value="disabled" ${statusFilter === 'disabled' ? 'selected' : ''}>Disabled</option>
                             <option value="pending_collection" ${statusFilter === 'pending_collection' ? 'selected' : ''}>Pending Info</option>
+                        </select>
+                        <select id="payee-sort" onchange="window.renderPayeeListPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="updated-desc" ${sortValue === 'updated-desc' ? 'selected' : ''}>Sort: Recently updated</option>
+                            <option value="updated-asc"  ${sortValue === 'updated-asc'  ? 'selected' : ''}>Sort: Oldest first</option>
+                            <option value="name-asc"     ${sortValue === 'name-asc'     ? 'selected' : ''}>Sort: Contact A→Z</option>
+                            <option value="name-desc"    ${sortValue === 'name-desc'    ? 'selected' : ''}>Sort: Contact Z→A</option>
+                            <option value="linked-desc"  ${sortValue === 'linked-desc'  ? 'selected' : ''}>Sort: Linked Orders ↓</option>
+                            <option value="linked-asc"   ${sortValue === 'linked-asc'   ? 'selected' : ''}>Sort: Linked Orders ↑</option>
                         </select>
                     </div>
 
