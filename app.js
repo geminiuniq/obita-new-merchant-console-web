@@ -9778,8 +9778,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <div style="padding: 13px 0; display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;">
                             <div>
-                                <div style="font-size: 13px; font-weight: 600; color: #334155;">Obita Enterprise Wallet Service Agreement</div>
-                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">企业钱包服务标准条款及用户权责声明</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #334155;">${isMso ? 'Obita Fiat Custody Service Terms & Conditions' : 'Obita Enterprise Wallet Service Agreement'}</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${isMso ? '法币托管服务标准条款、资金隔离安排及用户权责声明' : '企业钱包服务标准条款及用户权责声明'}</div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 12px;">
                                 <div style="font-size: 12px; color: #94A3B8; white-space: nowrap;">Accepted Nov 21, 2025</div>
