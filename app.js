@@ -7213,6 +7213,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             if (window.currentLicenseMode === 'MSO' && (request.scope || '').toLowerCase().includes('stablecoin')) return false;
                             return true;
                         }).slice(0, 2);
+                        // EDD-pending contacts (payees/payers flagged eddRequired without moreInfo)
+                        const eddPendingContacts = (typeof payeeList !== 'undefined' ? payeeList : [])
+                            .filter(c => c.eddRequired && !c.moreInfo)
+                            .slice(0, 3);
+                        const eddTotalCount = (typeof payeeList !== 'undefined' ? payeeList : [])
+                            .filter(c => c.eddRequired && !c.moreInfo).length;
                         const isMSO = window.currentLicenseMode === 'MSO';
                         const exceptions = isMSO ? [
                             {
@@ -7262,7 +7268,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div>
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
                                         <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To-Do</div>
-                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals</span>
+                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals${eddTotalCount ? ` · ${eddTotalCount} EDD` : ''}</span>
                                     </div>
                                     <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
                                         ${pendingApprovals.map(request => `
@@ -7279,6 +7285,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                                 </div>
                                             </div>
                                         `).join('')}
+                                        ${eddPendingContacts.map(c => {
+                                            const directoryType = c.usageScope?.collectionInvoice && !c.usageScope?.payout ? 'invoicePayer' : 'payee';
+                                            const roleLabel = directoryType === 'invoicePayer' ? 'Payer' : 'Payee';
+                                            return `
+                                            <div class="approval-item" style="padding: 16px; border: 1px solid #FDE68A; border-radius: 12px; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
+                                                    <div style="flex: 1; min-width: 0;">
+                                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                                            <div style="font-weight: 700; color: #0F172A; font-size: 14px;">EDD Required · ${c.alias || c.name}</div>
+                                                            <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">${roleLabel}</span>
+                                                        </div>
+                                                        <div style="color: #92400E; font-size: 12px; margin-top: 4px; line-height: 1.5;">${c.eddReason || 'Additional information required before further transactions.'}</div>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                                    <button class="btn btn-primary" onclick="window.editPayee('${c.id}', '${directoryType}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700; background: #B45309; border: none;">Complete EDD</button>
+                                                </div>
+                                            </div>`;
+                                        }).join('')}
                                     </div>
                                 </div>
 
