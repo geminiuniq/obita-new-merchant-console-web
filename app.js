@@ -10863,144 +10863,168 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
+        const renderCheckoutRow = (row) => {
+            const normalizedStatus = normalizeOrderStatus(row.status);
+            const isInProgress = normalizedStatus === 'In Progress';
+            const rowBg = isInProgress ? 'background: rgba(254, 243, 199, 0.22);' : '';
+            const rowHoverBg = isInProgress ? '#FFFBEB' : '#F8FAFC';
+            return `
+                <tr onclick="window.openCheckoutOrderDetail('${row.checkoutId}')" onmouseover="this.style.background='${rowHoverBg}'" onmouseout="this.style.background='${isInProgress ? 'rgba(254, 243, 199, 0.22)' : ''}'" style="cursor: pointer; ${rowBg}">
+                    <td>
+                        <div style="font-family: monospace; font-size: 12px; color: #2563EB; font-weight: 600;">${row.checkoutId}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${row.createdAt}</div>
+                    </td>
+                    <td>
+                        <div class="font-medium">${row.externalOrderId}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${row.storefront}</div>
+                    </td>
+                    <td style="color: #475569;">${row.paymentMethod}</td>
+                    <td class="text-right">
+                        <div class="font-medium" style="font-variant-numeric: tabular-nums;">${row.amount}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px; font-variant-numeric: tabular-nums;">Paid ${row.paidAmount}</div>
+                    </td>
+                    <td class="text-muted" style="font-size: 12px;">${row.expiresAt}</td>
+                    <td>${renderStatus(row.status)}</td>
+                </tr>`;
+        };
+
+        const showDemoPanel = window.currentLicenseMode !== 'MSO';
+
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                <div style="display: grid; grid-template-columns: 1fr 260px; gap: 20px; align-items: stretch;">
-                    <div class="card collections-summary-card" style="padding: 24px; min-width: 0; margin-bottom: 0;">
-                        <div class="collection-header" style="margin-bottom: 22px;">
-                            <div>
-                                <h2 class="card-title" style="font-size: 18px; margin: 0;">Checkout Summary</h2>
-                                <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Checkout payment performance for the selected date range.</div>
-                            </div>
-                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 999px; background: #FFFFFF;">
-                                <span style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Date Range</span>
-                                <span style="font-size: 13px; font-weight: 600; color: #0F172A;">
-                                    ${activeCheckoutOrdersStartDate || 'All dates'} to ${activeCheckoutOrdersEndDate || 'Today'}
-                                </span>
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                <!-- Page Header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Checkout Orders</h1>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Track hosted checkout performance across all storefronts and payment channels.</div>
+                        </div>
+                        ${showDemoPanel ? `<button class="btn btn-outline" onclick="window.openCheckoutDemoDrawer()" style="padding: 10px 16px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; color: #4C1D95; border-color: #DDD6FE;"><i data-lucide="play-circle" style="width: 14px; height: 14px;"></i> Live Demo</button>` : ''}
+                    </div>
+                </div>
+
+                <!-- KPI Row: Checkout Summary (full width in MSO; with demo panel in TCSP) -->
+                <div style="display: grid; grid-template-columns: ${showDemoPanel ? 'minmax(0, 2.1fr) minmax(280px, 0.9fr)' : '1fr'}; gap: 16px; align-items: stretch;">
+                    <!-- Checkout Summary with hero + breakdown -->
+                    <div class="card" style="margin: 0; padding: 0; overflow: hidden;">
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Checkout Summary</div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid #E2E8F0; border-radius: 999px; background: #F8FAFC;">
+                                <i data-lucide="calendar" style="width: 12px; height: 12px; color: #94A3B8;"></i>
+                                <span style="font-size: 12px; font-weight: 600; color: #475569;">${activeCheckoutOrdersStartDate || 'All dates'} → ${activeCheckoutOrdersEndDate || 'Today'}</span>
                             </div>
                         </div>
-                        <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
-                            <div class="c-stat-box" style="min-width: 140px;">
-                                <span class="c-stat-label">Created Orders</span>
-                                <span class="c-stat-count">${summary.createdCount}</span>
-                                <span class="c-stat-amount">${formatCheckoutSummaryAmount(summary.createdAmount)}</span>
+                        <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
+                            <!-- Hero: Total Volume -->
+                            <div style="padding: 22px 26px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
+                                <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
+                                <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">${formatCheckoutSummaryAmount(summary.createdAmount)}</div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">${summary.createdCount} orders</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 140px;">
-                                <span class="c-stat-label">Paid Successfully</span>
-                                <span class="c-stat-count text-success">${summary.paidCount}</span>
-                                <span class="c-stat-amount text-success">${formatCheckoutSummaryAmount(summary.paidAmount)}</span>
+                            <!-- Paid -->
+                            <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Paid</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.paidCount}</div>
+                                <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatCheckoutSummaryAmount(summary.paidAmount)}</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 140px;">
-                                <span class="c-stat-label">In-Transit</span>
-                                <span class="c-stat-count text-warning">${summary.transitCount}</span>
-                                <span class="c-stat-amount text-warning">${formatCheckoutSummaryAmount(summary.transitAmount)}</span>
+                            <!-- In-Transit -->
+                            <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.transitCount}</div>
+                                <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatCheckoutSummaryAmount(summary.transitAmount)}</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 140px;">
-                                <span class="c-stat-label">Failed (Expired/Cancelled)</span>
-                                <span class="c-stat-count text-muted">${summary.failedCount}</span>
-                                <span class="c-stat-amount text-muted">${formatCheckoutSummaryAmount(summary.failedAmount)}</span>
+                            <!-- Failed -->
+                            <div style="padding: 22px 22px;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Failed</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.failedCount}</div>
+                                <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatCheckoutSummaryAmount(summary.failedAmount)}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div onclick="window.openCheckoutDemoDrawer()" style="border-radius: 16px; background: linear-gradient(145deg, #1E1B4B 0%, #312E81 60%, #4C1D95 100%); padding: 24px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; box-shadow: 0 8px 24px rgba(99,102,241,0.25); transition: box-shadow 0.2s ease;" onmouseover="this.style.boxShadow='0 12px 32px rgba(99,102,241,0.38)'" onmouseout="this.style.boxShadow='0 8px 24px rgba(99,102,241,0.25)'">
-                        <div>
-                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(165,180,252,0.15); border: 1px solid rgba(165,180,252,0.3); padding: 5px 10px; border-radius: 999px; margin-bottom: 14px;">
-                                <i data-lucide="play-circle" style="width: 12px; height: 12px; color: #A5B4FC;"></i>
-                                <span style="font-size: 10px; font-weight: 700; color: #A5B4FC; text-transform: uppercase; letter-spacing: 0.08em;">Live Demo</span>
+                    ${showDemoPanel ? `
+                    <!-- Live Demo side panel (TCSP only) -->
+                    <div onclick="window.openCheckoutDemoDrawer()" style="border-radius: 12px; background: linear-gradient(145deg, #1E1B4B 0%, #312E81 60%, #4C1D95 100%); padding: 0; cursor: pointer; display: flex; flex-direction: column; box-shadow: 0 6px 18px rgba(99,102,241,0.2); transition: box-shadow 0.2s ease; overflow: hidden;" onmouseover="this.style.boxShadow='0 10px 26px rgba(99,102,241,0.32)'" onmouseout="this.style.boxShadow='0 6px 18px rgba(99,102,241,0.2)'">
+                        <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                <div style="width: 22px; height: 22px; border-radius: 6px; background: rgba(165,180,252,0.2); display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="play-circle" style="width: 13px; height: 13px; color: #A5B4FC;"></i>
+                                </div>
+                                <div style="font-size: 14px; font-weight: 700; color: #FFFFFF;">Live Demo</div>
                             </div>
-                            <div style="font-size: 16px; font-weight: 800; color: #FFFFFF; line-height: 1.4;">Checkout Payment Flow</div>
+                            <i data-lucide="arrow-right" style="width: 14px; height: 14px; color: #A5B4FC;"></i>
                         </div>
-                        <div>
-                            <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;">
+                        <div style="flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                            <div style="font-size: 13px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em;">Checkout Payment Flow</div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${[
                                     { num: 1, label: 'Select Stablecoins', color: '#818CF8' },
                                     { num: 2, label: 'Pick coin & network', color: '#A78BFA' },
                                     { num: 3, label: 'Connect wallet & Pay', color: '#F59E0B' },
                                     { num: 4, label: 'Order complete', color: '#34D399' }
                                 ].map(s => `
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div style="width: 18px; height: 18px; border-radius: 50%; background: ${s.color}22; border: 1.5px solid ${s.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <span style="font-size: 9px; font-weight: 800; color: ${s.color};">${s.num}</span>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 20px; height: 20px; border-radius: 50%; background: ${s.color}22; border: 1.5px solid ${s.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <span style="font-size: 10px; font-weight: 800; color: ${s.color};">${s.num}</span>
                                         </div>
-                                        <span style="font-size: 11px; color: #C7D2FE;">${s.label}</span>
+                                        <span style="font-size: 12px; color: #C7D2FE;">${s.label}</span>
                                     </div>
                                 `).join('')}
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px;">
-                                <span style="font-size: 12px; font-weight: 700; color: #FFFFFF;">View Full Demo</span>
-                                <i data-lucide="arrow-right" style="width: 15px; height: 15px; color: #A5B4FC;"></i>
-                            </div>
                         </div>
                     </div>
+                    ` : ''}
                 </div>
 
+                <!-- Checkout Order List -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h2 class="card-title" style="margin: 0; font-size: 18px;">Checkout Order List</h2>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Track hosted checkout orders by merchant order, customer, storefront, payment method, expiry, and settlement result.</div>
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div style="position: relative; flex: 1; min-width: 240px; max-width: 320px;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="checkout-orders-search" type="text" value="${document.getElementById('checkout-orders-search')?.value || ''}" oninput="window.renderCheckoutOrdersPage()" placeholder="Search by checkout ID, merchant order, customer..." style="width: 100%; padding: 10px 14px 10px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                         </div>
-                    </div>
-
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.8fr) minmax(180px, 0.8fr) auto; gap: 14px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
-                                <input id="checkout-orders-start-date" type="date" value="${activeCheckoutOrdersStartDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                                <span style="font-size: 12px; color: #94A3B8;">to</span>
-                                <input id="checkout-orders-end-date" type="date" value="${activeCheckoutOrdersEndDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                            </div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                            <input id="checkout-orders-start-date" type="date" value="${activeCheckoutOrdersStartDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
+                            <span style="font-size: 12px; color: #94A3B8;">to</span>
+                            <input id="checkout-orders-end-date" type="date" value="${activeCheckoutOrdersEndDate}" onchange="window.renderCheckoutOrdersPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
                         </div>
-                        <select id="checkout-orders-status" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <select id="checkout-orders-status" onchange="window.renderCheckoutOrdersPage()" style="min-width: 160px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Statuses</option>
                             <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
                             <option value="In Progress" ${statusValue === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
                         </select>
-                        <select id="checkout-orders-method" onchange="window.renderCheckoutOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
-                            <option value="all">All Payment Methods</option>
+                        <select id="checkout-orders-method" onchange="window.renderCheckoutOrdersPage()" style="min-width: 160px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                            <option value="all">All Methods</option>
                             ${window.currentLicenseMode !== 'MSO' ? `<option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>` : ''}
                             <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                             <option value="Bank Card" ${methodValue === 'Bank Card' ? 'selected' : ''}>Bank Card</option>
                         </select>
-                        <div style="position: relative; min-width: 260px;">
-                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                            <input id="checkout-orders-search" type="text" value="${document.getElementById('checkout-orders-search')?.value || ''}" oninput="window.renderCheckoutOrdersPage()" placeholder="Search by checkout ID, merchant order, customer..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
-                        </div>
                     </div>
 
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Checkout ID</th>
-                                    <th>Created At</th>
-                                    <th>External Order ID</th>
-                                    <th>Storefront</th>
-                                    <th>Payment Method</th>
-                                    <th>Settlement Asset</th>
-                                    <th class="text-right">Order Amount</th>
-                                    <th class="text-right">Paid Amount</th>
-                                    <th>Expires At</th>
+                                    <th>Checkout</th>
+                                    <th>Merchant Order</th>
+                                    <th>Method</th>
+                                    <th class="text-right">Amount</th>
+                                    <th>Expires</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${filteredRows.length ? filteredRows.map(row => `
-                                    <tr onclick="window.openCheckoutOrderDetail('${row.checkoutId}')">
-                                        <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.checkoutId}</td>
-                                        <td class="text-muted">${row.createdAt}</td>
-                                        <td>${row.externalOrderId}</td>
-                                        <td>${row.storefront}</td>
-                                        <td>${row.paymentMethod}</td>
-                                        <td>${row.settlementAsset}</td>
-                                        <td class="text-right font-medium">${row.amount}</td>
-                                        <td class="text-right">${row.paidAmount}</td>
-                                        <td class="text-muted">${row.expiresAt}</td>
-                                        <td>${renderStatus(row.status)}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="10" style="padding: 48px 24px; text-align: center; color: #64748B;">No checkout orders matched your current filters.</td></tr>'}
+                                ${filteredRows.length ? filteredRows.map(renderCheckoutRow).join('') : '<tr><td colspan="6" style="padding: 48px 24px; text-align: center; color: #64748B;">No checkout orders matched your current filters.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
