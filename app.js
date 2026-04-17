@@ -7443,6 +7443,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
 
                 <!-- Payouts Summary -->
+                ${(() => {
+                    const s = computePayoutSummary();
+                    return `
                 <div class="card payouts-summary-card">
                     <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
                     <div class="collection-card-inner">
@@ -7459,32 +7462,28 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div class="collection-stats-grid">
                             <div class="c-stat-box">
                                 <span class="c-stat-label">Created Orders</span>
-                                <span class="c-stat-count">350</span>
-                                <span class="c-stat-amount">$2,550,000.00</span>
+                                <span class="c-stat-count">${s.totalCount}</span>
+                                <span class="c-stat-amount">${formatUsdFull(s.totalVolume)}</span>
                             </div>
                             <div class="c-stat-box">
                                 <span class="c-stat-label">Successful</span>
-                                <span class="c-stat-count text-success">310</span>
-                                <span class="c-stat-amount text-success">$2,400,000.00</span>
-                            </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Settled</span>
-                                <span class="c-stat-count" style="color: #3B82F6;">290</span>
-                                <span class="c-stat-amount" style="color: #3B82F6;">$2,250,000.00</span>
+                                <span class="c-stat-count text-success">${s.completedCount}</span>
+                                <span class="c-stat-amount text-success">${formatUsdFull(s.completedVolume)}</span>
                             </div>
                             <div class="c-stat-box">
                                 <span class="c-stat-label">In-Transit</span>
-                                <span class="c-stat-count text-warning">25</span>
-                                <span class="c-stat-amount text-warning">$100,000.00</span>
+                                <span class="c-stat-count" style="color: #1D4ED8;">${s.inTransitCount}</span>
+                                <span class="c-stat-amount" style="color: #1D4ED8;">${formatUsdFull(s.inTransitVolume)}</span>
                             </div>
                             <div class="c-stat-box">
                                 <span class="c-stat-label">Failed</span>
-                                <span class="c-stat-count text-muted">15</span>
-                                <span class="c-stat-amount text-muted">$50,000.00</span>
+                                <span class="c-stat-count text-muted">${s.failedCount}</span>
+                                <span class="c-stat-amount text-muted">${formatUsdFull(s.failedVolume)}</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>`;
+                })()}
 
 
 
@@ -11433,6 +11432,65 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         if (value === 'expired') return 'Expired';
         if (['cancelled', 'canceled'].includes(value)) return 'Cancelled';
         return status || 'In Progress';
+    }
+
+    // Rough FX rates for demo aggregation (to USD)
+    const USD_RATES = {
+        USD: 1, USDT: 1, USDC: 1,
+        HKD: 1 / 7.8, EUR: 1.09, GBP: 1.27, JPY: 1 / 150, BRL: 0.19, SGD: 0.74, CNY: 1 / 7.2
+    };
+    function parseAmountToUsd(amountStr) {
+        if (!amountStr) return 0;
+        const match = String(amountStr).match(/([+-]?[\d,]+(?:\.\d+)?)\s*([A-Z]{3,4})?/);
+        if (!match) return 0;
+        const value = parseFloat(match[1].replace(/,/g, '')) || 0;
+        const ccy = (match[2] || 'USD').toUpperCase();
+        const rate = USD_RATES[ccy] != null ? USD_RATES[ccy] : 1;
+        return value * rate;
+    }
+    function formatUsdAbbrev(usd) {
+        const abs = Math.abs(usd);
+        if (abs >= 1_000_000) return '$' + (usd / 1_000_000).toFixed(2).replace(/\.00$/, '') + 'M';
+        if (abs >= 1_000)     return '$' + Math.round(usd / 1_000).toLocaleString('en-US') + 'K';
+        return '$' + Math.round(usd).toLocaleString('en-US');
+    }
+    function formatUsdFull(usd) {
+        return '$' + usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Aggregate payout orders into Total / Completed / In-Transit / Failed buckets
+    function computePayoutSummary() {
+        const rows = (ORDER_REPORT_DATA.payout || []).filter(row => {
+            if (window.currentLicenseMode === 'MSO') {
+                const v = Object.values(row).join(' ');
+                if (/\bUSDT\b|\bUSDC\b|Stablecoin|Wallet Transfer/.test(v)) return false;
+            }
+            return true;
+        });
+        const summary = {
+            totalCount: 0, totalVolume: 0,
+            completedCount: 0, completedVolume: 0,
+            inTransitCount: 0, inTransitVolume: 0,
+            failedCount: 0, failedVolume: 0
+        };
+        rows.forEach(row => {
+            const count = row.payoutCount || 1;
+            const usd = parseAmountToUsd(row.amount);
+            const bucket = normalizeOrderStatus(row.status);
+            summary.totalCount += count;
+            summary.totalVolume += usd;
+            if (bucket === 'Completed') {
+                summary.completedCount += count;
+                summary.completedVolume += usd;
+            } else if (bucket === 'Failed' || bucket === 'Expired' || bucket === 'Cancelled') {
+                summary.failedCount += count;
+                summary.failedVolume += usd;
+            } else {
+                summary.inTransitCount += count;
+                summary.inTransitVolume += usd;
+            }
+        });
+        return summary;
     }
 
     function getOrderReportStatusPill(status) {
@@ -16557,12 +16615,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">1y</span>
                         </div>
                     </div>
+                    ${(() => {
+                        const s = computePayoutSummary();
+                        return `
                     <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
                         <!-- Hero: Total Volume -->
                         <div style="padding: 22px 26px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
                             <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
-                            <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">$2.55M</div>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">350 orders</div>
+                            <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">${formatUsdAbbrev(s.totalVolume)}</div>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">${s.totalCount} orders</div>
                         </div>
                         <!-- Completed -->
                         <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
@@ -16570,8 +16631,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
                                 <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Completed</div>
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">310</div>
-                            <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$2.40M</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.completedCount}</div>
+                            <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.completedVolume)}</div>
                         </div>
                         <!-- In-Transit -->
                         <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
@@ -16579,8 +16640,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                                 <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">25</div>
-                            <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$100,000</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.inTransitCount}</div>
+                            <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.inTransitVolume)}</div>
                         </div>
                         <!-- Failed -->
                         <div style="padding: 22px 22px;">
@@ -16588,10 +16649,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
                                 <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Failed</div>
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">15</div>
-                            <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$50,000</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.failedCount}</div>
+                            <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.failedVolume)}</div>
                         </div>
-                    </div>
+                    </div>`;
+                    })()}
                 </div>
 
                 <!-- Payees side panel -->
