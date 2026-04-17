@@ -6545,152 +6545,187 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const body = document.getElementById('checkout-demo-drawer-body');
         if (!drawer || !body) return;
 
+        // Shared mockup chrome for consistency across all steps
+        const mockupCard = (content) => `<div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;padding:16px;font-size:12px;">${content}</div>`;
+        // Neutral step color for all journey steps; only the final success step uses green
+        const stepColor = '#334155';
+        const successColor = '#059669';
+
         const steps = [
             {
-                num: 1, color: '#2563EB', label: 'Select Stablecoins',
-                mockup: `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:16px;font-size:12px;">
-                    <div style="font-weight:700;color:#0F172A;margin-bottom:10px;">Payment Type</div>
+                num: 1, label: 'Select Stablecoins',
+                caption: 'Customer picks Stablecoin as the payment method at checkout.',
+                mockup: mockupCard(`
+                    <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Payment Type</div>
                     <div style="display:flex;flex-direction:column;gap:7px;">
                         <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;color:#94A3B8;">
                             <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;flex-shrink:0;"></div>Credit or Debit Card
                         </div>
                         <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;color:#94A3B8;">
-                            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;flex-shrink:0;"></div>My IKEA Credit Card
+                            <div style="width:14px;height:14px;border-radius:50%;border:1.5px solid #CBD5E1;flex-shrink:0;"></div>Store Credit Card
                         </div>
-                        <div style="border:2px solid #2563EB;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;background:#EFF6FF;color:#1D4ED8;font-weight:600;">
-                            <div style="width:14px;height:14px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #BFDBFE;flex-shrink:0;"></div>
+                        <div style="border:1.5px solid #334155;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;background:#F8FAFC;color:#0F172A;font-weight:600;">
+                            <div style="width:14px;height:14px;border-radius:50%;background:#334155;box-shadow:0 0 0 3px #E2E8F0;flex-shrink:0;"></div>
                             Stablecoins
                             <span style="margin-left:auto;display:flex;gap:4px;">
-                                <span style="width:18px;height:18px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">T</span>
-                                <span style="width:18px;height:18px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">$</span>
+                                <span style="width:18px;height:18px;border-radius:50%;background:#26A17B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">₮</span>
+                                <span style="width:18px;height:18px;border-radius:50%;background:#2775CA;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;">C</span>
                             </span>
                         </div>
                     </div>
-                    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#0F172A;border-radius:8px;">
-                        <div><div style="font-size:10px;color:#94A3B8;">Order Total</div><div style="font-size:13px;font-weight:700;color:#fff;">$500.00</div></div>
-                        <div style="background:#2563EB;color:#fff;border-radius:6px;padding:8px 14px;font-weight:700;font-size:12px;">Pay $500.00 →</div>
+                    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+                        <div><div style="font-size:10px;color:#94A3B8;font-weight:600;">Order Total</div><div style="font-size:14px;font-weight:800;color:#0F172A;margin-top:2px;">$500.00</div></div>
+                        <div style="background:#0F172A;color:#fff;border-radius:6px;padding:8px 14px;font-weight:700;font-size:12px;">Pay $500.00 →</div>
                     </div>
-                </div>`
+                `)
             },
             {
-                num: 2, color: '#7C3AED', label: 'Select coin & network',
-                mockup: `<div style="background:#EEF2FF;border-radius:12px;padding:14px;font-size:12px;">
-                    <div style="background:linear-gradient(135deg,#EDE9FE,#C7D2FE);border-radius:8px;padding:12px 14px;margin-bottom:14px;">
-                        <div style="font-size:10px;color:#6D28D9;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
-                        <div style="font-size:22px;font-weight:800;color:#1E1B4B;margin-top:2px;">500.00 USD</div>
+                num: 2, label: 'Pick coin & network',
+                caption: 'Customer chooses which stablecoin (USDT / USDC) and which chain to send from.',
+                mockup: mockupCard(`
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;margin-bottom:14px;">
+                        <div style="font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
+                        <div style="font-size:22px;font-weight:800;color:#0F172A;margin-top:2px;letter-spacing:-0.02em;">500.00 USD</div>
                     </div>
-                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:8px;font-size:11px;">Select Stablecoin</div>
+                    <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Select Stablecoin</div>
                     <div style="display:flex;gap:8px;margin-bottom:14px;">
-                        <div style="flex:1;border:2px solid #7C3AED;border-radius:8px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:6px;font-weight:700;color:#7C3AED;font-size:12px;">
-                            <div style="width:20px;height:20px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">T</div>
-                            USDT <span style="margin-left:auto;color:#7C3AED;">✓</span>
+                        <div style="flex:1;border:1.5px solid #334155;border-radius:8px;padding:9px 12px;background:#F8FAFC;display:flex;align-items:center;gap:6px;font-weight:700;color:#0F172A;font-size:12px;">
+                            <div style="width:20px;height:20px;border-radius:50%;background:#26A17B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">₮</div>
+                            USDT <span style="margin-left:auto;color:#334155;">✓</span>
                         </div>
                         <div style="flex:1;border:1px solid #E2E8F0;border-radius:8px;padding:9px 12px;background:#fff;display:flex;align-items:center;gap:6px;color:#64748B;font-size:12px;">
-                            <div style="width:20px;height:20px;border-radius:50%;background:#2563EB;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">$</div>
+                            <div style="width:20px;height:20px;border-radius:50%;background:#2775CA;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:800;flex-shrink:0;">C</div>
                             USDC
                         </div>
                     </div>
-                    <div style="font-weight:700;color:#1E1B4B;margin-bottom:8px;font-size:11px;">Select Network</div>
+                    <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Select Network</div>
                     <div style="display:flex;flex-direction:column;gap:6px;">
-                        <div style="border:2px solid #7C3AED;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#1E1B4B;">
-                            <span>BSC <span style="font-weight:400;color:#64748B;font-size:11px;">— Low fees, fast transactions</span></span><span style="color:#7C3AED;">✓</span>
+                        <div style="border:1.5px solid #334155;border-radius:8px;padding:10px 12px;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:#0F172A;">
+                            <span>BSC <span style="font-weight:400;color:#64748B;font-size:11px;">— Low fees, fast</span></span><span style="color:#334155;">✓</span>
                         </div>
-                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Ethereum <span style="font-size:11px;">— Most secure, higher fees</span></div>
-                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Tron <span style="font-size:11px;">— Very low fees, fast confirmation</span></div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Ethereum <span style="font-size:11px;">— Most secure</span></div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;font-size:12px;color:#64748B;">Tron <span style="font-size:11px;">— Very low fees</span></div>
                     </div>
-                    <div style="margin-top:14px;background:#7C3AED;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Continue to Pay</div>
-                    <div style="text-align:center;margin-top:8px;font-size:10px;color:#94A3B8;">Powered by Obita</div>
-                </div>`
+                    <div style="margin-top:14px;background:#0F172A;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Continue to Pay</div>
+                `)
             },
             {
-                num: 3, color: '#D97706', label: 'Connect wallet & Pay',
-                mockup: `<div style="display:flex;flex-direction:column;gap:10px;">
-                    <div style="background:#EEF2FF;border-radius:12px;padding:14px;font-size:12px;">
-                        <div style="background:linear-gradient(135deg,#EDE9FE,#C7D2FE);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div>
-                                <div style="font-size:10px;color:#6D28D9;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
-                                <div style="font-size:22px;font-weight:800;color:#1E1B4B;margin-top:2px;">500.00 USD</div>
-                                <div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
-                                    <div style="width:14px;height:14px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:7px;font-weight:800;flex-shrink:0;">T</div>
-                                    <span style="font-size:11px;color:#059669;font-weight:600;">500.04 USDT</span>
-                                    <span style="font-size:10px;color:#64748B;">(1 USD ≈ 1.0000 USDT)</span>
-                                </div>
-                            </div>
-                            <div style="background:#FEF3C7;border-radius:6px;padding:5px 10px;font-size:13px;font-weight:800;color:#92400E;letter-spacing:0.05em;">14 : 15</div>
-                        </div>
-                        <div style="font-weight:700;color:#1E1B4B;margin-bottom:7px;font-size:11px;display:flex;align-items:center;gap:6px;">Fast Payment <span style="background:#7C3AED;color:#fff;font-size:9px;padding:2px 7px;border-radius:999px;font-weight:600;">Recommend</span></div>
-                        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-                            <div style="border:2px solid #D97706;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#1E1B4B;">
-                                <div style="width:22px;height:22px;border-radius:6px;background:#F6851B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">M</div>
-                                MetaMask <span style="margin-left:auto;color:#D97706;font-size:14px;">✓</span>
-                            </div>
-                            <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
-                                <div style="width:22px;height:22px;border-radius:6px;background:#3B99FC;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">W</div>
-                                WalletConnect
-                            </div>
-                            <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
-                                <div style="width:22px;height:22px;border-radius:6px;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;flex-shrink:0;">⊞</div>
-                                Scan QR Code
+                num: 3, label: 'Connect wallet',
+                caption: 'Customer picks how to connect — browser extension, mobile WalletConnect, or QR scan.',
+                mockup: mockupCard(`
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                        <div style="min-width:0;">
+                            <div style="font-size:10px;color:#94A3B8;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Total Amount</div>
+                            <div style="font-size:22px;font-weight:800;color:#0F172A;margin-top:2px;letter-spacing:-0.02em;">500.00 USD</div>
+                            <div style="display:flex;align-items:center;gap:4px;margin-top:6px;">
+                                <div style="width:14px;height:14px;border-radius:50%;background:#26A17B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:800;flex-shrink:0;">₮</div>
+                                <span style="font-size:11px;color:#475569;font-weight:600;">500.04 USDT</span>
                             </div>
                         </div>
-                        <div style="background:#2563EB;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Payment 500.04 USDT</div>
+                        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:800;color:#92400E;letter-spacing:0.05em;white-space:nowrap;">14:15</div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:8px;padding:0 4px;">
-                        <div style="flex:1;height:1px;background:#E2E8F0;"></div>
-                        <span style="font-size:10px;color:#94A3B8;font-weight:600;">wallet confirms</span>
-                        <div style="flex:1;height:1px;background:#E2E8F0;"></div>
-                    </div>
-                    <div style="background:#1C1C1E;border-radius:12px;padding:16px;font-size:12px;color:#fff;">
-                        <div style="text-align:center;font-size:13px;font-weight:700;margin-bottom:12px;color:#E5E7EB;">转账请求</div>
-                        <div style="background:#2C2C2E;border-radius:8px;padding:12px;margin-bottom:10px;text-align:center;">
-                            <div style="font-size:18px;font-weight:800;color:#fff;">500.04 USDT</div>
+                    <div style="font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;">Connect Wallet</div>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+                        <div style="border:1.5px solid #334155;border-radius:8px;padding:10px 12px;background:#F8FAFC;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#0F172A;">
+                            <div style="width:22px;height:22px;border-radius:6px;background:#F6851B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">🦊</div>
+                            MetaMask <span style="margin-left:auto;color:#334155;">✓</span>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;margin-bottom:12px;">
-                            <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">网络</span><span style="color:#fff;">BNB Smart Chain</span></div>
-                            <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">请求来自</span><span style="color:#3B82F6;">cashier.obita.org</span></div>
-                            <div style="display:flex;justify-content:space-between;"><span style="color:#9CA3AF;">网络费</span><span style="color:#fff;">&lt; $0.01 · BNB</span></div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
+                            <div style="width:22px;height:22px;border-radius:6px;background:#3B99FC;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;flex-shrink:0;">W</div>
+                            WalletConnect
                         </div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                            <div style="background:#3F3F46;border-radius:8px;padding:10px;text-align:center;font-weight:600;color:#9CA3AF;font-size:12px;">取消</div>
-                            <div style="background:#2563EB;border-radius:8px;padding:10px;text-align:center;font-weight:700;color:#fff;font-size:12px;">确认</div>
+                        <div style="border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;background:#fff;display:flex;align-items:center;gap:8px;font-size:12px;color:#64748B;">
+                            <div style="width:22px;height:22px;border-radius:6px;background:#475569;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;flex-shrink:0;">⊞</div>
+                            Scan QR Code
                         </div>
                     </div>
-                </div>`
+                    <div style="background:#0F172A;color:#fff;border-radius:8px;padding:11px;text-align:center;font-weight:700;font-size:13px;">Pay 500.04 USDT</div>
+                `)
             },
             {
-                num: 4, color: '#059669', label: 'Order complete',
-                mockup: `<div style="background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:18px;font-size:12px;">
+                num: 4, label: 'Confirm payment',
+                caption: 'Customer reviews and confirms the transaction in their wallet.',
+                mockup: mockupCard(`
+                    <div style="text-align:center;font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;">Transfer Request</div>
+                    <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:12px;text-align:center;">
+                        <div style="font-size:22px;font-weight:800;color:#0F172A;letter-spacing:-0.02em;">500.04 USDT</div>
+                        <div style="font-size:11px;color:#64748B;margin-top:4px;">≈ 500.00 USD</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:10px;font-size:11px;margin-bottom:14px;">
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#94A3B8;">Network</span><span style="color:#334155;font-weight:600;">BNB Smart Chain</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#94A3B8;">Requested by</span><span style="color:#2563EB;font-weight:600;">cashier.obita.org</span></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#94A3B8;">Network fee</span><span style="color:#334155;font-weight:600;">&lt; $0.01 · BNB</span></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:8px;padding:10px;text-align:center;font-weight:600;color:#64748B;font-size:12px;">Cancel</div>
+                        <div style="background:#0F172A;border:1px solid #0F172A;border-radius:8px;padding:10px;text-align:center;font-weight:700;color:#fff;font-size:12px;">Confirm</div>
+                    </div>
+                `)
+            },
+            {
+                num: 5, label: 'Order complete',
+                caption: 'Obita settles the transaction and delivers a webhook to the merchant.',
+                isSuccess: true,
+                mockup: mockupCard(`
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                        <div style="width:32px;height:32px;border-radius:50%;background:#059669;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;flex-shrink:0;">✓</div>
-                        <div style="font-size:18px;font-weight:800;color:#0F172A;">Thanks for your order!</div>
+                        <div style="width:32px;height:32px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;color:#059669;font-size:16px;font-weight:700;flex-shrink:0;">✓</div>
+                        <div style="font-size:16px;font-weight:800;color:#0F172A;">Thanks for your order!</div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:10px;padding:12px;background:#F8FAFC;border-radius:8px;font-size:12px;margin-bottom:12px;">
-                        <div><span style="color:#64748B;">Order number </span><strong style="color:#0F172A;">#428046573</strong></div>
-                        <div><span style="color:#64748B;">Confirmation sent to </span><span style="color:#2563EB;">janesmith1.mobbin@gmail.com</span></div>
+                    <div style="display:flex;flex-direction:column;gap:10px;padding:12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#94A3B8;">Order number</span><strong style="color:#0F172A;font-family:monospace;">#428046573</strong></div>
+                        <div style="display:flex;justify-content:space-between;"><span style="color:#94A3B8;">Confirmation to</span><span style="color:#334155;">jane@example.com</span></div>
                     </div>
-                    <div style="padding:10px 14px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:11px;font-weight:600;color:#059669;">
-                        ⟳ Obita webhook delivered · Settlement in progress
+                    <div style="padding:10px 14px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;font-size:11px;font-weight:600;color:#059669;display:flex;align-items:center;gap:7px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Obita webhook delivered · Settlement in progress
                     </div>
-                </div>`
+                `)
             }
         ];
 
         body.innerHTML = `
-            <div style="padding:24px;display:flex;flex-direction:column;gap:0;position:relative;">
-                ${steps.map((step, i) => `
-                    <div style="display:flex;gap:0;position:relative;">
+            <!-- Intro -->
+            <div style="padding: 24px 24px 18px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Customer journey preview</div>
+                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Here's what your customers experience when paying with stablecoins via an Obita-powered checkout — from selecting the method to receiving the confirmation.</div>
+            </div>
+
+            <!-- Steps timeline -->
+            <div style="padding: 22px 24px; display: flex; flex-direction: column;">
+                ${steps.map((step, i) => {
+                    const color = step.isSuccess ? successColor : stepColor;
+                    const bg = step.isSuccess ? '#DCFCE7' : '#F1F5F9';
+                    const textColor = step.isSuccess ? successColor : stepColor;
+                    return `
+                    <div style="display: flex; gap: 0; position: relative;">
                         <!-- Timeline column -->
-                        <div style="display:flex;flex-direction:column;align-items:center;width:44px;flex-shrink:0;">
-                            <div style="width:32px;height:32px;border-radius:50%;background:${step.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:800;flex-shrink:0;z-index:1;box-shadow:0 0 0 4px #F1F5F9;">${step.num}</div>
-                            ${i < steps.length - 1 ? `<div style="width:2px;flex:1;min-height:24px;background:linear-gradient(to bottom,${step.color},${steps[i+1].color});margin:4px 0;opacity:0.35;"></div>` : ''}
+                        <div style="display: flex; flex-direction: column; align-items: center; width: 44px; flex-shrink: 0;">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: ${bg}; color: ${textColor}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; z-index: 1; border: 2px solid white; box-shadow: 0 0 0 1px #E2E8F0;">${step.num}</div>
+                            ${i < steps.length - 1 ? `<div style="width: 1px; flex: 1; min-height: 24px; background: #E2E8F0; margin: 4px 0;"></div>` : ''}
                         </div>
                         <!-- Content -->
-                        <div style="flex:1;min-width:0;padding-bottom:${i < steps.length - 1 ? '20px' : '0'};">
-                            <div style="font-size:13px;font-weight:700;color:#0F172A;margin-bottom:10px;padding-top:6px;">${step.label}</div>
+                        <div style="flex: 1; min-width: 0; padding-bottom: ${i < steps.length - 1 ? '24px' : '0'};">
+                            <div style="font-size: 14px; font-weight: 700; color: ${step.isSuccess ? successColor : '#0F172A'}; padding-top: 3px;">${step.label}</div>
+                            <div style="font-size: 12px; color: #64748B; margin: 4px 0 12px; line-height: 1.5;">${step.caption}</div>
                             ${step.mockup}
                         </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
+            </div>
+
+            <!-- Closing CTA -->
+            <div style="padding: 16px 24px 24px; border-top: 1px solid #F1F5F9; background: #FCFDFE;">
+                <div style="padding: 16px 18px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                    <div style="min-width: 0; flex: 1;">
+                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Ready to integrate?</div>
+                        <div style="font-size: 12px; color: #64748B; margin-top: 3px; line-height: 1.5;">Add Obita Checkout to your storefront in under an hour.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-outline" style="padding: 8px 14px; font-size: 12px; font-weight: 700;">View API Docs</button>
+                        <button class="btn btn-primary" style="padding: 8px 14px; font-size: 12px; font-weight: 700;">Get Started</button>
+                    </div>
+                </div>
             </div>
         `;
         lucide.createIcons();
@@ -10967,16 +11002,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 13px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em;">Checkout Payment Flow</div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${[
-                                    { num: 1, label: 'Select Stablecoins', color: '#818CF8' },
-                                    { num: 2, label: 'Pick coin & network', color: '#A78BFA' },
-                                    { num: 3, label: 'Connect wallet & Pay', color: '#F59E0B' },
-                                    { num: 4, label: 'Order complete', color: '#34D399' }
+                                    { num: 1, label: 'Select Stablecoins' },
+                                    { num: 2, label: 'Pick coin & network' },
+                                    { num: 3, label: 'Connect wallet' },
+                                    { num: 4, label: 'Confirm payment' },
+                                    { num: 5, label: 'Order complete', isSuccess: true }
                                 ].map(s => `
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div style="width: 20px; height: 20px; border-radius: 50%; background: ${s.color}22; border: 1.5px solid ${s.color}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <span style="font-size: 10px; font-weight: 800; color: ${s.color};">${s.num}</span>
+                                        <div style="width: 18px; height: 18px; border-radius: 50%; background: ${s.isSuccess ? 'rgba(52,211,153,0.2)' : 'rgba(255,255,255,0.1)'}; border: 1.5px solid ${s.isSuccess ? '#34D399' : 'rgba(255,255,255,0.3)'}; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                            <span style="font-size: 10px; font-weight: 800; color: ${s.isSuccess ? '#34D399' : '#C7D2FE'};">${s.num}</span>
                                         </div>
-                                        <span style="font-size: 12px; color: #C7D2FE;">${s.label}</span>
+                                        <span style="font-size: 12px; color: ${s.isSuccess ? '#A7F3D0' : '#C7D2FE'};">${s.label}</span>
                                     </div>
                                 `).join('')}
                             </div>
