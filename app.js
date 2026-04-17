@@ -13158,10 +13158,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         } else {
             const payee = getPayeeById(activePayeeId);
             const isDetailPayer = activePayeeDetailType === 'invoicePayer' || payeeDirectoryMode === 'invoicePayerList';
-            const isDetailPayee = !isDetailPayer && payeeDirectoryMode === 'payeeList';
-            const isDetailEnhancedView = isDetailPayer || isDetailPayee; // Enhanced layout for both Payer & Payee; Contact Management keeps legacy
+            const isDetailPayee = !isDetailPayer && (activePayeeDetailType === 'payee' || payeeDirectoryMode === 'payeeList');
+            const isDetailEnhancedView = isDetailPayer || isDetailPayee; // Enhanced layout for both Payer & Payee (incl. Contact Management entries)
             const detailEntityLabel = isDetailPayer ? 'Payer' : 'Payee';
-            const detailBackLabel = isDetailPayer ? 'Back to Payer List for Invoice' : payeeDirectoryMode === 'payeeList' ? 'Back to Payee List' : 'Back to Contact Management';
+            // Back label: Contact Management navigates back to its list regardless of detail type
+            const detailBackLabel = payeeDirectoryMode === 'externalContacts'
+                ? 'Back to Contact Management'
+                : isDetailPayer
+                    ? 'Back to Payer List for Invoice'
+                    : payeeDirectoryMode === 'payeeList'
+                        ? 'Back to Payee List'
+                        : 'Back to Contact Management';
             const detailIdentityLabel = isDetailPayer ? 'Payer Type' : 'Payee Type';
             const detailEmailLabel = isDetailPayer ? 'Payer Email' : 'Payee Email';
 
