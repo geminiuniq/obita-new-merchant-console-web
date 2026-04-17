@@ -8106,29 +8106,27 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;"><i data-lucide="download" style="width: 14px; height: 14px;"></i> Export</button>
                     </div>
                 </div>
-                <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
-                            <input id="fiat-vault-tx-start-date" type="date" onchange="filterVaultTransactions('fiat-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                            <span style="font-size: 12px; color: #94A3B8;">to</span>
-                            <input id="fiat-vault-tx-end-date" type="date" onchange="filterVaultTransactions('fiat-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                        </div>
+                <div style="padding: 16px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(280px, auto) minmax(160px, 0.7fr) minmax(160px, 0.7fr) minmax(240px, 1.2fr); gap: 12px; align-items: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF; box-sizing: border-box;">
+                        <i data-lucide="calendar" style="width: 15px; height: 15px; color: #94A3B8; flex-shrink: 0;"></i>
+                        <input id="fiat-vault-tx-start-date" type="date" onchange="filterVaultTransactions('fiat-vault')" aria-label="Start date" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 120px;">
+                        <span style="font-size: 12px; color: #CBD5E1;">→</span>
+                        <input id="fiat-vault-tx-end-date" type="date" onchange="filterVaultTransactions('fiat-vault')" aria-label="End date" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 120px;">
                     </div>
-                    <select id="fiat-vault-tx-type-filter" onchange="filterVaultTransactions('fiat-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <select id="fiat-vault-tx-type-filter" onchange="filterVaultTransactions('fiat-vault')" aria-label="Filter by type" style="width: 100%; height: 40px; padding: 0 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box; cursor: pointer;">
                         <option value="all">All Types</option>
                         <option value="top-up">Top Up</option>
                         <option value="transfer">Transfer</option>
                         <option value="convert">Convert</option>
                     </select>
-                    <select id="fiat-vault-tx-status-filter" onchange="filterVaultTransactions('fiat-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <select id="fiat-vault-tx-status-filter" onchange="filterVaultTransactions('fiat-vault')" aria-label="Filter by status" style="width: 100%; height: 40px; padding: 0 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box; cursor: pointer;">
                         <option value="all">All Statuses</option>
                         <option value="completed">Completed</option>
                         <option value="confirming">Confirming</option>
                     </select>
-                    <div style="position: relative; min-width: 260px;">
-                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                        <input id="fiat-vault-tx-search" type="text" oninput="filterVaultTransactions('fiat-vault')" placeholder="Search by order ID, counterparty..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <div style="position: relative; width: 100%;">
+                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8; pointer-events: none;"></i>
+                        <input id="fiat-vault-tx-search" type="text" oninput="filterVaultTransactions('fiat-vault')" placeholder="Search by order ID, counterparty…" aria-label="Search transactions" style="width: 100%; height: 40px; padding: 0 14px 0 36px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box;">
                     </div>
                 </div>
                 <div class="table-responsive" style="margin-top: 16px;">
@@ -9159,28 +9157,26 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </button>
                     </div>
                 </div>
-                <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                        <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
-                            <input id="stable-vault-tx-start-date" type="date" onchange="filterVaultTransactions('stable-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                            <span style="font-size: 12px; color: #94A3B8;">to</span>
-                            <input id="stable-vault-tx-end-date" type="date" onchange="filterVaultTransactions('stable-vault')" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                        </div>
+                <div style="padding: 16px 24px; border-top: 1px solid #E2E8F0; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(280px, auto) minmax(160px, 0.7fr) minmax(160px, 0.7fr) minmax(240px, 1.2fr); gap: 12px; align-items: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF; box-sizing: border-box;">
+                        <i data-lucide="calendar" style="width: 15px; height: 15px; color: #94A3B8; flex-shrink: 0;"></i>
+                        <input id="stable-vault-tx-start-date" type="date" onchange="filterVaultTransactions('stable-vault')" aria-label="Start date" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 120px;">
+                        <span style="font-size: 12px; color: #CBD5E1;">→</span>
+                        <input id="stable-vault-tx-end-date" type="date" onchange="filterVaultTransactions('stable-vault')" aria-label="End date" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 120px;">
                     </div>
-                    <select id="stable-vault-tx-type-filter" onchange="filterVaultTransactions('stable-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <select id="stable-vault-tx-type-filter" onchange="filterVaultTransactions('stable-vault')" aria-label="Filter by type" style="width: 100%; height: 40px; padding: 0 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box; cursor: pointer;">
                         <option value="all">All Types</option>
                         <option value="top-up">Top Up</option>
                         <option value="transfer">Transfer</option>
                     </select>
-                    <select id="stable-vault-tx-status-filter" onchange="filterVaultTransactions('stable-vault')" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <select id="stable-vault-tx-status-filter" onchange="filterVaultTransactions('stable-vault')" aria-label="Filter by status" style="width: 100%; height: 40px; padding: 0 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box; cursor: pointer;">
                         <option value="all">All Statuses</option>
                         <option value="completed">Completed</option>
                         <option value="confirming">Confirming</option>
                     </select>
-                    <div style="position: relative; min-width: 260px;">
-                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                        <input id="stable-vault-tx-search" type="text" oninput="filterVaultTransactions('stable-vault')" placeholder="Search by order ID, address..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                    <div style="position: relative; width: 100%;">
+                        <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8; pointer-events: none;"></i>
+                        <input id="stable-vault-tx-search" type="text" oninput="filterVaultTransactions('stable-vault')" placeholder="Search by order ID, address…" aria-label="Search transactions" style="width: 100%; height: 40px; padding: 0 14px 0 36px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none; box-sizing: border-box;">
                     </div>
                 </div>
                 <div class="table-responsive" style="margin-top: 16px;">
