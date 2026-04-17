@@ -3016,20 +3016,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div>
                         ${filteredMembers.length ? filteredMembers.map(member => {
                             const statusMeta = getMemberStatusMeta(member.status);
+                            const isAdminMember = member.role === 'Admin';
+                            const adminTag = isAdminMember
+                                ? '<span title="Workspace administrator" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:10px;font-weight:700;margin-left:8px;vertical-align:middle;"><i data-lucide="shield" style="width:10px;height:10px;"></i>Admin</span>'
+                                : '';
                             return `
                                 <div onclick="window.openMemberDetail('${member.id}')" style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); display: grid; grid-template-columns: 1.5fr 1.1fr 0.8fr 1fr 1.15fr; gap: 16px; align-items: center; cursor: pointer;">
                                     <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${member.name}</div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: inline-flex; align-items: center; flex-wrap: wrap;"><span>${member.name}</span>${adminTag}</div>
                                         <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.5;">${member.email} · ${member.id}</div>
                                     </div>
                                     <div style="font-size: 13px; color: #334155;">${getMemberPermissionSummary(member)}</div>
                                     <div><span style="background: ${statusMeta.background}; color: ${statusMeta.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusMeta.label}</span></div>
                                     <div style="font-size: 13px; color: #334155;">${member.lastActive}</div>
                                     <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
-                                        <button class="btn btn-outline" onclick="window.editMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                                        <button class="btn btn-outline" onclick="window.resetMemberPassword('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Reset Password</button>
-                                        <button class="btn btn-outline" onclick="window.toggleMemberStatus('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${member.status === 'inactive' ? 'Enable' : 'Disable'}</button>
-                                        <button class="btn btn-outline text-danger" onclick="window.deleteMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                                        ${isAdminMember ? '' : `
+                                            <button class="btn btn-outline" onclick="window.editMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                                            <button class="btn btn-outline" onclick="window.resetMemberPassword('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Reset Password</button>
+                                            <button class="btn btn-outline" onclick="window.toggleMemberStatus('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">${member.status === 'inactive' ? 'Enable' : 'Disable'}</button>
+                                            <button class="btn btn-outline text-danger" onclick="window.deleteMember('${member.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                                        `}
                                     </div>
                                 </div>
                             `;
