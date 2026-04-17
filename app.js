@@ -16688,6 +16688,29 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         renderPlaceholderContent('Conversion');
     };
 
+    window.copyConversionOrderId = function(id) {
+        navigator.clipboard.writeText(id).then(() => {
+            const label = document.getElementById('cv-copy-label');
+            if (!label) return;
+            const prev = label.textContent;
+            label.textContent = 'Copied';
+            setTimeout(() => { label.textContent = prev; }, 1400);
+        });
+    };
+    window.downloadConversionReceipt = function() {
+        alert('Receipt download will begin shortly.');
+    };
+    window.retryConversion = function() {
+        window.activeConversionOrderId = null;
+        renderPlaceholderContent('Conversion');
+    };
+    window.contactSupportConversion = function(id) {
+        alert('Support request drafted for order ' + id + '. Our team will reach out within 1 business day.');
+    };
+    window.refreshConversionStatus = function() {
+        alert('Status refreshed. No updates since last check.');
+    };
+
     function renderConversionOrderDetailPage(orderId) {
         const order = CONVERSION_ORDERS[orderId];
         if (!order) { window.activeConversionOrderId = null; renderPlaceholderContent('Conversion'); return; }
@@ -16698,44 +16721,82 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             Failed:     { bg: '#FEE2E2', color: '#B91C1C', icon: 'x-circle' }
         };
         const s = statusStyles[order.status] || statusStyles.Processing;
+        const isMso = window.currentLicenseMode === 'MSO';
+        // In MSO mode, all currencies are fiat → skip the redundant "· Fiat" suffix
+        const fromTypeSuffix = isMso ? '' : `<span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.fromType}</span>`;
+        const toTypeSuffix   = isMso ? '' : `<span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.toType}</span>`;
+
+        const isFailed = order.status === 'Failed';
+        const isProcessing = order.status === 'Processing';
+
+        const tooltipIcon = (txt) => `<i data-lucide="info" style="width:12px;height:12px;color:#CBD5E1;cursor:help;vertical-align:middle;margin-left:4px;" title="${txt}"></i>`;
+
+        // Action buttons: always Copy ID + Download Receipt; conditional Retry/Contact/Refresh
+        const actionButtons = `
+            <button onclick="window.copyConversionOrderId('${orderId}')" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="copy" style="width: 12px; height: 12px;"></i><span id="cv-copy-label">Copy ID</span></button>
+            <button onclick="window.downloadConversionReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+            ${isFailed ? `
+                <button onclick="window.retryConversion()" style="padding: 7px 14px; background: #2563EB; border: 1px solid #2563EB; border-radius: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>Retry Conversion</button>
+                <button onclick="window.contactSupportConversion('${orderId}')" style="padding: 7px 12px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 12px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'"><i data-lucide="message-circle" style="width: 12px; height: 12px;"></i>Contact Support</button>
+            ` : ''}
+            ${isProcessing ? `
+                <button onclick="window.refreshConversionStatus()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>Refresh Status</button>
+            ` : ''}
+        `;
+
+        // Failure alert banner
+        const failedBanner = isFailed ? `
+            <div class="card" style="padding: 16px 22px; background: linear-gradient(180deg, #FEF2F2 0%, #FFFFFF 100%); border: 1px solid #FECACA; display: flex; align-items: flex-start; gap: 12px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i></div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 14px; font-weight: 800; color: #B91C1C;">Conversion failed — no funds were moved</div>
+                    <div style="font-size: 12px; color: #7F1D1D; margin-top: 4px; line-height: 1.55;">${order.failureReason || 'The conversion could not be completed at execution time. Your source balance is unchanged.'}</div>
+                </div>
+            </div>
+        ` : '';
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
                 <!-- Page header -->
-                <div class="card" style="padding: 22px 28px;">
-                    <button onclick="window.backToConversionList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Conversion</button>
+                <div class="card" style="padding: 20px 28px;">
+                    <button onclick="window.backToConversionList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Conversion</button>
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                         <div>
                             <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Conversion Order Detail</h1>
                             <div style="font-family: monospace; font-size: 13px; color: #2563EB; font-weight: 600;">${orderId}</div>
                         </div>
-                        <span style="background: ${s.bg}; color: ${s.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="${s.icon}" style="width: 13px; height: 13px;"></i>${order.status}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                            <span style="background: ${s.bg}; color: ${s.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="${s.icon}" style="width: 13px; height: 13px;"></i>${order.status}</span>
+                            <div style="display: inline-flex; gap: 6px; flex-wrap: wrap;">${actionButtons}</div>
+                        </div>
                     </div>
                 </div>
 
+                ${failedBanner}
+
                 <!-- Conversion flow hero -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 22px 28px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-bottom: 1px solid #DBEAFE;">
-                        <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Conversion Summary</div>
-                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-top: 16px;">
+                    <div style="padding: 22px 28px; background: ${isFailed ? '#FFFFFF' : 'linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%)'}; border-bottom: 1px solid ${isFailed ? '#F1F5F9' : '#DBEAFE'};">
+                        <div style="font-size: 12px; font-weight: 700; color: ${isFailed ? '#94A3B8' : '#1D4ED8'}; text-transform: uppercase; letter-spacing: 0.08em;">${isFailed ? 'Attempted Conversion' : 'Conversion Summary'}</div>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-top: 16px; ${isFailed ? 'opacity: 0.55;' : ''}">
                             <div>
                                 <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">From</div>
                                 <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 6px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;">${order.fromAmount}</div>
-                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.from} <span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.fromType}</span></div>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.from} ${fromTypeSuffix}</div>
                             </div>
-                            <div style="width: 40px; height: 40px; border-radius: 999px; background: white; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="arrow-right" style="width: 18px; height: 18px; color: #64748B;"></i></div>
+                            <div style="display: flex; align-items: center; justify-content: center; color: #94A3B8;" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
                             <div style="text-align: right;">
                                 <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">To</div>
                                 <div style="font-size: 28px; font-weight: 900; color: ${order.status === 'Completed' ? '#059669' : '#0F172A'}; margin-top: 6px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;">${order.toAmount}</div>
-                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.to} <span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.toType}</span></div>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.to} ${toTypeSuffix}</div>
                             </div>
                         </div>
-                        <div style="display: flex; justify-content: center; margin-top: 18px;">
+                        <div style="display: flex; justify-content: center; margin-top: 18px; ${isFailed ? 'opacity: 0.6;' : ''}">
                             <div style="display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; color: #475569; font-family: monospace;">${order.rate}</div>
                         </div>
                     </div>
 
-                    <!-- Transaction details grid -->
+                    <!-- Transaction details grid (Exchange Rate removed — already in hero chip) -->
                     <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                         <div>
                             <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Source Vault</div>
@@ -16746,62 +16807,68 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.destinationVault}</div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Exchange Rate</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; font-family: monospace;">${order.rate}</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Spread</div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Spread${tooltipIcon('Difference between our quoted rate and the mid-market rate. This is how Obita earns revenue on zero-fee conversions.')}</div>
                             <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.spread}</div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Conversion Fee</div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Conversion Fee${tooltipIcon('Obita does not charge an explicit fee — platform revenue comes from the spread above.')}</div>
                             <div style="font-size: 14px; font-weight: 700; color: #059669; margin-top: 5px;">${order.fee}</div>
                         </div>
                         <div>
                             <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Initiated By</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.initiatedBy}</div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;">
+                                <div style="width: 22px; height: 22px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0;">${(order.initiatedBy || 'U').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}</div>
+                                <span style="font-size: 14px; font-weight: 700; color: #0F172A;">${order.initiatedBy}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">${order.status === 'Completed' ? 'Settled At' : 'Quote Locked At'}</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.status === 'Completed' ? order.settledAt : order.quoteLockedAt}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Timeline -->
                 <div class="card" style="padding: 22px 28px;">
-                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 16px;">Timeline</div>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 18px;">Timeline</div>
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Step 1: Created (muted) -->
                         <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                            <div style="width: 22px; height: 22px; border-radius: 999px; background: #F1F5F9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;"><i data-lucide="check" style="width: 11px; height: 11px; color: #64748B;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Order Created</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.createdAt} · ${order.initiatedBy}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: #475569;">Order Created</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 1px;">${order.createdAt} · ${order.initiatedBy}</div>
                             </div>
                         </div>
+                        <!-- Step 2: Quote Locked (muted) -->
                         <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                            <div style="width: 22px; height: 22px; border-radius: 999px; background: #F1F5F9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;"><i data-lucide="check" style="width: 11px; height: 11px; color: #64748B;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Quote Locked</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.quoteLockedAt} · ${order.rate}</div>
+                                <div style="font-size: 12px; font-weight: 600; color: #475569;">Quote Locked</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 1px;">${order.quoteLockedAt} · ${order.rate}</div>
                             </div>
                         </div>
+                        <!-- Step 3: Terminal state (emphasized) -->
                         ${order.status === 'Completed' ? `
-                        <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px;">
+                            <div style="width: 30px; height: 30px; border-radius: 999px; background: #16A34A; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(22,163,74,0.25);"><i data-lucide="check" style="width: 16px; height: 16px; color: white;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Settled</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.settledAt} · Funds credited to ${order.destinationVault}</div>
+                                <div style="font-size: 14px; font-weight: 800; color: #15803D;">Settled</div>
+                                <div style="font-size: 12px; color: #166534; margin-top: 3px;">${order.settledAt} · Funds credited to <strong>${order.destinationVault}</strong></div>
                             </div>
                         </div>` : order.status === 'Processing' ? `
-                        <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="clock" style="width: 12px; height: 12px; color: #B45309;"></i></div>
+                        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px;">
+                            <div style="width: 30px; height: 30px; border-radius: 999px; background: #B45309; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(180,83,9,0.25);"><i data-lucide="clock" style="width: 16px; height: 16px; color: white;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Settlement in Progress</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Awaiting settlement to ${order.destinationVault}</div>
+                                <div style="font-size: 14px; font-weight: 800; color: #92400E;">Settlement in Progress</div>
+                                <div style="font-size: 12px; color: #78350F; margin-top: 3px;">Awaiting settlement to <strong>${order.destinationVault}</strong></div>
                             </div>
                         </div>` : `
-                        <div style="display: flex; gap: 12px; align-items: flex-start;">
-                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="x" style="width: 12px; height: 12px; color: #DC2626;"></i></div>
+                        <div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px;">
+                            <div style="width: 30px; height: 30px; border-radius: 999px; background: #DC2626; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,38,38,0.25);"><i data-lucide="x" style="width: 16px; height: 16px; color: white;"></i></div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Failed</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.failureReason || 'Conversion could not be completed.'}</div>
+                                <div style="font-size: 14px; font-weight: 800; color: #B91C1C;">Failed</div>
+                                <div style="font-size: 12px; color: #7F1D1D; margin-top: 3px;">${order.failureReason || 'Conversion could not be completed.'}</div>
                             </div>
                         </div>`}
                     </div>
