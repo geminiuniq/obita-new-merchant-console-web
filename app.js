@@ -5531,7 +5531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ['Payout Disbursement',    'Funds debited upon execution of a Payout order to a beneficiary.'],
             ['FX Conversion Received', 'Funds credited as the target currency of a foreign exchange conversion.'],
             ['FX Conversion Sold',     'Funds debited as the source currency of a foreign exchange conversion.'],
-            ['FX Settlement Credit',   'Settlement funds credited following stablecoin-to-fiat conversion.'],
+            ['FX Settlement Credit',   window.currentLicenseMode === 'MSO' ? 'Settlement funds credited following a foreign-exchange conversion.' : 'Settlement funds credited following stablecoin-to-fiat conversion.'],
             ['Platform Fee',           'Service charge applied by Obita for payment or conversion services.'],
             ['Merchant Deposit',       'Funds deposited into the vault directly by the Account Holder.'],
             ['Merchant Withdrawal',    'Funds withdrawn from the vault to an external account by the Account Holder.'],
@@ -5654,7 +5654,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
       <span style="font-size:8pt;font-weight:700;color:#0F172A;">Account Details</span>
     </div>
     <div style="padding:5mm;border:0.5pt solid #E2E8F0;border-radius:2mm;font-size:8pt;color:#475569;line-height:1.75;">
-      <p>This Account Statement covers all transaction activity within the Account Holder&rsquo;s Obita ${vaultType} for the indicated period. The Account Holder may maintain a separate Stablecoin Vault and Fiat Vault, each covered by its own statement.</p>
+      <p>This Account Statement covers all transaction activity within the Account Holder&rsquo;s Obita ${vaultType} for the indicated period.${window.currentLicenseMode === 'MSO' ? '' : ' The Account Holder may maintain a separate Stablecoin Vault and Fiat Vault, each covered by its own statement.'}</p>
       ${vaultNote}
       <p style="margin-top:3mm;">The Balance column reflects the per-currency running balance after each transaction. Opening and Closing Balances represent the balance at the start and end of the statement period for each currency respectively.</p>
     </div>
@@ -11201,12 +11201,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
         const tableMeta = {
             vault: {
-                description: 'Top up and transfer activity from Stablecoin Vault and Fiat Vault.',
+                description: window.currentLicenseMode === 'MSO'
+                    ? 'Top up and transfer activity from Fiat Vault.'
+                    : 'Top up and transfer activity from Stablecoin Vault and Fiat Vault.',
                 headers: ['Time', 'Order ID', 'Vault', 'Type', 'Channel', 'Source', 'Destination', 'Amount', 'Fee', 'Status'],
                 statusOptions: ['In Progress', 'Completed']
             },
             conversion: {
-                description: 'Asset conversion requests between fiat and stablecoin balances.',
+                description: window.currentLicenseMode === 'MSO'
+                    ? 'Asset conversion requests between fiat currencies.'
+                    : 'Asset conversion requests between fiat and stablecoin balances.',
                 headers: ['Time', 'Order ID', 'Sell Amount', 'Buy Amount', 'FX Rate', 'Spread', 'Destination Vault', 'Status'],
                 statusOptions: ['In Progress', 'Completed']
             },
@@ -11367,12 +11371,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
         const tableMeta = {
             vault: {
-                description: 'Settlement batches for fiat and stablecoin vault orders, with gross, fee, net, and settlement account details.',
+                description: window.currentLicenseMode === 'MSO'
+                    ? 'Settlement batches for Fiat Vault orders, with gross, fee, net, and settlement account details.'
+                    : 'Settlement batches for fiat and stablecoin vault orders, with gross, fee, net, and settlement account details.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Business Line', 'Currency', 'Gross', 'Fee', 'Net', 'Settlement Account', 'Status'],
                 statusOptions: ['In Progress', 'Completed']
             },
             conversion: {
-                description: 'Settlement outcomes for conversion orders, including source/target assets, applied FX rate, and destination wallet or vault.',
+                description: window.currentLicenseMode === 'MSO'
+                    ? 'Settlement outcomes for fiat-to-fiat conversion orders, including source/target currency, applied FX rate, and destination vault.'
+                    : 'Settlement outcomes for conversion orders, including source/target assets, applied FX rate, and destination wallet or vault.',
                 headers: ['Batch ID', 'Settlement Date', 'Direction', 'Order ID', 'Source', 'Target', 'Gross Source', 'Net Target', 'FX Rate', 'Settlement Wallet', 'Status'],
                 statusOptions: ['Completed', 'In Progress']
             },
@@ -11648,7 +11656,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             {
                 title: 'Account statement',
                 badge: 'Asset Vaults',
-                description: 'An official vault statement covering all currencies within a Stablecoin Vault or Fiat Vault, with per-currency transaction history and financial summary.',
+                description: window.currentLicenseMode === 'MSO'
+                    ? 'An official vault statement covering all currencies within a Fiat Vault, with per-currency transaction history and financial summary.'
+                    : 'An official vault statement covering all currencies within a Stablecoin Vault or Fiat Vault, with per-currency transaction history and financial summary.',
                 icon: 'file-text',
                 iconBg: 'linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%)',
                 iconColor: '#94A3B8',
