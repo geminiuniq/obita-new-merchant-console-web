@@ -12316,15 +12316,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     : (p.personType === 'company' ? 'Company' : 'Individual');
                                 const eddPending = p.eddRequired && !p.moreInfo;
                                 const eddBadge = eddPending
-                                    ? '<span title="Enhanced Due Diligence required" style="display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:999px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>EDD</span>'
+                                    ? '<span title="Enhanced Due Diligence required — additional information needed" style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:11px;font-weight:700;margin-left:10px;vertical-align:middle;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>EDD Required</span>'
                                     : '';
                                 const rowName = `
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: flex; align-items: center; flex-wrap: wrap;"><span>${p.alias || p.name}</span>${eddBadge}</div>
                                     ${p.email ? `<div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>` : ''}
                                     <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${personTypeLabel} · ${p.id}</div>
                                 `;
+                                const rowBgHover = eddPending ? '#FFFBEB' : '#F8FAFC';
+                                const rowBgDefault = eddPending ? 'rgba(254, 243, 199, 0.28)' : '';
                                 return `
-                                <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''" style="cursor: pointer; transition: background 0.12s ease; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
+                                <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" onmouseover="this.style.background='${rowBgHover}'" onmouseout="this.style.background='${rowBgDefault}'" style="cursor: pointer; transition: background 0.12s ease; background: ${rowBgDefault}; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                     <td>${rowName}</td>
                                     ${isContactManagementMode ? `
                                     <td>
