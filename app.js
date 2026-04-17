@@ -13565,9 +13565,13 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                         <select class="bank-form-control" style="background: #F8FAFC; color: #64748B;" disabled><option ${payee.personType==='individual'?'selected':''}>Individual</option><option ${payee.personType==='company'?'selected':''}>Company</option></select>
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">${detailEmailLabel}</label>
-                                        <input id="detail-edit-email" class="bank-form-control" type="text" value="${payee.email}">
+                                        <label class="bank-form-label">Payee Alias</label>
+                                        <input id="detail-edit-alias" class="bank-form-control" type="text" value="${payee.alias || payee.name || ''}">
                                     </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="bank-form-label">${detailEmailLabel}</label>
+                                    <input id="detail-edit-email" class="bank-form-control" type="text" value="${payee.email || ''}">
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <label class="bank-form-label" style="color: #94A3B8;">Entity Name</label>
@@ -13974,6 +13978,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                     payee.moreInfo = null;
                 }
             } else {
+            const aliasInput = document.getElementById('detail-edit-alias');
+            if (aliasInput) { const v = aliasInput.value.trim(); if (v) payee.alias = v; }
             const emailInput = document.getElementById('detail-edit-email');
             if (emailInput) payee.email = emailInput.value.trim() || payee.email;
             }
@@ -14031,6 +14037,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         payeeListView = 'form';
         activePayeeId = id;
         activePayeeDetailType = detailType;
+        // Reset edit state so Basic Information opens in read-only view
+        detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
         renderPayeeListPage();
     };
 
@@ -14074,6 +14082,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         payeeListView = 'form';
         activePayeeId = id;
         activePayeeDetailType = detailType;
+        // Reset edit state so Basic Information opens in read-only view
+        detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
         renderPayeeListPage();
     };
 
