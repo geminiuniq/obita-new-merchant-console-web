@@ -7655,7 +7655,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 4821</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
                                     <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Today</span>
@@ -7687,7 +7688,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 9230</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
                                     <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">HKD</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Yesterday</span>
@@ -7719,7 +7721,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">IBAN DE89 •••• •••• 0130</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
                                     <span style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">EUR</span>
                                     <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
                                 </div>
@@ -7769,7 +7772,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 7712</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px;">
+                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
                                     <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">BRL</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Sep 15</span>
