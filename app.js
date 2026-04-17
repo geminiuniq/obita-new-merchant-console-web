@@ -16692,9 +16692,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         navigator.clipboard.writeText(id).then(() => {
             const label = document.getElementById('cv-copy-label');
             if (!label) return;
-            const prev = label.textContent;
-            label.textContent = 'Copied';
-            setTimeout(() => { label.textContent = prev; }, 1400);
+            label.style.display = 'inline';
+            setTimeout(() => { label.style.display = 'none'; }, 1400);
         });
     };
     window.downloadConversionReceipt = function() {
@@ -16703,9 +16702,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     window.retryConversion = function() {
         window.activeConversionOrderId = null;
         renderPlaceholderContent('Conversion');
-    };
-    window.contactSupportConversion = function(id) {
-        alert('Support request drafted for order ' + id + '. Our team will reach out within 1 business day.');
     };
     window.refreshConversionStatus = function() {
         alert('Status refreshed. No updates since last check.');
@@ -16731,26 +16727,25 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         const tooltipIcon = (txt) => `<i data-lucide="info" style="width:12px;height:12px;color:#CBD5E1;cursor:help;vertical-align:middle;margin-left:4px;" title="${txt}"></i>`;
 
-        // Action buttons: always Copy ID + Download Receipt; conditional Retry/Contact/Refresh
+        // Action buttons: Download Receipt always; Retry (Failed) / Refresh (Processing)
         const actionButtons = `
-            <button onclick="window.copyConversionOrderId('${orderId}')" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="copy" style="width: 12px; height: 12px;"></i><span id="cv-copy-label">Copy ID</span></button>
             <button onclick="window.downloadConversionReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
             ${isFailed ? `
                 <button onclick="window.retryConversion()" style="padding: 7px 14px; background: #2563EB; border: 1px solid #2563EB; border-radius: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>Retry Conversion</button>
-                <button onclick="window.contactSupportConversion('${orderId}')" style="padding: 7px 12px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 12px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'"><i data-lucide="message-circle" style="width: 12px; height: 12px;"></i>Contact Support</button>
             ` : ''}
             ${isProcessing ? `
                 <button onclick="window.refreshConversionStatus()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>Refresh Status</button>
             ` : ''}
         `;
 
-        // Failure alert banner
+        // Failure alert banner — includes contact-account-manager note in lieu of a Contact Support button
         const failedBanner = isFailed ? `
             <div class="card" style="padding: 16px 22px; background: linear-gradient(180deg, #FEF2F2 0%, #FFFFFF 100%); border: 1px solid #FECACA; display: flex; align-items: flex-start; gap: 12px;">
                 <div style="width: 32px; height: 32px; border-radius: 8px; background: #FEE2E2; color: #DC2626; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="alert-triangle" style="width: 16px; height: 16px;"></i></div>
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-size: 14px; font-weight: 800; color: #B91C1C;">Conversion failed — no funds were moved</div>
                     <div style="font-size: 12px; color: #7F1D1D; margin-top: 4px; line-height: 1.55;">${order.failureReason || 'The conversion could not be completed at execution time. Your source balance is unchanged.'}</div>
+                    <div style="font-size: 11px; color: #991B1B; margin-top: 8px; line-height: 1.55;">Need help? Reach out to your Obita account manager for assistance.</div>
                 </div>
             </div>
         ` : '';
@@ -16763,7 +16758,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                         <div>
                             <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Conversion Order Detail</h1>
-                            <div style="font-family: monospace; font-size: 13px; color: #2563EB; font-weight: 600;">${orderId}</div>
+                            <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="font-family: monospace; font-size: 13px; color: #2563EB; font-weight: 600;">${orderId}</span>
+                                <button onclick="window.copyConversionOrderId('${orderId}')" title="Copy order ID" aria-label="Copy order ID" style="background: none; border: none; padding: 3px; cursor: pointer; color: #94A3B8; display: inline-flex; align-items: center; border-radius: 4px;" onmouseover="this.style.color='#2563EB';this.style.background='#EFF6FF'" onmouseout="this.style.color='#94A3B8';this.style.background='transparent'"><i data-lucide="copy" style="width: 13px; height: 13px;" id="cv-copy-icon"></i></button>
+                                <span id="cv-copy-label" style="font-size: 11px; color: #16A34A; font-weight: 600; display: none;">Copied</span>
+                            </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
                             <span style="background: ${s.bg}; color: ${s.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="${s.icon}" style="width: 13px; height: 13px;"></i>${order.status}</span>
