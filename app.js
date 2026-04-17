@@ -1294,14 +1294,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const options = ['<option value="">Select a connected bank account</option>'];
 
         accounts.forEach(account => {
-            const optionLabel = `${account.bankName} - ${account.accountName}${account.currency ? ` (${account.currency})` : ''}${account.reason ? ` - ${account.reason}` : ''}`;
+            const sameNameTag = account.sameName ? '[同名] ' : '';
+            const optionLabel = `${sameNameTag}${account.bankName} - ${account.accountName}${account.currency ? ` (${account.currency})` : ''}${account.reason ? ` · ${account.reason}` : ''}`;
             options.push(`<option value="${account.accountName}" ${account.selectable ? '' : 'disabled'}>${optionLabel}</option>`);
         });
 
         select.innerHTML = options.join('');
         note.textContent = accounts.some(account => account.selectable)
-            ? 'Only enabled, same-name connected bank accounts that have completed verification can be selected.'
-            : 'No eligible same-name connected bank accounts are currently available.';
+            ? 'Same-name (同名) accounts are marked with a [同名] tag in the list below. Only enabled, verified same-name accounts can be selected.'
+            : 'No eligible same-name (同名) connected bank accounts are currently available.';
     }
 
     function renderFiatTransferReceivingInfo(account) {
@@ -1541,7 +1542,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const options = ['<option value="">Select a linked bank account</option>'];
 
         relevantAccounts.forEach(account => {
-            const label = `${account.bankName} - ${account.accountName}${account.reason ? ` (${account.reason})` : ''}`;
+            const sameNameTag = account.sameName ? '[同名] ' : '';
+            const label = `${sameNameTag}${account.bankName} - ${account.accountName}${account.reason ? ` · ${account.reason}` : ''}`;
             options.push(`<option value="${account.bankName}||${account.accountName}" ${account.selectable ? '' : 'disabled'}>${label}</option>`);
         });
 
@@ -1549,8 +1551,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const hasSelectable = relevantAccounts.some(account => account.selectable);
         note.textContent = hasSelectable
-            ? 'Only enabled, same-name bank accounts that have completed verification can be used for fiat top up.'
-            : 'No eligible same-name bank account is available. Please bind and enable a bank account under the merchant name after verification is completed.';
+            ? 'Same-name (同名) accounts are marked with a [同名] tag in the list. Only enabled, verified same-name accounts can be used for top up.'
+            : 'No eligible same-name (同名) bank account is available. Please bind and enable a bank account under the merchant name after verification is completed.';
         note.style.color = hasSelectable ? '#64748B' : '#DC2626';
         confirmBtn.disabled = !hasSelectable;
         confirmBtn.style.opacity = hasSelectable ? '1' : '0.5';
