@@ -9238,7 +9238,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 14px; color: #64748B;">Created on: Nov 21, 2025, 10:49</div>
                         </div>
                     </div>
-                    <button class="btn btn-outline" style="padding: 10px 16px; font-size: 13px;">Edit Profile</button>
                 </div>
             </div>
 
