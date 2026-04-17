@@ -1637,6 +1637,32 @@ body.license-group .group-only { display: revert !important; }
 body.license-group .tcsp-only { display: none !important; }
 body.license-group .mso-only { display: none !important; }
 
+/* Coming Soon pill on disabled nav groups */
+.nav-coming-soon {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94A3B8;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+body.license-mso span.nav-coming-soon.mso-only { display: inline-flex !important; align-items: center; }
+
+/* MSO: disable Collection nav group entirely */
+body.license-mso #nav-group-collection .nav-item.has-submenu {
+    cursor: not-allowed;
+    opacity: 0.65;
+    pointer-events: none;
+}
+body.license-mso #nav-group-collection .submenu,
+body.license-mso #nav-group-collection .submenu-toggle {
+    display: none !important;
+}
+
 /* --- MSO Accent (Purple) --- */
 body.license-mso {
     --clr-accent: #7C3AED;
