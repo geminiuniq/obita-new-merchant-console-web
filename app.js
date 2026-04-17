@@ -16135,80 +16135,80 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div>
 
             <!-- KPI Row: Summary hero + payee side panel -->
-            <div style="display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(250px, 0.9fr); gap: 16px; align-items: stretch;">
+            <div style="display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr); gap: 16px; align-items: stretch;">
                 <!-- Payouts Summary with hero + breakdown -->
                 <div class="card" style="margin: 0; padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 22px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                        <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Payouts Summary</div>
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payouts Summary</div>
                         <div class="time-selector" style="display: inline-flex; gap: 4px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 3px;">
-                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">1w</span>
-                            <span class="time-option active" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; background: white; color: #0F172A; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">1m</span>
-                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">6m</span>
-                            <span class="time-option" style="font-size: 11px; padding: 4px 10px; border-radius: 5px; cursor: pointer; color: #64748B;">1y</span>
+                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">1w</span>
+                            <span class="time-option active" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; background: white; color: #0F172A; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">1m</span>
+                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">6m</span>
+                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">1y</span>
                         </div>
                     </div>
                     <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
                         <!-- Hero: Total Volume -->
-                        <div style="padding: 18px 22px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
-                            <div style="font-size: 10px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
-                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 6px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">$2.55M</div>
-                            <div style="font-size: 11px; color: #64748B; margin-top: 4px;">350 orders</div>
+                        <div style="padding: 22px 26px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
+                            <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
+                            <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">$2.55M</div>
+                            <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">350 orders</div>
                         </div>
                         <!-- Completed -->
-                        <div style="padding: 18px 20px; border-right: 1px solid #F1F5F9;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Completed</div>
+                        <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 7px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Completed</div>
                             </div>
-                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">310</div>
-                            <div style="font-size: 11px; color: #15803D; margin-top: 3px; font-weight: 600;">$2.40M</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">310</div>
+                            <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$2.40M</div>
                         </div>
                         <!-- In-Transit -->
-                        <div style="padding: 18px 20px; border-right: 1px solid #F1F5F9;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">In-Transit</div>
+                        <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="display: flex; align-items: center; gap: 7px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
                             </div>
-                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">25</div>
-                            <div style="font-size: 11px; color: #B45309; margin-top: 3px; font-weight: 600;">$100,000</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">25</div>
+                            <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$100,000</div>
                         </div>
                         <!-- Failed -->
-                        <div style="padding: 18px 20px;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                                <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Failed</div>
+                        <div style="padding: 22px 22px;">
+                            <div style="display: flex; align-items: center; gap: 7px;">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Failed</div>
                             </div>
-                            <div style="font-size: 20px; font-weight: 800; color: #0F172A; margin-top: 6px; font-variant-numeric: tabular-nums;">15</div>
-                            <div style="font-size: 11px; color: #B91C1C; margin-top: 3px; font-weight: 600;">$50,000</div>
+                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">15</div>
+                            <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$50,000</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Payees side panel (compact) -->
+                <!-- Payees side panel -->
                 <div class="card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-                    <div style="padding: 16px 20px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Payees</div>
-                        <button onclick="window.openPayeeManagementPage()" style="background: none; border: none; padding: 0; font-size: 12px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i></button>
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payees</div>
+                        <button onclick="window.openPayeeManagementPage()" style="background: none; border: none; padding: 0; font-size: 13px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i></button>
                     </div>
-                    <div style="flex: 1; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                    <div style="flex: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; justify-content: center;">
                         <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
-                            <div style="font-size: 11px; color: #64748B;">Total</div>
-                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">${payoutPayeeSummary.total}</div>
+                            <div style="font-size: 13px; color: #64748B; font-weight: 500;">Total</div>
+                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1;">${payoutPayeeSummary.total}</div>
                         </div>
                         <div style="height: 1px; background: #F1F5F9;"></div>
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 6px;">
-                                <span style="width: 6px; height: 6px; border-radius: 999px; background: #16A34A;"></span>
-                                <span style="font-size: 11px; color: #64748B;">Active</span>
+                            <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                <span style="width: 7px; height: 7px; border-radius: 999px; background: #16A34A;"></span>
+                                <span style="font-size: 13px; color: #334155; font-weight: 500;">Active</span>
                             </div>
-                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.active}</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.active}</div>
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 6px;">
-                                <span style="width: 6px; height: 6px; border-radius: 999px; background: #B45309;"></span>
-                                <span style="font-size: 11px; color: #64748B;">Pending Setup</span>
+                            <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                <span style="width: 7px; height: 7px; border-radius: 999px; background: #B45309;"></span>
+                                <span style="font-size: 13px; color: #334155; font-weight: 500;">Pending Setup</span>
                             </div>
-                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.pending}</div>
+                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.pending}</div>
                         </div>
                     </div>
                 </div>
