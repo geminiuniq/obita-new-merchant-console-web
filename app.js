@@ -9586,7 +9586,38 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         lucide.createIcons();
     };
 
-    const merchantProfileHTML = `
+    function getMerchantProfileHTML() {
+        const isMso = window.currentLicenseMode === 'MSO';
+        const masterAgreementDesc = isMso
+            ? '规范使用 Obita 企业资金管理平台及法币管理服务的主服务协议，涵盖账户开设、资金操作、合规要求及责任条款。'
+            : '规范使用 Obita 企业资金管理平台、稳定币金库及法币管理服务的主服务协议，涵盖账户开设、资金操作、合规要求及责任条款。';
+        const stablecoinContractHTML = isMso ? '' : `
+                    <!-- Contract 2 -->
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="width: 36px; height: 36px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+                                <i data-lucide="scroll-text" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">Stablecoin Custody & Settlement Agreement</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">规范稳定币（USDT/USDC）托管、金库操作及链上结算流程的专项协议，包含链上划转授权、网络手续费安排及合规审查条款。</div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
+                            <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">签署</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 5, 2025</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 11px; color: #94A3B8;">到期</span>
+                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 4, 2026</span>
+                                </div>
+                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 4px;">Effective</span>
+                            </div>
+                        </div>
+                    </div>`;
+        return `
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 24px;">
             <div class="card" style="padding: 28px 32px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); border: 1px solid #E2E8F0;">
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
@@ -9668,7 +9699,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div>
                                 <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">Obita Platform Services Master Agreement</div>
-                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">规范使用 Obita 企业资金管理平台、稳定币金库及法币管理服务的主服务协议，涵盖账户开设、资金操作、合规要求及责任条款。</div>
+                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">${masterAgreementDesc}</div>
                             </div>
                         </div>
                         <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
@@ -9686,31 +9717,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                     </div>
 
-                    <!-- Contract 2 -->
-                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: flex; gap: 14px; align-items: flex-start;">
-                            <div style="width: 36px; height: 36px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
-                                <i data-lucide="scroll-text" style="width: 16px; height: 16px; color: #7C3AED;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px;">Stablecoin Custody & Settlement Agreement</div>
-                                <div style="font-size: 12px; color: #64748B; line-height: 1.6;">规范稳定币（USDT/USDC）托管、金库操作及链上结算流程的专项协议，包含链上划转授权、网络手续费安排及合规审查条款。</div>
-                            </div>
-                        </div>
-                        <div style="text-align: right; flex-shrink: 0; min-width: 130px;">
-                            <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 11px; color: #94A3B8;">签署</span>
-                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 5, 2025</span>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <span style="font-size: 11px; color: #94A3B8;">到期</span>
-                                    <span style="font-size: 12px; font-weight: 600; color: #475569;">Dec 4, 2026</span>
-                                </div>
-                                <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; margin-top: 4px;">Effective</span>
-                            </div>
-                        </div>
-                    </div>
+                    ${stablecoinContractHTML}
 
                     <!-- Contract 3 — expiring soon, renewal reminder -->
                     <div style="padding: 16px 0;">
@@ -9785,6 +9792,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             </div>
         </div>
     `;
+    }
 
     const ORDER_REPORT_TABS = [
         { id: 'vault', label: 'Vault', tone: { color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' } },
@@ -17223,7 +17231,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             renderPlaceholderContent('Overview');
             window.openBusinessVerificationDrawer();
         } else if (title === 'Merchant Profile') {
-            contentBody.innerHTML = merchantProfileHTML;
+            contentBody.innerHTML = getMerchantProfileHTML();
             lucide.createIcons();
         } else if (title === 'Invoice Orders') {
             invoiceOrdersView = 'list';
