@@ -11863,7 +11863,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             email: 'sarah.j@freelance.email',
             personType: 'individual',
             usageScope: { payout: true, collectionInvoice: false, collectionCheckout: false, refund: false },
-            createdAt: 'Apr 4, 2026'
+            createdAt: 'Apr 4, 2026',
+            eddRequired: true,
+            eddReason: 'Aggregated payout volume exceeds USD 50,000 threshold'
         },
         {
             id: 'PAY-007',
@@ -12306,8 +12308,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 const personTypeLabel = isInvoicePayerMode
                                     ? (p.personType === 'company' ? 'Institution' : 'Individual')
                                     : (p.personType === 'company' ? 'Company' : 'Individual');
+                                const eddPending = p.eddRequired && !p.moreInfo;
+                                const eddBadge = eddPending
+                                    ? '<span title="Enhanced Due Diligence required" style="display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:999px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-size:10px;font-weight:700;margin-left:6px;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>EDD</span>'
+                                    : '';
                                 const rowName = `
-                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: flex; align-items: center; flex-wrap: wrap;"><span>${p.alias || p.name}</span>${eddBadge}</div>
                                     ${p.email ? `<div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>` : ''}
                                     <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${personTypeLabel} · ${p.id}</div>
                                 `;
@@ -13418,11 +13424,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                     <div class="card" style="padding: 24px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #F1F5F9;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <div style="width: 32px; height: 32px; border-radius: 9px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
                                     <i data-lucide="user-circle" style="width: 16px; height: 16px; color: #2563EB;"></i>
                                 </div>
                                 <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                                ${payee.eddRequired && !payee.moreInfo ? '<span title="Enhanced Due Diligence required" style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-size:11px;font-weight:700;"><i data-lucide="alert-triangle" style="width:12px;height:12px;"></i>EDD Required</span>' : ''}
                             </div>
                             ${!detailEditState.profile ? `<button class="btn btn-outline" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;">Edit Profile</button>` : `<div style="display:flex; gap:8px;"><button class="btn" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; background: transparent; color: #64748B;">Cancel</button><button class="btn btn-primary" onclick="window.saveDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px;">Save Profile</button></div>`}
                         </div>
@@ -13651,7 +13658,72 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                             `}
                         `}
                     </div>
-                    
+
+                    ${payee.eddRequired && !payee.moreInfo ? `
+                    <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FDE68A; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                        <div style="padding: 20px 24px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid #FDE68A;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #FDE68A;">
+                                <i data-lucide="alert-triangle" style="width: 18px; height: 18px; color: #B45309;"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <div style="font-size: 16px; font-weight: 800; color: #0F172A;">Enhanced Due Diligence Required</div>
+                                    <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Action Needed</span>
+                                </div>
+                                ${payee.eddReason ? `<div style="font-size: 12px; color: #92400E; margin-top: 6px; line-height: 1.55;">Reason: ${payee.eddReason}</div>` : ''}
+                                <div style="font-size: 12px; color: #64748B; margin-top: 8px; line-height: 1.6;">
+                                    Additional information is required before further transactions can be processed:
+                                    <strong style="color: #334155;">Email · Date of Birth · Country of Residence · Residential Address</strong>.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action options -->
+                        <div style="padding: 20px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                            <!-- Option A: Merchant fills -->
+                            <div style="padding: 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="pencil" style="width: 13px; height: 13px; color: #2563EB;"></i>
+                                    </div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Fill in on behalf</div>
+                                </div>
+                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.6; flex: 1;">Enter the information yourself if you already have it on file. Data remains editable after submission.</div>
+                                <button class="btn btn-primary" onclick="window.startEddFill()" style="padding: 9px 14px; font-size: 12px; font-weight: 700;">Start Filling</button>
+                            </div>
+
+                            <!-- Option B: Invite to self-complete -->
+                            <div style="padding: 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: #F0FDF4; display: flex; align-items: center; justify-content: center;">
+                                        <i data-lucide="send" style="width: 13px; height: 13px; color: #16A34A;"></i>
+                                    </div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Invite ${isDetailPayer ? 'Payer' : 'Payee'} to self-complete</div>
+                                </div>
+                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.6; flex: 1;">Share a secure link. The ${isDetailPayer ? 'payer' : 'payee'} fills in their own details — no need to collect sensitive data manually.</div>
+                                <button class="btn btn-outline" onclick="window.showEddSelfCompleteLink('${payee.id}')" style="padding: 9px 14px; font-size: 12px; font-weight: 700;">Get Shareable Link</button>
+                            </div>
+                        </div>
+
+                        <!-- Self-complete link reveal zone (initially hidden) -->
+                        <div id="edd-self-complete-zone" style="display: none; padding: 16px 24px 20px; border-top: 1px dashed #FDE68A;">
+                            <div style="padding: 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                                    <i data-lucide="info" style="width: 14px; height: 14px; color: #B45309; margin-top: 3px; flex-shrink: 0;"></i>
+                                    <div style="font-size: 12px; color: #92400E; line-height: 1.6;">Share this secure link via email, message, or any channel you use. The link expires in <strong>7 days</strong> and can be opened only by the intended recipient. You will be notified once the form is submitted.</div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <input id="edd-self-complete-link" type="text" readonly value="https://obita.com/edd/${payee.id}/${Math.random().toString(36).slice(2, 10)}" class="bank-form-control" style="flex: 1; font-family: monospace; font-size: 12px; background: white; color: #475569;" onclick="this.select()">
+                                    <button onclick="window.copyEddLink()" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+                                        <span id="edd-copy-label">Copy Link</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     ${isDetailEnhancedView ? (() => {
                         const w = (window.currentLicenseMode !== 'MSO') ? payee.wallets?.[0] : null;
                         const b = payee.banks?.[0];
@@ -13931,6 +14003,42 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         payee.eddEmailSentTo = email;
         // Re-render the detail page to show the "pending" banner and lock More Info fields
         renderPayeeFormPage();
+    };
+
+    // EDD: Start filling in on behalf → enters edit mode and auto-enables More Information
+    window.startEddFill = function() {
+        detailEditState.profile = true;
+        renderPayeeFormPage();
+        // After render, auto-check the More Info checkbox and reveal its fields
+        setTimeout(() => {
+            const chk = document.getElementById('detail-more-info-chk');
+            const fields = document.getElementById('detail-more-info-fields');
+            if (chk) chk.checked = true;
+            if (fields) fields.style.display = 'flex';
+            // Scroll to More Info fields for focus
+            if (fields) fields.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 80);
+    };
+
+    // EDD: Reveal shareable link zone
+    window.showEddSelfCompleteLink = function() {
+        const zone = document.getElementById('edd-self-complete-zone');
+        if (!zone) return;
+        zone.style.display = 'block';
+        lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.copyEddLink = function() {
+        const input = document.getElementById('edd-self-complete-link');
+        const label = document.getElementById('edd-copy-label');
+        if (!input || !label) return;
+        input.select();
+        navigator.clipboard.writeText(input.value).then(() => {
+            const prev = label.textContent;
+            label.textContent = 'Copied!';
+            setTimeout(() => { label.textContent = prev; }, 1400);
+        });
     };
 
     window.toggleDetailEdit = function(section) {
