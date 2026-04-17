@@ -9597,12 +9597,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                                 <h2 style="font-size: 30px; font-weight: 700; color: #0F172A; margin: 0;">ABC Trading Pte Ltd</h2>
-                                <span style="display: inline-flex; align-items: center; gap: 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;">
-                                    <i data-lucide="shield-alert" style="width: 14px; height: 14px;"></i>
-                                    Business Verification Required
+                                <span style="display: inline-flex; align-items: center; gap: 8px; background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;">
+                                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                                    Business Verified
                                 </span>
                             </div>
-                            <div style="font-size: 14px; color: #64748B;">Created on: Nov 21, 2025, 10:49</div>
+                            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #64748B;">
+                                <span>Created on: Nov 21, 2025, 10:49</span>
+                                <span style="color: #CBD5E1;">·</span>
+                                <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="badge-check" style="width: 13px; height: 13px; color: #059669;"></i>KYB passed on Nov 28, 2025</span>
+                            </div>
                         </div>
                     </div>
                 </div>
