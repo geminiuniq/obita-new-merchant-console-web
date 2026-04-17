@@ -13605,7 +13605,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                             ` : ''}
                             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 20px;">
                                 <div>
-                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">${isDetailPayer ? 'Payer Alias' : 'Payee Name'}</div>
+                                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">${isDetailPayer ? 'Payer Alias' : 'Payee Alias'}</div>
                                     <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 5px;">${payee.alias || payee.name || '—'}</div>
                                 </div>
                                 <div>
