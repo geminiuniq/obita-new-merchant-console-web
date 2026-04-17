@@ -7639,102 +7639,93 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
 
                         <!-- Chase Bank -->
-                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0F6FF); border: 1px solid #BFDBFE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(37,99,235,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(37,99,235,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(37,99,235,0.06)'">
+                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Chase Bank', 'Corporate Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #1D4ED8, #2563EB); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                <div style="width: 38px; height: 38px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #1D4ED8;"></i>
                                 </div>
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Chase Bank</div>
-                                    <div style="font-size: 11px; color: #64748B;">Corporate Account</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Chase Bank</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Corporate Account</div>
                                 </div>
                             </div>
-                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 4821</div>
+                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 4821</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                     <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Today</span>
                             </div>
                             </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Chase Bank', 'Corporate Account')" style="width: 100%; border: none; border-top: 1px solid rgba(191,219,254,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
-                                <span style="font-size: 12px; font-weight: 700; color: #1D4ED8;">交易记录</span>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
-                                    View Transactions
-                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                </span>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Chase Bank', 'Corporate Account')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
+                                View Transactions
+                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
                             </button>
                         </div>
 
                         <!-- HSBC -->
-                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFF5F5); border: 1px solid #FECACA; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(220,38,38,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(220,38,38,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(220,38,38,0.06)'">
+                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
                             <div onclick="window.openFiatVaultBankAccountDetail('HSBC Hong Kong', 'Operating Account')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B91C1C, #DC2626); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(220,38,38,0.3);">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                <div style="width: 38px; height: 38px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #DC2626;"></i>
                                 </div>
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">HSBC Hong Kong</div>
-                                    <div style="font-size: 11px; color: #64748B;">Operating Account</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">HSBC Hong Kong</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Operating Account</div>
                                 </div>
                             </div>
-                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 9230</div>
+                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 9230</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                     <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">HKD</span>
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">HKD</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Yesterday</span>
                             </div>
                             </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('HSBC Hong Kong', 'Operating Account')" style="width: 100%; border: none; border-top: 1px solid rgba(254,202,202,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
-                                <span style="font-size: 12px; font-weight: 700; color: #DC2626;">交易记录</span>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
-                                    View Transactions
-                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                </span>
+                            <button onclick="window.openBankAccountTransactionsDrawer('HSBC Hong Kong', 'Operating Account')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
+                                View Transactions
+                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
                             </button>
                         </div>
 
                         <!-- Deutsche Bank -->
-                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
+                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Deutsche Bank', 'Euro Settlement')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #5B21B6, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                <div style="width: 38px; height: 38px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #7C3AED;"></i>
                                 </div>
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Deutsche Bank</div>
-                                    <div style="font-size: 11px; color: #64748B;">Euro Settlement</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Deutsche Bank</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Euro Settlement</div>
                                 </div>
                             </div>
-                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">IBAN DE89 •••• •••• 0130</div>
+                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">DE89 •••• •••• •••• 0130</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                     <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">EUR</span>
-                                    <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">EUR</span>
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Oct 23</span>
                             </div>
                             </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Deutsche Bank', 'Euro Settlement')" style="width: 100%; border: none; border-top: 1px solid rgba(221,214,254,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
-                                <span style="font-size: 12px; font-weight: 700; color: #7C3AED;">交易记录</span>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
-                                    View Transactions
-                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                </span>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Deutsche Bank', 'Euro Settlement')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
+                                View Transactions
+                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
                             </button>
                         </div>
 
@@ -7756,47 +7747,41 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
 
                         <!-- Banco Bradesco -->
-                        <div style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F0FDF4); border: 1px solid #BBF7D0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(16,185,129,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(16,185,129,0.12)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(16,185,129,0.06)'">
+                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
                             <div onclick="window.openFiatVaultBankAccountDetail('Banco Bradesco', 'BRL Payments')" style="padding: 18px 18px 14px; cursor: pointer;">
                             <div style="position: absolute; top: 12px; right: 12px;">
                                 <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #047857, #059669); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(5,150,105,0.3);">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: white;"></i>
+                                <div style="width: 38px; height: 38px; background: #ECFDF5; border: 1px solid #BBF7D0; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #059669;"></i>
                                 </div>
                                 <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Banco Bradesco</div>
-                                    <div style="font-size: 11px; color: #64748B;">BRL Payments</div>
+                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Banco Bradesco</div>
+                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">BRL Payments</div>
                                 </div>
                             </div>
-                            <div style="font-size: 13px; font-family: monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 7712</div>
+                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 7712</div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                     <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #D1FAE5; color: #059669; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">BRL</span>
+                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">BRL</span>
                                 </div>
                                 <span style="font-size: 10px; color: #94A3B8;">Last used: Sep 15</span>
                             </div>
                             </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Banco Bradesco', 'BRL Payments')" style="width: 100%; border: none; border-top: 1px solid rgba(187,247,208,0.9); background: rgba(255,255,255,0.78); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer;">
-                                <span style="font-size: 12px; font-weight: 700; color: #059669;">交易记录</span>
-                                <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B;">
-                                    View Transactions
-                                    <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                                </span>
+                            <button onclick="window.openBankAccountTransactionsDrawer('Banco Bradesco', 'BRL Payments')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
+                                View Transactions
+                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
                             </button>
                         </div>
 
                         <!-- Add Account card -->
-                        <div onclick="window.openManageBankAccountsDrawer()" style="border: 2px dashed #CBD5E1; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 136px; transition: border-color 0.15s, background 0.15s;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
+                        <div onclick="window.openManageBankAccountsDrawer()" style="border: 1.5px dashed #CBD5E1; border-radius: 14px; padding: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 172px; transition: border-color 0.15s ease, background 0.15s ease;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
                             <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
                                 <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
                             </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 13px; font-weight: 600; color: #475569;">绑定新账户</div>
-                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Add Bank Account</div>
-                            </div>
+                            <div style="font-size: 13px; font-weight: 600; color: #475569;">Add Bank Account</div>
                         </div>
 
                     </div>
@@ -7987,10 +7972,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div>
                                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                                     <h2 style="font-size:28px;font-weight:800;color:#0F172A;margin:0;">${account.bankName}</h2>
-                                    <span title="Same-name account — bank account name matches merchant" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;">同名</span>
                                     <span style="background:${statusMeta.background};color:${statusMeta.color};border:1px solid ${statusMeta.border};font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;text-transform:uppercase;">${statusMeta.label}</span>
                                 </div>
-                                <div style="font-size:15px;color:#475569;margin-top:8px;">${account.accountName}</div>
+                                <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+                                    <div style="font-size:15px;color:#475569;">${account.accountName}</div>
+                                    <span title="Same-name account — bank account name matches merchant" style="display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;"><i data-lucide="user-check" style="width:11px;height:11px;"></i>同名账户</span>
+                                </div>
                                 <div style="font-size:13px;color:#94A3B8;margin-top:6px;">${account.accountNumber} · Last used ${account.lastUsed}</div>
                             </div>
                         </div>
