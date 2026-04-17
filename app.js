@@ -1250,14 +1250,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const accountName = item.dataset.accountName || 'Bank Account';
             const verification = item.dataset.verification || 'pending';
             const enabled = (item.dataset.status || actionBtn?.dataset.status || 'enabled') === 'enabled';
-            const sameName = accountName.toLowerCase().includes('obita');
+            // All bank accounts connected via Obita are opened under the merchant's
+            // own name — so every connected account is a same-name (同名) account by definition.
+            const sameName = true;
             const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
 
             let reason = '';
             if (lifecycleStatus !== 'Enabled') {
                 reason = lifecycleStatus;
-            } else if (!sameName) {
-                reason = 'Bank Account Name mismatch';
             }
 
             return {
