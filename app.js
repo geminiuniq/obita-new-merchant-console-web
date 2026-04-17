@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'payee-form-drawer',
         'member-form-drawer',
         'kyb-drawer',
+        'edd-fill-drawer',
         'checkout-demo-drawer'
     ];
 
@@ -14008,22 +14009,164 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         renderPayeeFormPage();
     };
 
-    // EDD: Start filling in on behalf → enters edit mode, reveals More Info fields,
-    // scrolls down to the input area and focuses the first field.
+    // EDD: Open the right-side drawer with the information entry form
     window.startEddFill = function() {
-        detailEditState.profile = true;
-        renderPayeeFormPage();
-        setTimeout(() => {
-            const chk = document.getElementById('detail-more-info-chk');
-            const fields = document.getElementById('detail-more-info-fields');
-            if (chk) chk.checked = true;
-            if (fields) fields.style.display = 'flex';
-            if (fields) {
-                fields.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                const firstInput = fields.querySelector('input, select');
-                if (firstInput) setTimeout(() => firstInput.focus({ preventScroll: true }), 350);
+        const payee = activePayeeId ? getPayeeById(activePayeeId) : null;
+        if (!payee) return;
+
+        const drawer = document.getElementById('edd-fill-drawer');
+        const body = document.getElementById('edd-fill-drawer-body');
+        const title = document.getElementById('edd-fill-drawer-title');
+        if (!drawer || !body) return;
+
+        if (title) title.textContent = `Enhanced Due Diligence · ${payee.alias || payee.name}`;
+
+        const countries = ['Hong Kong','China','United States','United Kingdom','Singapore','Japan','South Korea','Australia','Canada','Germany','France','Netherlands','Switzerland','UAE','India','Brazil','Mexico','Thailand','Vietnam','Malaysia','Indonesia','Philippines'];
+        const industries = ['Technology / Software','E-commerce / Retail','Financial Services','Manufacturing','Logistics / Shipping','Trading / Import-Export','Professional Services','Media / Advertising','Real Estate','Healthcare','Education','Hospitality / F&B','Construction','Energy','Telecommunications','Other'];
+        const mi = payee.moreInfo || {};
+
+        const isCompany = payee.personType === 'company';
+        const fieldsHtml = isCompany ? `
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Company Full Name *</label>
+                <input id="edd-field-company-name" class="bank-form-control" type="text" placeholder="Full registered company name" value="${mi.companyName || ''}">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Industry *</label>
+                    <select id="edd-field-industry" class="bank-form-control">
+                        <option value="">— Select industry —</option>
+                        ${industries.map(i => `<option value="${i}" ${mi.industry === i ? 'selected' : ''}>${i}</option>`).join('')}
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Country of Registration *</label>
+                    <select id="edd-field-country" class="bank-form-control">
+                        <option value="">— Select country —</option>
+                        ${countries.map(c => `<option value="${c}" ${mi.country === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Company Address *</label>
+                <input id="edd-field-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${mi.address || ''}">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Tax ID / Business Registration Number *</label>
+                <input id="edd-field-taxid" class="bank-form-control" type="text" placeholder="e.g. BR-123456789" value="${mi.taxId || ''}">
+            </div>
+        ` : `
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">First Name *</label>
+                    <input id="edd-field-fname" class="bank-form-control" type="text" value="${mi.firstName || ''}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Middle Name</label>
+                    <input id="edd-field-mname" class="bank-form-control" type="text" value="${mi.middleName || ''}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Surname *</label>
+                    <input id="edd-field-lname" class="bank-form-control" type="text" value="${mi.lastName || ''}">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Date of Birth *</label>
+                    <input id="edd-field-dob" class="bank-form-control" type="date" value="${mi.dob || ''}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Country of Residence *</label>
+                    <select id="edd-field-country" class="bank-form-control">
+                        <option value="">— Select country —</option>
+                        ${countries.map(c => `<option value="${c}" ${mi.country === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Residential Address *</label>
+                <input id="edd-field-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${mi.address || ''}">
+            </div>
+        `;
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 12px; color: #92400E; line-height: 1.65; display: flex; align-items: flex-start; gap: 8px;">
+                        <i data-lucide="shield-alert" style="width: 14px; height: 14px; color: #B45309; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span>You are entering data on behalf of <strong>${payee.alias || payee.name}</strong>. Please ensure every field is accurate and authentic. Incorrect information may delay or block future transactions.</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label class="bank-form-label">Email *</label>
+                        <input id="edd-field-email" class="bank-form-control" type="email" value="${payee.email || ''}" placeholder="email@example.com">
+                    </div>
+                    ${fieldsHtml}
+                </div>
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-outline" onclick="window.closeEddFillDrawer()" style="padding: 9px 16px; font-size: 13px;">Cancel</button>
+                    <button class="btn btn-primary" onclick="window.submitEddFill()" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Submit Information</button>
+                </div>
+            </div>
+        `;
+
+        // Close any other drawers, then open this one
+        ALL_DRAWER_IDS.forEach(id => {
+            if (id !== 'edd-fill-drawer') {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('drawer-active');
             }
-        }, 80);
+        });
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        lucide.createIcons();
+        setTimeout(() => body.querySelector('input, select')?.focus({ preventScroll: true }), 280);
+    };
+
+    window.closeEddFillDrawer = function() {
+        const drawer = document.getElementById('edd-fill-drawer');
+        if (drawer) drawer.classList.remove('drawer-active');
+        document.body.classList.remove('drawer-open');
+    };
+
+    window.submitEddFill = function() {
+        const payee = activePayeeId ? getPayeeById(activePayeeId) : null;
+        if (!payee) return;
+
+        const email = document.getElementById('edd-field-email')?.value.trim() || '';
+        if (!email) { alert('Email is required.'); return; }
+
+        const country = document.getElementById('edd-field-country')?.value || '';
+        const address = document.getElementById('edd-field-address')?.value.trim() || '';
+
+        if (payee.personType === 'company') {
+            const companyName = document.getElementById('edd-field-company-name')?.value.trim() || '';
+            const industry = document.getElementById('edd-field-industry')?.value || '';
+            const taxId = document.getElementById('edd-field-taxid')?.value.trim() || '';
+            if (!companyName || !industry || !country || !address || !taxId) {
+                alert('All required fields must be filled in.');
+                return;
+            }
+            payee.moreInfo = { companyName, industry, country, address, taxId };
+        } else {
+            const firstName = document.getElementById('edd-field-fname')?.value.trim() || '';
+            const middleName = document.getElementById('edd-field-mname')?.value.trim() || '';
+            const lastName = document.getElementById('edd-field-lname')?.value.trim() || '';
+            const dob = document.getElementById('edd-field-dob')?.value || '';
+            if (!firstName || !lastName || !dob || !country || !address) {
+                alert('All required fields must be filled in.');
+                return;
+            }
+            payee.moreInfo = { firstName, middleName, lastName, dob, country, address };
+        }
+
+        payee.email = email;
+
+        window.closeEddFillDrawer();
+        renderPayeeFormPage();
+        // Toast-style feedback
+        if (typeof notifyOrderCreated === 'function') {
+            try { notifyOrderCreated('EDD Information Submitted', `${payee.alias || payee.name} is now fully verified for further transactions.`); } catch (e) {}
+        }
     };
 
     // EDD: Reveal shareable link zone
