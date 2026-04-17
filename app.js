@@ -13357,11 +13357,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                 <div style="display: flex; gap: 8px; flex-shrink: 0;">
                                     <button onclick="window.togglePayeeStatusFromDetail('${payee.id}')" style="padding: 8px 14px; background: white; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);" onmouseover="this.style.borderColor='#CBD5E1';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
                                         <i data-lucide="${payee.status === 'disabled' ? 'play-circle' : 'pause-circle'}" style="width: 13px; height: 13px;"></i>
-                                        ${payee.status === 'disabled' ? 'Enable' : 'Disable'} ${detailEntityLabel}
+                                        ${payee.status === 'disabled' ? 'Enable' : 'Disable'}
                                     </button>
                                     <button onclick="window.deletePayeeFromDetail('${payee.id}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 9px; font-size: 12px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04);" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
                                         <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
-                                        Delete ${detailEntityLabel}
+                                        Delete
                                     </button>
                                 </div>
                             </div>
