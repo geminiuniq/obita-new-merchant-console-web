@@ -7987,6 +7987,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div>
                                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                                     <h2 style="font-size:28px;font-weight:800;color:#0F172A;margin:0;">${account.bankName}</h2>
+                                    <span title="Same-name account — bank account name matches merchant" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;">同名</span>
                                     <span style="background:${statusMeta.background};color:${statusMeta.color};border:1px solid ${statusMeta.border};font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;text-transform:uppercase;">${statusMeta.label}</span>
                                 </div>
                                 <div style="font-size:15px;color:#475569;margin-top:8px;">${account.accountName}</div>
