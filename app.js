@@ -6203,7 +6203,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     let kybUboCount = 1;
     let kybReqId = '';
     let kybSubmitted = false;
-    let merchantKybCompleted = false; // Set this to true to see the "Verified" state
+    let merchantKybCompleted = true; // Default: verified state for both TCSP and MSO modes
 
     window.addKybUbo = function() {
         kybUboCount++;
