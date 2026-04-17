@@ -15470,58 +15470,72 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         lucide.createIcons();
     }
 
+    function truncateAddress(addr = '') {
+        const s = String(addr).trim();
+        if (s.length <= 16) return s;
+        return `${s.slice(0, 6)}…${s.slice(-6)}`;
+    }
+
     function renderPayoutConfirmPage() {
         const batch = ensurePayoutBatchDraft();
         const totals = getPayoutBatchTotals();
+        const isMso = window.currentLicenseMode === 'MSO';
+        const sourceLabel = isMso ? 'Asset Vault' : 'Source of Fund';
+        const sourceValue = isMso ? 'Fiat Vault · ' + batch.sourceCurrency : batch.sourceCurrency + ' Asset Vault';
+        const requestCount = batch.requests.length;
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 36px;">
-                <div class="card" style="padding: 24px 28px;">
-                    <button onclick="window.backToPayoutBatchEdit()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 700; padding: 0; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;">
+            <div class="fade-in" style="max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 36px;">
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.backToPayoutBatchEdit()" style="background: none; border: none; color: #64748B; cursor: pointer; font-size: 13px; font-weight: 700; padding: 0; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;">
                         <i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>
                         Back to Edit
                     </button>
-                    <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Confirm Payout Batch</h2>
-                    <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review the batch details below before execution. The batch will be submitted into review immediately after execution.</div>
+                    <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Confirm Payout Batch</h2>
+                    <div style="font-size: 13px; color: #64748B; line-height: 1.55;">Review the details below. Once submitted, the batch enters the approval workflow and cannot be edited.</div>
                 </div>
 
+                <!-- Hero: Total Required + supporting KPIs -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                        <div style="display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</div>
-                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${window.currentLicenseMode === 'MSO' ? 'Fiat Vault - ' + batch.sourceCurrency : batch.sourceCurrency + ' Asset Vault'}</div>
+                    <div style="display: grid; grid-template-columns: 1.35fr 1fr; gap: 0; border-bottom: 1px solid #E2E8F0;">
+                        <!-- Hero: Total Required -->
+                        <div style="padding: 24px 28px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
+                            <div style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">You are about to pay out</div>
+                            <div style="font-size: 40px; font-weight: 900; color: #0F172A; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums;">
+                                ${totals.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                <span style="font-size: 18px; font-weight: 700; color: #1D4ED8; margin-left: 6px; letter-spacing: 0;">${batch.sourceCurrency || '--'}</span>
                             </div>
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Net Payout</div>
-                                <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 4px;">${formatTransferMoney(totals.netSource, batch.sourceCurrency)}</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 10px; line-height: 1.5;">Debited from <strong style="color: #334155;">${sourceValue}</strong> across <strong style="color: #334155;">${requestCount}</strong> payout request${requestCount > 1 ? 's' : ''}.</div>
+                        </div>
+                        <!-- Supporting KPIs -->
+                        <div style="display: flex; flex-direction: column; background: #FFFFFF;">
+                            <div style="padding: 14px 24px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #64748B;">${sourceLabel}</span>
+                                <span style="font-size: 13px; font-weight: 700; color: #0F172A;">${sourceValue}</span>
                             </div>
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Fee</div>
-                                <div style="font-size: 18px; font-weight: 800; color: #C2410C; margin-top: 4px;">${formatTransferMoney(totals.fee, batch.sourceCurrency)}</div>
+                            <div style="padding: 14px 24px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #64748B;">Net Payout</span>
+                                <span style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${formatTransferMoney(totals.netSource, batch.sourceCurrency)}</span>
                             </div>
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Required</div>
-                                <div style="font-size: 20px; font-weight: 900; color: #1D4ED8; margin-top: 4px;">${formatTransferMoney(totals.total, batch.sourceCurrency)}</div>
+                            <div style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #64748B; display: inline-flex; align-items: center; gap: 4px;">Fee <i data-lucide="info" style="width: 12px; height: 12px; color: #CBD5E1; cursor: help;" title="Network fee for on-chain transactions, or bank wire fee for fiat transfers."></i></span>
+                                <span style="font-size: 13px; font-weight: 700; color: #C2410C; font-variant-numeric: tabular-nums;">${formatTransferMoney(totals.fee, batch.sourceCurrency)}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div style="padding: 20px 24px 10px 24px; border-bottom: 1px solid #E2E8F0; background: #FFFFFF;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Payout Requests</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Review the batch rows below before submitting this payout batch for approval.</div>
-                            </div>
-                            <div style="font-size: 12px; font-weight: 700; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 6px 10px; border-radius: 999px;">
-                                ${batch.requests.length} Request${batch.requests.length > 1 ? 's' : ''}
-                            </div>
+                    <!-- Payout Requests Header -->
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="font-size: 15px; font-weight: 700; color: #0F172A;">Payout Requests</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 4px 10px; border-radius: 999px;">
+                            ${requestCount} ${requestCount > 1 ? 'Requests' : 'Request'}
                         </div>
                     </div>
 
-                    <div style="padding: 0 24px 18px 24px; background: #FFFFFF;">
-                        <div style="display: grid; grid-template-columns: 52px 1.2fr 0.7fr 1fr 1.8fr 0.9fr 0.9fr; gap: 18px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
-                            <div>No.</div>
+                    <!-- Request rows -->
+                    <div style="padding: 0 24px; background: #FFFFFF;">
+                        <div style="display: grid; grid-template-columns: 40px 1.3fr 0.6fr 1fr 1.6fr 0.9fr 0.9fr; gap: 14px; padding: 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div>#</div>
                             <div>Payee</div>
                             <div>Currency</div>
                             <div class="text-right">Payout Amount</div>
@@ -15533,32 +15547,51 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             const payee = getPayeeById(row.payeeId);
                             const destination = getPayeeDestinationOptions(payee, row.payoutCurrency).find(item => item.key === row.destinationKey);
                             const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
+                            const destLabel = destination ? destination.meta : '';
+                            const destValue = destination ? destination.value : '';
+                            const destValueDisplay = destValue ? truncateAddress(destValue) : '';
+                            const noteText = (row.note || '').trim();
                             return `
-                                <div style="display: grid; grid-template-columns: 52px 1.2fr 0.7fr 1fr 1.8fr 0.9fr 0.9fr; gap: 18px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
-                                    <div style="font-size: 13px; font-weight: 700; color: #64748B;">${String(index + 1).padStart(2, '0')}</div>
-                                    <div>
-                                        <div style="font-size: 14px; font-weight: 600; color: #0F172A;">${payee?.name || '-'}</div>
-                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${getPayoutPurposeLabel(row)}</div>
+                                <div style="display: grid; grid-template-columns: 40px 1.3fr 0.6fr 1fr 1.6fr 0.9fr 0.9fr; gap: 14px; align-items: center; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 12px; font-weight: 700; color: #CBD5E1; font-variant-numeric: tabular-nums;">${String(index + 1).padStart(2, '0')}</div>
+                                    <div style="min-width: 0;">
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${payee?.name || '-'}</div>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${getPayoutPurposeLabel(row)}</div>
                                     </div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; padding-top: 1px;">${row.payoutCurrency}</div>
-                                    <div style="text-align: right;">
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${formatTransferMoney(parseFloat(row.amount) || 0, row.payoutCurrency)}</div>
-                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${row.payoutCurrency}</div>
+                                    <div style="font-size: 12px; font-weight: 700; color: #334155; background: #F8FAFC; padding: 3px 8px; border-radius: 6px; display: inline-block; width: fit-content;">${row.payoutCurrency}</div>
+                                    <div style="text-align: right; min-width: 0;">
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${formatTransferMoney(parseFloat(row.amount) || 0, row.payoutCurrency)}</div>
+                                        <div style="font-size: 10px; color: #94A3B8; margin-top: 3px; font-variant-numeric: tabular-nums;">@ ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}</div>
                                     </div>
-                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${destination ? `${destination.meta} - ${destination.value}` : '-'}</div>
-                                    <div style="text-align: right; font-size: 14px; font-weight: 700; color: #0F172A;">${formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency)}</div>
-                                    <div style="text-align: right;">
-                                        <div style="font-size: 14px; font-weight: 700; color: #B45309;">${formatTransferMoney(calculation.feeInSourceCurrency, batch.sourceCurrency)}</div>
-                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${row.note || '-'}</div>
+                                    <div style="min-width: 0;">
+                                        ${destination ? `
+                                            <div style="font-size: 12px; font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${destLabel}</div>
+                                            <div style="font-size: 11px; color: #94A3B8; margin-top: 3px; font-family: monospace; cursor: help;" title="${destValue}">${destValueDisplay}</div>
+                                        ` : `<div style="font-size: 12px; color: #94A3B8;">—</div>`}
+                                        ${noteText ? `
+                                            <div style="font-size: 10px; color: #64748B; margin-top: 6px; padding: 3px 7px; background: #FEFCE8; border: 1px solid #FEF08A; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; max-width: 100%;">
+                                                <i data-lucide="message-square" style="width: 9px; height: 9px; color: #A16207; flex-shrink: 0;"></i>
+                                                <span style="color: #854D0E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${noteText}">${noteText}</span>
+                                            </div>
+                                        ` : ''}
                                     </div>
+                                    <div style="text-align: right; font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency)}</div>
+                                    <div style="text-align: right; font-size: 13px; font-weight: 700; color: #C2410C; font-variant-numeric: tabular-nums;">${formatTransferMoney(calculation.feeInSourceCurrency, batch.sourceCurrency)}</div>
                                 </div>
                             `;
                         }).join('')}
                     </div>
 
-                    <div style="padding: 18px 24px; border-top: 1px solid #E2E8F0; background: #FFFFFF; display: flex; justify-content: flex-end; gap: 10px;">
-                        <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
-                        <button class="btn btn-primary" onclick="window.executePayoutBatch()" style="padding: 10px 18px;">Execute to Payout</button>
+                    <!-- Footer: reassurance + actions -->
+                    <div style="padding: 16px 24px; border-top: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748B; line-height: 1.5;">
+                            <i data-lucide="shield-check" style="width: 14px; height: 14px; color: #059669; flex-shrink: 0;"></i>
+                            <span>This batch will be submitted for approval. You can track its status in <strong style="color: #334155;">Payout Orders</strong>.</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
+                            <button class="btn btn-primary" onclick="window.executePayoutBatch()" style="padding: 10px 22px; font-weight: 700;">Submit Payout Batch</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -16100,6 +16133,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             if (!row.destinationKey) {
                 alert('Please select the destination address or bank account for every payout request.');
                 return;
+            }
+            // MSO safety: block stablecoin currencies and wallet destinations
+            if (window.currentLicenseMode === 'MSO') {
+                if (['USDT', 'USDC'].includes(row.payoutCurrency)) {
+                    alert('Stablecoin payouts are not supported in MSO mode. Please change the currency to a fiat currency.');
+                    return;
+                }
+                if (row.destinationKey && row.destinationKey.startsWith('wallet-')) {
+                    alert('Wallet destinations are not supported in MSO mode. Please select a bank account.');
+                    return;
+                }
             }
         }
 
