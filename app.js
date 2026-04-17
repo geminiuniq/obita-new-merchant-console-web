@@ -16668,6 +16668,150 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         renderPayoutOrdersPage();
     };
 
+    // Conversion Order detail: mock data + handlers
+    const CONVERSION_ORDERS = {
+        'CV-20261025-009': { createdAt: 'Today, 11:30', from: 'USDT', fromType: 'Stablecoin', to: 'HKD', toType: 'Fiat', fromAmount: '500,000.00', toAmount: '3,910,000.00', rate: '1 USDT = 7.82 HKD', spread: '0.12%', fee: 'Zero Fee', status: 'Completed', sourceVault: 'Stablecoin Vault', destinationVault: 'HKD Fiat Vault', initiatedBy: 'Nancy User', settledAt: 'Today, 11:30', quoteLockedAt: 'Today, 11:29' },
+        'CV-20261024-007': { createdAt: 'Yesterday, 15:02', from: 'USDC', fromType: 'Stablecoin', to: 'EUR', toType: 'Fiat', fromAmount: '200,000.00', toAmount: '184,000.00', rate: '1 USDC = 0.92 EUR', spread: '0.18%', fee: 'Zero Fee', status: 'Completed', sourceVault: 'Stablecoin Vault', destinationVault: 'EUR Fiat Vault', initiatedBy: 'Nancy User', settledAt: 'Yesterday, 15:03', quoteLockedAt: 'Yesterday, 15:02' },
+        'CV-20261024-005': { createdAt: 'Yesterday, 09:45', from: 'USD', fromType: 'Fiat', to: 'USDT', toType: 'Stablecoin', fromAmount: '100,000.00', toAmount: '— —', rate: '1 USD = 1.00 USDT', spread: '0.10%', fee: 'Zero Fee', status: 'Processing', sourceVault: 'USD Fiat Vault', destinationVault: 'Stablecoin Vault', initiatedBy: 'Nancy User', settledAt: '—', quoteLockedAt: 'Yesterday, 09:45' },
+        'CV-20261023-002': { createdAt: 'Oct 23, 14:11', from: 'USDT', fromType: 'Stablecoin', to: 'BRL', toType: 'Fiat', fromAmount: '80,000.00', toAmount: '400,800.00', rate: '1 USDT = 5.01 BRL', spread: '0.22%', fee: 'Zero Fee', status: 'Completed', sourceVault: 'Stablecoin Vault', destinationVault: 'BRL Fiat Vault', initiatedBy: 'Ethan Lee', settledAt: 'Oct 23, 14:12', quoteLockedAt: 'Oct 23, 14:11' },
+        'CV-20261022-001': { createdAt: 'Oct 22, 10:05', from: 'HKD', fromType: 'Fiat', to: 'USD', toType: 'Fiat', fromAmount: '1,000,000.00', toAmount: '128,000.00', rate: '1 HKD = 0.128 USD', spread: '0.15%', fee: 'Zero Fee', status: 'Failed', sourceVault: 'HKD Fiat Vault', destinationVault: 'USD Fiat Vault', initiatedBy: 'Nancy User', settledAt: '—', quoteLockedAt: 'Oct 22, 10:05', failureReason: 'Insufficient HKD balance at execution time.' },
+        'CV-20260410-003': { createdAt: 'Apr 10, 14:22', from: 'HKD', fromType: 'Fiat', to: 'USD', toType: 'Fiat', fromAmount: '2,000,000.00', toAmount: '256,000.00', rate: '1 HKD = 0.128 USD', spread: '0.15%', fee: 'Zero Fee', status: 'Completed', sourceVault: 'HKD Fiat Vault', destinationVault: 'USD Fiat Vault', initiatedBy: 'Nancy User', settledAt: 'Apr 10, 14:23', quoteLockedAt: 'Apr 10, 14:22' },
+        'CV-20260409-002': { createdAt: 'Apr 9, 10:05', from: 'USD', fromType: 'Fiat', to: 'EUR', toType: 'Fiat', fromAmount: '50,000.00', toAmount: '46,000.00', rate: '1 USD = 0.92 EUR', spread: '0.15%', fee: 'Zero Fee', status: 'Processing', sourceVault: 'USD Fiat Vault', destinationVault: 'EUR Fiat Vault', initiatedBy: 'Nancy User', settledAt: '—', quoteLockedAt: 'Apr 9, 10:05' }
+    };
+
+    window.openConversionOrderDetail = function(orderId) {
+        window.activeConversionOrderId = orderId;
+        renderPlaceholderContent('Conversion');
+    };
+    window.backToConversionList = function() {
+        window.activeConversionOrderId = null;
+        renderPlaceholderContent('Conversion');
+    };
+
+    function renderConversionOrderDetailPage(orderId) {
+        const order = CONVERSION_ORDERS[orderId];
+        if (!order) { window.activeConversionOrderId = null; renderPlaceholderContent('Conversion'); return; }
+
+        const statusStyles = {
+            Completed:  { bg: '#DCFCE7', color: '#15803D', icon: 'check-circle-2' },
+            Processing: { bg: '#FEF3C7', color: '#B45309', icon: 'clock' },
+            Failed:     { bg: '#FEE2E2', color: '#B91C1C', icon: 'x-circle' }
+        };
+        const s = statusStyles[order.status] || statusStyles.Processing;
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.backToConversionList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Conversion</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Conversion Order Detail</h1>
+                            <div style="font-family: monospace; font-size: 13px; color: #2563EB; font-weight: 600;">${orderId}</div>
+                        </div>
+                        <span style="background: ${s.bg}; color: ${s.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="${s.icon}" style="width: 13px; height: 13px;"></i>${order.status}</span>
+                    </div>
+                </div>
+
+                <!-- Conversion flow hero -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 22px 28px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-bottom: 1px solid #DBEAFE;">
+                        <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Conversion Summary</div>
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: center; margin-top: 16px;">
+                            <div>
+                                <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">From</div>
+                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 6px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;">${order.fromAmount}</div>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.from} <span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.fromType}</span></div>
+                            </div>
+                            <div style="width: 40px; height: 40px; border-radius: 999px; background: white; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="arrow-right" style="width: 18px; height: 18px; color: #64748B;"></i></div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">To</div>
+                                <div style="font-size: 28px; font-weight: 900; color: ${order.status === 'Completed' ? '#059669' : '#0F172A'}; margin-top: 6px; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.1;">${order.toAmount}</div>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 3px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; font-weight: 700; color: #334155;">${order.to} <span style="font-size: 10px; font-weight: 600; color: #94A3B8;">· ${order.toType}</span></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: center; margin-top: 18px;">
+                            <div style="display: inline-flex; align-items: center; gap: 10px; padding: 8px 16px; background: white; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 12px; color: #475569; font-family: monospace;">${order.rate}</div>
+                        </div>
+                    </div>
+
+                    <!-- Transaction details grid -->
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Source Vault</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.sourceVault}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Destination Vault</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.destinationVault}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Exchange Rate</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; font-family: monospace;">${order.rate}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Spread</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.spread}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Conversion Fee</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #059669; margin-top: 5px;">${order.fee}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Initiated By</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${order.initiatedBy}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="card" style="padding: 22px 28px;">
+                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 16px;">Timeline</div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Order Created</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.createdAt} · ${order.initiatedBy}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Quote Locked</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.quoteLockedAt} · ${order.rate}</div>
+                            </div>
+                        </div>
+                        ${order.status === 'Completed' ? `
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #DCFCE7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 12px; height: 12px; color: #16A34A;"></i></div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Settled</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.settledAt} · Funds credited to ${order.destinationVault}</div>
+                            </div>
+                        </div>` : order.status === 'Processing' ? `
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="clock" style="width: 12px; height: 12px; color: #B45309;"></i></div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Settlement in Progress</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">Awaiting settlement to ${order.destinationVault}</div>
+                            </div>
+                        </div>` : `
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div style="width: 24px; height: 24px; border-radius: 999px; background: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="x" style="width: 12px; height: 12px; color: #DC2626;"></i></div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Failed</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 2px;">${order.failureReason || 'Conversion could not be completed.'}</div>
+                            </div>
+                        </div>`}
+                    </div>
+                </div>
+            </div>
+        `;
+        lucide.createIcons();
+        window.applyLicenseConstraints();
+    }
+
     function renderPlaceholderContent(title) {
         if (title === 'Overview') {
             contentBody.innerHTML = getOverviewHTML();
@@ -16761,6 +16905,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 contentBody.innerHTML = stablecoinVaultHTML;
             }
         } else if (title === 'Conversion') {
+            // If a conversion order is selected, show its detail page instead of the form + list
+            if (window.activeConversionOrderId) {
+                renderConversionOrderDetailPage(window.activeConversionOrderId);
+                return;
+            }
             contentBody.innerHTML = `
             <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 520px) minmax(220px, 280px)' : 'minmax(0, 560px) 260px'}; gap: 24px; align-items: start; padding-bottom: 40px;">
 
@@ -17093,7 +17242,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </thead>
                         <tbody id="cv-order-list-body">
                             ${window.currentLicenseMode !== 'MSO' ? `
-                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261025-009')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261025-009</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Today, 11:30</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
@@ -17103,7 +17252,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 7.82 HKD</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261024-007')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-007</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 15:02</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDC</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
@@ -17113,7 +17262,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDC = 0.92 EUR</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261024-005')" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='#FFFBEB'">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-005</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 09:45</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
@@ -17123,7 +17272,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 1.00 USDT</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Processing</span></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261023-002')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261023-002</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 23, 14:11</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
@@ -17133,7 +17282,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 5.01 BRL</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
                             </tr>` : `
-                            <tr style="border-bottom: 1px solid #F1F5F9;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20260410-003')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260410-003</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 10, 14:22</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
@@ -17143,7 +17292,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 HKD = 0.128 USD</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #D1FAE5; color: #059669; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Completed</span></td>
                             </tr>
-                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB;">
+                            <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20260409-002')" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='#FFFBEB'">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260409-002</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 9, 10:05</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
@@ -17153,7 +17302,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 0.92 EUR</td>
                                 <td style="padding: 14px; text-align: center;"><span style="background: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px;">Processing</span></td>
                             </tr>`}
-                            <tr>
+                            <tr style="cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261022-001')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261022-001</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 22, 10:05</td>
                                 <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
