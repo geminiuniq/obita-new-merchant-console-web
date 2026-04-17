@@ -10507,138 +10507,163 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             return `<span style="background: ${pill.bg}; color: ${pill.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>`;
         };
 
+        const renderInvoiceRow = (row) => {
+            const normalizedStatus = normalizeOrderStatus(row.status);
+            const isInProgress = normalizedStatus === 'In Progress';
+            const rowBg = isInProgress ? 'background: rgba(254, 243, 199, 0.22);' : '';
+            const rowHoverBg = isInProgress ? '#FFFBEB' : '#F8FAFC';
+            return `
+                <tr onclick="window.openInvoiceOrderDetail('${row.invoiceNo}')" onmouseover="this.style.background='${rowHoverBg}'" onmouseout="this.style.background='${isInProgress ? 'rgba(254, 243, 199, 0.22)' : ''}'" style="cursor: pointer; ${rowBg}">
+                    <td>
+                        <div style="font-family: monospace; font-size: 12px; color: #2563EB; font-weight: 600;">${row.invoiceNo}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">Issued ${row.issuedOn}</div>
+                    </td>
+                    <td>
+                        <div class="font-medium">${row.buyer}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px;">${row.recipient}</div>
+                    </td>
+                    <td style="color: #475569;">${row.method}</td>
+                    <td class="text-muted">${row.dueOn}</td>
+                    <td class="text-right">
+                        <div class="font-medium" style="font-variant-numeric: tabular-nums;">${row.amount}</div>
+                        <div style="font-size: 11px; color: #94A3B8; margin-top: 3px; font-variant-numeric: tabular-nums;">Collected ${row.collected}</div>
+                    </td>
+                    <td>${renderStatus(row.status)}</td>
+                </tr>`;
+        };
+
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                <div style="display: grid; grid-template-columns: minmax(0, 2.3fr) minmax(290px, 0.95fr); gap: 20px; align-items: stretch;">
-                    <div class="card collections-summary-card" style="padding: 24px;">
-                        <div class="collection-header" style="margin-bottom: 22px; min-height: 42px; align-items: flex-start;">
-                            <div style="min-height: 42px; display: flex; align-items: center;">
-                                <h2 class="card-title" style="font-size: 18px; margin: 0;">Invoice Summary</h2>
-                            </div>
-                            <div class="time-selector">
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                <!-- Page Header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Invoice Orders</h1>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Issue invoices, track collection status, and manage payers from one place.</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="window.openNewInvoicePage()" style="padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i> New Invoice</button>
+                    </div>
+                </div>
+
+                <!-- KPI Row: Invoice Summary + Payer side panel -->
+                <div style="display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr); gap: 16px; align-items: stretch;">
+                    <!-- Invoice Summary with hero + breakdown -->
+                    <div class="card" style="margin: 0; padding: 0; overflow: hidden;">
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Invoice Summary</div>
+                            <div class="time-selector" style="display: inline-flex; gap: 4px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 3px;">
                                 ${INVOICE_DURATION_OPTIONS.map(option => `
-                                    <span class="time-option ${option === activeInvoiceOrdersDuration ? 'active' : ''}" onclick="window.switchInvoiceOrdersDuration('${option}')" style="cursor: pointer;">${option}</span>
+                                    <span class="time-option ${option === activeInvoiceOrdersDuration ? 'active' : ''}" onclick="window.switchInvoiceOrdersDuration('${option}')" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; ${option === activeInvoiceOrdersDuration ? 'background: white; color: #0F172A; font-weight: 700; box-shadow: 0 1px 2px rgba(0,0,0,0.05);' : 'color: #64748B;'}">${option}</span>
                                 `).join('')}
                             </div>
                         </div>
-                        <div class="collection-stats-grid" style="gap: 14px; flex-wrap: wrap;">
-                            <div class="c-stat-box" style="min-width: 160px;">
-                                <span class="c-stat-label">Created Orders</span>
-                                <span class="c-stat-count">${summary.createdCount}</span>
-                                <span class="c-stat-amount">${summary.createdAmount}</span>
+                        <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
+                            <!-- Hero: Created Orders (total volume) -->
+                            <div style="padding: 22px 26px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
+                                <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Issued</div>
+                                <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">${summary.createdAmount}</div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">${summary.createdCount} invoices</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 160px;">
-                                <span class="c-stat-label">Paid Successfully</span>
-                                <span class="c-stat-count text-success">${summary.paidCount}</span>
-                                <span class="c-stat-amount text-success">${summary.paidAmount}</span>
+                            <!-- Paid -->
+                            <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Paid</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.paidCount}</div>
+                                <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${summary.paidAmount}</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 160px;">
-                                <span class="c-stat-label">In-Transit (incl. Underpaid)</span>
-                                <span class="c-stat-count text-warning">${summary.transitCount}</span>
-                                <span class="c-stat-amount text-warning">${summary.transitAmount}</span>
+                            <!-- In-Transit -->
+                            <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.transitCount}</div>
+                                <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${summary.transitAmount}</div>
                             </div>
-                            <div class="c-stat-box" style="min-width: 160px;">
-                                <span class="c-stat-label">Failed (Expired/Cancelled)</span>
-                                <span class="c-stat-count text-muted">${summary.failedCount}</span>
-                                <span class="c-stat-amount text-muted">${summary.failedAmount}</span>
+                            <!-- Failed -->
+                            <div style="padding: 22px 22px;">
+                                <div style="display: flex; align-items: center; gap: 7px;">
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                    <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Failed</div>
+                                </div>
+                                <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.failedCount}</div>
+                                <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${summary.failedAmount}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card" style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #CBD5E1; box-shadow: 0 18px 32px rgba(15, 23, 42, 0.06);">
-                        <div style="min-height: 42px; display: flex; align-items: center;">
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Payer List</div>
+                    <!-- Payers side panel -->
+                    <div class="card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payers</div>
+                            <button onclick="window.openRecipientManagementPage()" style="background: none; border: none; padding: 0; font-size: 13px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i></button>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); display: flex; flex-direction: column; justify-content: space-between;">
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Total Payers</div>
-                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em;">${payerSummary.total}</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 6px;">${payerSummary.active} active</div>
+                        <div style="flex: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; justify-content: center;">
+                            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+                                <div style="font-size: 13px; color: #64748B; font-weight: 500;">Total</div>
+                                <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1;">${payerSummary.total}</div>
                             </div>
-                            <div style="min-height: 124px; padding: 16px; border-radius: 16px; border: 1px solid #E2E8F0; background: #FFFFFF; display: flex; flex-direction: column; justify-content: space-between;">
-                                <div>
-                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Pending Setup</div>
-                                    <div style="font-size: 24px; font-weight: 800; color: #0F172A; margin-top: 10px;">${payerSummary.pending}</div>
+                            <div style="height: 1px; background: #F1F5F9;"></div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                    <span style="width: 7px; height: 7px; border-radius: 999px; background: #16A34A;"></span>
+                                    <span style="font-size: 13px; color: #334155; font-weight: 500;">Active</span>
                                 </div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 10px;">${payerSummary.lastUpdated}</div>
+                                <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payerSummary.active}</div>
                             </div>
-                        </div>
-                        <div style="display: flex; justify-content: flex-end;">
-                            <button class="btn btn-primary" onclick="window.openRecipientManagementPage()" style="padding: 11px 18px; font-weight: 800; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);">Manage Payers</button>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                    <span style="width: 7px; height: 7px; border-radius: 999px; background: #B45309;"></span>
+                                    <span style="font-size: 13px; color: #334155; font-weight: 500;">Pending Setup</span>
+                                </div>
+                                <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payerSummary.pending}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Invoice Order List -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h2 class="card-title" style="margin: 0; font-size: 18px;">Invoice Order List</h2>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Track issued invoices, receiving entity, collection method, and payment result in one place.</div>
+                    <div style="padding: 16px 20px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <div style="position: relative; flex: 1; min-width: 240px; max-width: 320px;">
+                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
+                            <input id="invoice-orders-search" type="text" value="${document.getElementById('invoice-orders-search')?.value || ''}" oninput="window.renderInvoiceOrdersPage()" placeholder="Search by invoice no., buyer..." style="width: 100%; padding: 10px 14px 10px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                         </div>
-                        <button class="btn btn-primary" onclick="window.openNewInvoicePage()" style="padding: 10px 18px; font-weight: 700;">
-                            <i data-lucide="plus"></i>
-                            New Invoice
-                        </button>
-                    </div>
-
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(180px, 0.7fr) minmax(180px, 0.7fr) auto; gap: 14px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;">Duration</div>
-                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
-                                <input id="invoice-orders-start-date" type="date" value="${activeInvoiceOrdersStartDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                                <span style="font-size: 12px; color: #94A3B8;">to</span>
-                                <input id="invoice-orders-end-date" type="date" value="${activeInvoiceOrdersEndDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 13px; color: #0F172A; outline: none; width: 130px;">
-                            </div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #E2E8F0; border-radius: 10px; background: #FFFFFF;">
+                            <input id="invoice-orders-start-date" type="date" value="${activeInvoiceOrdersStartDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
+                            <span style="font-size: 12px; color: #94A3B8;">to</span>
+                            <input id="invoice-orders-end-date" type="date" value="${activeInvoiceOrdersEndDate}" onchange="window.renderInvoiceOrdersPage()" style="border: none; background: transparent; font-size: 12px; color: #0F172A; outline: none; padding: 10px 0; width: 110px;">
                         </div>
-                        <select id="invoice-orders-status" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <select id="invoice-orders-status" onchange="window.renderInvoiceOrdersPage()" style="min-width: 160px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Statuses</option>
                             <option value="Completed" ${statusValue === 'Completed' ? 'selected' : ''}>Completed</option>
                             <option value="In Progress" ${statusValue === 'In Progress' ? 'selected' : ''}>In Progress</option>
                             <option value="Expired" ${statusValue === 'Expired' ? 'selected' : ''}>Expired</option>
                         </select>
-                        <select id="invoice-orders-method" onchange="window.renderInvoiceOrdersPage()" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
+                        <select id="invoice-orders-method" onchange="window.renderInvoiceOrdersPage()" style="min-width: 150px; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
                             <option value="all">All Methods</option>
                             <option value="Bank Transfer" ${methodValue === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
                             <option value="Card Payment" ${methodValue === 'Card Payment' ? 'selected' : ''}>Card Payment</option>
                             ${window.currentLicenseMode !== 'MSO' ? `<option value="Wallet Pay" ${methodValue === 'Wallet Pay' ? 'selected' : ''}>Wallet Pay</option>` : ''}
                         </select>
-                        <div style="position: relative; min-width: 260px;">
-                            <i data-lucide="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #94A3B8;"></i>
-                            <input id="invoice-orders-search" type="text" value="${document.getElementById('invoice-orders-search')?.value || ''}" oninput="window.renderInvoiceOrdersPage()" placeholder="Search by invoice no., buyer..." style="width: 100%; padding: 11px 14px 11px 38px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 13px; color: #0F172A; background: #FFFFFF; outline: none;">
-                        </div>
                     </div>
 
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Invoice No.</th>
-                                    <th>Issued On</th>
-                                    <th>Due On</th>
+                                    <th>Invoice</th>
                                     <th>Buyer</th>
-                                    <th>Recipient</th>
                                     <th>Method</th>
-                                    <th>Settlement Currency</th>
-                                    <th class="text-right">Invoice Amount</th>
-                                    <th class="text-right">Collected</th>
+                                    <th>Due On</th>
+                                    <th class="text-right">Amount</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${filteredRows.length ? filteredRows.map(row => `
-                                    <tr onclick="window.openInvoiceOrderDetail('${row.invoiceNo}')">
-                                        <td style="font-family: monospace; font-size: 12px; color: #2563EB;">${row.invoiceNo}</td>
-                                        <td class="text-muted">${row.issuedOn}</td>
-                                        <td class="text-muted">${row.dueOn}</td>
-                                        <td class="font-medium">${row.buyer}</td>
-                                        <td style="font-size: 12px; color: #475569;">${row.recipient}</td>
-                                        <td>${row.method}</td>
-                                        <td>${row.settlementCurrency}</td>
-                                        <td class="text-right font-medium">${row.amount}</td>
-                                        <td class="text-right">${row.collected}</td>
-                                        <td>${renderStatus(row.status)}</td>
-                                    </tr>
-                                `).join('') : '<tr><td colspan="10" style="padding: 48px 24px; text-align: center; color: #64748B;">No invoice orders matched your current filters.</td></tr>'}
+                                ${filteredRows.length ? filteredRows.map(renderInvoiceRow).join('') : '<tr><td colspan="6" style="padding: 48px 24px; text-align: center; color: #64748B;">No invoice orders matched your current filters.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
