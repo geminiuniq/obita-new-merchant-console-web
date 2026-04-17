@@ -10923,11 +10923,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <!-- In-Transit -->
                             <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
                                 <div style="display: flex; align-items: center; gap: 7px;">
-                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                                     <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
                                 </div>
                                 <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.transitCount}</div>
-                                <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${summary.transitAmount}</div>
+                                <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${summary.transitAmount}</div>
                             </div>
                             <!-- Failed -->
                             <div style="padding: 22px 22px;">
@@ -11280,11 +11280,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <!-- In-Transit -->
                             <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
                                 <div style="display: flex; align-items: center; gap: 7px;">
-                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                    <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                                     <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
                                 </div>
                                 <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${summary.transitCount}</div>
-                                <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatCheckoutSummaryAmount(summary.transitAmount)}</div>
+                                <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatCheckoutSummaryAmount(summary.transitAmount)}</div>
                             </div>
                             <!-- Failed -->
                             <div style="padding: 22px 22px;">
@@ -16574,11 +16574,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <!-- In-Transit -->
                         <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
                             <div style="display: flex; align-items: center; gap: 7px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                                 <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
                             </div>
                             <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">25</div>
-                            <div style="font-size: 13px; color: #B45309; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$100,000</div>
+                            <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">$100,000</div>
                         </div>
                         <!-- Failed -->
                         <div style="padding: 22px 22px;">
