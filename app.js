@@ -12226,49 +12226,46 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             if (p.usageScope?.refund) scopeHtml += '<span style="background: #DCFCE7; color: #15803D; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 700;">Refund</span>';
                             scopeHtml += '</div>';
 
+                            // Minimal verification mark — icon only, no color pill
+                            const verifiedMark = '<span title="Verified" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#DCFCE7;color:#16A34A;" aria-label="Verified"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>';
+                            const pendingMark = '<span title="Pending verification" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEF3C7;color:#B45309;" aria-label="Pending verification"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>';
+                            const failedMark = '<span title="Failed" style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:999px;background:#FEE2E2;color:#DC2626;" aria-label="Failed"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
+
                             let destinationSummary;
                             if (isInvoicePayerMode || isPayoutPayeeMode || isContactManagementMode) {
                                 const w = (window.currentLicenseMode !== 'MSO') ? p.wallets?.[0] : null;
                                 const b = p.banks?.[0];
                                 if (w) {
-                                    const verifBadge = w.verified === true
-                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DCFCE7;color:#16A34A;">Verified</span>'
-                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FEF9C3;color:#A16207;">Pending Verification</span>';
-                                    const kindBadge = w.walletKind === 'exchange'
-                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FFF7ED;color:#EA580C;">Exchange</span>'
-                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#F5F3FF;color:#7C3AED;">Private</span>';
+                                    const verifMark = w.verified === true ? verifiedMark : pendingMark;
                                     destinationSummary = `
                                         <div style="display:flex;align-items:flex-start;gap:10px;">
-                                            <div style="width:30px;height:30px;border-radius:8px;background:#F5F3FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                                <i data-lucide="wallet" style="width:15px;height:15px;color:#7C3AED;"></i>
+                                            <div style="width:28px;height:28px;border-radius:7px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                <i data-lucide="wallet" style="width:14px;height:14px;color:#64748B;"></i>
                                             </div>
-                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
-                                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                                                <div style="display:flex;align-items:center;gap:6px;">
                                                     <span style="font-size:12px;font-weight:700;color:#0F172A;">${w.network}</span>
-                                                    ${kindBadge}${verifBadge}
+                                                    ${verifMark}
                                                 </div>
-                                                <div style="font-size:11.5px;font-family:monospace;color:#475569;letter-spacing:0.3px;">${formatMaskedAddress(w.address)}</div>
+                                                <div style="font-size:11.5px;font-family:monospace;color:#64748B;letter-spacing:0.3px;">${formatMaskedAddress(w.address)}</div>
                                             </div>
                                         </div>`;
                                 } else if (b) {
                                     const bStat = window._computeBankStatus(p);
-                                    const bStatBadge = bStat === 'verified'
-                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DCFCE7;color:#16A34A;">Verified</span>'
-                                        : bStat === 'failed'
-                                        ? '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#FEE2E2;color:#DC2626;">Failed</span>'
-                                        : '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DBEAFE;color:#1D4ED8;">New</span>';
+                                    const bStatMark = bStat === 'verified' ? verifiedMark : bStat === 'failed' ? failedMark : pendingMark;
+                                    const currencyText = b.currency ? `<span style="font-size:11px;color:#94A3B8;font-weight:600;">· ${b.currency}</span>` : '';
                                     destinationSummary = `
                                         <div style="display:flex;align-items:flex-start;gap:10px;">
-                                            <div style="width:30px;height:30px;border-radius:8px;background:#EFF6FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                                <i data-lucide="landmark" style="width:15px;height:15px;color:#2563EB;"></i>
+                                            <div style="width:28px;height:28px;border-radius:7px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                                <i data-lucide="landmark" style="width:14px;height:14px;color:#64748B;"></i>
                                             </div>
-                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
-                                                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                                                <div style="display:flex;align-items:center;gap:6px;">
                                                     <span style="font-size:12px;font-weight:700;color:#0F172A;">${b.bankName}</span>
-                                                    ${b.currency ? `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#DBEAFE;color:#1D4ED8;">${b.currency}</span>` : ''}
-                                                    ${bStatBadge}
+                                                    ${currencyText}
+                                                    ${bStatMark}
                                                 </div>
-                                                <div style="font-size:11.5px;font-family:monospace;color:#475569;letter-spacing:0.3px;">${formatMaskedAddress(b.account)}${b.accountName ? ` <span style="font-family:inherit;color:#94A3B8;">· ${b.accountName}</span>` : ''}</div>
+                                                <div style="font-size:11.5px;font-family:monospace;color:#64748B;letter-spacing:0.3px;">${formatMaskedAddress(b.account)}${b.accountName ? ` <span style="font-family:inherit;color:#94A3B8;">· ${b.accountName}</span>` : ''}</div>
                                             </div>
                                         </div>`;
                                 } else {
@@ -12293,10 +12290,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 </div>`;
                             }
 
-                            const contactTypeBadge = p.directoryType === 'invoicePayer' ? 'Payer for Invoice' : 'Payee';
-                            const contactTypeBadgeStyle = p.directoryType === 'invoicePayer'
-                                ? 'background: #FCE7F3; color: #BE185D;'
-                                : 'background: #EFF6FF; color: #1D4ED8;';
+                            const contactTypeBadge = p.directoryType === 'invoicePayer' ? 'Payer' : 'Payee';
+                            const contactTypeBadgeStyle = 'background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0;';
 
                             const detailTypeArg = isContactManagementMode
                                 ? p.directoryType
