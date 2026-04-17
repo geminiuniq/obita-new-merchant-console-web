@@ -1680,6 +1680,161 @@ document.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
     };
 
+    // TCSP mode: Top Up entry — choose Stablecoin or Fiat, then currency, then the existing flow
+    function _hideAllFiatTopUpSteps() {
+        ['fiat-topup-step-type', 'fiat-topup-step-stablecoin', 'fiat-topup-step-currency', 'fiat-topup-step-1', 'fiat-topup-step-2', 'fiat-topup-step-3'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
+
+    function _ensureTopUpStep(id) {
+        let step = document.getElementById(id);
+        if (!step) {
+            step = document.createElement('div');
+            step.id = id;
+            step.style.cssText = 'display: flex; flex-direction: column; height: 100%;';
+            const step1 = document.getElementById('fiat-topup-step-1');
+            step1.parentElement.insertBefore(step, step1);
+        }
+        return step;
+    }
+
+    window.openTcspTopUpPicker = function() {
+        ALL_DRAWER_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('drawer-active');
+        });
+
+        const drawer = document.getElementById('fiat-topup-drawer');
+        const titleEl = document.getElementById('fiat-topup-drawer-title');
+        if (titleEl) titleEl.textContent = 'Top Up';
+
+        _hideAllFiatTopUpSteps();
+
+        const typeStep = _ensureTopUpStep('fiat-topup-step-type');
+        typeStep.innerHTML = `
+            <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                <div>
+                    <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Select Asset Type</div>
+                    <div style="font-size: 12px; color: #94A3B8; line-height: 1.5;">Choose whether to top up a stablecoin balance or a fiat currency balance.</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button onclick="window.selectTcspTopUpType('stablecoin')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #1D4ED8;">
+                            <i data-lucide="coins" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Stablecoin</div>
+                            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">USDT · USDC — Deposit via on-chain transfer</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                    </button>
+                    <button onclick="window.selectTcspTopUpType('fiat')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #F1F5F9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #475569;">
+                            <i data-lucide="landmark" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Fiat</div>
+                            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">USD · HKD · EUR · BRL — Deposit via bank wire</div>
+                        </div>
+                        <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        typeStep.style.display = 'flex';
+        lucide.createIcons();
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    };
+
+    window.selectTcspTopUpType = function(type) {
+        _hideAllFiatTopUpSteps();
+        if (type === 'stablecoin') {
+            const step = _ensureTopUpStep('fiat-topup-step-stablecoin');
+            const coins = [
+                { code: 'USDT', name: 'Tether USD',  letter: '₮', bg: '#ECFDF5', color: '#059669', balance: 250000 },
+                { code: 'USDC', name: 'USD Coin',    letter: 'C', bg: '#EFF6FF', color: '#1D4ED8', balance: 200000 }
+            ];
+            step.innerHTML = `
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button onclick="window.openTcspTopUpPicker()" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>Back</button>
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Select Stablecoin</div>
+                        <div style="font-size: 12px; color: #94A3B8; line-height: 1.5;">Choose the stablecoin you want to top up. You will then see the deposit address and QR code.</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${coins.map(c => `
+                        <button onclick="window.selectTcspTopUpCoin('${c.code}')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: ${c.bg}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: ${c.color}; flex-shrink: 0;">${c.letter}</div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${c.code}</div>
+                                <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${c.name}</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${c.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">Current Balance</div>
+                            </div>
+                            <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                        </button>`).join('')}
+                    </div>
+                </div>
+            `;
+            step.style.display = 'flex';
+            lucide.createIcons();
+        } else {
+            // Fiat — reuse MSO currency picker UI inside the same drawer
+            const pickerStep = _ensureTopUpStep('fiat-topup-step-currency');
+            const fiatCurrencies = ['USD', 'HKD', 'EUR', 'BRL'].filter(c => (TRANSFER_BALANCES[c] || 0) > 0);
+            pickerStep.innerHTML = `
+                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <button onclick="window.openTcspTopUpPicker()" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;"><i data-lucide="chevron-left" style="width: 14px; height: 14px;"></i>Back</button>
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Select Currency</div>
+                        <div style="font-size: 12px; color: #94A3B8; line-height: 1.5;">Choose the fiat currency you want to top up. You will then provide the bank transfer details.</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        ${fiatCurrencies.map(c => {
+                            const balance = TRANSFER_BALANCES[c] || 0;
+                            const icons = { USD: '$', HKD: 'HK$', EUR: '€', BRL: 'R$' };
+                            const colors = { USD: '#0F172A', HKD: '#DC2626', EUR: '#1D4ED8', BRL: '#15803D' };
+                            const bgs = { USD: '#F1F5F9', HKD: '#FEF2F2', EUR: '#EFF6FF', BRL: '#F0FDF4' };
+                            const names = { USD: 'US Dollar', HKD: 'Hong Kong Dollar', EUR: 'Euro', BRL: 'Brazilian Real' };
+                            return `
+                            <button onclick="window.selectMsoTopUpCurrency('${c}')" style="display: flex; align-items: center; gap: 14px; padding: 16px 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#FAFBFC'" onmouseout="this.style.borderColor='#E2E8F0';this.style.background='white'">
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: ${bgs[c]}; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: ${colors[c]}; flex-shrink: 0;">${icons[c]}</div>
+                                <div style="flex: 1; min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${c}</div>
+                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">${names[c]}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                                    <div style="font-size: 10px; color: #94A3B8; margin-top: 2px;">Current Balance</div>
+                                </div>
+                                <i data-lucide="chevron-right" style="width: 16px; height: 16px; color: #CBD5E1; flex-shrink: 0;"></i>
+                            </button>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+            pickerStep.style.display = 'flex';
+            lucide.createIcons();
+        }
+    };
+
+    window.selectTcspTopUpCoin = function(coin) {
+        // Close the picker drawer and hand off to the existing stablecoin top-up drawer
+        const fiatDrawer = document.getElementById('fiat-topup-drawer');
+        if (fiatDrawer) fiatDrawer.classList.remove('drawer-active');
+        _hideAllFiatTopUpSteps();
+        window.openTopUpDrawer(coin);
+    };
+
     // MSO mode: open fiat transfer drawer with currency selection as first step
     window.openMsoTransferCurrencyPicker = function() {
         ALL_DRAWER_IDS.forEach(id => {
@@ -6924,7 +7079,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div class="action-buttons">
                                 ${window.currentLicenseMode === 'MSO'
                                     ? '<button class="btn btn-primary" onclick="window.openMsoTopUpCurrencyPicker()"><i data-lucide="plus"></i> Top Up</button>'
-                                    : '<button class="btn btn-primary"><i data-lucide="plus"></i> Top Up</button>'}
+                                    : '<button class="btn btn-primary" onclick="window.openTcspTopUpPicker()"><i data-lucide="plus"></i> Top Up</button>'}
                                 ${window.currentLicenseMode === 'MSO'
                                     ? '<button class="btn btn-outline" onclick="window.openMsoTransferCurrencyPicker()"><i data-lucide="send"></i> Transfer</button>'
                                     : '<button class="btn btn-outline"><i data-lucide="send"></i> Transfer</button>'}
