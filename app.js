@@ -12431,15 +12431,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             return true;
         };
 
+        const msoHidesPayers = window.currentLicenseMode === 'MSO';
         const scopedContacts = isContactManagementMode
             ? payeeList
-                .filter(payee => Boolean(payee.usageScope?.payout) || Boolean(payee.usageScope?.collectionInvoice))
+                .filter(payee => Boolean(payee.usageScope?.payout) || (!msoHidesPayers && Boolean(payee.usageScope?.collectionInvoice)))
                 .flatMap(payee => {
                     const rows = [];
                     if (payee.usageScope?.payout) {
                         rows.push({ ...payee, directoryType: 'payee' });
                     }
-                    if (payee.usageScope?.collectionInvoice) {
+                    if (!msoHidesPayers && payee.usageScope?.collectionInvoice) {
                         rows.push({ ...payee, directoryType: 'invoicePayer' });
                     }
                     return rows;
