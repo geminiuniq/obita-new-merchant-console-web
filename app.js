@@ -12033,8 +12033,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         };
         filtered.sort((a, b) => {
             switch (sortValue) {
-                case 'name-asc':     return (a.alias || a.name || '').localeCompare(b.alias || b.name || '');
-                case 'name-desc':    return (b.alias || b.name || '').localeCompare(a.alias || a.name || '');
+                case 'name-asc':     return (a.alias || '').localeCompare(b.alias || '');
+                case 'name-desc':    return (b.alias || '').localeCompare(a.alias || '');
                 case 'updated-asc':  return parseDate(a.createdAt) - parseDate(b.createdAt);
                 case 'updated-desc': return parseDate(b.createdAt) - parseDate(a.createdAt);
                 case 'linked-desc':  return linkedCount(b) - linkedCount(a);
