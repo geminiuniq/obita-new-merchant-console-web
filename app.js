@@ -13678,11 +13678,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                     <div style="font-size: 16px; font-weight: 800; color: #0F172A;">Enhanced Due Diligence Required</div>
                                     <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Action Needed</span>
                                 </div>
-                                ${payee.eddReason ? `<div style="font-size: 12px; color: #92400E; margin-top: 6px; line-height: 1.55;">Reason: ${payee.eddReason}</div>` : ''}
-                                <div style="font-size: 12px; color: #64748B; margin-top: 8px; line-height: 1.6;">
-                                    Additional information is required before further transactions can be processed:
-                                    <strong style="color: #334155;">Email · Date of Birth · Country of Residence · Residential Address</strong>.
-                                </div>
                             </div>
                         </div>
 
@@ -13696,7 +13691,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                     </div>
                                     <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Fill in on behalf</div>
                                 </div>
-                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.6; flex: 1;">Enter the information yourself if you already have it on file. Data remains editable after submission.</div>
+                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.6; flex: 1;">You are responsible for the <strong style="color: #334155;">accuracy and authenticity</strong> of the information entered. Any discrepancies may delay or block future transactions.</div>
                                 <button class="btn btn-primary" onclick="window.startEddFill()" style="padding: 9px 14px; font-size: 12px; font-weight: 700;">Start Filling</button>
                             </div>
 
@@ -14013,18 +14008,21 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         renderPayeeFormPage();
     };
 
-    // EDD: Start filling in on behalf → enters edit mode and auto-enables More Information
+    // EDD: Start filling in on behalf → enters edit mode, reveals More Info fields,
+    // scrolls down to the input area and focuses the first field.
     window.startEddFill = function() {
         detailEditState.profile = true;
         renderPayeeFormPage();
-        // After render, auto-check the More Info checkbox and reveal its fields
         setTimeout(() => {
             const chk = document.getElementById('detail-more-info-chk');
             const fields = document.getElementById('detail-more-info-fields');
             if (chk) chk.checked = true;
             if (fields) fields.style.display = 'flex';
-            // Scroll to More Info fields for focus
-            if (fields) fields.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (fields) {
+                fields.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const firstInput = fields.querySelector('input, select');
+                if (firstInput) setTimeout(() => firstInput.focus({ preventScroll: true }), 350);
+            }
         }, 80);
     };
 
