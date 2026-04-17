@@ -12173,12 +12173,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <thead>
                                 ${isCompactDirectoryMode ? `
                                 <tr>
-                                    <th style="width: ${isContactManagementMode ? '24%' : '28%'};">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
-                                    ${isContactManagementMode ? '<th style="width: 16%;">Type</th>' : ''}
-                                    <th style="width: ${isContactManagementMode ? '24%' : '40%'};">Payment Method</th>
-                                    <th style="width: ${isContactManagementMode ? '12%' : '16%'};">Status</th>
-                                    <th class="text-center" style="width: ${isContactManagementMode ? '10%' : '16%'};">${isInvoicePayerMode ? 'Linked Invoices' : isPayoutPayeeMode ? 'Linked Payouts' : 'Linked Orders'}</th>
-                                    ${isContactManagementMode ? `<th class="text-right" style="width: 14%;">Actions</th>` : ''}
+                                    <th style="width: 28%;">${isPayoutPayeeMode ? 'Payee' : isInvoicePayerMode ? 'Payer' : 'Contact'}</th>
+                                    <th style="width: 40%;">Payment Method</th>
+                                    <th style="width: 16%;">Status</th>
+                                    <th class="text-center" style="width: 16%;">${isInvoicePayerMode ? 'Linked Invoices' : isPayoutPayeeMode ? 'Linked Payouts' : 'Linked Orders'}</th>
                                 </tr>
                                 ` : `
                                 <tr>
@@ -12310,24 +12308,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 : (p.linkedPayouts || 0);
 
                             if (isCompactDirectoryMode) {
-                                const rowName = isInvoicePayerMode
-                                    ? `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
-                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Institution' : 'Individual'} · ${p.id}</div>`
-                                    : isPayoutPayeeMode
-                                    ? `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.alias || p.name}</div>
-                                       <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email || ''}</div>
-                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>`
-                                    : `<div style="font-size: 14px; font-weight: 700; color: #0F172A;">${p.name}</div>
-                                       <div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>
-                                       <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${p.personType === 'company' ? 'Company' : 'Individual'} · ${p.id}</div>`;
+                                // Inline type tag for Contact Management rows
+                                const inlineTypeTag = isContactManagementMode
+                                    ? `<span style="display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; margin-left: 8px; vertical-align: middle; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>`
+                                    : '';
+                                const personTypeLabel = isInvoicePayerMode
+                                    ? (p.personType === 'company' ? 'Institution' : 'Individual')
+                                    : (p.personType === 'company' ? 'Company' : 'Individual');
+                                const rowName = `
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: flex; align-items: center; flex-wrap: wrap;">
+                                        <span>${p.alias || p.name}</span>${inlineTypeTag}
+                                    </div>
+                                    ${p.email ? `<div style="font-size: 12px; color: #64748B; margin-top: 3px;">${p.email}</div>` : ''}
+                                    <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${personTypeLabel} · ${p.id}</div>
+                                `;
                                 return `
                                 <tr onclick="window.editPayee('${p.id}', '${detailTypeArg}')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''" style="cursor: pointer; transition: background 0.12s ease; ${p.status === 'disabled' ? 'opacity: 0.55;' : ''}">
                                     <td>${rowName}</td>
-                                    ${isContactManagementMode ? `
-                                    <td>
-                                        <span style="display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; ${contactTypeBadgeStyle}">${contactTypeBadge}</span>
-                                    </td>
-                                    ` : ''}
                                     <td style="vertical-align: top;">${destinationSummary}</td>
                                     <td>
                                         <span style="background: ${statusMeta.bg}; color: ${statusMeta.color}; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;">${statusMeta.label}</span>
@@ -12335,15 +12332,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     <td class="text-center">
                                         <span style="font-size: 13px; font-weight: 700; color: #334155; display: inline-flex; justify-content: center; align-items: center; background: #F8FAFC; border: 1px solid #E2E8F0; width: 24px; height: 24px; border-radius: 6px;">${linkedOrderCount}</span>
                                     </td>
-                                    ${isContactManagementMode ? `
-                                    <td>
-                                        <div style="display: flex; justify-content: flex-end; gap: 6px; flex-wrap: nowrap;">
-                                        <button class="btn btn-outline" onclick="window.editPayee('${p.id}', '${detailTypeArg}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">Edit</button>
-                                        <button class="btn btn-outline" onclick="window.togglePayeeStatus('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; white-space: nowrap;">${p.status === 'active' || p.status === 'pending_collection' ? 'Disable' : 'Enable'}</button>
-                                        <button class="btn btn-outline" onclick="window.deletePayee('${p.id}'); event.stopPropagation();" style="flex: 1; padding: 6px 0; font-size: 11px; color: #DC2626; border-color: #FECACA; white-space: nowrap;">Delete</button>
-                                        </div>
-                                    </td>
-                                    ` : ''}
                                 </tr>`;
                             }
 
