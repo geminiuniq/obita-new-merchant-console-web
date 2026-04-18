@@ -10680,7 +10680,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Invoice Order Detail</h2>
                                 <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.invoiceNo}</div>
                             </div>
-                            ${renderStatus(order.status)}
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                                ${renderStatus(order.status)}
+                                ${normalizeOrderStatus(order.status) === 'Completed' ? `<button onclick="window.downloadInvoiceReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -11041,7 +11044,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Checkout Order Detail</h2>
                                 <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.checkoutId}</div>
                             </div>
-                            ${renderStatus(order.status)}
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                                ${renderStatus(order.status)}
+                                ${normalizeOrderStatus(order.status) === 'Completed' ? `<button onclick="window.downloadCheckoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -16459,7 +16465,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Payout Order Detail</h2>
                                 <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.orderId}</div>
                             </div>
-                            <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
+                                <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>
+                                ${pill.label === 'Completed' ? `<button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -17073,42 +17082,75 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             setTimeout(() => { label.style.display = 'none'; }, 1400);
         });
     };
-    window.downloadConversionReceipt = function() {
-        const orderId = window.activeConversionOrderId;
-        const order = CONVERSION_ORDERS[orderId];
-        if (!order || order.status !== 'Completed') {
-            alert('Receipt is only available for completed conversion orders.');
-            return;
-        }
-
+    // ----- Shared Obita Receipt builder -----
+    function _obitaIssuer() {
         const isMso = window.currentLicenseMode === 'MSO';
-        const issuer = isMso
+        return isMso
             ? { nameEn: 'Obita Payment Services Ltd.', nameZh: '华信汇款有限公司', licence: 'Hong Kong MSO Licence No. 18-16-01834', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Customs and Excise Department, Hong Kong (MSO)' }
             : { nameEn: 'Obita Financial Services Ltd.', nameZh: '华信科技有限公司', licence: 'Hong Kong TCSP Licence No. TC005128', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Companies Registry, Hong Kong (TCSP)' };
+    }
+    function _obitaEscape(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
 
-        const issueDateObj = new Date();
+    // config = {
+    //   orderId, docPrefix, titleEn, titleZh, popupTitle,
+    //   clientLabel, clientName, clientSub,
+    //   providerLabel, providerSub,  // provider name auto from issuer
+    //   flow: { leftLabel, leftAmount, leftCcy, rightLabel, rightAmount, rightCcy, emphasizeRight },
+    //   sections: [{ title, rows: [{label, value, emphasis?, isTotal?, valueColor?}] }],
+    //   disclaimer, stampText
+    // }
+    function buildObitaReceipt(config) {
+        const issuer = _obitaIssuer();
+        const d = new Date();
         const pad = (n) => String(n).padStart(2, '0');
-        const issueDate = `${issueDateObj.getFullYear()}-${pad(issueDateObj.getMonth() + 1)}-${pad(issueDateObj.getDate())}`;
-        const issueTime = `${pad(issueDateObj.getHours())}:${pad(issueDateObj.getMinutes())}:${pad(issueDateObj.getSeconds())}`;
-        const docRef = `RCPT-${orderId}-${issueDateObj.getFullYear()}${pad(issueDateObj.getMonth() + 1)}${pad(issueDateObj.getDate())}`;
+        const issueDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const issueTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        const docRef = `${config.docPrefix || 'RCPT'}-${config.orderId}-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 
-        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
-
-        // Compute settlement / value date — fall back to settledAt string
-        const tradeDate = order.quoteLockedAt || order.createdAt || '';
-        const settleDate = order.settledAt || '';
-
-        const row = (label, value, emphasis) => `
-            <tr>
-                <td style="padding: 10px 0; color: #4B5563; font-size: 12px; width: 42%;">${label}</td>
-                <td style="padding: 10px 0; text-align: right; color: #0F172A; font-size: ${emphasis ? '13px' : '12px'}; font-weight: ${emphasis ? '700' : '600'}; font-variant-numeric: tabular-nums;">${value}</td>
+        const rowHTML = (r) => {
+            if (r.isTotal) {
+                return `<tr class="total">
+                    <td>${_obitaEscape(r.label)}</td>
+                    <td style="text-align: right; color: ${r.valueColor || '#0F172A'};">${_obitaEscape(r.value)}</td>
+                </tr>`;
+            }
+            return `<tr>
+                <td style="padding: 10px 0; color: #4B5563; font-size: 12px; width: 42%;">${_obitaEscape(r.label)}</td>
+                <td style="padding: 10px 0; text-align: right; color: ${r.valueColor || '#0F172A'}; font-size: ${r.emphasis ? '13px' : '12px'}; font-weight: ${r.emphasis ? '700' : '600'}; font-variant-numeric: tabular-nums;">${_obitaEscape(r.value)}</td>
             </tr>`;
+        };
+        const sectionHTML = (sec) => `
+            <div class="section">
+                <div class="section-title">${_obitaEscape(sec.title)}</div>
+                <table class="breakdown">${sec.rows.map(rowHTML).join('')}</table>
+            </div>`;
 
-        const receiptHTML = `<!DOCTYPE html>
+        const flow = config.flow;
+        const flowHTML = flow ? `
+            <div class="section">
+                <div class="section-title">Transaction Summary</div>
+                <div class="flow-row">
+                    <div class="flow-from">
+                        <div class="flow-side-label">${_obitaEscape(flow.leftLabel)}</div>
+                        <div class="flow-amount">${_obitaEscape(flow.leftAmount)}</div>
+                        <div class="flow-ccy">${_obitaEscape(flow.leftCcy)}</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="${flow.emphasizeRight ? 'flow-to' : 'flow-from'}" style="text-align: right;">
+                        <div class="flow-side-label">${_obitaEscape(flow.rightLabel)}</div>
+                        <div class="flow-amount">${_obitaEscape(flow.rightAmount)}</div>
+                        <div class="flow-ccy">${_obitaEscape(flow.rightCcy)}</div>
+                    </div>
+                </div>
+            </div>` : '';
+
+        return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Conversion Receipt ${orderId}</title>
+<title>${_obitaEscape(config.popupTitle || 'Obita Receipt')} ${_obitaEscape(config.orderId)}</title>
 <style>
   @page { size: A4; margin: 18mm 16mm; }
   * { box-sizing: border-box; }
@@ -17147,7 +17189,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
   table.breakdown { width: 100%; border-collapse: collapse; margin-top: 12px; }
   table.breakdown tr { border-bottom: 1px solid #F1F5F9; }
   table.breakdown tr:last-child { border-bottom: 1px solid #0F172A; }
-  table.breakdown tr.total td { padding-top: 12px; padding-bottom: 12px; font-weight: 800; color: #0F172A; font-size: 13px; border-top: 1px solid #0F172A; border-bottom: none; }
+  table.breakdown tr.total td { padding-top: 12px; padding-bottom: 12px; font-weight: 800; color: #0F172A; font-size: 13px; border-top: 1px solid #0F172A; border-bottom: none; text-align: right; }
+  table.breakdown tr.total td:first-child { text-align: left; }
   .disclaimer { margin-top: 30px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 10.5px; color: #475569; line-height: 1.65; }
   .footer { margin-top: 22px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-top: 16px; border-top: 1px solid #E2E8F0; font-size: 10px; color: #64748B; }
   .footer .generated { font-family: 'SFMono-Regular', Menlo, monospace; color: #94A3B8; }
@@ -17187,8 +17230,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
   </div>
 
   <div class="title-block">
-    <div class="title-en">Foreign Exchange Conversion Confirmation</div>
-    <div class="title-zh">外汇兑换交易回单</div>
+    <div class="title-en">${_obitaEscape(config.titleEn)}</div>
+    <div class="title-zh">${_obitaEscape(config.titleZh)}</div>
     <div class="meta-grid">
       <div>
         <div class="meta-label">Document Reference</div>
@@ -17196,7 +17239,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       </div>
       <div>
         <div class="meta-label">Order ID</div>
-        <div class="meta-value">${orderId}</div>
+        <div class="meta-value">${_obitaEscape(config.orderId)}</div>
       </div>
       <div>
         <div class="meta-label">Issued</div>
@@ -17209,70 +17252,24 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     <div class="section-title">Parties</div>
     <div class="two-col">
       <div>
-        <div class="party-label">Client / Account Holder</div>
-        <div class="party-value">${merchantName}</div>
-        <div class="party-sub">Merchant Account — ${merchantName}</div>
+        <div class="party-label">${_obitaEscape(config.clientLabel || 'Client / Account Holder')}</div>
+        <div class="party-value">${_obitaEscape(config.clientName)}</div>
+        <div class="party-sub">${_obitaEscape(config.clientSub || '')}</div>
       </div>
       <div>
-        <div class="party-label">Service Provider</div>
+        <div class="party-label">${_obitaEscape(config.providerLabel || 'Service Provider')}</div>
         <div class="party-value">${issuer.nameEn}</div>
-        <div class="party-sub">${issuer.nameZh} · ${issuer.licence}</div>
+        <div class="party-sub">${_obitaEscape(config.providerSub || `${issuer.nameZh} · ${issuer.licence}`)}</div>
       </div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-title">Transaction Summary</div>
-    <div class="flow-row">
-      <div class="flow-from">
-        <div class="flow-side-label">From (Debit)</div>
-        <div class="flow-amount">${order.fromAmount}</div>
-        <div class="flow-ccy">${order.from}${isMso ? '' : ' · ' + order.fromType}</div>
-      </div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-to" style="text-align: right;">
-        <div class="flow-side-label">To (Credit)</div>
-        <div class="flow-amount">${order.toAmount}</div>
-        <div class="flow-ccy">${order.to}${isMso ? '' : ' · ' + order.toType}</div>
-      </div>
-    </div>
-  </div>
+  ${flowHTML}
 
-  <div class="section">
-    <div class="section-title">Execution Details</div>
-    <table class="breakdown">
-      ${row('Source Currency', order.from)}
-      ${row('Target Currency', order.to)}
-      ${row('Source Amount Debited', `${order.fromAmount} ${order.from}`, true)}
-      ${row('Exchange Rate (applied)', order.rate)}
-      ${row('Quoted Spread', order.spread)}
-      ${row('Platform Fee', order.fee)}
-      <tr class="total">
-        <td>Target Amount Credited</td>
-        <td style="text-align: right; color: #047857;">${order.toAmount} ${order.to}</td>
-      </tr>
-    </table>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Settlement</div>
-    <table class="breakdown">
-      ${row('Source Account', order.sourceVault)}
-      ${row('Destination Account', order.destinationVault)}
-      ${row('Trade Date / Time', tradeDate)}
-      ${row('Value / Settlement Date', settleDate)}
-      ${row('Initiated By', order.initiatedBy || '—')}
-      ${row('Execution Channel', 'Obita FX Engine (Mid-Market Rate + Spread)')}
-    </table>
-  </div>
+  ${(config.sections || []).map(sectionHTML).join('')}
 
   <div class="disclaimer">
-    This document is a conversion confirmation generated by ${issuer.nameEn} and serves as official evidence of
-    the foreign exchange transaction identified by Order ID ${orderId}. The applied exchange rate reflects the
-    mid-market rate plus the platform's quoted spread, which constitutes the sole consideration for this
-    conversion service. No separate fee was charged. Funds have been settled to the destination account shown
-    above and can be reconciled against the statement for the corresponding value date. This document is
-    system-generated; retain it with your accounting records for audit and regulatory purposes.
+    ${_obitaEscape(config.disclaimer)}
   </div>
 
   <div class="footer">
@@ -17282,20 +17279,22 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       <div class="generated" style="margin-top: 6px;">Generated ${issueDate} ${issueTime} &middot; ${docRef}</div>
     </div>
     <div style="text-align: right;">
-      <div class="stamp"><span class="stamp-dot"></span>Confirmed &amp; Settled</div>
+      <div class="stamp"><span class="stamp-dot"></span>${_obitaEscape(config.stampText || 'Confirmed & Settled')}</div>
       <div class="no-signature">System-generated document — no signature required.</div>
     </div>
   </div>
 </div>
 </body>
 </html>`;
+    }
 
-        // NOTE: do not pass 'noopener' / 'noreferrer' — those cause window.open to
-        // return null (or a disconnected window), which is why the popup rendered blank.
+    function openObitaReceipt(config) {
+        const html = buildObitaReceipt(config);
+        // Do not pass 'noopener' / 'noreferrer' — they return a disconnected window
+        // whose document cannot be written to.
         const w = window.open('', '_blank', 'width=880,height=1100');
         if (!w || !w.document) {
-            // Fallback: use a Blob URL so the receipt still renders even if popups are blocked.
-            const blob = new Blob([receiptHTML], { type: 'text/html;charset=utf-8' });
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -17308,10 +17307,267 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             return;
         }
         w.document.open();
-        w.document.write(receiptHTML);
+        w.document.write(html);
         w.document.close();
-        try { w.document.title = `Conversion Receipt ${orderId}`; } catch (_) {}
+        try { w.document.title = `${config.popupTitle || 'Obita Receipt'} ${config.orderId}`; } catch (_) {}
         w.focus();
+    }
+
+    window.downloadConversionReceipt = function() {
+        const orderId = window.activeConversionOrderId;
+        const order = CONVERSION_ORDERS[orderId];
+        if (!order || order.status !== 'Completed') {
+            alert('Receipt is only available for completed conversion orders.');
+            return;
+        }
+        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const isMso = window.currentLicenseMode === 'MSO';
+        openObitaReceipt({
+            orderId,
+            docPrefix: 'CV',
+            popupTitle: 'Conversion Receipt',
+            titleEn: 'Foreign Exchange Conversion Confirmation',
+            titleZh: '外汇兑换交易回单',
+            clientName: merchantName,
+            clientSub: `Merchant Account — ${merchantName}`,
+            flow: {
+                leftLabel: 'From (Debit)',
+                leftAmount: order.fromAmount,
+                leftCcy: `${order.from}${isMso ? '' : ' · ' + order.fromType}`,
+                rightLabel: 'To (Credit)',
+                rightAmount: order.toAmount,
+                rightCcy: `${order.to}${isMso ? '' : ' · ' + order.toType}`,
+                emphasizeRight: true
+            },
+            sections: [
+                {
+                    title: 'Execution Details',
+                    rows: [
+                        { label: 'Source Currency', value: order.from },
+                        { label: 'Target Currency', value: order.to },
+                        { label: 'Source Amount Debited', value: `${order.fromAmount} ${order.from}`, emphasis: true },
+                        { label: 'Exchange Rate (applied)', value: order.rate },
+                        { label: 'Quoted Spread', value: order.spread },
+                        { label: 'Platform Fee', value: order.fee },
+                        { label: 'Target Amount Credited', value: `${order.toAmount} ${order.to}`, isTotal: true, valueColor: '#047857' }
+                    ]
+                },
+                {
+                    title: 'Settlement',
+                    rows: [
+                        { label: 'Source Account', value: order.sourceVault },
+                        { label: 'Destination Account', value: order.destinationVault },
+                        { label: 'Trade Date / Time', value: order.quoteLockedAt || order.createdAt || '' },
+                        { label: 'Value / Settlement Date', value: order.settledAt || '' },
+                        { label: 'Initiated By', value: order.initiatedBy || '—' },
+                        { label: 'Execution Channel', value: 'Obita FX Engine (Mid-Market Rate + Spread)' }
+                    ]
+                }
+            ],
+            disclaimer: `This document is a conversion confirmation generated by ${_obitaIssuer().nameEn} and serves as official evidence of the foreign exchange transaction identified by Order ID ${orderId}. The applied exchange rate reflects the mid-market rate plus the platform's quoted spread, which constitutes the sole consideration for this conversion service. No separate fee was charged. Funds have been settled to the destination account shown above and can be reconciled against the statement for the corresponding value date. This document is system-generated; retain it with your accounting records for audit and regulatory purposes.`,
+            stampText: 'Confirmed & Settled'
+        });
+    };
+
+    window.downloadInvoiceReceipt = function() {
+        const orderId = activeInvoiceOrderId;
+        const order = typeof getInvoiceOrderById === 'function' ? getInvoiceOrderById(orderId) : null;
+        const detail = INVOICE_ORDER_DETAILS[orderId];
+        if (!order) { alert('Invoice order not found.'); return; }
+        if (normalizeOrderStatus(order.status) !== 'Completed') {
+            alert('Receipt is only available for completed invoice orders.');
+            return;
+        }
+        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const issuer = _obitaIssuer();
+        const sections = [
+            {
+                title: 'Invoice Reference',
+                rows: [
+                    { label: 'Invoice Number', value: order.invoiceNo },
+                    { label: 'External Invoice ID', value: detail?.externalInvoiceId || '—' },
+                    { label: 'Buyer', value: order.buyer },
+                    { label: 'Issued On', value: order.issuedOn },
+                    { label: 'Due On', value: order.dueOn }
+                ]
+            },
+            {
+                title: 'Collection Details',
+                rows: [
+                    { label: 'Invoice Amount', value: order.amount, emphasis: true },
+                    { label: 'Collection Channel', value: detail?.collectionChannel || '—' },
+                    { label: 'Payment Method', value: order.method },
+                    { label: 'Settlement Currency', value: order.settlementCurrency },
+                    { label: 'Collected Amount', value: order.collected, isTotal: true, valueColor: '#047857' }
+                ]
+            },
+            {
+                title: 'Settlement',
+                rows: [
+                    { label: 'Settlement Destination', value: detail?.settlementDestination || '—' },
+                    { label: 'Settlement Terms', value: detail?.settlementTerms || '—' },
+                    { label: 'Recipient Entity', value: detail?.recipientEntity || order.recipient || merchantName }
+                ]
+            }
+        ];
+        openObitaReceipt({
+            orderId,
+            docPrefix: 'INV',
+            popupTitle: 'Invoice Collection Receipt',
+            titleEn: 'Invoice Payment Collection Confirmation',
+            titleZh: '应收账款代收回单',
+            clientName: merchantName,
+            clientSub: `Merchant / Beneficiary — ${merchantName}`,
+            clientLabel: 'Beneficiary / Merchant',
+            providerLabel: 'Collection Agent',
+            flow: {
+                leftLabel: 'Payer',
+                leftAmount: order.buyer,
+                leftCcy: `Invoice ${order.invoiceNo}`,
+                rightLabel: 'Net Collected',
+                rightAmount: order.collected,
+                rightCcy: order.settlementCurrency,
+                emphasizeRight: true
+            },
+            sections,
+            disclaimer: `This document certifies that ${issuer.nameEn} received payment on behalf of ${merchantName} against invoice ${order.invoiceNo} from ${order.buyer}. The collected funds have been credited to the merchant settlement destination shown above on the corresponding value date. Retain this confirmation alongside the original invoice for accounting and tax reconciliation purposes.`,
+            stampText: 'Collected & Settled'
+        });
+    };
+
+    window.downloadCheckoutReceipt = function() {
+        const orderId = activeCheckoutOrderId;
+        const order = typeof getCheckoutOrderById === 'function' ? getCheckoutOrderById(orderId) : null;
+        const detail = CHECKOUT_ORDER_DETAILS[orderId];
+        if (!order) { alert('Checkout order not found.'); return; }
+        if (normalizeOrderStatus(order.status) !== 'Completed') {
+            alert('Receipt is only available for completed checkout orders.');
+            return;
+        }
+        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const issuer = _obitaIssuer();
+        const sections = [
+            {
+                title: 'Order Reference',
+                rows: [
+                    { label: 'Checkout ID', value: order.checkoutId },
+                    { label: 'External Order ID', value: order.externalOrderId || '—' },
+                    { label: 'Storefront', value: order.storefront || '—' },
+                    { label: 'Checkout Channel', value: detail?.channel || '—' },
+                    { label: 'Created At', value: order.createdAt || '—' }
+                ]
+            },
+            {
+                title: 'Payment Details',
+                rows: [
+                    { label: 'Order Amount', value: order.amount, emphasis: true },
+                    { label: 'Payment Method', value: order.paymentMethod || '—' },
+                    { label: 'Settlement Asset', value: order.settlementAsset || '—' },
+                    { label: 'Paid Amount', value: order.paidAmount, isTotal: true, valueColor: '#047857' }
+                ]
+            },
+            {
+                title: 'Settlement',
+                rows: [
+                    { label: 'Settlement Destination', value: detail?.settlementWallet || '—' },
+                    { label: 'Merchant', value: merchantName }
+                ]
+            }
+        ];
+        openObitaReceipt({
+            orderId,
+            docPrefix: 'CKO',
+            popupTitle: 'Checkout Receipt',
+            titleEn: 'Checkout Payment Confirmation',
+            titleZh: '在线收款回单',
+            clientName: merchantName,
+            clientSub: `Merchant / Beneficiary — ${merchantName}`,
+            clientLabel: 'Beneficiary / Merchant',
+            providerLabel: 'Collection Agent',
+            flow: {
+                leftLabel: 'From',
+                leftAmount: order.storefront || 'Customer',
+                leftCcy: `Order ${order.externalOrderId || order.checkoutId}`,
+                rightLabel: 'Net Collected',
+                rightAmount: order.paidAmount,
+                rightCcy: order.settlementAsset || '',
+                emphasizeRight: true
+            },
+            sections,
+            disclaimer: `This document certifies that ${issuer.nameEn} processed a checkout payment for ${merchantName} under checkout reference ${order.checkoutId}. The funds have been settled to the merchant destination shown above. Please keep this confirmation with your commerce records for reconciliation and audit purposes.`,
+            stampText: 'Collected & Settled'
+        });
+    };
+
+    window.downloadPayoutReceipt = function() {
+        const orderId = activePayoutOrderId;
+        const order = ORDER_REPORT_DATA['payout'].find(row => row.orderId === orderId);
+        const detail = PAYOUT_ORDER_DETAILS[orderId];
+        if (!order) { alert('Payout order not found.'); return; }
+        if (normalizeOrderStatus(order.status) !== 'Completed') {
+            alert('Receipt is only available for completed payout orders.');
+            return;
+        }
+        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const issuer = _obitaIssuer();
+        const isBatch = !!order.payoutCount;
+        const firstPayout = detail?.payouts?.[0];
+        const beneficiarySub = isBatch ? `${order.payoutCount} payees in batch` : (firstPayout?.destination || order.beneficiary);
+
+        const detailRows = [
+            { label: 'Order ID', value: order.orderId },
+            { label: 'Created Time', value: order.time },
+            { label: 'Purpose', value: order.purpose || '—' },
+            { label: 'Payout Method', value: order.method || '—' },
+            { label: 'Source Account', value: order.source || '—' },
+            { label: 'Approval', value: order.approval || '—' }
+        ];
+        if (isBatch) detailRows.push({ label: 'Payout Requests', value: String(order.payoutCount) });
+
+        const breakdownRows = isBatch && detail?.payouts
+            ? detail.payouts.slice(0, 8).map(p => ({ label: `${p.sequence} · ${p.payee}`, value: p.net }))
+            : firstPayout
+                ? [
+                    { label: 'Gross Amount', value: firstPayout.amount, emphasis: true },
+                    { label: 'Network / Processing Fee', value: firstPayout.fee },
+                    { label: 'Net Remitted', value: firstPayout.net, isTotal: true, valueColor: '#047857' }
+                  ]
+                : [ { label: 'Amount Remitted', value: order.amount, emphasis: true } ];
+
+        const sections = [
+            { title: 'Remittance Details', rows: detailRows },
+            { title: isBatch ? 'Batch Breakdown' : 'Amount Breakdown', rows: breakdownRows }
+        ];
+        if (detail?.approvers?.length) {
+            sections.push({
+                title: 'Approval Record',
+                rows: detail.approvers.map(a => ({ label: `${a.level} · ${a.name}`, value: `${a.status}${a.actedAt && a.actedAt !== '-' ? ' · ' + a.actedAt : ''}` }))
+            });
+        }
+
+        openObitaReceipt({
+            orderId,
+            docPrefix: 'PO',
+            popupTitle: 'Payout Receipt',
+            titleEn: isBatch ? 'Payout Batch Remittance Confirmation' : 'Payout Remittance Confirmation',
+            titleZh: isBatch ? '批量付款汇款回单' : '付款汇款回单',
+            clientName: merchantName,
+            clientSub: `Remitter — ${merchantName}`,
+            clientLabel: 'Remitter / Merchant',
+            providerLabel: 'Processing Bank',
+            flow: {
+                leftLabel: 'Remitter',
+                leftAmount: merchantName,
+                leftCcy: order.source || '',
+                rightLabel: isBatch ? `To ${order.payoutCount} Payees` : 'Beneficiary',
+                rightAmount: order.beneficiary,
+                rightCcy: beneficiarySub,
+                emphasizeRight: false
+            },
+            sections,
+            disclaimer: `This document confirms that ${issuer.nameEn} has executed the payout instruction on behalf of ${merchantName} under order ${order.orderId}. Funds totalling ${order.amount} have been remitted to the beneficiary${isBatch ? 's shown above' : ' shown above'} through the indicated payout channel. Retain this confirmation for financial and compliance records.`,
+            stampText: 'Remitted & Settled'
+        });
     };
     window.retryConversion = function() {
         window.activeConversionOrderId = null;
