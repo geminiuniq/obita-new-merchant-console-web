@@ -138,6 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Navigate to a page by title (used by Overview action buttons)
+    // Reset the scroll position of the main content area. Called whenever we
+    // route to a new page or open/close a detail view so the user always lands
+    // at the top of the new page instead of inheriting the previous scroll.
+    window.scrollContentToTop = function() {
+        if (contentBody) contentBody.scrollTop = 0;
+    };
+
     window.navigateToPage = function(title) {
         // Update sidebar active state
         document.querySelectorAll('.sidebar-nav .nav-item, .sidebar-nav .nav-subitem').forEach(el => el.classList.remove('active'));
@@ -3601,6 +3608,7 @@ document.addEventListener('DOMContentLoaded', () => {
         membersView = 'detail';
         activeMemberId = memberId;
         renderMembersPage();
+        window.scrollContentToTop();
     };
 
     window.syncMemberPermission = function(permissionId, changedField) {
@@ -3807,6 +3815,7 @@ document.addEventListener('DOMContentLoaded', () => {
         invoiceOrdersView = 'detail';
         activeInvoiceOrderId = invoiceNo;
         renderInvoiceOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.backToInvoiceOrdersList = function() {
@@ -3815,18 +3824,21 @@ document.addEventListener('DOMContentLoaded', () => {
         activeInvoiceDraft = null;
         lastCreatedInvoiceSuccess = null;
         renderInvoiceOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.openCheckoutOrderDetail = function(checkoutId) {
         checkoutOrdersView = 'detail';
         activeCheckoutOrderId = checkoutId;
         renderCheckoutOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.backToCheckoutOrdersList = function() {
         checkoutOrdersView = 'list';
         activeCheckoutOrderId = null;
         renderCheckoutOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.renderCheckoutOrdersPage = function() {
@@ -6031,12 +6043,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         payoutOrdersView = 'detail';
         activePayoutOrderId = orderId;
         renderPayoutOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.backToPayoutOrdersList = function() {
         payoutOrdersView = 'list';
         activePayoutOrderId = null;
         renderPayoutOrdersPage();
+        window.scrollContentToTop();
     };
 
     window.openApprovalRequestDetail = function(requestId) {
@@ -6045,6 +6059,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         expandedApprovalActionId = null;
         activeApprovalDecision = null;
         renderApprovalListPage();
+        window.scrollContentToTop();
     };
 
     window.renderApprovalListPage = function() {
@@ -8769,6 +8784,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         activeFiatVaultBankAccountKey = null;
         activeFiatVaultTxId = txId;
         renderFiatVaultTxDetailPage(txId);
+        window.scrollContentToTop();
     };
 
     window.openFiatVaultBankAccountDetail = function(bankName, accountName) {
@@ -8777,6 +8793,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         activeFiatVaultTxId = null;
         activeFiatVaultBankAccountKey = getBankAccountTransactionKey(bankName, accountName);
         renderFiatVaultBankAccountDetailPage(activeFiatVaultBankAccountKey);
+        window.scrollContentToTop();
     };
 
     window.backToFiatVault = function() {
@@ -8786,6 +8803,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         activeFiatVaultBankAccountKey = null;
         contentBody.innerHTML = fiatVaultHTML;
         lucide.createIcons();
+        window.scrollContentToTop();
     };
 
     window.printFiatVaultReceipt = function(txId) {
@@ -9610,6 +9628,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         stableVaultTxView = 'detail';
         activeStableVaultTxId = txId;
         renderStableVaultTxDetailPage(txId);
+        window.scrollContentToTop();
     };
 
     window.backToStableVault = function() {
@@ -9617,6 +9636,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         activeStableVaultTxId = null;
         contentBody.innerHTML = stablecoinVaultHTML;
         lucide.createIcons();
+        window.scrollContentToTop();
     };
 
     function getMerchantProfileHTML() {
@@ -14815,6 +14835,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         activePayeeId = null;
         activePayeeDetailType = null;
         renderPayeeListPage();
+        window.scrollContentToTop();
     };
 
     window.editPayee = function(id, detailType = null) {
@@ -14825,6 +14846,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         // Reset edit state so Basic Information opens in read-only view
         detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
         renderPayeeListPage();
+        window.scrollContentToTop();
     };
 
     function openPayeeFormDrawerForPayout(rowId) {
@@ -14861,6 +14883,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         activePayeeDetailType = null;
         payeeFormContext = { mode: 'page', payoutRowId: null };
         renderPayeeListPage();
+        window.scrollContentToTop();
     };
 
     window.editPayee = function(id, detailType = null) {
@@ -14870,6 +14893,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         // Reset edit state so Basic Information opens in read-only view
         detailEditState = { profile: false, usage: false, addWallet: false, addBank: false };
         renderPayeeListPage();
+        window.scrollContentToTop();
     };
 
     window.togglePayeeStatus = function(id) {
@@ -17786,6 +17810,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     }
 
     function renderPlaceholderContent(title) {
+        window.scrollContentToTop();
         if (title === 'Overview') {
             contentBody.innerHTML = getOverviewHTML();
             // Initialize Chart after injecting HTML
