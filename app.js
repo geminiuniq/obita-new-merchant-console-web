@@ -17640,17 +17640,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Confirm within 15 seconds to lock the rate and execute</div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- MSO: Conversion Info -->
-                    <div style="background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 12px; padding: 16px 18px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                            <i data-lucide="info" style="width: 14px; height: 14px; color: #94A3B8;"></i>
-                            <span style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Fee Structure</span>
-                        </div>
-                        <div style="font-size: 12px; color: #64748B; line-height: 1.7;">
-                            Obita does not charge an explicit conversion fee. The exchange rate includes a spread from the mid-market rate, which constitutes the platform's service revenue.
-                        </div>
                     </div>` : ''}
 
                 </div><!-- /market rates right column -->
