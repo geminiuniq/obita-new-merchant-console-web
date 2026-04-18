@@ -17074,7 +17074,235 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         });
     };
     window.downloadConversionReceipt = function() {
-        alert('Receipt download will begin shortly.');
+        const orderId = window.activeConversionOrderId;
+        const order = CONVERSION_ORDERS[orderId];
+        if (!order || order.status !== 'Completed') {
+            alert('Receipt is only available for completed conversion orders.');
+            return;
+        }
+
+        const isMso = window.currentLicenseMode === 'MSO';
+        const issuer = isMso
+            ? { nameEn: 'Obita Payment Services Ltd.', nameZh: '华信汇款有限公司', licence: 'Hong Kong MSO Licence No. 18-16-01834', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Customs and Excise Department, Hong Kong (MSO)' }
+            : { nameEn: 'Obita Financial Services Ltd.', nameZh: '华信科技有限公司', licence: 'Hong Kong TCSP Licence No. TC005128', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Companies Registry, Hong Kong (TCSP)' };
+
+        const issueDateObj = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const issueDate = `${issueDateObj.getFullYear()}-${pad(issueDateObj.getMonth() + 1)}-${pad(issueDateObj.getDate())}`;
+        const issueTime = `${pad(issueDateObj.getHours())}:${pad(issueDateObj.getMinutes())}:${pad(issueDateObj.getSeconds())}`;
+        const docRef = `RCPT-${orderId}-${issueDateObj.getFullYear()}${pad(issueDateObj.getMonth() + 1)}${pad(issueDateObj.getDate())}`;
+
+        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+
+        // Compute settlement / value date — fall back to settledAt string
+        const tradeDate = order.quoteLockedAt || order.createdAt || '';
+        const settleDate = order.settledAt || '';
+
+        const row = (label, value, emphasis) => `
+            <tr>
+                <td style="padding: 10px 0; color: #4B5563; font-size: 12px; width: 42%;">${label}</td>
+                <td style="padding: 10px 0; text-align: right; color: #0F172A; font-size: ${emphasis ? '13px' : '12px'}; font-weight: ${emphasis ? '700' : '600'}; font-variant-numeric: tabular-nums;">${value}</td>
+            </tr>`;
+
+        const receiptHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Conversion Receipt ${orderId}</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: #0F172A; margin: 0; padding: 32px 40px; background: #FFFFFF;
+    font-size: 12px; line-height: 1.55;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .sheet { max-width: 780px; margin: 0 auto; }
+  .top-bar { height: 4px; background: linear-gradient(90deg, #1D4ED8 0%, #2563EB 60%, #60A5FA 100%); border-radius: 2px; }
+  .issuer { display: flex; align-items: flex-start; justify-content: space-between; margin-top: 22px; gap: 32px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg, #1D4ED8, #2563EB); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 17px; letter-spacing: -0.02em; }
+  .issuer-name { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: #0F172A; }
+  .issuer-name-zh { font-size: 11px; color: #475569; margin-top: 2px; }
+  .issuer-meta { font-size: 10.5px; color: #64748B; text-align: right; line-height: 1.5; max-width: 340px; }
+  .title-block { margin-top: 28px; padding: 20px 0 18px; border-top: 1px solid #0F172A; border-bottom: 1px solid #E2E8F0; }
+  .title-en { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; color: #0F172A; }
+  .title-zh { font-size: 13px; color: #475569; margin-top: 3px; letter-spacing: 0.02em; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 14px; }
+  .meta-label { font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; }
+  .meta-value { font-size: 12px; font-weight: 700; color: #0F172A; margin-top: 3px; font-variant-numeric: tabular-nums; font-family: 'SFMono-Regular', Menlo, monospace; }
+  .section { margin-top: 26px; }
+  .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #64748B; padding-bottom: 8px; border-bottom: 1px solid #E2E8F0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 12px; }
+  .party-label { font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; }
+  .party-value { font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 5px; }
+  .party-sub { font-size: 11px; color: #475569; margin-top: 3px; line-height: 1.55; }
+  .flow-row { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 18px; align-items: center; margin-top: 16px; padding: 20px 20px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; }
+  .flow-side-label { font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; }
+  .flow-amount { font-size: 22px; font-weight: 900; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .flow-ccy { font-size: 11px; color: #475569; margin-top: 3px; font-weight: 600; }
+  .flow-arrow { text-align: center; color: #94A3B8; font-size: 22px; font-weight: 300; }
+  .flow-to .flow-amount { color: #047857; }
+  table.breakdown { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  table.breakdown tr { border-bottom: 1px solid #F1F5F9; }
+  table.breakdown tr:last-child { border-bottom: 1px solid #0F172A; }
+  table.breakdown tr.total td { padding-top: 12px; padding-bottom: 12px; font-weight: 800; color: #0F172A; font-size: 13px; border-top: 1px solid #0F172A; border-bottom: none; }
+  .disclaimer { margin-top: 30px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 10.5px; color: #475569; line-height: 1.65; }
+  .footer { margin-top: 22px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; padding-top: 16px; border-top: 1px solid #E2E8F0; font-size: 10px; color: #64748B; }
+  .footer .generated { font-family: 'SFMono-Regular', Menlo, monospace; color: #94A3B8; }
+  .stamp { border: 1.5px solid #1D4ED8; color: #1D4ED8; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; padding: 6px 12px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+  .stamp-dot { width: 6px; height: 6px; border-radius: 999px; background: #1D4ED8; }
+  .no-signature { font-size: 9.5px; color: #94A3B8; font-style: italic; margin-top: 6px; }
+  @media print {
+    body { padding: 0; }
+    .print-actions { display: none !important; }
+  }
+  .print-actions { position: fixed; top: 14px; right: 14px; display: flex; gap: 8px; z-index: 10; }
+  .print-btn { padding: 8px 14px; font-size: 12px; font-weight: 700; border-radius: 6px; border: 1px solid #E2E8F0; background: white; color: #334155; cursor: pointer; font-family: inherit; }
+  .print-btn.primary { background: #1D4ED8; border-color: #1D4ED8; color: white; }
+</style>
+</head>
+<body>
+<div class="print-actions">
+  <button class="print-btn" onclick="window.close()">Close</button>
+  <button class="print-btn primary" onclick="window.print()">Save as PDF / Print</button>
+</div>
+<div class="sheet">
+  <div class="top-bar"></div>
+
+  <div class="issuer">
+    <div class="logo">
+      <div class="logo-mark">O</div>
+      <div>
+        <div class="issuer-name">${issuer.nameEn}</div>
+        <div class="issuer-name-zh">${issuer.nameZh}</div>
+      </div>
+    </div>
+    <div class="issuer-meta">
+      ${issuer.address}<br>
+      ${issuer.licence}<br>
+      Regulated by ${issuer.regulator}
+    </div>
+  </div>
+
+  <div class="title-block">
+    <div class="title-en">Foreign Exchange Conversion Confirmation</div>
+    <div class="title-zh">外汇兑换交易回单</div>
+    <div class="meta-grid">
+      <div>
+        <div class="meta-label">Document Reference</div>
+        <div class="meta-value">${docRef}</div>
+      </div>
+      <div>
+        <div class="meta-label">Order ID</div>
+        <div class="meta-value">${orderId}</div>
+      </div>
+      <div>
+        <div class="meta-label">Issued</div>
+        <div class="meta-value">${issueDate}&nbsp;&nbsp;${issueTime}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Parties</div>
+    <div class="two-col">
+      <div>
+        <div class="party-label">Client / Account Holder</div>
+        <div class="party-value">${merchantName}</div>
+        <div class="party-sub">Merchant Account — ${merchantName}</div>
+      </div>
+      <div>
+        <div class="party-label">Service Provider</div>
+        <div class="party-value">${issuer.nameEn}</div>
+        <div class="party-sub">${issuer.nameZh} · ${issuer.licence}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Transaction Summary</div>
+    <div class="flow-row">
+      <div class="flow-from">
+        <div class="flow-side-label">From (Debit)</div>
+        <div class="flow-amount">${order.fromAmount}</div>
+        <div class="flow-ccy">${order.from}${isMso ? '' : ' · ' + order.fromType}</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-to" style="text-align: right;">
+        <div class="flow-side-label">To (Credit)</div>
+        <div class="flow-amount">${order.toAmount}</div>
+        <div class="flow-ccy">${order.to}${isMso ? '' : ' · ' + order.toType}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Execution Details</div>
+    <table class="breakdown">
+      ${row('Source Currency', order.from)}
+      ${row('Target Currency', order.to)}
+      ${row('Source Amount Debited', `${order.fromAmount} ${order.from}`, true)}
+      ${row('Exchange Rate (applied)', order.rate)}
+      ${row('Quoted Spread', order.spread)}
+      ${row('Platform Fee', order.fee)}
+      <tr class="total">
+        <td>Target Amount Credited</td>
+        <td style="text-align: right; color: #047857;">${order.toAmount} ${order.to}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Settlement</div>
+    <table class="breakdown">
+      ${row('Source Account', order.sourceVault)}
+      ${row('Destination Account', order.destinationVault)}
+      ${row('Trade Date / Time', tradeDate)}
+      ${row('Value / Settlement Date', settleDate)}
+      ${row('Initiated By', order.initiatedBy || '—')}
+      ${row('Execution Channel', 'Obita FX Engine (Mid-Market Rate + Spread)')}
+    </table>
+  </div>
+
+  <div class="disclaimer">
+    This document is a conversion confirmation generated by ${issuer.nameEn} and serves as official evidence of
+    the foreign exchange transaction identified by Order ID ${orderId}. The applied exchange rate reflects the
+    mid-market rate plus the platform's quoted spread, which constitutes the sole consideration for this
+    conversion service. No separate fee was charged. Funds have been settled to the destination account shown
+    above and can be reconciled against the statement for the corresponding value date. This document is
+    system-generated; retain it with your accounting records for audit and regulatory purposes.
+  </div>
+
+  <div class="footer">
+    <div>
+      <div>For inquiries regarding this confirmation, please contact your Obita account manager or
+      <strong>support@obita.com</strong>.</div>
+      <div class="generated" style="margin-top: 6px;">Generated ${issueDate} ${issueTime} &middot; ${docRef}</div>
+    </div>
+    <div style="text-align: right;">
+      <div class="stamp"><span class="stamp-dot"></span>Confirmed &amp; Settled</div>
+      <div class="no-signature">System-generated document — no signature required.</div>
+    </div>
+  </div>
+</div>
+<script>
+  // Auto-open the print dialog shortly after load so the user can save as PDF.
+  window.addEventListener('load', function() { setTimeout(function(){ window.print(); }, 350); });
+</script>
+</body>
+</html>`;
+
+        const w = window.open('', '_blank', 'noopener,noreferrer,width=880,height=1100');
+        if (!w) {
+            alert('Please allow pop-ups for this site to download the receipt.');
+            return;
+        }
+        w.document.open();
+        w.document.write(receiptHTML);
+        w.document.close();
+        w.document.title = `Conversion Receipt ${orderId}`;
     };
     window.retryConversion = function() {
         window.activeConversionOrderId = null;
