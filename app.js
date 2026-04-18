@@ -17403,10 +17403,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             clientName: clientEntityName,
             clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             flow: {
-                leftLabel: 'From (Debit)',
+                leftLabel: `From ${order.sourceVault}`,
                 leftAmount: order.fromAmount,
                 leftCcy: `${order.from}${isMso ? '' : ' · ' + order.fromType}`,
-                rightLabel: 'To (Credit)',
+                rightLabel: `To ${order.destinationVault}`,
                 rightAmount: order.toAmount,
                 rightCcy: `${order.to}${isMso ? '' : ' · ' + order.toType}`,
                 emphasizeRight: true
