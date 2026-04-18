@@ -7639,29 +7639,28 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                     ` : `
                     <div>
-                        ${items.map((item, idx) => {
+                        ${items.map(item => {
                             const t = tone[item.severity];
-                            const isLast = idx === items.length - 1;
                             return `
                             <div onclick="${item.handler}"
-                                 style="display: grid; grid-template-columns: 138px 1fr auto; align-items: center; gap: 20px; padding: 16px 24px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
+                                 style="padding: 14px 20px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
                                  onmouseover="this.style.background='#FCFDFE'"
                                  onmouseout="this.style.background='transparent'">
-                                <div style="display: inline-flex; align-items: center; gap: 8px;">
-                                    <span style="width: 7px; height: 7px; border-radius: 999px; background: ${t.color}; flex-shrink: 0;"></span>
-                                    <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase;">${t.label}</span>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
+                                    <div style="display: inline-flex; align-items: center; gap: 7px; min-width: 0;">
+                                        <span style="width: 6px; height: 6px; border-radius: 999px; background: ${t.color}; flex-shrink: 0;"></span>
+                                        <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
+                                    </div>
+                                    <button onclick="event.stopPropagation(); ${item.handler}"
+                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; transition: border-color 0.12s ease, color 0.12s ease; flex-shrink: 0;"
+                                            onmouseover="this.style.borderColor='#0F172A';this.style.color='#0F172A'"
+                                            onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#334155'">
+                                        ${item.actionLabel}
+                                        <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
+                                    </button>
                                 </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35; overflow: hidden; text-overflow: ellipsis;">${item.title}</div>
-                                    <div style="font-size: 12px; color: #64748B; margin-top: 3px; line-height: 1.5;">${item.meta}</div>
-                                </div>
-                                <button onclick="event.stopPropagation(); ${item.handler}"
-                                        style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; background: transparent; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; transition: border-color 0.12s ease, color 0.12s ease;"
-                                        onmouseover="this.style.borderColor='#0F172A';this.style.color='#0F172A'"
-                                        onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#334155'">
-                                    ${item.actionLabel}
-                                    <span aria-hidden="true" style="font-size: 14px; line-height: 1;">→</span>
-                                </button>
+                                <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35;">${item.title}</div>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 3px; line-height: 1.5; overflow-wrap: anywhere;">${item.meta}</div>
                             </div>`;
                         }).join('')}
                     </div>
