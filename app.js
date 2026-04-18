@@ -17294,15 +17294,28 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 </body>
 </html>`;
 
-        const w = window.open('', '_blank', 'noopener,noreferrer,width=880,height=1100');
-        if (!w) {
-            alert('Please allow pop-ups for this site to download the receipt.');
+        // NOTE: do not pass 'noopener' / 'noreferrer' — those cause window.open to
+        // return null (or a disconnected window), which is why the popup rendered blank.
+        const w = window.open('', '_blank', 'width=880,height=1100');
+        if (!w || !w.document) {
+            // Fallback: use a Blob URL so the receipt still renders even if popups are blocked.
+            const blob = new Blob([receiptHTML], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
             return;
         }
         w.document.open();
         w.document.write(receiptHTML);
         w.document.close();
-        w.document.title = `Conversion Receipt ${orderId}`;
+        try { w.document.title = `Conversion Receipt ${orderId}`; } catch (_) {}
+        w.focus();
     };
     window.retryConversion = function() {
         window.activeConversionOrderId = null;
