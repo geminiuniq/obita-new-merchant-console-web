@@ -16526,7 +16526,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
                                 <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>
-                                ${pill.label === 'Completed' ? `<button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+                                ${pill.label === 'Completed' ? `
+                                    <button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                ` : `
+                                    <button title="Receipt is available once the payout is completed" disabled style="padding: 7px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                `}
                             </div>
                         </div>
                     </div>
