@@ -7635,7 +7635,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
 
                     ${total === 0 ? `
-                    <div style="padding: 26px 20px 30px; display: flex; align-items: center; gap: 14px;">
+                    <div style="padding: 26px 20px 30px; display: flex; align-items: center; gap: 14px; background: #F8FAFC;">
                         <div style="width: 40px; height: 40px; border-radius: 999px; background: #ECFDF5; color: #16A34A; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 18px; height: 18px;"></i></div>
                         <div>
                             <div style="font-size: 14px; font-weight: 700; color: #0F172A;">You're all caught up</div>
@@ -7643,32 +7643,34 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                     </div>
                     ` : `
+                    <!-- Console-style column labels, workbench feel -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 20px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                        <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.12em; text-transform: uppercase;">Queue &middot; ${total} item${total === 1 ? '' : 's'}</span>
+                        <span style="font-size: 10px; font-weight: 700; color: #94A3B8; letter-spacing: 0.06em; text-transform: uppercase;">Sorted by severity</span>
+                    </div>
                     <div>
                         ${items.map((item, idx) => {
                             const t = tone[item.severity];
+                            const zebra = idx % 2 === 1 ? '#FCFDFE' : '#FFFFFF';
                             return `
                             <div onclick="${item.handler}"
-                                 style="display: grid; grid-template-columns: 40px 1fr; column-gap: 14px; row-gap: 6px; padding: 16px 20px 14px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; transition: background 0.12s ease;"
-                                 onmouseover="this.style.background='#FCFDFE'"
-                                 onmouseout="this.style.background='transparent'">
-                                <div style="grid-row: 1 / span 3; grid-column: 1; width: 40px; height: 40px; border-radius: 999px; background: ${t.bg}; color: ${t.color}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);">
-                                    <i data-lucide="${t.icon}" style="width: 18px; height: 18px;"></i>
+                                 style="padding: 13px 20px 14px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; background: ${zebra}; transition: background 0.12s ease;"
+                                 onmouseover="this.style.background='#F1F5F9'"
+                                 onmouseout="this.style.background='${zebra}'">
+                                <!-- Filled category chip carries the severity weight -->
+                                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; background: ${t.bg}; color: ${t.color}; border: 1px solid ${t.color}26; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;">
+                                    <i data-lucide="${t.icon}" style="width: 11px; height: 11px;"></i>${t.label}
                                 </div>
-                                <div style="grid-column: 2;">
-                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                        <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
-                                    </div>
-                                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35; margin-top: 3px;">${item.title}</div>
-                                    <div style="font-size: 12px; color: #64748B; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere;">${item.meta}</div>
-                                </div>
-                                <div style="grid-column: 2; display: flex; justify-content: flex-end; margin-top: 6px;">
-                                    <button onclick="event.stopPropagation(); ${item.handler}"
-                                            style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; background: var(--clr-accent); border: 1px solid var(--clr-accent); border-radius: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: filter 0.12s ease, transform 0.12s ease; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.22);"
-                                            onmouseover="this.style.filter='brightness(0.94)';this.style.transform='translateY(-1px)'"
-                                            onmouseout="this.style.filter='brightness(1)';this.style.transform='translateY(0)'">
+                                <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.4; margin-top: 7px;">${item.title}</div>
+                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;">${item.meta}</div>
+                                <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+                                    <a href="#" onclick="event.preventDefault(); event.stopPropagation(); ${item.handler}"
+                                       style="display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--clr-accent); text-decoration: none; white-space: nowrap; padding: 2px 0; transition: gap 0.12s ease;"
+                                       onmouseover="this.style.textDecoration='underline';this.style.gap='6px'"
+                                       onmouseout="this.style.textDecoration='none';this.style.gap='3px'">
                                         ${item.actionLabel}
-                                        <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
-                                    </button>
+                                        <span aria-hidden="true" style="font-size: 12px; line-height: 1;">→</span>
+                                    </a>
                                 </div>
                             </div>`;
                         }).join('')}
