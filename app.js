@@ -7601,36 +7601,36 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     }));
                     items.sort((a, b) => priority[a.severity] - priority[b.severity]);
 
-                    // Summary line showing the breakdown
+                    // Summary line showing the breakdown — rendered on the accent header, so use white/near-white tints
                     const counts = items.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
                     const parts = [];
-                    if (counts.critical)   parts.push(`<span style="color:#FCA5A5;font-weight:700;">${counts.critical} critical</span>`);
-                    if (counts.watch)      parts.push(`<span style="color:#FCD34D;font-weight:700;">${counts.watch} watch</span>`);
-                    if (counts.compliance) parts.push(`<span style="color:#FCD34D;font-weight:700;">${counts.compliance} EDD</span>`);
-                    if (counts.approval)   parts.push(`<span style="color:#93C5FD;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
-                    const summaryLine = parts.join(' <span style="color:#475569;">·</span> ');
+                    if (counts.critical)   parts.push(`<span style="color:#FCA5A5;font-weight:800;">${counts.critical} critical</span>`);
+                    if (counts.watch)      parts.push(`<span style="color:#FDE68A;font-weight:800;">${counts.watch} watch</span>`);
+                    if (counts.compliance) parts.push(`<span style="color:#FDE68A;font-weight:800;">${counts.compliance} EDD</span>`);
+                    if (counts.approval)   parts.push(`<span style="color:white;font-weight:800;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
+                    const summaryLine = parts.join(' <span style="color:rgba(255,255,255,0.5);">·</span> ');
 
                     const total = items.length;
                     const hasCritical = !!counts.critical;
 
                     return `
-                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden; border: 1.5px solid #0F172A; box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);">
-                    <!-- Dark header band -->
-                    <div style="background: #0F172A; color: white; padding: 16px 20px; position: relative;">
+                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden; border: 1px solid #BFDBFE; box-shadow: 0 14px 32px -16px rgba(37, 99, 235, 0.28), 0 2px 6px rgba(15, 23, 42, 0.06);">
+                    <!-- Accent header band (uses brand colour — blue in TCSP, purple in MSO) -->
+                    <div style="background: var(--clr-accent); color: white; padding: 16px 20px; position: relative;">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                             <div style="display: inline-flex; align-items: center; gap: 10px; min-width: 0;">
-                                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; background: ${hasCritical ? 'rgba(220, 38, 38, 0.18)' : 'rgba(245, 158, 11, 0.18)'}; border: 1px solid ${hasCritical ? 'rgba(248, 113, 113, 0.45)' : 'rgba(252, 211, 77, 0.45)'}; border-radius: 999px;">
-                                    <span style="width: 6px; height: 6px; border-radius: 999px; background: ${hasCritical ? '#F87171' : '#FCD34D'}; box-shadow: 0 0 0 3px ${hasCritical ? 'rgba(248, 113, 113, 0.22)' : 'rgba(252, 211, 77, 0.22)'}; flex-shrink: 0;"></span>
-                                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: ${hasCritical ? '#FCA5A5' : '#FCD34D'}; text-transform: uppercase; white-space: nowrap;">Action Required</span>
+                                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.38); border-radius: 999px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 999px; background: ${hasCritical ? '#FCA5A5' : '#FCD34D'}; box-shadow: 0 0 0 3px ${hasCritical ? 'rgba(252, 165, 165, 0.32)' : 'rgba(252, 211, 77, 0.32)'}; flex-shrink: 0;"></span>
+                                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: white; text-transform: uppercase; white-space: nowrap;">Action Required</span>
                                 </div>
                             </div>
                             <div style="display: inline-flex; align-items: baseline; gap: 5px;">
                                 <span style="font-size: 28px; font-weight: 900; color: white; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">${total}</span>
-                                <span style="font-size: 11px; font-weight: 600; color: #94A3B8;">open</span>
+                                <span style="font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.78);">open</span>
                             </div>
                         </div>
                         <div style="margin-top: 8px; font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.005em;">Exceptions &amp; Tasks</div>
-                        ${summaryLine ? `<div style="font-size: 11.5px; color: #CBD5E1; margin-top: 4px; line-height: 1.6;">${summaryLine}</div>` : ''}
+                        ${summaryLine ? `<div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82); margin-top: 4px; line-height: 1.6;">${summaryLine}</div>` : ''}
                     </div>
 
                     ${total === 0 ? `
@@ -7656,9 +7656,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div style="grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;">
                                     <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
                                     <button onclick="event.stopPropagation(); ${item.handler}"
-                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: #0F172A; border: 1px solid #0F172A; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: background 0.12s ease; flex-shrink: 0;"
-                                            onmouseover="this.style.background='#334155';this.style.borderColor='#334155'"
-                                            onmouseout="this.style.background='#0F172A';this.style.borderColor='#0F172A'">
+                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: var(--clr-accent); border: 1px solid var(--clr-accent); border-radius: 6px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: filter 0.12s ease, box-shadow 0.12s ease; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.18);"
+                                            onmouseover="this.style.filter='brightness(0.92)'"
+                                            onmouseout="this.style.filter='brightness(1)'">
                                         ${item.actionLabel}
                                         <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
                                     </button>
