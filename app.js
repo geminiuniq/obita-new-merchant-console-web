@@ -17601,6 +17601,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         const txHashShort = tx.txHash ? `${tx.txHash.slice(0, 10)}…${tx.txHash.slice(-8)}` : '—';
 
+        // Strip internal source hints like '(Address Book)' / '(Address Book — Whitelisted)'
+        // from counterparty labels before they appear on the printed receipt.
+        const cleanLabel = (s) => s ? String(s).replace(/\s*\((?:Address Book)(?:[^)]*)?\)\s*/gi, '').trim() : s;
+        const fromLabelClean = cleanLabel(tx.fromLabel);
+        const toLabelClean   = cleanLabel(tx.toLabel);
+
         const sections = [
             {
                 title: 'Transaction Reference',
@@ -17619,9 +17625,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 title: isDeposit ? 'On-Chain Details · Sender → Custody' : 'On-Chain Details · Custody → Recipient',
                 rows: [
                     { label: 'From Address', value: tx.fromAddress },
-                    { label: 'From Label',   value: tx.fromLabel || '—' },
+                    { label: 'From Label',   value: fromLabelClean || '—' },
                     { label: 'To Address',   value: tx.toAddress },
-                    { label: 'To Label',     value: tx.toLabel || '—' },
+                    { label: 'To Label',     value: toLabelClean || '—' },
                     { label: 'Counterparty VASP', value: tx.vasp ? `${tx.vasp.name} · ${tx.vasp.category}` : '—' }
                 ]
             },
@@ -17669,7 +17675,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             providerLabel: 'Digital Asset Custodian',
             flow: {
                 leftLabel: isDeposit ? 'From (Source Wallet)' : 'From (Obita Custody)',
-                leftAmount: isDeposit ? `${tx.fromLabel || 'Source'}` : 'Obita Stablecoin Vault',
+                leftAmount: isDeposit ? (fromLabelClean || 'Source') : 'Obita Stablecoin Vault',
                 leftCcy: isDeposit ? (tx.fromAddress.slice(0, 10) + '…' + tx.fromAddress.slice(-6)) : clientEntityName,
                 rightLabel: isDeposit ? 'To (Obita Custody)' : 'To (Destination Wallet)',
                 rightAmount: `${fmt(tx.netAmount)} ${tx.asset}`,
