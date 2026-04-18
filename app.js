@@ -9894,7 +9894,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             { time: 'Today, 09:18', orderId: 'PO-20260406-0114', beneficiary: 'Shenzhen Apex Electronics', method: 'Bank Transfer', purpose: 'Supplier Payment', source: 'USD Treasury Balance', amount: '14,200.00 USD', approval: 'Pending / Nancy Test', status: 'Pending Approval' },
             { time: 'Today, 08:36', orderId: 'PB-20260406-0008', beneficiary: '3 Payees', method: 'Payout Batch', purpose: 'Supplier Settlement Batch', source: 'USD Treasury Balance', amount: '48,620.00 USD', approval: 'Pending / Nancy Test', status: 'Pending Approval', payoutCount: 3 },
             { time: 'Apr 5, 17:02', orderId: 'PO-20260405-0102', beneficiary: 'Nova Logistics', method: 'Wallet Transfer', purpose: 'Logistics Settlement', source: 'USDT Operations Pool', amount: '8,500.00 USDT', approval: 'Completed / Nancy Test', status: 'Completed' },
-            { time: 'Apr 4, 14:18', orderId: 'PB-20260404-0005', beneficiary: '5 Payees', method: 'Payout Batch', purpose: 'Weekly Treasury Disbursement', source: 'USDC Operations Pool', amount: '126,400.00 USDC', approval: 'Completed / Nancy Test', status: 'Completed', payoutCount: 5 }
+            { time: 'Apr 4, 14:18', orderId: 'PB-20260404-0005', beneficiary: '5 Payees', method: 'Payout Batch', purpose: 'Weekly Treasury Disbursement', source: 'USDC Operations Pool', amount: '126,400.00 USDC', approval: 'Completed / Nancy Test', status: 'Completed', payoutCount: 5 },
+            { time: 'Apr 5, 11:24', orderId: 'PO-20260405-0088', beneficiary: 'Pacific Rim Trading Co.',  method: 'Bank Transfer', purpose: 'Supplier Payment',        source: 'USD Treasury Balance', amount: '32,500.00 USD', approval: 'Completed / Nancy Test', status: 'Completed' },
+            { time: 'Apr 3, 16:08', orderId: 'PO-20260403-0062', beneficiary: 'Sterling Freight Ltd.',    method: 'Bank Transfer', purpose: 'Logistics Settlement',    source: 'HKD Operating Balance', amount: '186,400.00 HKD', approval: 'Completed / Nancy Test', status: 'Completed' },
+            { time: 'Apr 2, 10:52', orderId: 'PO-20260402-0041', beneficiary: 'Orion Marketing GmbH',     method: 'Bank Transfer', purpose: 'Marketing Services',      source: 'EUR Operating Balance', amount: '18,250.00 EUR', approval: 'Completed / Nancy Test', status: 'Failed' }
         ]
     };
 
@@ -9955,6 +9958,48 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 { sequence: '03', payee: 'Kairo Commerce', destination: 'Ethereum wallet', currency: 'USDC', amount: '31,500.00 USDC', fee: '7.00 USDC', net: '31,493.00 USDC', status: 'Completed', note: 'Marketplace settlement' },
                 { sequence: '04', payee: 'Nordic Freight Systems', destination: 'HSBC UK ••••2210', currency: 'USDC', amount: '22,100.00 USDC', fee: '9.00 USDC', net: '22,091.00 USDC', status: 'Completed', note: 'Freight service fee' },
                 { sequence: '05', payee: 'Bluepeak Services', destination: 'TRON wallet', currency: 'USDC', amount: '30,200.00 USDC', fee: '11.00 USDC', net: '30,189.00 USDC', status: 'Completed', note: 'Technology service retainer' }
+            ]
+        },
+        'PO-20260405-0088': {
+            timeline: [
+                { time: 'Apr 5, 2026 11:24', status: 'Created',   note: 'Payout order created by Nancy User.' },
+                { time: 'Apr 5, 2026 11:28', status: 'Approved',  note: 'Approved by Nancy Test.' },
+                { time: 'Apr 5, 2026 11:35', status: 'Processing', note: 'Outbound wire submitted to JPMorgan Chase via SWIFT MT103.' },
+                { time: 'Apr 5, 2026 12:47', status: 'Completed', note: 'USD 32,500.00 delivered to beneficiary. SWIFT confirmation (MT910) received.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 5, 2026 11:28' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Pacific Rim Trading Co.', destination: 'JPMorgan Chase ••••9410', currency: 'USD', amount: '32,500.00 USD', fee: '38.00 USD', net: '32,462.00 USD', status: 'Completed', note: 'April supplier invoice PRT-20260401-018' }
+            ]
+        },
+        'PO-20260403-0062': {
+            timeline: [
+                { time: 'Apr 3, 2026 16:08', status: 'Created',   note: 'Payout order created by Nancy User.' },
+                { time: 'Apr 3, 2026 16:14', status: 'Approved',  note: 'Approved by Nancy Test.' },
+                { time: 'Apr 3, 2026 16:22', status: 'Processing', note: 'HKD outbound transfer released to HSBC Hong Kong.' },
+                { time: 'Apr 3, 2026 17:04', status: 'Completed', note: 'HKD 186,400.00 credited to beneficiary bank account. Transfer confirmation received.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 3, 2026 16:14' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Sterling Freight Ltd.', destination: 'HSBC Hong Kong ••••3278', currency: 'HKD', amount: '186,400.00 HKD', fee: '120.00 HKD', net: '186,280.00 HKD', status: 'Completed', note: 'Q1 freight logistics settlement' }
+            ]
+        },
+        'PO-20260402-0041': {
+            timeline: [
+                { time: 'Apr 2, 2026 10:52', status: 'Created',   note: 'Payout order created by Nancy User.' },
+                { time: 'Apr 2, 2026 11:02', status: 'Approved',  note: 'Approved by Nancy Test.' },
+                { time: 'Apr 2, 2026 11:18', status: 'Processing', note: 'EUR outbound wire submitted via SEPA.' },
+                { time: 'Apr 2, 2026 14:46', status: 'Failed',    note: 'Beneficiary bank rejected the transfer — account number does not match registered holder. No funds were debited.' }
+            ],
+            approvers: [
+                { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 2, 2026 11:02' }
+            ],
+            payouts: [
+                { sequence: '01', payee: 'Orion Marketing GmbH', destination: 'Deutsche Bank ••••5521', currency: 'EUR', amount: '18,250.00 EUR', fee: '24.00 EUR', net: '18,226.00 EUR', status: 'Failed', note: 'Account holder mismatch — coordinate corrected beneficiary details before resubmission.' }
             ]
         }
     };
