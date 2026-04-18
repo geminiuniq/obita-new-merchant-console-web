@@ -7601,40 +7601,41 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     }));
                     items.sort((a, b) => priority[a.severity] - priority[b.severity]);
 
-                    // Summary line showing the breakdown — rendered on the accent header, so use white/near-white tints
+                    // Summary breakdown — rendered on the soft-tinted header, subtle colour per severity
                     const counts = items.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
                     const parts = [];
-                    if (counts.critical)   parts.push(`<span style="color:#FCA5A5;font-weight:800;">${counts.critical} critical</span>`);
-                    if (counts.watch)      parts.push(`<span style="color:#FDE68A;font-weight:800;">${counts.watch} watch</span>`);
-                    if (counts.compliance) parts.push(`<span style="color:#FDE68A;font-weight:800;">${counts.compliance} EDD</span>`);
-                    if (counts.approval)   parts.push(`<span style="color:white;font-weight:800;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
-                    const summaryLine = parts.join(' <span style="color:rgba(255,255,255,0.5);">·</span> ');
+                    if (counts.critical)   parts.push(`<span style="color:#B91C1C;font-weight:700;">${counts.critical} critical</span>`);
+                    if (counts.watch)      parts.push(`<span style="color:#B45309;font-weight:700;">${counts.watch} watch</span>`);
+                    if (counts.compliance) parts.push(`<span style="color:#B45309;font-weight:700;">${counts.compliance} EDD</span>`);
+                    if (counts.approval)   parts.push(`<span style="color:#1D4ED8;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
+                    const summaryLine = parts.join(' <span style="color:#CBD5E1;">·</span> ');
 
                     const total = items.length;
                     const hasCritical = !!counts.critical;
 
                     return `
-                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden; border: 1px solid #BFDBFE; box-shadow: 0 14px 32px -16px rgba(37, 99, 235, 0.28), 0 2px 6px rgba(15, 23, 42, 0.06);">
-                    <!-- Accent header band (uses brand colour — blue in TCSP, purple in MSO) -->
-                    <div style="background: var(--clr-accent); color: white; padding: 16px 20px; position: relative;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 10px; min-width: 0;">
-                                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.38); border-radius: 999px;">
-                                    <span style="width: 6px; height: 6px; border-radius: 999px; background: ${hasCritical ? '#FCA5A5' : '#FCD34D'}; box-shadow: 0 0 0 3px ${hasCritical ? 'rgba(252, 165, 165, 0.32)' : 'rgba(252, 211, 77, 0.32)'}; flex-shrink: 0;"></span>
-                                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: white; text-transform: uppercase; white-space: nowrap;">Action Required</span>
-                                </div>
+                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
+                    <!-- Header — soft brand-tint, same language as the Verified bar pattern used elsewhere -->
+                    <div style="padding: 18px 20px; background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%); border-bottom: 1px solid #E2E8F0;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #FFFFFF; border: 1px solid #BFDBFE; color: #1D4ED8; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);">
+                                <i data-lucide="list-checks" style="width: 18px; height: 18px;"></i>
                             </div>
-                            <div style="display: inline-flex; align-items: baseline; gap: 5px;">
-                                <span style="font-size: 28px; font-weight: 900; color: white; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">${total}</span>
-                                <span style="font-size: 11px; font-weight: 600; color: rgba(255, 255, 255, 0.78);">open</span>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <h2 class="card-title" style="margin: 0; font-size: 15px;">Exceptions &amp; Tasks</h2>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; background: ${hasCritical ? '#FEE2E2' : '#EFF6FF'}; color: ${hasCritical ? '#B91C1C' : '#1D4ED8'}; border: 1px solid ${hasCritical ? '#FECACA' : '#BFDBFE'}; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">
+                                        ${hasCritical ? `<span style="width: 5px; height: 5px; border-radius: 999px; background: #DC2626;"></span>` : ''}
+                                        ${total} open
+                                    </span>
+                                </div>
+                                ${summaryLine ? `<div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.55;">${summaryLine}</div>` : ''}
                             </div>
                         </div>
-                        <div style="margin-top: 8px; font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.005em;">Exceptions &amp; Tasks</div>
-                        ${summaryLine ? `<div style="font-size: 11.5px; color: rgba(255, 255, 255, 0.82); margin-top: 4px; line-height: 1.6;">${summaryLine}</div>` : ''}
                     </div>
 
                     ${total === 0 ? `
-                    <div style="padding: 28px 20px 32px; display: flex; align-items: center; gap: 14px;">
+                    <div style="padding: 26px 20px 30px; display: flex; align-items: center; gap: 14px;">
                         <div style="width: 40px; height: 40px; border-radius: 999px; background: #ECFDF5; color: #16A34A; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 18px; height: 18px;"></i></div>
                         <div>
                             <div style="font-size: 14px; font-weight: 700; color: #0F172A;">You're all caught up</div>
@@ -7643,11 +7644,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                     ` : `
                     <div>
-                        ${items.map(item => {
+                        ${items.map((item, idx) => {
                             const t = tone[item.severity];
                             return `
                             <div onclick="${item.handler}"
-                                 style="display: grid; grid-template-columns: 36px 1fr; grid-auto-rows: min-content; column-gap: 12px; row-gap: 3px; padding: 16px 18px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
+                                 style="display: grid; grid-template-columns: 36px 1fr; grid-auto-rows: min-content; column-gap: 12px; row-gap: 3px; padding: 16px 20px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; transition: background 0.12s ease;"
                                  onmouseover="this.style.background='#FCFDFE'"
                                  onmouseout="this.style.background='transparent'">
                                 <div style="grid-row: 1 / span 3; grid-column: 1; width: 36px; height: 36px; border-radius: 999px; background: ${t.bg}; color: ${t.color}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -7656,9 +7657,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div style="grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;">
                                     <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
                                     <button onclick="event.stopPropagation(); ${item.handler}"
-                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: var(--clr-accent); border: 1px solid var(--clr-accent); border-radius: 6px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: filter 0.12s ease, box-shadow 0.12s ease; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.18);"
-                                            onmouseover="this.style.filter='brightness(0.92)'"
-                                            onmouseout="this.style.filter='brightness(1)'">
+                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--clr-accent); cursor: pointer; white-space: nowrap; transition: background 0.12s ease, border-color 0.12s ease; flex-shrink: 0;"
+                                            onmouseover="this.style.background='var(--clr-accent)';this.style.color='white';this.style.borderColor='var(--clr-accent)'"
+                                            onmouseout="this.style.background='transparent';this.style.color='var(--clr-accent)';this.style.borderColor='#E2E8F0'">
                                         ${item.actionLabel}
                                         <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
                                     </button>
