@@ -17287,10 +17287,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     </div>
   </div>
 </div>
-<script>
-  // Auto-open the print dialog shortly after load so the user can save as PDF.
-  window.addEventListener('load', function() { setTimeout(function(){ window.print(); }, 350); });
-</script>
 </body>
 </html>`;
 
