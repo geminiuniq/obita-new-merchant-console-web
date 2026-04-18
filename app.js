@@ -9514,16 +9514,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <div class="card" style="padding:0;overflow:hidden;margin:0;">
                     <div style="height:4px;background:linear-gradient(90deg,${typeColor},${typeColor}66);"></div>
                     <div style="padding:22px 26px 20px;">
-                        <!-- Badges row -->
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                            <span style="display:inline-flex;align-items:center;gap:5px;background:${typeBg};color:${typeColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">
-                                <i data-lucide="${typeIcon}" style="width:11px;height:11px;"></i>${typeLabel}
-                            </span>
-                            <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">${st.label}</span>
-                            <span style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.04);border:1px solid #E2E8F0;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;color:#334155;">
-                                <span style="width:7px;height:7px;border-radius:50%;background:${netColor};display:inline-block;"></span>${tx.network} / ${tx.protocol}
-                            </span>
-                            ${tx.whitelisted ? `<span style="display:inline-flex;align-items:center;gap:5px;background:#EFF6FF;color:#1D4ED8;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid #BFDBFE;"><i data-lucide="shield-check" style="width:11px;height:11px;"></i>Whitelisted Address</span>` : ''}
+                        <!-- Badges + download receipt row -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="display:inline-flex;align-items:center;gap:5px;background:${typeBg};color:${typeColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">
+                                    <i data-lucide="${typeIcon}" style="width:11px;height:11px;"></i>${typeLabel}
+                                </span>
+                                <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">${st.label}</span>
+                            </div>
+                            ${tx.status === 'completed' ? `
+                                <button onclick="window.downloadStableVaultReceipt('${txId}')" style="padding:6px 12px;background:white;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width:12px;height:12px;"></i>Download Receipt</button>
+                            ` : ''}
                         </div>
                         <!-- Amount + meta -->
                         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
@@ -17562,6 +17563,111 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             sections,
             disclaimer: `This document certifies that ${issuer.nameEn} processed a checkout payment for ${clientEntityName} under checkout reference ${order.checkoutId}. The funds have been settled to the merchant destination shown above. Please keep this confirmation with your commerce records for reconciliation and audit purposes.`,
             stampText: 'Collected & Settled'
+        });
+    };
+
+    window.downloadStableVaultReceipt = function(txId) {
+        const tx = STABLE_VAULT_TX_DETAILS[txId];
+        if (!tx) { alert('Transaction not found.'); return; }
+        if (tx.status !== 'completed') {
+            alert('Receipt is only available for completed transactions.');
+            return;
+        }
+        const isMso = window.currentLicenseMode === 'MSO';
+        const entity = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: '' };
+        const groupName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const clientEntityName = entity.name || groupName;
+        const issuer = _obitaIssuer();
+        const isDeposit = tx.direction === 'credit';
+        const fmt = (n, d = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+        const explorerUrl =
+            tx.network === 'Ethereum' ? `https://etherscan.io/tx/${tx.txHash}` :
+            tx.network === 'TRON'     ? `https://tronscan.org/#/transaction/${tx.txHash}` :
+            tx.network === 'BNB Chain'? `https://bscscan.com/tx/${tx.txHash}` :
+            tx.network === 'Polygon'  ? `https://polygonscan.com/tx/${tx.txHash}` :
+            tx.network === 'Solana'   ? `https://solscan.io/tx/${tx.txHash}` : '';
+
+        const txHashShort = tx.txHash ? `${tx.txHash.slice(0, 10)}…${tx.txHash.slice(-8)}` : '—';
+
+        const sections = [
+            {
+                title: 'Transaction Reference',
+                rows: [
+                    { label: 'Order ID', value: tx.orderId || txId },
+                    { label: 'Type', value: isDeposit ? 'Digital Asset Deposit (Top Up)' : 'Digital Asset Transfer (Withdrawal)' },
+                    { label: 'Asset', value: tx.asset },
+                    { label: 'Network / Protocol', value: `${tx.network} / ${tx.protocol}` },
+                    { label: 'Transaction Hash', value: txHashShort },
+                    { label: 'Block Height', value: String(tx.blockHeight || '—') },
+                    { label: 'Confirmations', value: `${tx.confirmations} / ${tx.requiredConfirmations}` },
+                    { label: 'Token Contract', value: tx.tokenContract || '—' }
+                ]
+            },
+            {
+                title: isDeposit ? 'On-Chain Details · Sender → Custody' : 'On-Chain Details · Custody → Recipient',
+                rows: [
+                    { label: 'From Address', value: tx.fromAddress },
+                    { label: 'From Label',   value: tx.fromLabel || '—' },
+                    { label: 'To Address',   value: tx.toAddress },
+                    { label: 'To Label',     value: tx.toLabel || '—' },
+                    { label: 'Counterparty VASP', value: tx.vasp ? `${tx.vasp.name} · ${tx.vasp.category}` : '—' }
+                ]
+            },
+            {
+                title: 'Amount Breakdown',
+                rows: [
+                    { label: isDeposit ? 'Gross Amount Received' : 'Gross Amount Sent', value: `${fmt(tx.grossAmount)} ${tx.asset}`, emphasis: true },
+                    { label: 'Network Fee (Gas)', value: tx.networkFee > 0 ? `${tx.networkFee} ${tx.networkFeeAsset || ''}${tx.networkFeeUSD ? ` (≈ USD ${fmt(tx.networkFeeUSD)})` : ''}` : 'Nil' },
+                    { label: isDeposit ? 'Net Amount Credited' : 'Net Amount Delivered', value: `${fmt(tx.netAmount)} ${tx.asset}`, isTotal: true, valueColor: '#047857' }
+                ]
+            },
+            {
+                title: 'Compliance Screening',
+                rows: [
+                    { label: 'Provider',   value: tx.aml?.provider || '—' },
+                    { label: 'Risk Score', value: tx.aml ? `${tx.aml.score} / 100` : '—' },
+                    { label: 'Risk Level', value: tx.aml ? `${tx.aml.level} · ${tx.aml.label}` : '—' }
+                ]
+            },
+            {
+                title: 'Timeline',
+                rows: [
+                    { label: 'Initiated / Broadcast', value: tx.createdAt || tx.broadcastAt || '—' },
+                    { label: 'Block Timestamp',       value: tx.blockTimestamp || '—' },
+                    { label: isDeposit ? 'Credited At' : 'Delivered At', value: tx.creditedAt || tx.timeline?.[tx.timeline.length - 1]?.time || '—' }
+                ]
+            }
+        ];
+        if (tx.approvalRequired && tx.approvers?.length) {
+            sections.push({
+                title: 'Approval Record',
+                rows: tx.approvers.map(a => ({ label: `${a.level} · ${a.name}`, value: `${a.decision}${a.actedAt ? ' · ' + a.actedAt : ''}` }))
+            });
+        }
+
+        openObitaReceipt({
+            orderId: tx.orderId || txId,
+            docPrefix: 'VT',
+            popupTitle: isDeposit ? 'Digital Asset Deposit Receipt' : 'Digital Asset Transfer Receipt',
+            titleEn: isDeposit ? 'Digital Asset Deposit Confirmation' : 'Digital Asset Transfer Confirmation',
+            titleZh: isDeposit ? '数字资产入金回单' : '数字资产转账回单',
+            clientName: clientEntityName,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientLabel: isDeposit ? 'Beneficiary / Merchant' : 'Remitter / Merchant',
+            providerLabel: 'Digital Asset Custodian',
+            flow: {
+                leftLabel: isDeposit ? 'From (Source Wallet)' : 'From (Obita Custody)',
+                leftAmount: isDeposit ? `${tx.fromLabel || 'Source'}` : 'Obita Stablecoin Vault',
+                leftCcy: isDeposit ? (tx.fromAddress.slice(0, 10) + '…' + tx.fromAddress.slice(-6)) : clientEntityName,
+                rightLabel: isDeposit ? 'To (Obita Custody)' : 'To (Destination Wallet)',
+                rightAmount: `${fmt(tx.netAmount)} ${tx.asset}`,
+                rightCcy: `${tx.network} / ${tx.protocol}`,
+                emphasizeRight: true
+            },
+            sections,
+            disclaimer: `This document confirms that ${issuer.nameEn} has ${isDeposit ? 'credited' : 'executed'} the digital-asset transaction identified by Order ID ${tx.orderId || txId} on the ${tx.network} network. The transaction is independently verifiable on the public blockchain at the hash shown above${explorerUrl ? ` (${explorerUrl})` : ''}. Retain this confirmation with your ledger records for reconciliation, audit, and regulatory purposes.`,
+            stampText: isDeposit ? 'Credited & Confirmed' : 'Delivered & Confirmed'
         });
     };
 
