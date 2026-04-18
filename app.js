@@ -7565,13 +7565,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         { severity: 'watch',    title: 'Invoice approaching expiry',     meta: 'INV-240405-8802 · expires in 2 days',                action: 'Review invoice', handler: "window.openInvoiceOrderDetail('INV-240405-8802')" }
                     ];
 
-                    // Category tone — a single dot + label carries the color signal
-                    // Severities: critical (red), watch (amber), compliance (amber), approval (slate)
+                    // Category tone — icon in a tinted circle carries the severity signal
                     const tone = {
-                        critical:   { color: '#B91C1C', label: 'Critical' },
-                        watch:      { color: '#B45309', label: 'Watch' },
-                        compliance: { color: '#B45309', label: 'Compliance · EDD' },
-                        approval:   { color: '#475569', label: 'Approval' }
+                        critical:   { color: '#B91C1C', bg: '#FEE2E2', label: 'Critical',   icon: 'alert-octagon' },
+                        watch:      { color: '#B45309', bg: '#FEF3C7', label: 'Watch',      icon: 'alert-triangle' },
+                        compliance: { color: '#B45309', bg: '#FEF3C7', label: 'Compliance', icon: 'shield-alert' },
+                        approval:   { color: '#1D4ED8', bg: '#DBEAFE', label: 'Approval',   icon: 'clock' }
                     };
                     const priority = { critical: 1, watch: 2, compliance: 3, approval: 4 };
 
@@ -7605,32 +7604,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     // Summary line showing the breakdown
                     const counts = items.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
                     const parts = [];
-                    if (counts.critical)   parts.push(`<span style="color:#B91C1C;font-weight:700;">${counts.critical} critical</span>`);
-                    if (counts.watch)      parts.push(`<span style="color:#B45309;font-weight:700;">${counts.watch} watch</span>`);
-                    if (counts.compliance) parts.push(`<span style="color:#B45309;font-weight:700;">${counts.compliance} EDD</span>`);
-                    if (counts.approval)   parts.push(`<span style="color:#475569;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
-                    const summaryLine = parts.join(' <span style="color:#CBD5E1;">·</span> ');
+                    if (counts.critical)   parts.push(`<span style="color:#FCA5A5;font-weight:700;">${counts.critical} critical</span>`);
+                    if (counts.watch)      parts.push(`<span style="color:#FCD34D;font-weight:700;">${counts.watch} watch</span>`);
+                    if (counts.compliance) parts.push(`<span style="color:#FCD34D;font-weight:700;">${counts.compliance} EDD</span>`);
+                    if (counts.approval)   parts.push(`<span style="color:#93C5FD;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
+                    const summaryLine = parts.join(' <span style="color:#475569;">·</span> ');
 
                     const total = items.length;
+                    const hasCritical = !!counts.critical;
 
                     return `
-                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
-                    <div style="padding: 22px 24px 18px;">
-                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                            <div>
-                                <h2 class="card-title" style="margin: 0;">Exceptions &amp; Tasks</h2>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 4px; letter-spacing: 0.01em;">Prioritised by urgency · Most critical first</div>
+                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden; border: 1.5px solid #0F172A; box-shadow: 0 10px 30px -12px rgba(15, 23, 42, 0.25), 0 2px 6px rgba(15, 23, 42, 0.08);">
+                    <!-- Dark header band -->
+                    <div style="background: #0F172A; color: white; padding: 16px 20px; position: relative;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: inline-flex; align-items: center; gap: 10px; min-width: 0;">
+                                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px 4px 7px; background: ${hasCritical ? 'rgba(220, 38, 38, 0.18)' : 'rgba(245, 158, 11, 0.18)'}; border: 1px solid ${hasCritical ? 'rgba(248, 113, 113, 0.45)' : 'rgba(252, 211, 77, 0.45)'}; border-radius: 999px;">
+                                    <span style="width: 6px; height: 6px; border-radius: 999px; background: ${hasCritical ? '#F87171' : '#FCD34D'}; box-shadow: 0 0 0 3px ${hasCritical ? 'rgba(248, 113, 113, 0.22)' : 'rgba(252, 211, 77, 0.22)'}; flex-shrink: 0;"></span>
+                                    <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: ${hasCritical ? '#FCA5A5' : '#FCD34D'}; text-transform: uppercase; white-space: nowrap;">Action Required</span>
+                                </div>
                             </div>
-                            <div style="display: inline-flex; align-items: baseline; gap: 6px;">
-                                <span style="font-size: 26px; font-weight: 800; color: #0F172A; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">${total}</span>
-                                <span style="font-size: 12px; font-weight: 600; color: #64748B;">open</span>
+                            <div style="display: inline-flex; align-items: baseline; gap: 5px;">
+                                <span style="font-size: 28px; font-weight: 900; color: white; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;">${total}</span>
+                                <span style="font-size: 11px; font-weight: 600; color: #94A3B8;">open</span>
                             </div>
                         </div>
-                        ${summaryLine ? `<div style="font-size: 12px; color: #64748B; margin-top: 10px;">${summaryLine}</div>` : ''}
+                        <div style="margin-top: 8px; font-size: 15px; font-weight: 700; color: white; letter-spacing: -0.005em;">Exceptions &amp; Tasks</div>
+                        ${summaryLine ? `<div style="font-size: 11.5px; color: #CBD5E1; margin-top: 4px; line-height: 1.6;">${summaryLine}</div>` : ''}
                     </div>
 
                     ${total === 0 ? `
-                    <div style="padding: 28px 24px 32px; border-top: 1px solid #F1F5F9; display: flex; align-items: center; gap: 14px;">
+                    <div style="padding: 28px 20px 32px; display: flex; align-items: center; gap: 14px;">
                         <div style="width: 40px; height: 40px; border-radius: 999px; background: #ECFDF5; color: #16A34A; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 18px; height: 18px;"></i></div>
                         <div>
                             <div style="font-size: 14px; font-weight: 700; color: #0F172A;">You're all caught up</div>
@@ -7643,24 +7647,24 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             const t = tone[item.severity];
                             return `
                             <div onclick="${item.handler}"
-                                 style="padding: 14px 20px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
+                                 style="display: grid; grid-template-columns: 36px 1fr; grid-auto-rows: min-content; column-gap: 12px; row-gap: 3px; padding: 16px 18px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
                                  onmouseover="this.style.background='#FCFDFE'"
                                  onmouseout="this.style.background='transparent'">
-                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
-                                    <div style="display: inline-flex; align-items: center; gap: 7px; min-width: 0;">
-                                        <span style="width: 6px; height: 6px; border-radius: 999px; background: ${t.color}; flex-shrink: 0;"></span>
-                                        <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
-                                    </div>
+                                <div style="grid-row: 1 / span 3; grid-column: 1; width: 36px; height: 36px; border-radius: 999px; background: ${t.bg}; color: ${t.color}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="${t.icon}" style="width: 16px; height: 16px;"></i>
+                                </div>
+                                <div style="grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;">
+                                    <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
                                     <button onclick="event.stopPropagation(); ${item.handler}"
-                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; transition: border-color 0.12s ease, color 0.12s ease; flex-shrink: 0;"
-                                            onmouseover="this.style.borderColor='#0F172A';this.style.color='#0F172A'"
-                                            onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#334155'">
+                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: #0F172A; border: 1px solid #0F172A; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: background 0.12s ease; flex-shrink: 0;"
+                                            onmouseover="this.style.background='#334155';this.style.borderColor='#334155'"
+                                            onmouseout="this.style.background='#0F172A';this.style.borderColor='#0F172A'">
                                         ${item.actionLabel}
                                         <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
                                     </button>
                                 </div>
-                                <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35;">${item.title}</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 3px; line-height: 1.5; overflow-wrap: anywhere;">${item.meta}</div>
+                                <div style="grid-column: 2; font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35;">${item.title}</div>
+                                <div style="grid-column: 2; font-size: 12px; color: #64748B; line-height: 1.55; overflow-wrap: anywhere;">${item.meta}</div>
                             </div>`;
                         }).join('')}
                     </div>
