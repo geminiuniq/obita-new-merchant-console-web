@@ -17153,7 +17153,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     }
 
     // config = {
-    //   orderId, docPrefix, titleEn, titleZh, popupTitle,
+    //   orderId, titleEn, titleZh, popupTitle,
     //   clientLabel, clientName, clientSub,
     //   providerLabel, providerSub,  // provider name auto from issuer
     //   flow: { leftLabel, leftAmount, leftCcy, rightLabel, rightAmount, rightCcy, emphasizeRight },
@@ -17166,7 +17166,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const pad = (n) => String(n).padStart(2, '0');
         const issueDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         const issueTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-        const docRef = `${config.docPrefix || 'RCPT'}-${config.orderId}-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
 
         const rowHTML = (r) => {
             if (r.isTotal) {
@@ -17230,7 +17229,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
   .title-block { margin-top: 28px; padding: 20px 0 18px; border-top: 1px solid #0F172A; border-bottom: 1px solid #E2E8F0; }
   .title-en { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; color: #0F172A; }
   .title-zh { font-size: 13px; color: #475569; margin-top: 3px; letter-spacing: 0.02em; }
-  .meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 14px; }
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 14px; }
   .meta-label { font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; }
   .meta-value { font-size: 12px; font-weight: 700; color: #0F172A; margin-top: 3px; font-variant-numeric: tabular-nums; font-family: 'SFMono-Regular', Menlo, monospace; }
   .section { margin-top: 26px; }
@@ -17293,10 +17292,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     <div class="title-zh">${_obitaEscape(config.titleZh)}</div>
     <div class="meta-grid">
       <div>
-        <div class="meta-label">Document Reference</div>
-        <div class="meta-value">${docRef}</div>
-      </div>
-      <div>
         <div class="meta-label">Order ID</div>
         <div class="meta-value">${_obitaEscape(config.orderId)}</div>
       </div>
@@ -17335,7 +17330,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     <div>
       <div>For inquiries regarding this confirmation, please contact your Obita account manager or
       <strong>support@obita.com</strong>.</div>
-      <div class="generated" style="margin-top: 6px;">Generated ${issueDate} ${issueTime} &middot; ${docRef}</div>
+      <div class="generated" style="margin-top: 6px;">Generated ${issueDate} ${issueTime} &middot; ${_obitaEscape(config.orderId)}</div>
     </div>
     <div style="text-align: right;">
       <div class="stamp"><span class="stamp-dot"></span>${_obitaEscape(config.stampText || 'Confirmed & Settled')}</div>
