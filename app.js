@@ -17378,16 +17378,18 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             alert('Receipt is only available for completed conversion orders.');
             return;
         }
-        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
         const isMso = window.currentLicenseMode === 'MSO';
+        const entity = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: '' };
+        const groupName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const clientEntityName = entity.name || groupName;
         openObitaReceipt({
             orderId,
             docPrefix: 'CV',
             popupTitle: 'Conversion Receipt',
             titleEn: 'Foreign Exchange Conversion Confirmation',
             titleZh: '外汇兑换交易回单',
-            clientName: merchantName,
-            clientSub: `Merchant Account — ${merchantName}`,
+            clientName: clientEntityName,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
             flow: {
                 leftLabel: 'From (Debit)',
                 leftAmount: order.fromAmount,
@@ -17436,7 +17438,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             alert('Receipt is only available for completed invoice orders.');
             return;
         }
-        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const isMso = window.currentLicenseMode === 'MSO';
+        const entity = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: '' };
+        const groupName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const clientEntityName = entity.name || groupName;
         const issuer = _obitaIssuer();
         const sections = [
             {
@@ -17464,7 +17469,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 rows: [
                     { label: 'Settlement Destination', value: detail?.settlementDestination || '—' },
                     { label: 'Settlement Terms', value: detail?.settlementTerms || '—' },
-                    { label: 'Recipient Entity', value: detail?.recipientEntity || order.recipient || merchantName }
+                    { label: 'Recipient Entity', value: detail?.recipientEntity || order.recipient || clientEntityName }
                 ]
             }
         ];
@@ -17474,8 +17479,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             popupTitle: 'Invoice Collection Receipt',
             titleEn: 'Invoice Payment Collection Confirmation',
             titleZh: '应收账款代收回单',
-            clientName: merchantName,
-            clientSub: `Merchant / Beneficiary — ${merchantName}`,
+            clientName: clientEntityName,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17488,7 +17493,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 emphasizeRight: true
             },
             sections,
-            disclaimer: `This document certifies that ${issuer.nameEn} received payment on behalf of ${merchantName} against invoice ${order.invoiceNo} from ${order.buyer}. The collected funds have been credited to the merchant settlement destination shown above on the corresponding value date. Retain this confirmation alongside the original invoice for accounting and tax reconciliation purposes.`,
+            disclaimer: `This document certifies that ${issuer.nameEn} received payment on behalf of ${clientEntityName} against invoice ${order.invoiceNo} from ${order.buyer}. The collected funds have been credited to the merchant settlement destination shown above on the corresponding value date. Retain this confirmation alongside the original invoice for accounting and tax reconciliation purposes.`,
             stampText: 'Collected & Settled'
         });
     };
@@ -17502,7 +17507,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             alert('Receipt is only available for completed checkout orders.');
             return;
         }
-        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const isMso = window.currentLicenseMode === 'MSO';
+        const entity = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: '' };
+        const groupName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const clientEntityName = entity.name || groupName;
         const issuer = _obitaIssuer();
         const sections = [
             {
@@ -17528,7 +17536,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 title: 'Settlement',
                 rows: [
                     { label: 'Settlement Destination', value: detail?.settlementWallet || '—' },
-                    { label: 'Merchant', value: merchantName }
+                    { label: 'Merchant Entity', value: clientEntityName }
                 ]
             }
         ];
@@ -17538,8 +17546,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             popupTitle: 'Checkout Receipt',
             titleEn: 'Checkout Payment Confirmation',
             titleZh: '在线收款回单',
-            clientName: merchantName,
-            clientSub: `Merchant / Beneficiary — ${merchantName}`,
+            clientName: clientEntityName,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17552,7 +17560,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 emphasizeRight: true
             },
             sections,
-            disclaimer: `This document certifies that ${issuer.nameEn} processed a checkout payment for ${merchantName} under checkout reference ${order.checkoutId}. The funds have been settled to the merchant destination shown above. Please keep this confirmation with your commerce records for reconciliation and audit purposes.`,
+            disclaimer: `This document certifies that ${issuer.nameEn} processed a checkout payment for ${clientEntityName} under checkout reference ${order.checkoutId}. The funds have been settled to the merchant destination shown above. Please keep this confirmation with your commerce records for reconciliation and audit purposes.`,
             stampText: 'Collected & Settled'
         });
     };
@@ -17566,7 +17574,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             alert('Receipt is only available for completed payout orders.');
             return;
         }
-        const merchantName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const isMso = window.currentLicenseMode === 'MSO';
+        const entity = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: '' };
+        const groupName = (typeof currentMerchantName !== 'undefined' && currentMerchantName) || 'ABC Trading Pte Ltd';
+        const clientEntityName = entity.name || groupName;
         const issuer = _obitaIssuer();
         const isBatch = !!order.payoutCount;
         const firstPayout = detail?.payouts?.[0];
@@ -17609,13 +17620,13 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             popupTitle: 'Payout Receipt',
             titleEn: isBatch ? 'Payout Batch Remittance Confirmation' : 'Payout Remittance Confirmation',
             titleZh: isBatch ? '批量付款汇款回单' : '付款汇款回单',
-            clientName: merchantName,
-            clientSub: `Remitter — ${merchantName}`,
+            clientName: clientEntityName,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
             clientLabel: 'Remitter / Merchant',
             providerLabel: 'Processing Bank',
             flow: {
                 leftLabel: 'Remitter',
-                leftAmount: merchantName,
+                leftAmount: clientEntityName,
                 leftCcy: order.source || '',
                 rightLabel: isBatch ? `To ${order.payoutCount} Payees` : 'Beneficiary',
                 rightAmount: order.beneficiary,
@@ -17623,7 +17634,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 emphasizeRight: false
             },
             sections,
-            disclaimer: `This document confirms that ${issuer.nameEn} has executed the payout instruction on behalf of ${merchantName} under order ${order.orderId}. Funds totalling ${order.amount} have been remitted to the beneficiary${isBatch ? 's shown above' : ' shown above'} through the indicated payout channel. Retain this confirmation for financial and compliance records.`,
+            disclaimer: `This document confirms that ${issuer.nameEn} has executed the payout instruction on behalf of ${clientEntityName} under order ${order.orderId}. Funds totalling ${order.amount} have been remitted to the beneficiary${isBatch ? 's shown above' : ' shown above'} through the indicated payout channel. Retain this confirmation for financial and compliance records.`,
             stampText: 'Remitted & Settled'
         });
     };
