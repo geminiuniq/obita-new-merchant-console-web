@@ -8597,7 +8597,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         ${infoRow('Rate Source', tx.rateSource)}
                         ${infoRow('Conversion Fee', `${fmt(tx.fee)} USD`)}
                         ${infoRow('Fee Basis', tx.feeNote)}
-                        ${infoRow('Processing Bank', tx.processingBank)}
+                        ${infoRow('Processing Agent', tx.processingBank)}
                     </div>
                 </div>
             </div>` : '';
@@ -17745,7 +17745,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             clientName: clientEntityName,
             clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             clientLabel: 'Remitter / Merchant',
-            providerLabel: 'Processing Bank',
+            providerLabel: 'Processing Agent',
             flow: {
                 leftLabel: 'Remitter',
                 leftAmount: clientEntityName,
