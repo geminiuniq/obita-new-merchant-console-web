@@ -17144,8 +17144,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     function _obitaIssuer() {
         const isMso = window.currentLicenseMode === 'MSO';
         return isMso
-            ? { nameEn: 'Obita Payment Services Ltd.', nameZh: '华信汇款有限公司', licence: 'Hong Kong MSO Licence No. 18-16-01834', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Customs and Excise Department, Hong Kong (MSO)' }
-            : { nameEn: 'Obita Financial Services Ltd.', nameZh: '华信科技有限公司', licence: 'Hong Kong TCSP Licence No. TC005128', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Companies Registry, Hong Kong (TCSP)' };
+            ? { nameEn: 'Obita Payment Services Ltd.',  licence: 'Hong Kong MSO Licence No. 18-16-01834', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Customs and Excise Department, Hong Kong (MSO)' }
+            : { nameEn: 'Obita Financial Services Ltd.', licence: 'Hong Kong TCSP Licence No. TC005128', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Companies Registry, Hong Kong (TCSP)' };
     }
     function _obitaEscape(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17277,7 +17277,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       <div class="logo-mark">O</div>
       <div>
         <div class="issuer-name">${issuer.nameEn}</div>
-        <div class="issuer-name-zh">${issuer.nameZh}</div>
+        <div class="issuer-name-zh">Enterprise Treasury &amp; Settlement</div>
       </div>
     </div>
     <div class="issuer-meta">
@@ -17317,7 +17317,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       <div>
         <div class="party-label">${_obitaEscape(config.providerLabel || 'Service Provider')}</div>
         <div class="party-value">${issuer.nameEn}</div>
-        <div class="party-sub">${_obitaEscape(config.providerSub || `${issuer.nameZh} · ${issuer.licence}`)}</div>
+        <div class="party-sub">${_obitaEscape(config.providerSub || issuer.licence)}</div>
       </div>
     </div>
   </div>
