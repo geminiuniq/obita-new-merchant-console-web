@@ -7780,46 +7780,81 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Row 1 -->
-                            <tr onclick="alert('Navigating to Order Details...')">
-                                <td class="text-muted">Today, 14:30</td>
-                                <td>Collection-Invoice</td>
-                                <td class="font-medium">Invoice to Global Tech Ltd</td>
-                                <td class="text-right font-medium text-success">+ $45,000.00 <span class="currency">USD</span></td>
+                            ${window.currentLicenseMode === 'MSO' ? `
+                            <!-- MSO: fiat-only rows -->
+                            <tr onclick="window.openInvoiceOrderDetail('INV-240406-8821')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 09:18</td>
+                                <td>Collection &middot; Invoice</td>
+                                <td class="font-medium">INV-240406-8821 &middot; Global Trade Holdings</td>
+                                <td class="text-right font-medium text-success">+ 42,800.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <!-- Row 2 -->
-                            <tr onclick="alert('Navigating to Order Details...')">
-                                <td class="text-muted">Today, 11:15</td>
-                                <td>Vault-Transfer</td>
-                                <td class="font-medium">Internal Transfer to USD Vault</td>
-                                <td class="text-right font-medium">- 10,000.00 <span class="currency">USDT</span></td>
-                                <td><span class="status-badge status-warning">Processing</span></td>
+                            <tr onclick="window.openFiatVaultTxDetail('FV-20261024-0019')" style="cursor: pointer;">
+                                <td class="text-muted">Yesterday, 15:20</td>
+                                <td>Fiat Vault &middot; Transfer</td>
+                                <td class="font-medium">FV-20261024-0019 &middot; HSBC HK ••9230</td>
+                                <td class="text-right font-medium">- 1,200,000.00 <span class="currency">HKD</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <!-- Row 3 -->
-                            <tr onclick="alert('Navigating to Order Details...')">
-                                <td class="text-muted">Yesterday, 09:45</td>
+                            <tr onclick="window.openConversionOrderDetail('CV-20260410-003')" style="cursor: pointer;">
+                                <td class="text-muted">Apr 10, 14:22</td>
                                 <td>Conversion</td>
-                                <td class="font-medium">Convert EUR to USD</td>
-                                <td class="text-right font-medium text-success">+ $50,000.00 <span class="currency">USD</span></td>
+                                <td class="font-medium">CV-20260410-003 &middot; HKD → USD</td>
+                                <td class="text-right font-medium text-success">+ 256,000.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <!-- Row 4 -->
-                            <tr onclick="alert('Navigating to Order Details...')">
-                                <td class="text-muted">Oct 24, 16:20</td>
-                                <td>Collection-Checkout</td>
-                                <td class="font-medium">Payment from Customer A</td>
-                                <td class="text-right font-medium text-success">+ €1,200.00 <span class="currency">EUR</span></td>
+                            <tr onclick="window.openInvoiceOrderDetail('INV-240405-8802')" style="cursor: pointer;">
+                                <td class="text-muted">Apr 5, 09:08</td>
+                                <td>Collection &middot; Invoice</td>
+                                <td class="font-medium">INV-240405-8802 &middot; Bluepeak Services</td>
+                                <td class="text-right font-medium">18,200.00 <span class="currency">EUR</span></td>
+                                <td><span class="status-badge status-warning">Pending Payment</span></td>
+                            </tr>
+                            <tr onclick="window.openFiatVaultTxDetail('FV-20261025-0031')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 11:30</td>
+                                <td>Fiat Vault &middot; Top Up</td>
+                                <td class="font-medium">FV-20261025-0031 &middot; Chase Bank ••4821</td>
+                                <td class="text-right font-medium text-success">+ 500,000.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <!-- Row 5 -->
-                            <tr onclick="alert('Navigating to Order Details...')">
-                                <td class="text-muted">Oct 23, 10:00</td>
-                                <td>Vault-Topup</td>
-                                <td class="font-medium">Bank Wire Deposit</td>
-                                <td class="text-right font-medium text-success">+ $100,000.00 <span class="currency">USD</span></td>
-                                <td><span class="status-badge status-failed">Failed</span></td>
+                            ` : `
+                            <!-- TCSP: mixed fiat + stablecoin rows -->
+                            <tr onclick="window.openInvoiceOrderDetail('INV-240406-8821')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 09:18</td>
+                                <td>Collection &middot; Invoice</td>
+                                <td class="font-medium">INV-240406-8821 &middot; Global Trade Holdings</td>
+                                <td class="text-right font-medium text-success">+ 42,800.00 <span class="currency">USD</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
+                            <tr onclick="window.openStableVaultTxDetail('VT-20261024-0018')" style="cursor: pointer;">
+                                <td class="text-muted">Yesterday, 16:45</td>
+                                <td>Stablecoin Vault &middot; Transfer</td>
+                                <td class="font-medium">VT-20261024-0018 &middot; Outbound to 0xab…ef12</td>
+                                <td class="text-right font-medium">- 12,500.00 <span class="currency">USDT</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
+                            </tr>
+                            <tr onclick="window.openConversionOrderDetail('CV-20261025-009')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 11:30</td>
+                                <td>Conversion</td>
+                                <td class="font-medium">CV-20261025-009 &middot; USDT → HKD</td>
+                                <td class="text-right font-medium text-success">+ 3,910,000.00 <span class="currency">HKD</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
+                            </tr>
+                            <tr onclick="window.openCheckoutOrderDetail('CKO-20260406-0188')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 12:04</td>
+                                <td>Collection &middot; Checkout</td>
+                                <td class="font-medium">CKO-20260406-0188 &middot; Wallet Pay</td>
+                                <td class="text-right font-medium text-success">+ 1,280.00 <span class="currency">USDC</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
+                            </tr>
+                            <tr onclick="window.openFiatVaultTxDetail('FV-20261025-0031')" style="cursor: pointer;">
+                                <td class="text-muted">Today, 11:30</td>
+                                <td>Fiat Vault &middot; Top Up</td>
+                                <td class="font-medium">FV-20261025-0031 &middot; Chase Bank ••4821</td>
+                                <td class="text-right font-medium text-success">+ 500,000.00 <span class="currency">USD</span></td>
+                                <td><span class="status-badge status-success">Completed</span></td>
+                            </tr>
+                            `}
                         </tbody>
                     </table>
                 </div>
