@@ -7547,138 +7547,127 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 `}
 
                 <!-- Exceptions & Tasks Card -->
-                <div class="card approvals-card" style="margin-top: 24px;">
-                    <div class="card-header-flex">
-                        <h2 class="card-title" style="margin-bottom: 0;">Exceptions & Tasks</h2>
-                        <span class="badge" style="background-color: #0F172A; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700;">Action Center</span>
-                    </div>
-                    ${(() => {
-                        const pendingApprovals = approvalRequests.filter(request => {
-                            if (request.status !== 'pending') return false;
-                            if (window.currentLicenseMode === 'MSO' && ['USDT', 'USDC'].includes(request.currency)) return false;
-                            if (window.currentLicenseMode === 'MSO' && (request.scope || '').toLowerCase().includes('stablecoin')) return false;
-                            return true;
-                        }).slice(0, 2);
-                        // EDD-pending contacts (payees/payers flagged eddRequired without moreInfo)
-                        const eddPendingContacts = (typeof payeeList !== 'undefined' ? payeeList : [])
-                            .filter(c => c.eddRequired && !c.moreInfo)
-                            .slice(0, 3);
-                        const eddTotalCount = (typeof payeeList !== 'undefined' ? payeeList : [])
-                            .filter(c => c.eddRequired && !c.moreInfo).length;
-                        const isMSO = window.currentLicenseMode === 'MSO';
-                        const exceptions = isMSO ? [
-                            {
-                                title: 'Underpaid invoice detected',
-                                meta: 'INV-20260408-0321 · 1,200.00 HKD short',
-                                toneBg: '#FFF7ED',
-                                toneBorder: '#FED7AA',
-                                toneColor: '#C2410C',
-                                pill: 'Exception',
-                                action: 'View Invoice',
-                                handler: "window.openInvoiceOrderDetail('INV-20260408-0321')"
-                            },
-                            {
-                                title: 'Payout bank transfer returned',
-                                meta: 'PAY-20260407-0055 · 8,500.00 USD · Incorrect account',
-                                toneBg: '#FEF2F2',
-                                toneBorder: '#FECACA',
-                                toneColor: '#DC2626',
-                                pill: 'Exception',
-                                action: 'View Payout',
-                                handler: "alert('Opening Payout Order...')"
-                            }
-                        ] : [
-                            {
-                                title: 'Underpaid checkout detected',
-                                meta: 'CKO-20260406-0179 · 280.00 USDT short',
-                                toneBg: '#FFF7ED',
-                                toneBorder: '#FED7AA',
-                                toneColor: '#C2410C',
-                                pill: 'Exception',
-                                action: 'View Order',
-                                handler: "window.openCheckoutOrderDetail('CKO-20260406-0179')"
-                            },
-                            {
-                                title: 'Invoice approaching expiry',
-                                meta: 'INV-240405-8802 · expires in 2 days',
-                                toneBg: '#FEFCE8',
-                                toneBorder: '#FDE68A',
-                                toneColor: '#A16207',
-                                pill: 'Watch',
-                                action: 'View Invoice',
-                                handler: "window.openInvoiceOrderDetail('INV-240405-8802')"
-                            }
-                        ];
-                        return `
-                            <div style="display: flex; flex-direction: column; gap: 18px; margin-top: 16px;">
-                                <div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To-Do</div>
-                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${pendingApprovals.length} pending approvals${eddTotalCount ? ` · ${eddTotalCount} EDD` : ''}</span>
-                                    </div>
-                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
-                                        ${pendingApprovals.map(request => `
-                                            <div class="approval-item" style="padding: 16px; border: 1px solid var(--clr-border); border-radius: 12px; background: #FFFFFF;">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
-                                                    <div>
-                                                        <div style="font-weight: 700; color: var(--clr-text-main); font-size: 14px;">${request.title}</div>
-                                                        <div style="color: var(--clr-text-muted); font-size: 13px; margin-top: 4px;">${request.subject} &bull; ${request.submittedAt}</div>
-                                                    </div>
-                                                    <div style="color: var(--clr-text-main); font-weight: 700; font-size: 14px; text-align: right;">${request.amount} ${request.currency}</div>
-                                                </div>
-                                                <div style="display: flex; justify-content: flex-end;">
-                                                    <button class="btn btn-primary" onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700;">Approve</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                        ${eddPendingContacts.map(c => {
-                                            const directoryType = c.usageScope?.collectionInvoice && !c.usageScope?.payout ? 'invoicePayer' : 'payee';
-                                            const roleLabel = directoryType === 'invoicePayer' ? 'Payer' : 'Payee';
-                                            return `
-                                            <div class="approval-item" style="padding: 16px; border: 1px solid #FDE68A; border-radius: 12px; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px;">
-                                                    <div style="flex: 1; min-width: 0;">
-                                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                                            <div style="font-weight: 700; color: #0F172A; font-size: 14px;">EDD Required · ${c.alias || c.name}</div>
-                                                            <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase;">${roleLabel}</span>
-                                                        </div>
-                                                        <div style="color: #92400E; font-size: 12px; margin-top: 4px; line-height: 1.5;">${c.eddReason || 'Additional information required before further transactions.'}</div>
-                                                    </div>
-                                                </div>
-                                                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                                                    <button class="btn btn-primary" onclick="window.editPayee('${c.id}', '${directoryType}')" style="padding: 6px 16px; font-size: 13px; font-weight: 700; background: #B45309; border: none;">Complete EDD</button>
-                                                </div>
-                                            </div>`;
-                                        }).join('')}
-                                    </div>
-                                </div>
+                ${(() => {
+                    const isMSO = window.currentLicenseMode === 'MSO';
+                    const pendingApprovals = approvalRequests.filter(request => {
+                        if (request.status !== 'pending') return false;
+                        if (isMSO && ['USDT', 'USDC'].includes(request.currency)) return false;
+                        if (isMSO && (request.scope || '').toLowerCase().includes('stablecoin')) return false;
+                        return true;
+                    }).slice(0, 2);
+                    const eddPendingContacts = (typeof payeeList !== 'undefined' ? payeeList : [])
+                        .filter(c => c.eddRequired && !c.moreInfo);
+                    const exceptionsRaw = isMSO ? [
+                        { severity: 'critical', title: 'Payout bank transfer returned',  meta: 'PAY-20260407-0055 · 8,500.00 USD · Incorrect account', action: 'Review payout', handler: "alert('Opening Payout Order...')" },
+                        { severity: 'watch',    title: 'Underpaid invoice detected',     meta: 'INV-20260408-0321 · 1,200.00 HKD short',             action: 'Review invoice', handler: "window.openInvoiceOrderDetail('INV-20260408-0321')" }
+                    ] : [
+                        { severity: 'watch',    title: 'Underpaid checkout detected',    meta: 'CKO-20260406-0179 · 280.00 USDT short',              action: 'Review order',   handler: "window.openCheckoutOrderDetail('CKO-20260406-0179')" },
+                        { severity: 'watch',    title: 'Invoice approaching expiry',     meta: 'INV-240405-8802 · expires in 2 days',                action: 'Review invoice', handler: "window.openInvoiceOrderDetail('INV-240405-8802')" }
+                    ];
 
-                                <div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px;">
-                                        <div style="font-size: 11px; font-weight: 800; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Exceptions</div>
-                                        <span style="font-size: 11px; font-weight: 700; color: #64748B;">${exceptions.length} active</span>
-                                    </div>
-                                    <div class="approval-list" style="display: flex; flex-direction: column; gap: 12px;">
-                                        ${exceptions.map(item => `
-                                            <div style="padding: 16px; border: 1px solid ${item.toneBorder}; border-radius: 12px; background: ${item.toneBg};">
-                                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
-                                                    <div>
-                                                        <div style="font-weight: 700; color: #0F172A; font-size: 14px;">${item.title}</div>
-                                                        <div style="color: #64748B; font-size: 13px; margin-top: 4px;">${item.meta}</div>
-                                                    </div>
-                                                    <span style="padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 800; color: ${item.toneColor}; background: rgba(255,255,255,0.72); border: 1px solid ${item.toneBorder};">${item.pill}</span>
-                                                </div>
-                                                <div style="display: flex; justify-content: flex-end;">
-                                                    <button class="btn btn-outline" onclick="${item.handler}" style="padding: 6px 14px; font-size: 13px; font-weight: 700;">${item.action}</button>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
+                    // Category tone — a single dot + label carries the color signal
+                    // Severities: critical (red), watch (amber), compliance (amber), approval (slate)
+                    const tone = {
+                        critical:   { color: '#B91C1C', label: 'Critical' },
+                        watch:      { color: '#B45309', label: 'Watch' },
+                        compliance: { color: '#B45309', label: 'Compliance · EDD' },
+                        approval:   { color: '#475569', label: 'Approval' }
+                    };
+                    const priority = { critical: 1, watch: 2, compliance: 3, approval: 4 };
+
+                    // Merge into a single prioritised queue
+                    const items = [];
+                    exceptionsRaw.forEach(e => items.push({
+                        kind: 'exception', severity: e.severity,
+                        title: e.title, meta: e.meta,
+                        actionLabel: e.action, handler: e.handler
+                    }));
+                    eddPendingContacts.forEach(c => {
+                        const directoryType = c.usageScope?.collectionInvoice && !c.usageScope?.payout ? 'invoicePayer' : 'payee';
+                        const roleLabel = directoryType === 'invoicePayer' ? 'Payer' : 'Payee';
+                        items.push({
+                            kind: 'edd', severity: 'compliance',
+                            title: `EDD required · ${c.alias || c.name}`,
+                            meta: `${roleLabel} · ${c.eddReason || 'Additional information required before further transactions.'}`,
+                            actionLabel: 'Complete EDD',
+                            handler: `window.editPayee('${c.id}', '${directoryType}')`
+                        });
+                    });
+                    pendingApprovals.forEach(r => items.push({
+                        kind: 'approval', severity: 'approval',
+                        title: r.title,
+                        meta: `${r.subject} · ${r.amount} ${r.currency} · ${r.submittedAt}`,
+                        actionLabel: 'Review',
+                        handler: `window.openApprovalRequestDetail('${r.id}')`
+                    }));
+                    items.sort((a, b) => priority[a.severity] - priority[b.severity]);
+
+                    // Summary line showing the breakdown
+                    const counts = items.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
+                    const parts = [];
+                    if (counts.critical)   parts.push(`<span style="color:#B91C1C;font-weight:700;">${counts.critical} critical</span>`);
+                    if (counts.watch)      parts.push(`<span style="color:#B45309;font-weight:700;">${counts.watch} watch</span>`);
+                    if (counts.compliance) parts.push(`<span style="color:#B45309;font-weight:700;">${counts.compliance} EDD</span>`);
+                    if (counts.approval)   parts.push(`<span style="color:#475569;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
+                    const summaryLine = parts.join(' <span style="color:#CBD5E1;">·</span> ');
+
+                    const total = items.length;
+
+                    return `
+                <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
+                    <div style="padding: 22px 24px 18px;">
+                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <div>
+                                <h2 class="card-title" style="margin: 0;">Exceptions &amp; Tasks</h2>
+                                <div style="font-size: 12px; color: #64748B; margin-top: 4px; letter-spacing: 0.01em;">Prioritised by urgency · Most critical first</div>
                             </div>
-                        `;
-                    })()}
-                </div>
+                            <div style="display: inline-flex; align-items: baseline; gap: 6px;">
+                                <span style="font-size: 26px; font-weight: 800; color: #0F172A; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">${total}</span>
+                                <span style="font-size: 12px; font-weight: 600; color: #64748B;">open</span>
+                            </div>
+                        </div>
+                        ${summaryLine ? `<div style="font-size: 12px; color: #64748B; margin-top: 10px;">${summaryLine}</div>` : ''}
+                    </div>
+
+                    ${total === 0 ? `
+                    <div style="padding: 28px 24px 32px; border-top: 1px solid #F1F5F9; display: flex; align-items: center; gap: 14px;">
+                        <div style="width: 40px; height: 40px; border-radius: 999px; background: #ECFDF5; color: #16A34A; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"><i data-lucide="check" style="width: 18px; height: 18px;"></i></div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">You're all caught up</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 3px;">No exceptions or pending tasks right now.</div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div>
+                        ${items.map((item, idx) => {
+                            const t = tone[item.severity];
+                            const isLast = idx === items.length - 1;
+                            return `
+                            <div onclick="${item.handler}"
+                                 style="display: grid; grid-template-columns: 138px 1fr auto; align-items: center; gap: 20px; padding: 16px 24px; border-top: 1px solid #F1F5F9; cursor: pointer; transition: background 0.12s ease;"
+                                 onmouseover="this.style.background='#FCFDFE'"
+                                 onmouseout="this.style.background='transparent'">
+                                <div style="display: inline-flex; align-items: center; gap: 8px;">
+                                    <span style="width: 7px; height: 7px; border-radius: 999px; background: ${t.color}; flex-shrink: 0;"></span>
+                                    <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase;">${t.label}</span>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35; overflow: hidden; text-overflow: ellipsis;">${item.title}</div>
+                                    <div style="font-size: 12px; color: #64748B; margin-top: 3px; line-height: 1.5;">${item.meta}</div>
+                                </div>
+                                <button onclick="event.stopPropagation(); ${item.handler}"
+                                        style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; background: transparent; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #334155; cursor: pointer; white-space: nowrap; transition: border-color 0.12s ease, color 0.12s ease;"
+                                        onmouseover="this.style.borderColor='#0F172A';this.style.color='#0F172A'"
+                                        onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#334155'">
+                                    ${item.actionLabel}
+                                    <span aria-hidden="true" style="font-size: 14px; line-height: 1;">→</span>
+                                </button>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                    `}
+                </div>`;
+                })()}
 
                 <div class="card activities-card" style="margin-top: 24px;">
                     <div class="card-header-flex">
