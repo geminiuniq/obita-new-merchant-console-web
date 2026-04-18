@@ -17389,7 +17389,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: 'Foreign Exchange Conversion Confirmation',
             titleZh: '外汇兑换交易回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             flow: {
                 leftLabel: 'From (Debit)',
                 leftAmount: order.fromAmount,
@@ -17480,7 +17480,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: 'Invoice Payment Collection Confirmation',
             titleZh: '应收账款代收回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17547,7 +17547,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: 'Checkout Payment Confirmation',
             titleZh: '在线收款回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17621,7 +17621,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: isBatch ? 'Payout Batch Remittance Confirmation' : 'Payout Remittance Confirmation',
             titleZh: isBatch ? '批量付款汇款回单' : '付款汇款回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'} · Group: ${groupName}`,
+            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
             clientLabel: 'Remitter / Merchant',
             providerLabel: 'Processing Bank',
             flow: {
