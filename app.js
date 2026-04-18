@@ -7615,21 +7615,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
                     return `
                 <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
-                    <!-- Header — soft brand-tint, same language as the Verified bar pattern used elsewhere -->
-                    <div style="padding: 18px 20px; background: linear-gradient(180deg, #EFF6FF 0%, #FFFFFF 100%); border-bottom: 1px solid #E2E8F0;">
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <div style="width: 40px; height: 40px; border-radius: 10px; background: #FFFFFF; border: 1px solid #BFDBFE; color: #1D4ED8; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);">
-                                <i data-lucide="list-checks" style="width: 18px; height: 18px;"></i>
+                    <!-- Header — solid brand tint with a filled brand icon tile for weight -->
+                    <div style="padding: 18px 20px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE;">
+                        <div style="display: flex; align-items: center; gap: 14px;">
+                            <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--clr-accent); color: white; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                                <i data-lucide="list-checks" style="width: 20px; height: 20px;"></i>
                             </div>
                             <div style="flex: 1; min-width: 0;">
-                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <h2 class="card-title" style="margin: 0; font-size: 15px;">Exceptions &amp; Tasks</h2>
-                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; background: ${hasCritical ? '#FEE2E2' : '#EFF6FF'}; color: ${hasCritical ? '#B91C1C' : '#1D4ED8'}; border: 1px solid ${hasCritical ? '#FECACA' : '#BFDBFE'}; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">
-                                        ${hasCritical ? `<span style="width: 5px; height: 5px; border-radius: 999px; background: #DC2626;"></span>` : ''}
+                                <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                                    <h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">Exceptions &amp; Tasks</h2>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: ${hasCritical ? '#DC2626' : 'var(--clr-accent)'}; color: white; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);">
+                                        ${hasCritical ? `<span style="width: 5px; height: 5px; border-radius: 999px; background: white; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);"></span>` : ''}
                                         ${total} open
                                     </span>
                                 </div>
-                                ${summaryLine ? `<div style="font-size: 11.5px; color: #64748B; margin-top: 4px; line-height: 1.55;">${summaryLine}</div>` : ''}
+                                ${summaryLine ? `<div style="font-size: 12px; color: #334155; margin-top: 5px; line-height: 1.55;">${summaryLine}</div>` : ''}
                             </div>
                         </div>
                     </div>
@@ -7648,24 +7648,28 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             const t = tone[item.severity];
                             return `
                             <div onclick="${item.handler}"
-                                 style="display: grid; grid-template-columns: 36px 1fr; grid-auto-rows: min-content; column-gap: 12px; row-gap: 3px; padding: 16px 20px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; transition: background 0.12s ease;"
+                                 style="display: grid; grid-template-columns: 40px 1fr; column-gap: 14px; row-gap: 6px; padding: 16px 20px 14px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; transition: background 0.12s ease;"
                                  onmouseover="this.style.background='#FCFDFE'"
                                  onmouseout="this.style.background='transparent'">
-                                <div style="grid-row: 1 / span 3; grid-column: 1; width: 36px; height: 36px; border-radius: 999px; background: ${t.bg}; color: ${t.color}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="${t.icon}" style="width: 16px; height: 16px;"></i>
+                                <div style="grid-row: 1 / span 3; grid-column: 1; width: 40px; height: 40px; border-radius: 999px; background: ${t.bg}; color: ${t.color}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.04);">
+                                    <i data-lucide="${t.icon}" style="width: 18px; height: 18px;"></i>
                                 </div>
-                                <div style="grid-column: 2; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0;">
-                                    <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
+                                <div style="grid-column: 2;">
+                                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                        <span style="font-size: 10.5px; font-weight: 800; letter-spacing: 0.09em; color: ${t.color}; text-transform: uppercase; white-space: nowrap;">${t.label}</span>
+                                    </div>
+                                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35; margin-top: 3px;">${item.title}</div>
+                                    <div style="font-size: 12px; color: #64748B; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere;">${item.meta}</div>
+                                </div>
+                                <div style="grid-column: 2; display: flex; justify-content: flex-end; margin-top: 6px;">
                                     <button onclick="event.stopPropagation(); ${item.handler}"
-                                            style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 700; color: var(--clr-accent); cursor: pointer; white-space: nowrap; transition: background 0.12s ease, border-color 0.12s ease; flex-shrink: 0;"
-                                            onmouseover="this.style.background='var(--clr-accent)';this.style.color='white';this.style.borderColor='var(--clr-accent)'"
-                                            onmouseout="this.style.background='transparent';this.style.color='var(--clr-accent)';this.style.borderColor='#E2E8F0'">
+                                            style="display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; background: var(--clr-accent); border: 1px solid var(--clr-accent); border-radius: 8px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; white-space: nowrap; transition: filter 0.12s ease, transform 0.12s ease; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37, 99, 235, 0.22);"
+                                            onmouseover="this.style.filter='brightness(0.94)';this.style.transform='translateY(-1px)'"
+                                            onmouseout="this.style.filter='brightness(1)';this.style.transform='translateY(0)'">
                                         ${item.actionLabel}
                                         <span aria-hidden="true" style="font-size: 13px; line-height: 1;">→</span>
                                     </button>
                                 </div>
-                                <div style="grid-column: 2; font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.35;">${item.title}</div>
-                                <div style="grid-column: 2; font-size: 12px; color: #64748B; line-height: 1.55; overflow-wrap: anywhere;">${item.meta}</div>
                             </div>`;
                         }).join('')}
                     </div>
