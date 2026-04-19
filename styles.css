@@ -1880,17 +1880,21 @@ body:not(.is-logged-out) .login-screen { display: none; }
 .login-brand-headline {
     margin: 0 0 24px;
     font-family: 'Clash Display', 'Inter', sans-serif;
-    font-weight: 600;
+    font-weight: 500;
     font-size: clamp(44px, 5.6vw, 76px);
-    line-height: 0.98;
+    line-height: 0.95;
     letter-spacing: -0.025em;
     color: #FFFFFF;
 }
 .login-brand-headline em {
+    display: inline-block;
     font-style: normal;
-    font-weight: 500;
+    font-weight: 700;
     color: #7DD3FC;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.028em;
+    font-size: clamp(60px, 8vw, 104px);
+    line-height: 0.92;
+    margin-top: 4px;
 }
 .login-brand-sub {
     max-width: 460px;
