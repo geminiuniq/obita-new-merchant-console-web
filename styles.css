@@ -1765,16 +1765,16 @@ body:not(.is-logged-out) .login-screen { display: none; }
     overflow: hidden;
 }
 
-/* -------- Brand panel -------- */
+/* -------- Brand panel (TCSP brand blue #2563EB family) -------- */
 .login-brand-panel {
     position: relative;
     overflow: hidden;
     padding: 56px 64px;
     color: #FFFFFF;
     background:
-        radial-gradient(1100px 700px at 8% -10%, #1E3FA5 0%, transparent 55%),
-        radial-gradient(1000px 700px at 110% 110%, #0B2E82 0%, transparent 55%),
-        linear-gradient(160deg, #0E3186 0%, #0A2365 60%, #071A4D 100%);
+        radial-gradient(1100px 700px at 8% -10%, #3B82F6 0%, transparent 55%),
+        radial-gradient(1000px 700px at 110% 110%, #1D4ED8 0%, transparent 55%),
+        linear-gradient(160deg, #2563EB 0%, #1D4ED8 55%, #1E40AF 100%);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1991,9 +1991,9 @@ body:not(.is-logged-out) .login-screen { display: none; }
     align-items: center;
     justify-content: space-between;
     padding: 0 22px;
-    border: 1px solid #0A2365;
+    border: 1px solid #2563EB;
     border-radius: 12px;
-    background: #0A2365;
+    background: #2563EB;
     color: #FFFFFF;
     font-size: 15px;
     font-weight: 700;
@@ -2001,9 +2001,9 @@ body:not(.is-logged-out) .login-screen { display: none; }
     cursor: pointer;
     font-family: inherit;
     transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    box-shadow: 0 10px 24px -10px rgba(10, 35, 101, 0.6);
+    box-shadow: 0 10px 24px -10px rgba(37, 99, 235, 0.55);
 }
-.login-submit:hover { background: #0E3186; border-color: #0E3186; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(14, 49, 134, 0.65); }
+.login-submit:hover { background: #1D4ED8; border-color: #1D4ED8; transform: translateY(-1px); box-shadow: 0 14px 32px -12px rgba(29, 78, 216, 0.6); }
 .login-submit:active { transform: translateY(0); }
 .login-submit:focus-visible { outline: 2px solid rgba(37, 99, 235, 0.45); outline-offset: 3px; }
 .login-submit i { transition: transform 0.18s ease; }
