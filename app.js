@@ -7161,9 +7161,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>`).join('')}
                         </div>
                     </div>
-                    <!-- Activated Products (its own section) -->
-                    <div style="padding: 16px 22px 12px; flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
+                    <!-- Activated Products (its own section — clearly separated from the assets block) -->
+                    <div style="padding: 18px 22px 14px; flex: 1; background: #FAFBFC; border-top: 1px solid #CBD5E1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <i data-lucide="layers" style="width: 15px; height: 15px; color: #1D4ED8; flex-shrink: 0;"></i>
+                            <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
+                        </div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
                                 { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
@@ -7234,9 +7237,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>`).join('')}
                         </div>
                     </div>
-                    <!-- Activated Products (its own section) -->
-                    <div style="padding: 16px 22px 12px; flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
+                    <!-- Activated Products (its own section — clearly separated from the assets block) -->
+                    <div style="padding: 18px 22px 14px; flex: 1; background: #FAFBFC; border-top: 1px solid #CBD5E1;">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <i data-lucide="layers" style="width: 15px; height: 15px; color: #1D4ED8; flex-shrink: 0;"></i>
+                            <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
+                        </div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
                                 { icon: 'wallet',             name: '统一账户', types: ['法币'] },
