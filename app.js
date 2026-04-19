@@ -7118,17 +7118,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <!-- TCSP Entity -->
                 <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Card Header -->
-                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #EFF6FF; border: 1px solid #BFDBFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                    <div style="padding: 18px 22px 16px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                                <div style="width: 34px; height: 34px; border-radius: 9px; background: #EFF6FF; border: 1px solid #BFDBFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="building-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
+                                    <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
-                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">已入驻 TCSP+MSO</div>
-                            </div>
+                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
                         </div>
-                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
+                        <!-- Licence strip — prominent chips, one per licence the entity is onboarded to -->
+                        <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase;">Licences</span>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>TCSP Licence</span>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>MSO Licence</span>
+                        </div>
                     </div>
                     <!-- KPI row: Total Assets + Pending Approvals side by side -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
@@ -7170,17 +7178,24 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <!-- MSO Entity -->
                 <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Card Header -->
-                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #F5F3FF; border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                    <div style="padding: 18px 22px 16px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                                <div style="width: 34px; height: 34px; border-radius: 9px; background: #F5F3FF; border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
+                                    <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
+                                </div>
                             </div>
-                            <div>
-                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
-                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">已入驻 MSO</div>
-                            </div>
+                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
                         </div>
-                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
+                        <!-- Licence strip -->
+                        <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase;">Licences</span>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>MSO Licence</span>
+                        </div>
                     </div>
                     <!-- KPI row: Total Assets + Pending Approvals side by side -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
