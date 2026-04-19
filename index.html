@@ -80,6 +80,48 @@
         </section>
     </div>
 
+    <!-- Post-login welcome modal — shown once after sign-in to surface access scope. -->
+    <div class="welcome-modal" id="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-modal-title" hidden>
+        <div class="welcome-modal-backdrop" id="welcome-modal-backdrop"></div>
+        <div class="welcome-modal-card">
+            <div class="welcome-modal-head">
+                <div class="welcome-modal-eyebrow">Signed in · nancy@obita.demo</div>
+                <h2 class="welcome-modal-title" id="welcome-modal-title">Welcome back, Nancy</h2>
+                <p class="welcome-modal-sub">Your account has access to the following entities:</p>
+            </div>
+            <div class="welcome-modal-list">
+                <div class="welcome-entity-row">
+                    <span class="welcome-entity-dot" style="background:#0F172A;"></span>
+                    <div class="welcome-entity-meta">
+                        <div class="welcome-entity-name">华信集团 HWA-CHIN GROUP</div>
+                        <div class="welcome-entity-scope">Group Overview</div>
+                    </div>
+                    <span class="welcome-entity-role welcome-role-group">Group Admin</span>
+                </div>
+                <div class="welcome-entity-row">
+                    <span class="welcome-entity-dot" style="background:#2563EB;"></span>
+                    <div class="welcome-entity-meta">
+                        <div class="welcome-entity-name">华信科技有限公司</div>
+                        <div class="welcome-entity-scope">已入驻 TCSP+MSO</div>
+                    </div>
+                    <span class="welcome-entity-role welcome-role-tcsp">Entity Admin</span>
+                </div>
+                <div class="welcome-entity-row">
+                    <span class="welcome-entity-dot" style="background:#7C3AED;"></span>
+                    <div class="welcome-entity-meta">
+                        <div class="welcome-entity-name">华信汇款有限公司</div>
+                        <div class="welcome-entity-scope">已入驻 MSO</div>
+                    </div>
+                    <span class="welcome-entity-role welcome-role-mso">Entity Admin</span>
+                </div>
+            </div>
+            <div class="welcome-modal-foot">
+                <p class="welcome-modal-note">You can switch between entities at any time from the header.</p>
+                <button type="button" class="welcome-modal-ok" id="welcome-modal-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar">

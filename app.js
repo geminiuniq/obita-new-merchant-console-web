@@ -18907,7 +18907,35 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 // Land on the Group view since Nancy is Group Admin.
                 window.switchEntity('GROUP');
                 lucide.createIcons();
+                // Show the access-scope acknowledgement modal once the user is in.
+                window.openWelcomeModal();
             }, 260);
         });
     }
+
+    // --- Post-login welcome modal ---
+    window.openWelcomeModal = function() {
+        const modal = document.getElementById('welcome-modal');
+        if (!modal) return;
+        modal.hidden = false;
+        // Focus the OK button for accessibility.
+        window.setTimeout(() => {
+            const okBtn = document.getElementById('welcome-modal-ok');
+            if (okBtn) okBtn.focus();
+        }, 50);
+    };
+    window.closeWelcomeModal = function() {
+        const modal = document.getElementById('welcome-modal');
+        if (!modal) return;
+        modal.hidden = true;
+    };
+    const welcomeOk = document.getElementById('welcome-modal-ok');
+    const welcomeBackdrop = document.getElementById('welcome-modal-backdrop');
+    if (welcomeOk) welcomeOk.addEventListener('click', window.closeWelcomeModal);
+    if (welcomeBackdrop) welcomeBackdrop.addEventListener('click', window.closeWelcomeModal);
+    document.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('welcome-modal');
+        if (!modal || modal.hidden) return;
+        if (e.key === 'Escape') window.closeWelcomeModal();
+    });
 });

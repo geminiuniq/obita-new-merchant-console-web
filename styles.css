@@ -2057,3 +2057,114 @@ body:not(.is-logged-out) .login-screen { display: none; }
     .login-form-inner,
     .login-brand-dot { animation: none !important; }
 }
+
+/* =============================================================
+   Post-login Welcome Modal (access scope acknowledgement)
+   ============================================================= */
+.welcome-modal { position: fixed; inset: 0; z-index: 1900; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.welcome-modal[hidden] { display: none; }
+.welcome-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(15, 23, 42, 0.38);
+    backdrop-filter: blur(2px);
+    animation: welcome-fade-in 0.2s ease-out;
+}
+.welcome-modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    box-shadow: 0 30px 60px -20px rgba(15, 23, 42, 0.35), 0 6px 16px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    animation: welcome-pop 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.welcome-modal-head { padding: 24px 26px 18px; }
+.welcome-modal-eyebrow {
+    font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #2563EB;
+    text-transform: lowercase;
+    margin-bottom: 10px;
+}
+.welcome-modal-title { margin: 0 0 6px; font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em; }
+.welcome-modal-sub { margin: 0; font-size: 13px; color: #64748B; line-height: 1.55; }
+
+.welcome-modal-list {
+    padding: 4px 18px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.welcome-entity-row {
+    display: grid;
+    grid-template-columns: 10px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #FAFBFC;
+    border: 1px solid #F1F5F9;
+    border-radius: 10px;
+}
+.welcome-entity-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.04);
+}
+.welcome-entity-meta { min-width: 0; }
+.welcome-entity-name { font-size: 13.5px; font-weight: 700; color: #0F172A; }
+.welcome-entity-scope { font-size: 11.5px; color: #64748B; margin-top: 2px; }
+.welcome-entity-role {
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.welcome-role-group { background: #F1F5F9; color: #334155; border: 1px solid #E2E8F0; }
+.welcome-role-tcsp  { background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; }
+.welcome-role-mso   { background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+
+.welcome-modal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 26px 22px;
+    border-top: 1px solid #F1F5F9;
+    margin-top: 12px;
+}
+.welcome-modal-note { margin: 0; font-size: 11.5px; color: #94A3B8; line-height: 1.5; }
+.welcome-modal-ok {
+    min-width: 92px;
+    height: 38px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 8px;
+    background: #0A2365;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s ease, transform 0.12s ease;
+    box-shadow: 0 6px 16px -8px rgba(10, 35, 101, 0.55);
+}
+.welcome-modal-ok:hover { background: #0E3186; transform: translateY(-1px); }
+.welcome-modal-ok:focus-visible { outline: 2px solid rgba(37, 99, 235, 0.5); outline-offset: 3px; }
+
+@keyframes welcome-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes welcome-pop {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .welcome-modal-card, .welcome-modal-backdrop { animation: none !important; }
+}
