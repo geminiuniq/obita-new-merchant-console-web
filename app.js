@@ -17194,8 +17194,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     function _obitaIssuer() {
         const isMso = window.currentLicenseMode === 'MSO';
         return isMso
-            ? { nameEn: 'Obita Payment Services Ltd.',  licence: 'Hong Kong MSO Licence No. 18-16-01834', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Customs and Excise Department, Hong Kong (MSO)' }
-            : { nameEn: 'Obita Financial Services Ltd.', licence: 'Hong Kong TCSP Licence No. TC005128', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong', regulator: 'Companies Registry, Hong Kong (TCSP)' };
+            ? { nameEn: 'Obita Payment Services Ltd.',  address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong' }
+            : { nameEn: 'Obita Financial Services Ltd.', address: 'Unit 2208, 22/F, Two International Finance Centre, 8 Finance Street, Central, Hong Kong' };
     }
     function _obitaEscape(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -17330,9 +17330,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       </div>
     </div>
     <div class="issuer-meta">
-      ${issuer.address}<br>
-      ${issuer.licence}<br>
-      Regulated by ${issuer.regulator}
+      ${issuer.address}
     </div>
   </div>
 
@@ -17362,7 +17360,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
       <div>
         <div class="party-label">${_obitaEscape(config.providerLabel || 'Service Provider')}</div>
         <div class="party-value">${issuer.nameEn}</div>
-        <div class="party-sub">${_obitaEscape(config.providerSub || issuer.licence)}</div>
+        <div class="party-sub">${_obitaEscape(config.providerSub || '')}</div>
       </div>
     </div>
   </div>
@@ -17445,7 +17443,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn,
             titleZh,
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientSub: '',
             flow: {
                 leftLabel: `From ${order.sourceVault}`,
                 leftAmount: order.fromAmount,
@@ -17536,7 +17534,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: 'Invoice Payment Collection Confirmation',
             titleZh: '应收账款代收回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientSub: '',
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17603,7 +17601,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: 'Checkout Payment Confirmation',
             titleZh: '在线收款回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientSub: '',
             clientLabel: 'Beneficiary / Merchant',
             providerLabel: 'Collection Agent',
             flow: {
@@ -17714,7 +17712,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: isDeposit ? 'Digital Asset Deposit Confirmation' : 'Digital Asset Transfer Confirmation',
             titleZh: isDeposit ? '数字资产入金回单' : '数字资产转账回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientSub: '',
             clientLabel: isDeposit ? 'Beneficiary / Merchant' : 'Remitter / Merchant',
             providerLabel: 'Digital Asset Custodian',
             flow: {
@@ -17788,7 +17786,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             titleEn: isBatch ? 'Payout Batch Remittance Confirmation' : 'Payout Remittance Confirmation',
             titleZh: isBatch ? '批量付款汇款回单' : '付款汇款回单',
             clientName: clientEntityName,
-            clientSub: `Operating under ${isMso ? 'Obita MSO Licence' : 'Obita TCSP Licence'}`,
+            clientSub: '',
             clientLabel: 'Remitter / Merchant',
             providerLabel: 'Processing Agent',
             flow: {
