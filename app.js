@@ -7144,8 +7144,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                         </div>
                     </div>
-                    <!-- Activated Products -->
-                    <div style="padding: 16px 22px 12px; border-bottom: 1px solid #F1F5F9;">
+                    <!-- Asset Breakdown (part of the Total Assets block) -->
+                    <div style="padding: 14px 22px 14px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${[
+                                { symbol: 'USDT', icon: '₮', color: '#26A17B', bg: '#ECFDF5', amount: '14,000,000' },
+                                { symbol: 'USDC', icon: 'C', color: '#2775CA', bg: '#EFF6FF', amount: '10,050,000' },
+                                { symbol: 'USD',  icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '2,500,000' },
+                                { symbol: 'HKD',  icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,400,000' }
+                            ].map(a => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
+                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
+                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                    <!-- Activated Products (its own section) -->
+                    <div style="padding: 16px 22px 12px; flex: 1;">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
@@ -7162,23 +7179,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
                                         : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
-                            </div>`).join('')}
-                        </div>
-                    </div>
-                    <!-- Asset Breakdown -->
-                    <div style="padding: 14px 22px 8px; flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${[
-                                { symbol: 'USDT', icon: '₮', color: '#26A17B', bg: '#ECFDF5', amount: '14,000,000' },
-                                { symbol: 'USDC', icon: 'C', color: '#2775CA', bg: '#EFF6FF', amount: '10,050,000' },
-                                { symbol: 'USD',  icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '2,500,000' },
-                                { symbol: 'HKD',  icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,400,000' }
-                            ].map(a => `
-                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
-                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
-                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
-                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
                             </div>`).join('')}
                         </div>
                     </div>
@@ -7217,8 +7217,25 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                         </div>
                     </div>
-                    <!-- Activated Products -->
-                    <div style="padding: 16px 22px 12px; border-bottom: 1px solid #F1F5F9;">
+                    <!-- Asset Breakdown (part of the Total Assets block) -->
+                    <div style="padding: 14px 22px 14px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${[
+                                { symbol: 'USD', icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '1,500,000' },
+                                { symbol: 'HKD', icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,200,000' },
+                                { symbol: 'EUR', icon: '\u20AC', color: '#1D4ED8', bg: '#EFF6FF', amount: '320,000' },
+                                { symbol: 'BRL', icon: 'R$', color: '#15803D', bg: '#F0FDF4', amount: '980,000' }
+                            ].map(a => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
+                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
+                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                    <!-- Activated Products (its own section) -->
+                    <div style="padding: 16px 22px 12px; flex: 1;">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
@@ -7234,23 +7251,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
                                         : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
-                            </div>`).join('')}
-                        </div>
-                    </div>
-                    <!-- Asset Breakdown -->
-                    <div style="padding: 14px 22px 8px; flex: 1;">
-                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px;">Asset Breakdown</div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            ${[
-                                { symbol: 'USD', icon: '$', color: '#0F172A', bg: '#F1F5F9', amount: '1,500,000' },
-                                { symbol: 'HKD', icon: 'HK$', color: '#DC2626', bg: '#FEF2F2', amount: '8,200,000' },
-                                { symbol: 'EUR', icon: '\u20AC', color: '#1D4ED8', bg: '#EFF6FF', amount: '320,000' },
-                                { symbol: 'BRL', icon: 'R$', color: '#15803D', bg: '#F0FDF4', amount: '980,000' }
-                            ].map(a => `
-                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
-                                <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
-                                <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
-                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
                             </div>`).join('')}
                         </div>
                     </div>
