@@ -7118,24 +7118,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <!-- TCSP Entity -->
                 <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Card Header -->
-                    <div style="padding: 18px 22px 16px; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                                <div style="width: 34px; height: 34px; border-radius: 9px; background: #EFF6FF; border: 1px solid #BFDBFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="building-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
-                                </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
-                                    <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
-                                </div>
+                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #EFF6FF; border: 1px solid #BFDBFE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #2563EB;"></i>
                             </div>
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
+                            <div style="min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
+                                <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
+                            </div>
                         </div>
-                        <!-- Licence strip — prominent chips, one per licence the entity is onboarded to -->
-                        <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase;">Licences</span>
-                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>TCSP Licence</span>
-                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>MSO Licence</span>
+                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
+                    </div>
+                    <!-- Activated Products -->
+                    <div style="padding: 14px 22px 10px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                        <div style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 8px;">已开通业务</div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            ${[
+                                { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
+                                { icon: 'arrow-down-to-line', name: '收款',     types: ['稳定币', '法币'] },
+                                { icon: 'arrow-up-from-line', name: '付款',     types: ['稳定币', '法币'] },
+                                { icon: 'arrow-left-right',   name: '兑换',     types: ['稳定币', '法币'] }
+                            ].map(p => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
+                                <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                <div style="display: inline-flex; gap: 5px;">
+                                    ${p.types.map(t => t === '稳定币'
+                                        ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
+                                        : `<span style="font-size: 10px; font-weight: 800; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                </div>
+                            </div>`).join('')}
                         </div>
                     </div>
                     <!-- KPI row: Total Assets + Pending Approvals side by side -->
@@ -7178,23 +7191,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 <!-- MSO Entity -->
                 <div style="background: white; border: 1px solid var(--clr-border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
                     <!-- Card Header -->
-                    <div style="padding: 18px 22px 16px; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                                <div style="width: 34px; height: 34px; border-radius: 9px; background: #F5F3FF; border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
-                                </div>
-                                <div style="min-width: 0;">
-                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
-                                    <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
-                                </div>
+                    <div style="padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                            <div style="width: 34px; height: 34px; border-radius: 9px; background: #F5F3FF; border: 1px solid #DDD6FE; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
                             </div>
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
+                            <div style="min-width: 0;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
+                                <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
+                            </div>
                         </div>
-                        <!-- Licence strip -->
-                        <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase;">Licences</span>
-                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: 0.04em;"><i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>MSO Licence</span>
+                        <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
+                    </div>
+                    <!-- Activated Products -->
+                    <div style="padding: 14px 22px 10px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                        <div style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 8px;">已开通业务</div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            ${[
+                                { icon: 'wallet',             name: '统一账户', types: ['法币'] },
+                                { icon: 'arrow-down-to-line', name: '收款',     types: ['法币'] },
+                                { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'] },
+                                { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'] }
+                            ].map(p => `
+                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
+                                <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                <div style="display: inline-flex; gap: 5px;">
+                                    ${p.types.map(t => t === '稳定币'
+                                        ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
+                                        : `<span style="font-size: 10px; font-weight: 800; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                </div>
+                            </div>`).join('')}
                         </div>
                     </div>
                     <!-- KPI row: Total Assets + Pending Approvals side by side -->
