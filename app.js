@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentLicenseMode = 'TCSP'; // 'TCSP' | 'MSO' | 'GROUP'
 
     window.ENTITY_CONFIG = {
-        TCSP:  { name: '华信科技有限公司', label: '已入驻 TCSP+MSO', accent: '#2563EB', icon: 'building-2' },
-        MSO:   { name: '华信汇款有限公司', label: '已入驻 MSO',       accent: '#7C3AED', icon: 'building-2' },
+        TCSP:  { name: '华信科技有限公司', label: '已开通稳定币+法币业务', accent: '#2563EB', icon: 'building-2' },
+        MSO:   { name: '华信汇款有限公司', label: '已开通法币业务',       accent: '#7C3AED', icon: 'building-2' },
         GROUP: { name: '华信集团 HWA-CHIN GROUP', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
     };
 
