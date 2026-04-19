@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentLicenseMode = 'TCSP'; // 'TCSP' | 'MSO' | 'GROUP'
 
     window.ENTITY_CONFIG = {
-        TCSP:  { name: '华信科技有限公司', label: 'via Obita TCSP', accent: '#2563EB', icon: 'building-2' },
-        MSO:   { name: '华信汇款有限公司', label: 'via Obita MSO',  accent: '#7C3AED', icon: 'building-2' },
+        TCSP:  { name: '华信科技有限公司', label: '已入驻 TCSP+MSO', accent: '#2563EB', icon: 'building-2' },
+        MSO:   { name: '华信汇款有限公司', label: '已入驻 MSO',       accent: '#7C3AED', icon: 'building-2' },
         GROUP: { name: '华信集团 HWA-CHIN GROUP', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
     };
 
@@ -7125,7 +7125,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div>
                                 <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
-                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">via Obita TCSP</div>
+                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">已入驻 TCSP+MSO</div>
                             </div>
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
@@ -7177,7 +7177,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div>
                                 <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
-                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">via Obita MSO</div>
+                                <div style="font-size: 10px; color: #94A3B8; letter-spacing: 0.03em;">已入驻 MSO</div>
                             </div>
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px;">Verified</span>
