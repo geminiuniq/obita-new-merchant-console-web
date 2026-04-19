@@ -7163,7 +7163,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                     <!-- CTA -->
                     <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
-                        <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 11px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(37,99,235,0.2);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">Enter TCSP Portal &rarr;</button>
+                        <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 11px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(37,99,235,0.2);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">Enter Portal &rarr;</button>
                     </div>
                 </div>
 
@@ -7215,7 +7215,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                     <!-- CTA -->
                     <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
-                        <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 11px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(124,58,237,0.2);" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">Enter MSO Portal &rarr;</button>
+                        <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 11px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(124,58,237,0.2);" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">Enter Portal &rarr;</button>
                     </div>
                 </div>
             </div>
