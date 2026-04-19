@@ -7130,9 +7130,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
                     </div>
+                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
+                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$24,050,000</div>
+                        </div>
+                        <div style="padding: 16px 22px;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
+                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">3</span>
+                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Activated Products -->
-                    <div style="padding: 14px 22px 10px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
-                        <div style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 8px;">已开通业务</div>
+                    <div style="padding: 16px 22px 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
                                 { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
@@ -7149,20 +7163,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
                             </div>`).join('')}
-                        </div>
-                    </div>
-                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
-                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
-                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
-                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$24,050,000</div>
-                        </div>
-                        <div style="padding: 16px 22px;">
-                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
-                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
-                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">3</span>
-                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
-                            </div>
                         </div>
                     </div>
                     <!-- Asset Breakdown -->
@@ -7203,9 +7203,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
                     </div>
+                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
+                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
+                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$9,180,000</div>
+                        </div>
+                        <div style="padding: 16px 22px;">
+                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
+                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
+                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">1</span>
+                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
+                            </div>
+                        </div>
+                    </div>
                     <!-- Activated Products -->
-                    <div style="padding: 14px 22px 10px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
-                        <div style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 8px;">已开通业务</div>
+                    <div style="padding: 16px 22px 12px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;">已开通业务</div>
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
                                 { icon: 'wallet',             name: '统一账户', types: ['法币'] },
@@ -7221,20 +7235,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
                             </div>`).join('')}
-                        </div>
-                    </div>
-                    <!-- KPI row: Total Assets + Pending Approvals side by side -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
-                        <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
-                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
-                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$9,180,000</div>
-                        </div>
-                        <div style="padding: 16px 22px;">
-                            <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
-                            <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px;">
-                                <span style="font-size: 22px; font-weight: 800; color: #D97706; letter-spacing: -0.02em;">1</span>
-                                <span style="font-size: 11px; font-weight: 600; color: #D97706; background: #FFFBEB; padding: 2px 8px; border-radius: 999px;">Action needed</span>
-                            </div>
                         </div>
                     </div>
                     <!-- Asset Breakdown -->
