@@ -18867,4 +18867,28 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     // Initialize first page
     syncManagedEntityStatuses();
     renderPlaceholderContent('Overview');
+
+    // --- Login flow ---
+    // The body starts with the `is-logged-out` class, which hides the dashboard
+    // and shows the login screen. On submit, we fade the screen out and land
+    // Nancy on the Group Overview (she is Group Admin on 华信集团 and Entity
+    // Admin on both TCSP and MSO subsidiaries, so the multi-entity landing is
+    // the correct first view).
+    const loginForm = document.getElementById('login-form');
+    const loginScreen = document.getElementById('login-screen');
+    if (loginForm && loginScreen) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('login-submit');
+            if (submitBtn) submitBtn.disabled = true;
+            loginScreen.classList.add('is-closing');
+            window.setTimeout(() => {
+                document.body.classList.remove('is-logged-out');
+                loginScreen.remove();
+                // Land on the Group view since Nancy is Group Admin.
+                window.switchEntity('GROUP');
+                lucide.createIcons();
+            }, 260);
+        });
+    }
 });

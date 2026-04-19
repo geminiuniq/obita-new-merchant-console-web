@@ -12,7 +12,67 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
+<body class="is-logged-out">
+    <!-- Login screen — shown on initial load until the user signs in. -->
+    <div class="login-screen" id="login-screen">
+        <div class="login-backdrop" aria-hidden="true"></div>
+        <div class="login-card" role="dialog" aria-labelledby="login-title">
+            <div class="login-brand">
+                <div class="login-brand-mark"><i data-lucide="layers"></i></div>
+                <div class="login-brand-name">Obita</div>
+            </div>
+            <h1 class="login-title" id="login-title">Welcome back</h1>
+            <p class="login-subtitle">Sign in to the Obita merchant portal.</p>
+
+            <form class="login-form" id="login-form" autocomplete="on" novalidate>
+                <label class="login-field">
+                    <span class="login-label">Work email</span>
+                    <input id="login-email" type="email" autocomplete="username" value="nancy@obita.demo" spellcheck="false" required>
+                </label>
+                <label class="login-field">
+                    <span class="login-label">
+                        <span>Password</span>
+                        <a href="#" class="login-forgot" tabindex="-1">Forgot password?</a>
+                    </span>
+                    <input id="login-password" type="password" autocomplete="current-password" value="••••••••" required>
+                </label>
+                <button type="submit" class="login-submit" id="login-submit">
+                    Continue
+                    <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+                </button>
+            </form>
+
+            <div class="login-entities">
+                <div class="login-entities-label">Signed-in entities for this account</div>
+                <div class="login-entities-list">
+                    <div class="login-entity-row">
+                        <span class="login-entity-dot" style="background:#0F172A;"></span>
+                        <div class="login-entity-meta">
+                            <div class="login-entity-name">华信集团 HWA-CHIN GROUP</div>
+                            <div class="login-entity-role">Group Admin</div>
+                        </div>
+                    </div>
+                    <div class="login-entity-row">
+                        <span class="login-entity-dot" style="background:#2563EB;"></span>
+                        <div class="login-entity-meta">
+                            <div class="login-entity-name">华信科技有限公司 · TCSP+MSO</div>
+                            <div class="login-entity-role">Entity Admin</div>
+                        </div>
+                    </div>
+                    <div class="login-entity-row">
+                        <span class="login-entity-dot" style="background:#7C3AED;"></span>
+                        <div class="login-entity-meta">
+                            <div class="login-entity-name">华信汇款有限公司 · MSO</div>
+                            <div class="login-entity-role">Entity Admin</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="login-footnote">Demo portal · credentials are not validated.</p>
+        </div>
+    </div>
+
     <div class="dashboard-layout">
         <!-- Sidebar -->
         <aside class="sidebar">
