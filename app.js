@@ -7161,30 +7161,37 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>`).join('')}
                         </div>
                     </div>
-                    <!-- Activated Products (its own section — clearly separated from the assets block) -->
-                    <div style="padding: 18px 22px 14px; flex: 1; background: #FAFBFC; border-top: 1px solid #CBD5E1;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <i data-lucide="layers" style="width: 15px; height: 15px; color: #1D4ED8; flex-shrink: 0;"></i>
-                            <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                            ${[
-                                { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
-                                { icon: 'arrow-down-to-line', name: '收款',     types: ['稳定币', '法币'] },
-                                { icon: 'arrow-up-from-line', name: '付款',     types: ['稳定币', '法币'] },
-                                { icon: 'arrow-left-right',   name: '兑换',     types: ['稳定币', '法币'] }
-                            ].map(p => `
-                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
-                                <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
-                                <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
-                                <div style="display: inline-flex; gap: 5px;">
-                                    ${p.types.map(t => t === '稳定币'
-                                        ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                        : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
-                                </div>
-                            </div>`).join('')}
-                        </div>
-                    </div>
+                    <!-- Activated Products (collapsible section) -->
+                    ${(() => {
+                        const products = [
+                            { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
+                            { icon: 'arrow-down-to-line', name: '收款',     types: ['稳定币', '法币'] },
+                            { icon: 'arrow-up-from-line', name: '付款',     types: ['稳定币', '法币'] },
+                            { icon: 'arrow-left-right',   name: '兑换',     types: ['稳定币', '法币'] }
+                        ];
+                        return `
+                        <details class="entity-products" style="background: #FAFBFC; border-top: 1px solid #CBD5E1; flex: 1;">
+                            <summary class="entity-products-head" style="padding: 16px 22px; display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; user-select: none;">
+                                <i data-lucide="layers" style="width: 15px; height: 15px; color: #1D4ED8; flex-shrink: 0;"></i>
+                                <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
+                                <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 7px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums;">${products.length}</span>
+                                <span style="flex: 1;"></span>
+                                <i data-lucide="chevron-down" class="entity-products-chev" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0; transition: transform 0.2s ease;"></i>
+                            </summary>
+                            <div style="padding: 2px 22px 14px; display: flex; flex-direction: column; gap: 2px;">
+                                ${products.map(p => `
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                    <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
+                                    <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                    <div style="display: inline-flex; gap: 5px;">
+                                        ${p.types.map(t => t === '稳定币'
+                                            ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
+                                            : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                    </div>
+                                </div>`).join('')}
+                            </div>
+                        </details>`;
+                    })()}
                     <!-- CTA -->
                     <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
                         <button onclick="window.switchEntity('TCSP')" style="width: 100%; padding: 11px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(37,99,235,0.2);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">Enter Portal &rarr;</button>
@@ -7238,28 +7245,35 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                     </div>
                     <!-- Activated Products (its own section — clearly separated from the assets block) -->
-                    <div style="padding: 18px 22px 14px; flex: 1; background: #FAFBFC; border-top: 1px solid #CBD5E1;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                            <i data-lucide="layers" style="width: 15px; height: 15px; color: #1D4ED8; flex-shrink: 0;"></i>
-                            <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                            ${[
-                                { icon: 'wallet',             name: '统一账户', types: ['法币'] },
-                                { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'] },
-                                { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'] }
-                            ].map(p => `
-                            <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
-                                <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
-                                <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
-                                <div style="display: inline-flex; gap: 5px;">
-                                    ${p.types.map(t => t === '稳定币'
-                                        ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                        : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
-                                </div>
-                            </div>`).join('')}
-                        </div>
-                    </div>
+                    ${(() => {
+                        const products = [
+                            { icon: 'wallet',             name: '统一账户', types: ['法币'] },
+                            { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'] },
+                            { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'] }
+                        ];
+                        return `
+                        <details class="entity-products" style="background: #FAFBFC; border-top: 1px solid #CBD5E1; flex: 1;">
+                            <summary class="entity-products-head" style="padding: 16px 22px; display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; user-select: none;">
+                                <i data-lucide="layers" style="width: 15px; height: 15px; color: #7C3AED; flex-shrink: 0;"></i>
+                                <span style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">已开通业务</span>
+                                <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 7px; background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; border-radius: 999px; font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums;">${products.length}</span>
+                                <span style="flex: 1;"></span>
+                                <i data-lucide="chevron-down" class="entity-products-chev" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0; transition: transform 0.2s ease;"></i>
+                            </summary>
+                            <div style="padding: 2px 22px 14px; display: flex; flex-direction: column; gap: 2px;">
+                                ${products.map(p => `
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                    <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
+                                    <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                    <div style="display: inline-flex; gap: 5px;">
+                                        ${p.types.map(t => t === '稳定币'
+                                            ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
+                                            : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                    </div>
+                                </div>`).join('')}
+                            </div>
+                        </details>`;
+                    })()}
                     <!-- CTA -->
                     <div style="padding: 12px 22px; border-top: 1px solid #F1F5F9;">
                         <button onclick="window.switchEntity('MSO')" style="width: 100%; padding: 11px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; box-shadow: 0 2px 8px rgba(124,58,237,0.2);" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">Enter Portal &rarr;</button>

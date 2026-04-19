@@ -2168,3 +2168,13 @@ body:not(.is-logged-out) .login-screen { display: none; }
 @media (prefers-reduced-motion: reduce) {
     .welcome-modal-card, .welcome-modal-backdrop { animation: none !important; }
 }
+
+/* =============================================================
+   Entity Products disclosure (Group Overview · 已开通业务)
+   ============================================================= */
+.entity-products > summary { list-style: none; outline: none; }
+.entity-products > summary::-webkit-details-marker { display: none; }
+.entity-products > summary::marker { display: none; }
+.entity-products > summary:hover { background: #F4F6FA; }
+.entity-products > summary:focus-visible { background: #F4F6FA; box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.35); }
+.entity-products[open] > summary .entity-products-chev { transform: rotate(180deg); }
