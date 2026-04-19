@@ -18868,6 +18868,25 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     syncManagedEntityStatuses();
     renderPlaceholderContent('Overview');
 
+    // Brand panel timestamp — refreshes once a minute while the login screen is up.
+    (function updateLoginBrandTime() {
+        const el = document.getElementById('login-brand-time');
+        if (!el) return;
+        const pad = (n) => String(n).padStart(2, '0');
+        const render = () => {
+            const d = new Date();
+            el.textContent = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} HKT`;
+        };
+        render();
+        const interval = window.setInterval(() => {
+            if (!document.body.classList.contains('is-logged-out')) {
+                window.clearInterval(interval);
+                return;
+            }
+            render();
+        }, 60000);
+    })();
+
     // --- Login flow ---
     // The body starts with the `is-logged-out` class, which hides the dashboard
     // and shows the login screen. On submit, we fade the screen out and land
