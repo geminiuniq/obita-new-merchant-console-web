@@ -7146,7 +7146,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div style="display: inline-flex; gap: 5px;">
                                     ${p.types.map(t => t === '稳定币'
                                         ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                        : `<span style="font-size: 10px; font-weight: 800; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                        : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
                             </div>`).join('')}
                         </div>
@@ -7209,7 +7209,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="display: flex; flex-direction: column; gap: 2px;">
                             ${[
                                 { icon: 'wallet',             name: '统一账户', types: ['法币'] },
-                                { icon: 'arrow-down-to-line', name: '收款',     types: ['法币'] },
                                 { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'] },
                                 { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'] }
                             ].map(p => `
@@ -7219,7 +7218,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <div style="display: inline-flex; gap: 5px;">
                                     ${p.types.map(t => t === '稳定币'
                                         ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                        : `<span style="font-size: 10px; font-weight: 800; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
+                                        : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
                                 </div>
                             </div>`).join('')}
                         </div>
