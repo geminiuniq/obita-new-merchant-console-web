@@ -7163,10 +7163,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <!-- Activated Products (collapsible section) -->
                     ${(() => {
                         const products = [
-                            { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'] },
-                            { icon: 'arrow-down-to-line', name: '收款',     types: ['稳定币', '法币'] },
-                            { icon: 'arrow-up-from-line', name: '付款',     types: ['稳定币', '法币'] },
-                            { icon: 'arrow-left-right',   name: '兑换',     types: ['稳定币', '法币'] }
+                            { icon: 'wallet',             name: '统一账户', types: ['稳定币', '法币'], color: '#2563EB', bg: '#EFF6FF' },
+                            { icon: 'arrow-down-to-line', name: '收款',     types: ['稳定币', '法币'], color: '#059669', bg: '#ECFDF5' },
+                            { icon: 'arrow-up-from-line', name: '付款',     types: ['稳定币', '法币'], color: '#C2410C', bg: '#FFF7ED' },
+                            { icon: 'arrow-left-right',   name: '兑换',     types: ['稳定币', '法币'], color: '#7C3AED', bg: '#F5F3FF' }
                         ];
                         return `
                         <details class="entity-products" style="background: #FAFBFC; border-top: 1px solid #CBD5E1; flex: 1;">
@@ -7180,8 +7180,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                 ${products.map(p => `
                                 <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #475569;"></i>
+                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: ${p.color};"></i>
                                     </div>
                                     <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em; line-height: 1.2;">${p.name}</div>
                                     <div style="font-size: 10.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em;">${p.types.join(' · ')}</div>
@@ -7243,9 +7243,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <!-- Activated Products (its own section — clearly separated from the assets block) -->
                     ${(() => {
                         const products = [
-                            { icon: 'wallet',             name: '统一账户', types: ['法币'] },
-                            { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'] },
-                            { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'] }
+                            { icon: 'wallet',             name: '统一账户', types: ['法币'], color: '#2563EB', bg: '#EFF6FF' },
+                            { icon: 'arrow-up-from-line', name: '付款',     types: ['法币'], color: '#C2410C', bg: '#FFF7ED' },
+                            { icon: 'arrow-left-right',   name: '兑换',     types: ['法币'], color: '#7C3AED', bg: '#F5F3FF' }
                         ];
                         return `
                         <details class="entity-products" style="background: #FAFBFC; border-top: 1px solid #CBD5E1; flex: 1;">
@@ -7259,8 +7259,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                                 ${products.map(p => `
                                 <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #475569;"></i>
+                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: ${p.color};"></i>
                                     </div>
                                     <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em; line-height: 1.2;">${p.name}</div>
                                     <div style="font-size: 10.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em;">${p.types.join(' · ')}</div>
