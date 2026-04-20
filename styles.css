@@ -2182,3 +2182,8 @@ body:not(.is-logged-out) .login-screen { display: none; }
 .entity-products > summary:hover { background: #F4F6FA; }
 .entity-products > summary:focus-visible { background: #F4F6FA; box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.35); }
 .entity-products[open] > summary .entity-products-chev { transform: rotate(180deg); }
+
+/* Entity-switcher labels / welcome-modal scope collapse cleanly when empty */
+.header-merchant-label:empty,
+.entity-item-label:empty,
+.welcome-entity-scope:empty { display: none; }

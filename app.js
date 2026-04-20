@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.currentLicenseMode = 'TCSP'; // 'TCSP' | 'MSO' | 'GROUP'
 
     window.ENTITY_CONFIG = {
-        TCSP:  { name: '华信科技有限公司', label: '已开通稳定币+法币业务', accent: '#2563EB', icon: 'building-2' },
-        MSO:   { name: '华信汇款有限公司', label: '已开通法币业务',       accent: '#7C3AED', icon: 'building-2' },
+        TCSP:  { name: '华信科技有限公司', label: '', accent: '#2563EB', icon: 'building-2' },
+        MSO:   { name: '华信电子商务有限公司', label: '',       accent: '#7C3AED', icon: 'building-2' },
         GROUP: { name: '华信集团 HWA-CHIN GROUP', label: 'Group Overview', accent: '#0F172A', icon: 'layers' }
     };
 
@@ -7207,7 +7207,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <i data-lucide="building-2" style="width: 16px; height: 16px; color: #7C3AED;"></i>
                             </div>
                             <div style="min-width: 0;">
-                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信汇款有限公司</div>
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信电子商务有限公司</div>
                                 <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
                             </div>
                         </div>
