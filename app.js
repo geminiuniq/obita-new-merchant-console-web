@@ -7177,14 +7177,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <span style="flex: 1;"></span>
                                 <i data-lucide="chevron-down" class="entity-products-chev" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0; transition: transform 0.2s ease;"></i>
                             </summary>
-                            <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                                 ${products.map(p => `
-                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: ${p.color};"></i>
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                                    <div style="width: 22px; height: 22px; border-radius: 6px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i data-lucide="${p.icon}" style="width: 12px; height: 12px; color: ${p.color};"></i>
                                     </div>
-                                    <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em; line-height: 1.2;">${p.name}</div>
-                                    <div style="font-size: 10.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em;">${p.types.join(' · ')}</div>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; letter-spacing: -0.005em; flex: 1; min-width: 0; white-space: nowrap;">${p.name}</div>
+                                    <div style="font-size: 10px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap;">${p.types.join('·')}</div>
                                 </div>`).join('')}
                             </div>
                         </details>`;
@@ -7256,14 +7256,14 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                 <span style="flex: 1;"></span>
                                 <i data-lucide="chevron-down" class="entity-products-chev" style="width: 16px; height: 16px; color: #64748B; flex-shrink: 0; transition: transform 0.2s ease;"></i>
                             </summary>
-                            <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div style="padding: 4px 22px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                                 ${products.map(p => `
-                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 11px 12px; display: flex; flex-direction: column; gap: 6px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
-                                    <div style="width: 28px; height: 28px; border-radius: 7px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                        <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: ${p.color};"></i>
+                                <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; transition: border-color 0.12s ease, box-shadow 0.12s ease;" onmouseover="this.style.borderColor='#CBD5E1';this.style.boxShadow='0 1px 3px rgba(15,23,42,0.04)'" onmouseout="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                                    <div style="width: 22px; height: 22px; border-radius: 6px; background: ${p.bg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <i data-lucide="${p.icon}" style="width: 12px; height: 12px; color: ${p.color};"></i>
                                     </div>
-                                    <div style="font-size: 13.5px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em; line-height: 1.2;">${p.name}</div>
-                                    <div style="font-size: 10.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em;">${p.types.join(' · ')}</div>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; letter-spacing: -0.005em; flex: 1; min-width: 0; white-space: nowrap;">${p.name}</div>
+                                    <div style="font-size: 10px; color: #94A3B8; font-weight: 500; letter-spacing: 0.02em; white-space: nowrap;">${p.types.join('·')}</div>
                                 </div>`).join('')}
                             </div>
                         </details>`;
