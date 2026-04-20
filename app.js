@@ -7125,7 +7125,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="min-width: 0;">
                                 <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信科技有限公司</div>
-                                <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
                             </div>
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
@@ -7180,14 +7179,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </summary>
                             <div style="padding: 2px 22px 14px; display: flex; flex-direction: column; gap: 2px;">
                                 ${products.map(p => `
-                                <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0;">
                                     <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
-                                    <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
-                                    <div style="display: inline-flex; gap: 5px;">
-                                        ${p.types.map(t => t === '稳定币'
-                                            ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                            : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
-                                    </div>
+                                    <span style="font-size: 13px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                    <span style="font-size: 11px; color: #94A3B8; font-weight: 500; letter-spacing: 0.01em;">${p.types.join(' · ')}</span>
                                 </div>`).join('')}
                             </div>
                         </details>`;
@@ -7208,7 +7203,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="min-width: 0;">
                                 <div style="font-size: 14px; font-weight: 700; color: #0F172A;">华信电子商务有限公司</div>
-                                <div style="font-size: 10.5px; color: #94A3B8; letter-spacing: 0.02em; margin-top: 2px;">Operating Subsidiary</div>
                             </div>
                         </div>
                         <span style="font-size: 10px; font-weight: 700; color: #059669; background: #F0FDF4; padding: 3px 8px; border-radius: 999px; flex-shrink: 0;">Verified</span>
@@ -7262,14 +7256,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </summary>
                             <div style="padding: 2px 22px 14px; display: flex; flex-direction: column; gap: 2px;">
                                 ${products.map(p => `
-                                <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
+                                <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0;">
                                     <i data-lucide="${p.icon}" style="width: 14px; height: 14px; color: #64748B; flex-shrink: 0;"></i>
-                                    <span style="font-size: 12.5px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
-                                    <div style="display: inline-flex; gap: 5px;">
-                                        ${p.types.map(t => t === '稳定币'
-                                            ? `<span style="font-size: 10px; font-weight: 800; color: #1D4ED8; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 2px 7px; border-radius: 999px;">${t}</span>`
-                                            : `<span style="font-size: 10px; font-weight: 800; color: #7C3AED; background: #F5F3FF; border: 1px solid #DDD6FE; padding: 2px 7px; border-radius: 999px;">${t}</span>`).join('')}
-                                    </div>
+                                    <span style="font-size: 13px; font-weight: 700; color: #0F172A; flex: 1;">${p.name}</span>
+                                    <span style="font-size: 11px; color: #94A3B8; font-weight: 500; letter-spacing: 0.01em;">${p.types.join(' · ')}</span>
                                 </div>`).join('')}
                             </div>
                         </details>`;
