@@ -18258,75 +18258,94 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                 <!-- Step 1: Input -->
                 <div id="pg-cv-step-1">
+                    <!-- Workspace wrapper — frames the user action zone and lifts it off the reference panel -->
+                    <div style="position: relative; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 14px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -18px rgba(37, 99, 235, 0.22); overflow: hidden;">
+                        <div style="height: 3px; background: linear-gradient(90deg, #2563EB 0%, #60A5FA 100%);"></div>
+                        <div style="padding: 20px 22px 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div>
+                                <div style="font-size: 10.5px; font-weight: 800; color: #2563EB; letter-spacing: 0.12em; text-transform: uppercase;">New Conversion</div>
+                                <div style="font-size: 13px; color: #64748B; margin-top: 3px;">Convert balances between vaults at the quoted mid-market rate.</div>
+                            </div>
+                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0;">
+                                <span style="width: 5px; height: 5px; border-radius: 999px; background: #22C55E; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);"></span>Live rates
+                            </span>
+                        </div>
 
-                    <!-- Asset Vault Selector -->
-                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
-                        <label style="display:block; font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Asset Vault</label>
-                        <select id="pg-cv-vault" onchange="window.pgCvOnVaultChange()" style="width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; font-weight: 600; color: #1E293B; background: #F8FAFC;">
-                            ${window.currentLicenseMode !== 'MSO' ? '<option value="stablecoin">Stablecoin Vault</option>' : ''}
-                            <option value="fiat">Fiat Vault</option>
-                        </select>
-                    </div>
+                        <div style="padding: 16px 22px 22px;">
+                            <!-- Asset Vault Selector -->
+                            <div style="margin-bottom: 14px;">
+                                <label style="display:block; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Asset Vault</label>
+                                <select id="pg-cv-vault" onchange="window.pgCvOnVaultChange()" style="width: 100%; height: 44px; padding: 0 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 14px; font-weight: 600; color: #0F172A; background: #FFFFFF; outline: none; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease;" onfocus="this.style.borderColor='#2563EB';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.14)'" onblur="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                                    ${window.currentLicenseMode !== 'MSO' ? '<option value="stablecoin">Stablecoin Vault</option>' : ''}
+                                    <option value="fiat">Fiat Vault</option>
+                                </select>
+                            </div>
 
-                    <!-- FROM Card -->
-                    <div style="background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">FROM</div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <select id="pg-cv-from-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 20px; font-weight: 700; color: #1E293B; border: none; background: transparent; outline: none; cursor: pointer; padding: 4px 0;">
-                                ${window.currentLicenseMode === 'MSO' ?
-                                    '<option value="HKD">HKD</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="BRL">BRL</option>' :
-                                    '<option value="USDT">USDT</option><option value="USDC">USDC</option>'}
-                            </select>
-                            <input type="number" id="pg-cv-amount" placeholder="0.00" oninput="window.pgCvUpdateQuote()" style="flex: 1; border: none; background: transparent; font-size: 28px; font-weight: 600; text-align: right; outline: none; color: #1E293B; padding: 4px 0;">
-                        </div>
-                        <div id="pg-cv-error" style="display:none; color:#DC2626; font-size:12px; font-weight:500; text-align:right; margin-top:6px;">Insufficient balance.</div>
-                        <div style="text-align: right; font-size: 12px; color: #94A3B8; margin-top: 4px;">
-                            Available: <span id="pg-cv-avail" style="font-weight: 600; color: #334155;">14,000,000.00</span>
-                        </div>
-                    </div>
+                            <!-- FROM Card — the primary input; stronger frame + focus ring -->
+                            <div id="pg-cv-from-card" style="background: #F8FBFF; border: 1.5px solid #BFDBFE; border-radius: 12px; padding: 16px 18px; transition: border-color 0.15s ease, box-shadow 0.15s ease;">
+                                <div style="display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px;">
+                                    <span style="font-size: 10.5px; font-weight: 800; color: #1D4ED8; letter-spacing: 0.08em; text-transform: uppercase;">You Pay</span>
+                                    <span style="font-size: 11px; color: #64748B;">Available: <span id="pg-cv-avail" style="font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">14,000,000.00</span></span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <select id="pg-cv-from-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 18px; font-weight: 800; color: #0F172A; border: none; background: transparent; outline: none; cursor: pointer; padding: 4px 0;">
+                                        ${window.currentLicenseMode === 'MSO' ?
+                                            '<option value="HKD">HKD</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="BRL">BRL</option>' :
+                                            '<option value="USDT">USDT</option><option value="USDC">USDC</option>'}
+                                    </select>
+                                    <input type="number" id="pg-cv-amount" placeholder="0.00" oninput="window.pgCvUpdateQuote()"
+                                        onfocus="document.getElementById('pg-cv-from-card').style.borderColor='#2563EB';document.getElementById('pg-cv-from-card').style.boxShadow='0 0 0 4px rgba(37,99,235,0.14)'"
+                                        onblur="document.getElementById('pg-cv-from-card').style.borderColor='#BFDBFE';document.getElementById('pg-cv-from-card').style.boxShadow='none'"
+                                        style="flex: 1; border: none; background: transparent; font-size: 32px; font-weight: 700; text-align: right; outline: none; color: #0F172A; padding: 4px 0; letter-spacing: -0.015em; font-variant-numeric: tabular-nums;">
+                                </div>
+                                <div id="pg-cv-error" style="display:none; color:#DC2626; font-size:12px; font-weight:600; text-align:right; margin-top:8px;">Insufficient balance.</div>
+                            </div>
 
-                    <!-- Arrow Divider -->
-                    <div style="display: flex; justify-content: center; margin: -2px 0; position: relative; z-index: 1;">
-                        <div style="width: 36px; height: 36px; background: white; border: 1px solid var(--clr-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.06);">
-                            <i data-lucide="arrow-down" style="width: 18px; height: 18px; color: #64748B;"></i>
-                        </div>
-                    </div>
+                            <!-- Arrow Divider -->
+                            <div style="display: flex; justify-content: center; margin: -14px 0; position: relative; z-index: 1;">
+                                <div style="width: 34px; height: 34px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);">
+                                    <i data-lucide="arrow-down" style="width: 16px; height: 16px; color: #2563EB;"></i>
+                                </div>
+                            </div>
 
-                    <!-- TO Card -->
-                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; margin-top: -2px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">TO</div>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <select id="pg-cv-to-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 16px; font-weight: 600; color: #1E293B; padding: 8px 10px; border: 1px solid var(--clr-border); border-radius: 6px; background: #F8FAFC; outline: none; cursor: pointer; flex-shrink:0;">
-                                <option value="USD">USD - US Dollar</option>
-                                ${window.currentLicenseMode !== 'MSO' ? '<option value="USDC">USDC - USD Coin</option>' : ''}
-                                <option value="HKD">HKD - Hong Kong Dollar</option>
-                                <option value="EUR">EUR - Euro</option>
-                                <option value="BRL">BRL - Brazilian Real</option>
-                            </select>
-                            <div id="pg-cv-est-amt" style="flex: 1; font-size: 28px; font-weight: 600; text-align: right; color: #0F172A;">0.00</div>
-                        </div>
-                    </div>
+                            <!-- TO Card -->
+                            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 18px;">
+                                <div style="font-size: 10.5px; font-weight: 800; color: #64748B; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px;">You Receive</div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <select id="pg-cv-to-coin" onchange="window.pgCvUpdateQuote()" style="font-size: 14px; font-weight: 700; color: #0F172A; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC; outline: none; cursor: pointer; flex-shrink:0;">
+                                        <option value="USD">USD - US Dollar</option>
+                                        ${window.currentLicenseMode !== 'MSO' ? '<option value="USDC">USDC - USD Coin</option>' : ''}
+                                        <option value="HKD">HKD - Hong Kong Dollar</option>
+                                        <option value="EUR">EUR - Euro</option>
+                                        <option value="BRL">BRL - Brazilian Real</option>
+                                    </select>
+                                    <div id="pg-cv-est-amt" style="flex: 1; font-size: 32px; font-weight: 700; text-align: right; color: #0F172A; letter-spacing: -0.015em; font-variant-numeric: tabular-nums;">0.00</div>
+                                </div>
+                            </div>
 
-                    <!-- Market Quote Box -->
-                    <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; padding: 16px 20px; margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Exchange Rate</span>
-                            <span id="pg-cv-rate-text" style="font-weight: 600; color: #1E293B;">${window.currentLicenseMode === 'MSO' ? '1 HKD = 0.128 USD' : '1 USDT = 1 USD'}</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                            <span style="color: #64748B;">Conversion Fee</span>
-                            ${window.currentLicenseMode === 'MSO'
-                                ? '<span style="font-weight: 500; color: #10B981;">0.00 <i data-lucide="info" style="width:12px;height:12px;cursor:help;vertical-align:middle;color:#94A3B8;" title="Obita 不收取额外手续费。实际兑换汇率与市场中间价存在差价，该差价为本平台服务收益。"></i></span>'
-                                : '<span style="font-weight: 500; color: #10B981;">0.00 (Zero Fee)</span>'}
-                        </div>
-                        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 11px; color: #D97706; font-weight: 600;">
-                            <i data-lucide="timer" style="width: 13px; height: 13px;"></i> ${window.currentLicenseMode === 'MSO' ? 'Rate locked for 15s &middot; Subject to availability' : 'Rate guaranteed for 15s'}
-                        </div>
-                    </div>
+                            <!-- Market Quote Box -->
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 12px 16px; margin-top: 14px; display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+                                    <span style="color: #64748B;">Exchange Rate</span>
+                                    <span id="pg-cv-rate-text" style="font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${window.currentLicenseMode === 'MSO' ? '1 HKD = 0.128 USD' : '1 USDT = 1 USD'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
+                                    <span style="color: #64748B;">Conversion Fee</span>
+                                    ${window.currentLicenseMode === 'MSO'
+                                        ? '<span style="font-weight: 700; color: #059669;">0.00 <i data-lucide="info" style="width:12px;height:12px;cursor:help;vertical-align:middle;color:#94A3B8;" title="Obita 不收取额外手续费。实际兑换汇率与市场中间价存在差价，该差价为本平台服务收益。"></i></span>'
+                                        : '<span style="font-weight: 700; color: #059669;">0.00 (Zero Fee)</span>'}
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 11px; color: #D97706; font-weight: 700;">
+                                    <i data-lucide="timer" style="width: 13px; height: 13px;"></i> ${window.currentLicenseMode === 'MSO' ? 'Rate locked for 15s &middot; Subject to availability' : 'Rate guaranteed for 15s'}
+                                </div>
+                            </div>
 
-                    <!-- CTA -->
-                    <div style="margin-top: 24px;">
-                        <button onclick="window.pgCvGoStep2()" style="width: 100%; padding: 14px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;">Review Quote</button>
+                            <!-- CTA — brand blue primary action, matches Top Up / Transfer CTAs across the portal -->
+                            <button onclick="window.pgCvGoStep2()" style="width: 100%; margin-top: 16px; height: 52px; background: #2563EB; color: white; border: 1px solid #2563EB; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: -0.005em; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 10px 24px -10px rgba(37, 99, 235, 0.55); transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;" onmouseover="this.style.background='#1D4ED8';this.style.borderColor='#1D4ED8';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='#2563EB';this.style.borderColor='#2563EB';this.style.transform='translateY(0)'">
+                                Review Quote
+                                <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
