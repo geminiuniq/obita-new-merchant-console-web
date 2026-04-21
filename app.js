@@ -7938,11 +7938,15 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <em style="font-style: normal; font-weight: 600; color: #2563EB;">language.</em>
                     </blockquote>
 
-                    <!-- Attribution rule + lockup -->
-                    <div style="height: 1px; background: #E2DCC8; margin-bottom: 12px;"></div>
-                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; color: #94A3B8; text-transform: uppercase;">
-                        <span>Obita &middot; Enterprise Treasury</span>
-                        <span>— Editorial</span>
+                    <!-- Attribution rule + brand lockup -->
+                    <div style="height: 1px; background: #E2DCC8; margin-bottom: 14px;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; background: #0F172A; color: #FFFFFF; flex-shrink: 0;">
+                            <i data-lucide="layers" style="width: 12px; height: 12px;"></i>
+                        </span>
+                        <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 18px; font-weight: 700; color: #0F172A; letter-spacing: -0.015em; line-height: 1;">Obita</span>
+                        <span style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 13px; color: #CBD5E1; font-weight: 700; line-height: 1;">//</span>
+                        <span style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10px; font-weight: 700; color: #475569; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1;">Make Payments Borderless</span>
                     </div>
                 </div>
 
