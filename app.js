@@ -7922,29 +7922,27 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
 
                 <!-- Editorial Kicker · Q2 · 2026 -->
-                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: radial-gradient(120% 140% at 0% 0%, #1E3A8A 0%, #0B1733 55%, #060C24 100%); color: #FFFFFF; padding: 28px 26px 24px;">
-                    <!-- faint ledger grid texture, fintech utilitarian -->
-                    <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none;"></div>
-                    <!-- Top kicker -->
-                    <div style="position: relative; display: flex; align-items: center; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.18em; color: rgba(255,255,255,0.62); text-transform: uppercase;">
-                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: #60A5FA; box-shadow: 0 0 0 3px rgba(96,165,250,0.22);"></span>
-                        <span>Q2 · 2026</span>
-                        <span style="flex: 1; height: 1px; background: rgba(255,255,255,0.18);"></span>
+                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: #FBFAF6; border: 1px solid #E7E2D2; padding: 28px 26px 22px;">
+                    <!-- Top masthead row -->
+                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; color: #94A3B8; text-transform: uppercase;">
+                        <span style="color: #334155;">Q2 &middot; 2026</span>
+                        <span>N<span style="text-transform: lowercase;">o.</span> 02</span>
                     </div>
+                    <div style="margin-top: 12px; height: 1px; background: #E2DCC8;"></div>
 
                     <!-- Pull quote -->
-                    <blockquote style="position: relative; margin: 22px 0 22px; font-family: 'Clash Display', 'Inter', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.12; letter-spacing: -0.02em; color: #FFFFFF;">
-                        <span aria-hidden="true" style="position: absolute; top: -18px; left: -4px; font-family: Georgia, 'Times New Roman', serif; font-size: 58px; line-height: 1; color: rgba(96,165,250,0.28); font-weight: 700;">&ldquo;</span>
+                    <blockquote style="position: relative; margin: 26px 0 22px; font-family: 'Clash Display', 'Inter', sans-serif; font-weight: 500; font-size: 30px; line-height: 1.1; letter-spacing: -0.022em; color: #0F172A;">
+                        <span aria-hidden="true" style="position: absolute; top: -30px; left: -2px; font-family: Georgia, 'Times New Roman', serif; font-size: 78px; line-height: 1; color: #CBD5E1; font-weight: 700;">&ldquo;</span>
                         A ledger that<br>
                         speaks your<br>
-                        <em style="font-style: normal; font-weight: 700; color: #7DD3FC;">language.</em>
+                        <em style="font-style: normal; font-weight: 600; color: #2563EB;">language.</em>
                     </blockquote>
 
-                    <!-- Signature rule + lockup -->
-                    <div style="position: relative; display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; color: rgba(255,255,255,0.55); text-transform: uppercase;">
-                        <span>Obita</span>
-                        <span style="color: rgba(255,255,255,0.28);">//</span>
-                        <span>Enterprise Treasury</span>
+                    <!-- Attribution rule + lockup -->
+                    <div style="height: 1px; background: #E2DCC8; margin-bottom: 12px;"></div>
+                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.14em; color: #94A3B8; text-transform: uppercase;">
+                        <span>Obita &middot; Enterprise Treasury</span>
+                        <span>— Editorial</span>
                     </div>
                 </div>
 
