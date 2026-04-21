@@ -18560,7 +18560,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div><!-- /grid wrapper -->
 
             <!-- Conversion Order List -->
-            <div class="card fade-in" style="margin-top: 20px; max-width: 900px; margin-left: auto; margin-right: auto;">
+            <div class="card fade-in" style="margin-top: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <h2 class="card-title" style="margin: 0;">Conversion Order List</h2>
                     <div style="display: flex; gap: 8px; align-items: center;">
