@@ -7932,7 +7932,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <a href="https://obita.xyz/news/" target="_blank" rel="noopener" style="font-size: 11.5px; font-weight: 700; color: #2563EB; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">View all <i data-lucide="arrow-up-right" style="width: 11px; height: 11px;"></i></a>
                     </div>
-                    <a href="http://public.obita.xyz/news/26041626015995312476160/" target="_blank" rel="noopener" style="display: block; padding: 16px 20px 18px; text-decoration: none; color: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#FCFDFE'" onmouseout="this.style.background='transparent'">
+                    <a href="https://obita.xyz/news/26041626015995312476160/" target="_blank" rel="noopener" style="display: block; padding: 16px 20px 18px; text-decoration: none; color: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#FCFDFE'" onmouseout="this.style.background='transparent'">
                         <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px;">
                             <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Latest</span>
                             <span style="font-size: 11.5px; color: #64748B; font-variant-numeric: tabular-nums;">16 Apr 2026</span>
