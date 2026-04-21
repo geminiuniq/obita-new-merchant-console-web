@@ -2212,9 +2212,9 @@ body:not(.is-logged-out) .login-screen { display: none; }
 }
 .twofa-modal-head {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 14px;
-    margin-bottom: 22px;
+    margin-bottom: 20px;
     padding-bottom: 18px;
     border-bottom: 1px solid #F1F5F9;
 }
@@ -2230,16 +2230,14 @@ body:not(.is-logged-out) .login-screen { display: none; }
     flex-shrink: 0;
 }
 .twofa-modal-icon svg { width: 18px; height: 18px; }
-.twofa-modal-head-text { flex: 1; min-width: 0; }
-.twofa-modal-heading {
-    margin: 0 0 6px;
-    font-size: 18px;
-    font-weight: 800;
-    color: #0F172A;
-    letter-spacing: -0.01em;
-    line-height: 1.25;
+.twofa-modal-sub {
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    color: #334155;
+    line-height: 1.55;
 }
-.twofa-modal-sub { margin: 0; font-size: 13px; color: #475569; line-height: 1.6; }
 .twofa-modal-sub strong { color: #0F172A; font-weight: 700; }
 #twofa-modal-subject { color: #0F172A; font-weight: 700; }
 

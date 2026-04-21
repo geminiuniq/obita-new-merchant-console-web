@@ -154,8 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openTwoFactorModal = function(config) {
         const modal = document.getElementById('twofa-modal');
         if (!modal) { config.onSuccess && config.onSuccess(); return; }
-        // The heading stays static ('Verify to continue'); the action is
-        // surfaced as a natural noun inside the description sentence.
+        // Surface the action as a natural noun inside the description sentence.
         const subjectEl = document.getElementById('twofa-modal-subject');
         const subjectMap = {
             'Confirm Convert': 'conversion',
