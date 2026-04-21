@@ -18593,8 +18593,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261025-009')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261025-009</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Today, 11:30</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">500,000.00 USDT</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">3,910,000.00 HKD</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 7.82 HKD</td>
@@ -18603,8 +18603,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261024-007')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-007</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 15:02</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDC</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDC</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">200,000.00 USDC</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">184,000.00 EUR</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDC = 0.92 EUR</td>
@@ -18613,8 +18613,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261024-005')" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='#FFFBEB'">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261024-005</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Yesterday, 09:45</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">100,000.00 USD</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #64748B;">— —</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 1.00 USDT</td>
@@ -18623,8 +18623,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261023-002')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261023-002</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 23, 14:11</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span> <span style="font-size: 11px; color: #94A3B8;">Stablecoin</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">BRL</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USDT</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">BRL</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">80,000.00 USDT</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">400,800.00 BRL</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USDT = 5.01 BRL</td>
@@ -18633,8 +18633,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20260410-003')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260410-003</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 10, 14:22</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">2,000,000.00 HKD</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">256,000.00 USD</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 HKD = 0.128 USD</td>
@@ -18643,8 +18643,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="border-bottom: 1px solid #F1F5F9; background: #FFFBEB; cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20260409-002')" onmouseover="this.style.background='#FEF3C7'" onmouseout="this.style.background='#FFFBEB'">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20260409-002</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Apr 9, 10:05</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">EUR</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">50,000.00 USD</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">46,000.00 EUR</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 USD = 0.92 EUR</td>
@@ -18653,8 +18653,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <tr style="cursor: pointer;" onclick="window.openConversionOrderDetail('CV-20261022-001')" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background=''">
                                 <td style="padding: 14px; font-weight: 600; color: #2563EB; font-family: monospace; white-space: nowrap;">CV-20261022-001</td>
                                 <td style="padding: 14px; color: #64748B; white-space: nowrap;">Oct 22, 10:05</td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
-                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span> <span style="font-size: 11px; color: #94A3B8;">Fiat</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">HKD</span></td>
+                                <td style="padding: 14px;"><span style="font-weight: 600; color: #1E293B;">USD</span></td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #1E293B;">1,000,000.00 HKD</td>
                                 <td style="padding: 14px; text-align: right; font-weight: 600; color: #059669;">128,000.00 USD</td>
                                 <td style="padding: 14px; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">1 HKD = 0.128 USD</td>
