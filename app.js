@@ -7922,22 +7922,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
 
                 <!-- Editorial Kicker · Q2 · 2026 -->
-                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: #FFFFFF; border: 1px solid #E2E8F0; padding: 24px 24px 18px;">
+                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 24px 24px 18px;">
                     <!-- Top masthead -->
                     <div style="display: flex; align-items: baseline; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #334155; text-transform: uppercase;">
                         <span>Q2 &middot; 2026</span>
-                        <span style="flex: 1; height: 1px; background: #E2E8F0;"></span>
+                        <span style="flex: 1; height: 1px; background: #CBD5E1;"></span>
                     </div>
 
                     <!-- Pull quote — the hero moment -->
                     <blockquote style="position: relative; margin: 22px 0 20px; padding-left: 14px; border-left: 0; font-family: 'Clash Display', 'Inter', sans-serif; font-weight: 500; font-size: 28px; line-height: 1.1; letter-spacing: -0.022em; color: #0F172A;">
-                        <span aria-hidden="true" style="position: absolute; top: -8px; left: -6px; font-family: Georgia, 'Times New Roman', serif; font-size: 38px; line-height: 1; color: #E2E8F0; font-weight: 700;">&ldquo;</span>
-                        One ledger.<br>
-                        <em style="font-style: normal; font-weight: 600; color: #2563EB;">Every</em> entity.
+                        <span aria-hidden="true" style="position: absolute; top: -8px; left: -6px; font-family: Georgia, 'Times New Roman', serif; font-size: 38px; line-height: 1; color: #CBD5E1; font-weight: 700;">&ldquo;</span>
+                        A ledger that<br>
+                        speaks your<br>
+                        <em style="font-style: normal; font-weight: 600; color: #2563EB;">language.</em>
                     </blockquote>
 
                     <!-- Attribution rule + brand lockup (quiet signature) -->
-                    <div style="height: 1px; background: #E2E8F0; margin-bottom: 12px;"></div>
+                    <div style="height: 1px; background: #CBD5E1; margin-bottom: 12px;"></div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; flex-shrink: 0;">
                             <i data-lucide="layers" style="width: 10px; height: 10px;"></i>
