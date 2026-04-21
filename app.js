@@ -7921,17 +7921,32 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                 </div>
 
-                <!-- Ad Banner -->
-                <div class="ad-banner fade-in" style="margin-top: 24px; border-radius: 12px; overflow: hidden; position: relative; aspect-ratio: 1 / 1;">
-                    <img src="banner_bg.png" alt="Building Background" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(15,23,42,0.1), rgba(15,23,42,0.85)); pointer-events: none;"></div>
-                    <div style="position: absolute; bottom: 20px; left: 20px; right: 20px; color: white;">
-                        <p style="font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px; opacity: 0.9; text-transform: uppercase;">Global Expansion</p>
-                        <h3 style="font-size: 19px; font-weight: 600; margin-bottom: 12px; line-height: 1.3;">Seamless Multi-<br>Currency Settlement</h3>
-                        <a href="#" style="color: white; font-size: 14px; text-decoration: none; display: flex; align-items: center; gap: 4px; font-weight: 500; transition: opacity 0.2s;">
-                            Explore Local accounts <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
-                        </a>
+                <!-- Obita News — latest item from obita.xyz/news -->
+                <div class="card fade-in" style="margin-top: 24px; padding: 0; overflow: hidden;">
+                    <div style="padding: 14px 20px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px;">
+                            <div style="width: 22px; height: 22px; border-radius: 6px; background: #0F172A; color: white; display: inline-flex; align-items: center; justify-content: center;">
+                                <i data-lucide="newspaper" style="width: 12px; height: 12px;"></i>
+                            </div>
+                            <span style="font-size: 11px; font-weight: 800; color: #0F172A; letter-spacing: 0.1em; text-transform: uppercase;">Obita News</span>
+                        </div>
+                        <a href="https://obita.xyz/news/" target="_blank" rel="noopener" style="font-size: 11.5px; font-weight: 700; color: #2563EB; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">View all <i data-lucide="arrow-up-right" style="width: 11px; height: 11px;"></i></a>
                     </div>
+                    <a href="http://public.obita.xyz/news/26041626015995312476160/" target="_blank" rel="noopener" style="display: block; padding: 16px 20px 18px; text-decoration: none; color: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#FCFDFE'" onmouseout="this.style.background='transparent'">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px;">
+                            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Latest</span>
+                            <span style="font-size: 11.5px; color: #64748B; font-variant-numeric: tabular-nums;">16 Apr 2026</span>
+                        </div>
+                        <h3 style="font-size: 15px; font-weight: 800; color: #0F172A; margin: 0 0 8px; line-height: 1.35; letter-spacing: -0.01em;">
+                            Obita to Attend the Payments Forum at Hong Kong Web3 Festival 2026
+                        </h3>
+                        <p style="font-size: 12.5px; color: #475569; margin: 0 0 12px; line-height: 1.6;">
+                            Co-Founder &amp; CBO Vincent Yang will join the <em>PayFi Infrastructure · Web3 Payments</em> panel on April 21, 2026.
+                        </p>
+                        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #2563EB;">
+                            Read article <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
+                        </span>
+                    </a>
                 </div>
 
             </div>
