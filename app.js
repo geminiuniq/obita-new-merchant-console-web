@@ -18251,7 +18251,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 return;
             }
             contentBody.innerHTML = `
-            <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 520px) minmax(220px, 280px)' : 'minmax(0, 560px) 260px'}; gap: 24px; align-items: start; padding-bottom: 40px;">
+            <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 520px) minmax(220px, 280px)' : 'minmax(0, 560px) 260px'}; gap: 24px; align-items: start; padding-bottom: 40px; max-width: 900px; margin: 0 auto; justify-content: center;">
 
                 <!-- Left: Conversion Form -->
                 <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -18560,7 +18560,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div><!-- /grid wrapper -->
 
             <!-- Conversion Order List -->
-            <div class="card fade-in" style="margin-top: 20px;">
+            <div class="card fade-in" style="margin-top: 20px; max-width: 900px; margin-left: auto; margin-right: auto;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
                     <h2 class="card-title" style="margin: 0;">Conversion Order List</h2>
                     <div style="display: flex; gap: 8px; align-items: center;">
