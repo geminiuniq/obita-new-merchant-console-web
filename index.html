@@ -82,18 +82,16 @@
     </div>
 
     <!-- Two-Factor Authentication modal (Google Authenticator OTP) -->
-    <div class="twofa-modal" id="twofa-modal" role="dialog" aria-modal="true" aria-labelledby="twofa-modal-eyebrow" hidden>
+    <div class="twofa-modal" id="twofa-modal" role="dialog" aria-modal="true" aria-labelledby="twofa-modal-heading" hidden>
         <div class="twofa-modal-backdrop" id="twofa-modal-backdrop"></div>
         <div class="twofa-modal-card">
             <div class="twofa-modal-head">
                 <div class="twofa-modal-icon"><i data-lucide="shield-check"></i></div>
-                <div>
-                    <div class="twofa-modal-eyebrow" id="twofa-modal-eyebrow">Action &middot; Pending Verification</div>
+                <div class="twofa-modal-head-text">
+                    <h2 class="twofa-modal-heading" id="twofa-modal-heading">Action</h2>
+                    <p class="twofa-modal-sub">Enter the 6-digit code from your <strong>Google Authenticator</strong> app to authorize this action.</p>
                 </div>
             </div>
-            <p class="twofa-modal-sub">
-                Enter the 6-digit code from your <strong>Google Authenticator</strong> app to authorize this action.
-            </p>
             <form class="twofa-modal-form" id="twofa-modal-form" autocomplete="off" novalidate>
                 <div class="twofa-input-group" id="twofa-input-group">
                     <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 1">

@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openTwoFactorModal = function(config) {
         const modal = document.getElementById('twofa-modal');
         if (!modal) { config.onSuccess && config.onSuccess(); return; }
-        const eyebrow = document.getElementById('twofa-modal-eyebrow');
-        if (eyebrow) eyebrow.textContent = `${config.actionLabel || 'Action'} · Pending Verification`;
+        const heading = document.getElementById('twofa-modal-heading');
+        if (heading) heading.textContent = config.actionLabel || 'Confirm action';
 
         const inputs = Array.from(modal.querySelectorAll('.twofa-input'));
         const errorEl = document.getElementById('twofa-modal-error');
