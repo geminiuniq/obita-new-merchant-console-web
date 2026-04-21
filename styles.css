@@ -2241,6 +2241,7 @@ body:not(.is-logged-out) .login-screen { display: none; }
 }
 .twofa-modal-sub { margin: 0; font-size: 13px; color: #475569; line-height: 1.6; }
 .twofa-modal-sub strong { color: #0F172A; font-weight: 700; }
+#twofa-modal-subject { color: #0F172A; font-weight: 700; }
 
 .twofa-modal-form { display: flex; flex-direction: column; gap: 14px; }
 .twofa-input-group {

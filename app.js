@@ -154,8 +154,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openTwoFactorModal = function(config) {
         const modal = document.getElementById('twofa-modal');
         if (!modal) { config.onSuccess && config.onSuccess(); return; }
-        const heading = document.getElementById('twofa-modal-heading');
-        if (heading) heading.textContent = config.actionLabel || 'Confirm action';
+        // The heading stays static ('Verify to continue'); the action is
+        // surfaced as a natural noun inside the description sentence.
+        const subjectEl = document.getElementById('twofa-modal-subject');
+        const subjectMap = {
+            'Confirm Convert': 'conversion',
+            'Send Invoice': 'invoice',
+            'Execute Transfer': 'transfer',
+            'Submit Payout Batch': 'payout batch'
+        };
+        const subject = config.actionSubject || subjectMap[config.actionLabel] || 'action';
+        if (subjectEl) subjectEl.textContent = subject;
 
         const inputs = Array.from(modal.querySelectorAll('.twofa-input'));
         const errorEl = document.getElementById('twofa-modal-error');
