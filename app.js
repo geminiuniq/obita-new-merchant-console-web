@@ -7921,32 +7921,31 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                 </div>
 
-                <!-- Obita News — latest item from obita.xyz/news -->
-                <div class="card fade-in" style="margin-top: 24px; padding: 0; overflow: hidden;">
-                    <div style="padding: 14px 20px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #F1F5F9;">
-                        <div style="display: inline-flex; align-items: center; gap: 8px;">
-                            <div style="width: 22px; height: 22px; border-radius: 6px; background: #0F172A; color: white; display: inline-flex; align-items: center; justify-content: center;">
-                                <i data-lucide="newspaper" style="width: 12px; height: 12px;"></i>
-                            </div>
-                            <span style="font-size: 11px; font-weight: 800; color: #0F172A; letter-spacing: 0.1em; text-transform: uppercase;">Obita News</span>
-                        </div>
-                        <a href="https://obita.xyz/news/" target="_blank" rel="noopener" style="font-size: 11.5px; font-weight: 700; color: #2563EB; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">View all <i data-lucide="arrow-up-right" style="width: 11px; height: 11px;"></i></a>
+                <!-- Editorial Kicker · Q2 · 2026 -->
+                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: radial-gradient(120% 140% at 0% 0%, #1E3A8A 0%, #0B1733 55%, #060C24 100%); color: #FFFFFF; padding: 28px 26px 24px;">
+                    <!-- faint ledger grid texture, fintech utilitarian -->
+                    <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px); background-size: 56px 56px; pointer-events: none;"></div>
+                    <!-- Top kicker -->
+                    <div style="position: relative; display: flex; align-items: center; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.18em; color: rgba(255,255,255,0.62); text-transform: uppercase;">
+                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: #60A5FA; box-shadow: 0 0 0 3px rgba(96,165,250,0.22);"></span>
+                        <span>Q2 · 2026</span>
+                        <span style="flex: 1; height: 1px; background: rgba(255,255,255,0.18);"></span>
                     </div>
-                    <a href="https://obita.xyz/news/26041626015995312476160/" target="_blank" rel="noopener" style="display: block; padding: 16px 20px 18px; text-decoration: none; color: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#FCFDFE'" onmouseout="this.style.background='transparent'">
-                        <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 10px;">
-                            <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Latest</span>
-                            <span style="font-size: 11.5px; color: #64748B; font-variant-numeric: tabular-nums;">16 Apr 2026</span>
-                        </div>
-                        <h3 style="font-size: 15px; font-weight: 800; color: #0F172A; margin: 0 0 8px; line-height: 1.35; letter-spacing: -0.01em;">
-                            Obita to Attend the Payments Forum at Hong Kong Web3 Festival 2026
-                        </h3>
-                        <p style="font-size: 12.5px; color: #475569; margin: 0 0 12px; line-height: 1.6;">
-                            Co-Founder &amp; CBO Vincent Yang will join the <em>PayFi Infrastructure · Web3 Payments</em> panel on April 21, 2026.
-                        </p>
-                        <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #2563EB;">
-                            Read article <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
-                        </span>
-                    </a>
+
+                    <!-- Pull quote -->
+                    <blockquote style="position: relative; margin: 22px 0 22px; font-family: 'Clash Display', 'Inter', sans-serif; font-weight: 500; font-size: 26px; line-height: 1.12; letter-spacing: -0.02em; color: #FFFFFF;">
+                        <span aria-hidden="true" style="position: absolute; top: -18px; left: -4px; font-family: Georgia, 'Times New Roman', serif; font-size: 58px; line-height: 1; color: rgba(96,165,250,0.28); font-weight: 700;">&ldquo;</span>
+                        A ledger that<br>
+                        speaks your<br>
+                        <em style="font-style: normal; font-weight: 700; color: #7DD3FC;">language.</em>
+                    </blockquote>
+
+                    <!-- Signature rule + lockup -->
+                    <div style="position: relative; display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.14); font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; color: rgba(255,255,255,0.55); text-transform: uppercase;">
+                        <span>Obita</span>
+                        <span style="color: rgba(255,255,255,0.28);">//</span>
+                        <span>Enterprise Treasury</span>
+                    </div>
                 </div>
 
             </div>
