@@ -81,6 +81,40 @@
         </section>
     </div>
 
+    <!-- Two-Factor Authentication modal (Google Authenticator OTP) -->
+    <div class="twofa-modal" id="twofa-modal" role="dialog" aria-modal="true" aria-labelledby="twofa-modal-title" hidden>
+        <div class="twofa-modal-backdrop" id="twofa-modal-backdrop"></div>
+        <div class="twofa-modal-card">
+            <div class="twofa-modal-head">
+                <div class="twofa-modal-icon"><i data-lucide="shield-check"></i></div>
+                <div>
+                    <div class="twofa-modal-eyebrow" id="twofa-modal-eyebrow">Action &middot; Pending Verification</div>
+                    <h2 class="twofa-modal-title" id="twofa-modal-title">Two-Factor Verification</h2>
+                </div>
+            </div>
+            <p class="twofa-modal-sub">
+                Enter the 6-digit code from your <strong>Google Authenticator</strong> app to authorize this action.
+            </p>
+            <form class="twofa-modal-form" id="twofa-modal-form" autocomplete="off" novalidate>
+                <div class="twofa-input-group" id="twofa-input-group">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 1">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 2">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 3">
+                    <span class="twofa-input-sep">·</span>
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 4">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 5">
+                    <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="twofa-input" aria-label="Digit 6">
+                </div>
+                <div class="twofa-modal-error" id="twofa-modal-error" hidden>Enter the full 6-digit code.</div>
+                <div class="twofa-modal-actions">
+                    <button type="button" class="twofa-modal-cancel" id="twofa-modal-cancel">Cancel</button>
+                    <button type="submit" class="twofa-modal-verify" id="twofa-modal-verify">Verify &amp; Authorize</button>
+                </div>
+            </form>
+            <p class="twofa-modal-foot">Can't access your authenticator? <a href="#">Use a backup code.</a></p>
+        </div>
+    </div>
+
     <!-- Post-login welcome modal — shown once after sign-in to surface access scope. -->
     <div class="welcome-modal" id="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-modal-title" hidden>
         <div class="welcome-modal-backdrop" id="welcome-modal-backdrop"></div>

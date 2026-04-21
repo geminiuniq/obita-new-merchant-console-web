@@ -145,6 +145,80 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contentBody) contentBody.scrollTop = 0;
     };
 
+    // Two-Factor Authentication (Google Authenticator OTP) gate.
+    // Used to guard critical actions: Confirm Convert, Send Invoice, Execute
+    // Transfer (fiat & stablecoin), Submit Payout Batch. Any 6-digit code is
+    // accepted in this demo.
+    const TWO_FA_TOKEN = Symbol('2fa-verified');
+    window.TWO_FA_TOKEN = TWO_FA_TOKEN;
+    window.openTwoFactorModal = function(config) {
+        const modal = document.getElementById('twofa-modal');
+        if (!modal) { config.onSuccess && config.onSuccess(); return; }
+        const eyebrow = document.getElementById('twofa-modal-eyebrow');
+        if (eyebrow) eyebrow.textContent = `${config.actionLabel || 'Action'} · Pending Verification`;
+
+        const inputs = Array.from(modal.querySelectorAll('.twofa-input'));
+        const errorEl = document.getElementById('twofa-modal-error');
+        const verifyBtn = document.getElementById('twofa-modal-verify');
+        const cancelBtn = document.getElementById('twofa-modal-cancel');
+        const form = document.getElementById('twofa-modal-form');
+        const backdrop = document.getElementById('twofa-modal-backdrop');
+
+        // Reset state
+        inputs.forEach(i => { i.value = ''; });
+        if (errorEl) errorEl.hidden = true;
+        if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = 'Verify & Authorize'; }
+        modal.hidden = false;
+        lucide.createIcons();
+        window.setTimeout(() => inputs[0] && inputs[0].focus(), 60);
+
+        // Per-digit input behaviour (auto-advance, backspace, paste)
+        inputs.forEach((input, i) => {
+            input.oninput = (e) => {
+                e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                if (e.target.value && i < inputs.length - 1) inputs[i + 1].focus();
+                if (errorEl) errorEl.hidden = true;
+            };
+            input.onkeydown = (e) => {
+                if (e.key === 'Backspace' && !e.target.value && i > 0) inputs[i - 1].focus();
+                else if (e.key === 'ArrowLeft'  && i > 0)                     { inputs[i - 1].focus(); e.preventDefault(); }
+                else if (e.key === 'ArrowRight' && i < inputs.length - 1)     { inputs[i + 1].focus(); e.preventDefault(); }
+            };
+            input.onpaste = (e) => {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                for (let j = 0; j < paste.length && j + i < inputs.length; j++) inputs[i + j].value = paste[j];
+                const nextIdx = Math.min(i + paste.length, inputs.length - 1);
+                inputs[nextIdx].focus();
+            };
+        });
+
+        const close = () => {
+            modal.hidden = true;
+            form.onsubmit = null;
+            cancelBtn.onclick = null;
+            backdrop.onclick = null;
+            inputs.forEach(i => { i.oninput = null; i.onkeydown = null; i.onpaste = null; });
+        };
+
+        form.onsubmit = (e) => {
+            e.preventDefault();
+            const code = inputs.map(i => i.value).join('');
+            if (code.length !== 6) {
+                if (errorEl) errorEl.hidden = false;
+                return;
+            }
+            // Demo: any 6-digit code passes.
+            if (verifyBtn) { verifyBtn.disabled = true; verifyBtn.textContent = 'Verifying…'; }
+            window.setTimeout(() => {
+                close();
+                try { config.onSuccess && config.onSuccess(); } catch (_) {}
+            }, 350);
+        };
+        cancelBtn.onclick = (e) => { e.preventDefault(); close(); config.onCancel && config.onCancel(); };
+        backdrop.onclick = close;
+    };
+
     window.navigateToPage = function(title) {
         // Update sidebar active state
         document.querySelectorAll('.sidebar-nav .nav-item, .sidebar-nav .nav-subitem').forEach(el => el.classList.remove('active'));
@@ -973,7 +1047,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('transfer-step-2').style.display = 'none';
     };
 
-    window.executeTransfer = function() {
+    window.executeTransfer = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Execute Transfer',
+                onSuccess: () => window.executeTransfer(TWO_FA_TOKEN)
+            });
+            return;
+        }
         const coin = document.getElementById('t-coin').value;
         const amt = parseFloat(document.getElementById('t-amount').value) || 0;
         const walletRaw = document.getElementById('t-wallet').value;
@@ -1448,7 +1529,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fiat-transfer-step-2').style.display = 'none';
     };
 
-    window.executeFiatTransfer = function() {
+    window.executeFiatTransfer = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Execute Transfer',
+                onSuccess: () => window.executeFiatTransfer(TWO_FA_TOKEN)
+            });
+            return;
+        }
         const account = getSelectedFiatTransferAccount();
         const currency = document.getElementById('fiat-transfer-currency').value;
         const amount = parseFloat(document.getElementById('fiat-transfer-amount').value) || 0;
@@ -3946,7 +4034,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    window.sendInvoiceDraft = function() {
+    window.sendInvoiceDraft = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            if (!activeInvoiceDraft) return;
+            window.openTwoFactorModal({
+                actionLabel: 'Send Invoice',
+                onSuccess: () => window.sendInvoiceDraft(TWO_FA_TOKEN)
+            });
+            return;
+        }
         if (!activeInvoiceDraft) return;
         const recipient = getInvoiceDraftRecipient(activeInvoiceDraft.recipientId);
         const financials = computeInvoiceDraftFinancials(activeInvoiceDraft);
@@ -17145,7 +17241,14 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         renderPayoutOrdersPage();
     };
 
-    window.executePayoutBatch = function() {
+    window.executePayoutBatch = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Submit Payout Batch',
+                onSuccess: () => window.executePayoutBatch(TWO_FA_TOKEN)
+            });
+            return;
+        }
         const batch = ensurePayoutBatchDraft();
         const totals = getPayoutBatchTotals();
         const usdEquivalent = getEquivalentUsdAmount(totals.total, batch.sourceCurrency);
@@ -18728,8 +18831,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 window.pgCvUpdateQuote();
             };
 
-            window.pgCvExecute = function() {
+            window.pgCvExecute = function(token) {
                 if (window.pgCvQuoteExpired) return;
+                if (token !== TWO_FA_TOKEN) {
+                    window.openTwoFactorModal({
+                        actionLabel: 'Confirm Convert',
+                        onSuccess: () => window.pgCvExecute(TWO_FA_TOKEN)
+                    });
+                    return;
+                }
                 const fromCoin = document.getElementById('pg-cv-from-coin').value;
                 const toCoin = document.getElementById('pg-cv-to-coin').value;
                 const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
