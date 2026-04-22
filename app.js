@@ -16526,6 +16526,114 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
         window.updatePayoutRequestField(rowId, 'payeeId', payeeId);
     };
+    // Progressive enhancement — wraps any existing <select id="foo"> with a
+    // custom-dropdown trigger/menu so the dropdown opens below the field
+    // instead of overlaying it. The underlying <select> is kept in the DOM
+    // (as the source of truth), just hidden, so existing read / write paths
+    // (document.getElementById(id).value) continue to work unchanged.
+    window.enhanceSelect = function(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select || select.dataset.enhanced === 'true') return;
+        select.dataset.enhanced = 'true';
+        select.style.display = 'none';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-dropdown';
+        wrapper.dataset.name = selectId;
+        wrapper.style.width = '100%';
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'custom-dropdown-trigger';
+        // Mirror the select's class list for visual parity (sans 'custom-dropdown-trigger' which is already set)
+        select.classList.forEach(cls => { if (cls) trigger.classList.add(cls); });
+        // Carry over a few inline styles from the select so the trigger looks identical
+        const srcStyle = select.getAttribute('style') || '';
+        const interestingStyles = srcStyle.split(';').filter(s => /padding|height|font|border-radius|width|text-align|background/i.test(s)).join(';');
+        if (interestingStyles) trigger.setAttribute('style', interestingStyles);
+        trigger.setAttribute('aria-haspopup', 'listbox');
+        trigger.innerHTML = '<span class="custom-dropdown-label"></span><i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>';
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            window.toggleCustomDropdown(selectId);
+        });
+        wrapper.appendChild(trigger);
+
+        const menu = document.createElement('div');
+        menu.className = 'custom-dropdown-menu';
+        menu.setAttribute('role', 'listbox');
+        wrapper.appendChild(menu);
+
+        window.syncEnhancedDropdown(selectId);
+
+        // Re-sync when options change (dynamic populate) or selection attribute changes
+        const observer = new MutationObserver(() => window.syncEnhancedDropdown(selectId));
+        observer.observe(select, { childList: true, attributes: true, subtree: true, attributeFilter: ['selected', 'disabled', 'value'] });
+        // Fires for user interaction; also explicit for programmatic dispatches
+        select.addEventListener('change', () => window.syncEnhancedDropdown(selectId));
+    };
+
+    window.syncEnhancedDropdown = function(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        const wrapper = select.closest('.custom-dropdown');
+        if (!wrapper) return;
+        const labelEl = wrapper.querySelector('.custom-dropdown-label');
+        const menu = wrapper.querySelector('.custom-dropdown-menu');
+        const currentValue = select.value;
+        const currentOption = select.options[select.selectedIndex];
+        if (labelEl) {
+            if (currentOption && currentOption.text) {
+                labelEl.textContent = currentOption.text;
+                labelEl.classList.toggle('placeholder', !currentOption.value);
+            } else {
+                labelEl.textContent = 'Select…';
+                labelEl.classList.add('placeholder');
+            }
+        }
+        if (!menu) return;
+        const items = Array.from(select.options).map(opt => {
+            const val = opt.value;
+            const isSelected = val === currentValue && val !== '';
+            const isDisabled = opt.disabled;
+            const isPlaceholder = (!val) && /^(Select|Choose|Pick)\b/i.test(opt.text || '');
+            if (isPlaceholder) return '';
+            const esc = (s) => String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return `<button type="button" class="custom-dropdown-option${isSelected ? ' selected' : ''}" data-value="${esc(val)}" ${isDisabled ? 'disabled' : ''} onclick="window.selectEnhancedDropdown('${esc(selectId)}', '${esc(val)}')"><span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${opt.text}</span><i data-lucide="check" class="custom-dropdown-option-check"></i></button>`;
+        }).join('');
+        menu.innerHTML = items || '<div style="padding: 14px; text-align: center; font-size: 12px; color: #94A3B8;">No options available</div>';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    window.selectEnhancedDropdown = function(selectId, value) {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        select.value = value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        window.syncEnhancedDropdown(selectId);
+        const wrapper = select.closest('.custom-dropdown');
+        if (wrapper) {
+            const menu = wrapper.querySelector('.custom-dropdown-menu');
+            if (menu) menu.classList.remove('open');
+        }
+    };
+
+    // Call this after each page render to upgrade selects that exist on
+    // Conversion / Top Up / Transfer / Convert screens.
+    window.enhanceFlowSelects = function() {
+        const ids = [
+            'topup-chain-select',
+            'fiat-topup-source-account',
+            't-coin', 't-wallet',
+            'fiat-transfer-target-account', 'fiat-transfer-currency', 'fiat-transfer-purpose',
+            'cv-source-coin', 'cv-target-coin',
+            'pg-cv-vault', 'pg-cv-from-coin', 'pg-cv-to-coin'
+        ];
+        ids.forEach(id => window.enhanceSelect(id));
+    };
+
     // Generic custom dropdown (used in Add Bank Account + any form that wants
     // the menu to open below the trigger instead of overlaying it).
     window.toggleCustomDropdown = function(name, event) {
@@ -18569,6 +18677,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const sweepBalances = () => window.initBalanceMasks && window.initBalanceMasks();
         queueMicrotask(sweepBalances);
         requestAnimationFrame(sweepBalances);
+        // Upgrade any matching <select> elements on the rendered page to the
+        // custom-dropdown (opens below, doesn't overlay). Idempotent.
+        queueMicrotask(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
+        requestAnimationFrame(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
         if (title === 'Overview') {
             contentBody.innerHTML = getOverviewHTML();
             // Initialize Chart after injecting HTML
@@ -19491,6 +19603,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         document.querySelectorAll('.admin-only').forEach(el => { el.style.display = 'none'; });
     }
     renderPlaceholderContent('Overview');
+    // Upgrade the drawer selects (Top Up / Transfer / Convert drawers are
+    // static in index.html — enhance them once at startup; re-enhance on
+    // demand is idempotent via the dataset.enhanced guard).
+    requestAnimationFrame(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
 
     // Brand panel timestamp — refreshes once a minute while the login screen is up.
     (function updateLoginBrandTime() {
