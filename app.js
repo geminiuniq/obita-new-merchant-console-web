@@ -13154,7 +13154,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     : (p.personType === 'company' ? 'Company' : 'Individual');
                                 const eddPending = p.eddRequired && !p.moreInfo;
                                 const eddBadge = eddPending
-                                    ? '<span title="Enhanced Due Diligence required — additional information needed" style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:11px;font-weight:700;margin-left:10px;vertical-align:middle;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>EDD Required</span>'
+                                    ? '<span title="Enhanced Due Diligence required — additional information needed" style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;font-size:11px;font-weight:700;margin-left:10px;vertical-align:middle;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>Info Required</span>'
                                     : '';
                                 const rowName = `
                                     <div style="font-size: 14px; font-weight: 700; color: #0F172A; display: flex; align-items: center; flex-wrap: wrap;"><span>${p.alias || p.name}</span>${eddBadge}</div>
@@ -14275,7 +14275,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                                     <i data-lucide="user-circle" style="width: 16px; height: 16px; color: #2563EB;"></i>
                                 </div>
                                 <h3 style="font-size: 16px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
-                                ${payee.eddRequired && !payee.moreInfo ? '<span title="Enhanced Due Diligence required" style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-size:11px;font-weight:700;"><i data-lucide="alert-triangle" style="width:12px;height:12px;"></i>EDD Required</span>' : ''}
+                                ${payee.eddRequired && !payee.moreInfo ? '<span title="Enhanced Due Diligence required" style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;font-size:11px;font-weight:700;"><i data-lucide="alert-triangle" style="width:12px;height:12px;"></i>Info Required</span>' : ''}
                             </div>
                             ${!detailEditState.profile ? `<button class="btn btn-outline" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; font-weight: 600;">Edit Profile</button>` : `<div style="display:flex; gap:8px;"><button class="btn" onclick="window.toggleDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px; background: transparent; color: #64748B;">Cancel</button><button class="btn btn-primary" onclick="window.saveDetailEdit('profile')" style="padding: 6px 12px; font-size: 12px;">Save Profile</button></div>`}
                         </div>
@@ -14513,7 +14513,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                             </div>
                             <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                    <div style="font-size: 16px; font-weight: 800; color: #0F172A;">Enhanced Due Diligence Required</div>
+                                    <div style="font-size: 16px; font-weight: 800; color: #0F172A;">More Information Required</div>
                                     <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Action Needed</span>
                                 </div>
                             </div>
