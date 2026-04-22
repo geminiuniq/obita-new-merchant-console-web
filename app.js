@@ -16547,12 +16547,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const trigger = document.createElement('button');
         trigger.type = 'button';
         trigger.className = 'custom-dropdown-trigger';
-        // Mirror the select's class list for visual parity (sans 'custom-dropdown-trigger' which is already set)
+        // Mirror the select's class list for visual parity (so e.g. .bank-form-control styling applies)
         select.classList.forEach(cls => { if (cls) trigger.classList.add(cls); });
-        // Carry over a few inline styles from the select so the trigger looks identical
-        const srcStyle = select.getAttribute('style') || '';
-        const interestingStyles = srcStyle.split(';').filter(s => /padding|height|font|border-radius|width|text-align|background/i.test(s)).join(';');
-        if (interestingStyles) trigger.setAttribute('style', interestingStyles);
         trigger.setAttribute('aria-haspopup', 'listbox');
         trigger.innerHTML = '<span class="custom-dropdown-label"></span><i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>';
         trigger.addEventListener('click', (e) => {
