@@ -16450,13 +16450,35 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         if (snapshot) restorePayoutFocus(snapshot);
     }
 
-    function renderPayoutBatchRow(row, batch) {
-        const payeeOptions = [
-            '<option value="">Select payee</option>',
-            '<option value="__new__">+ New Payee</option>',
-            ...payeeList.map(payee => `<option value="${payee.id}" ${row.payeeId === payee.id ? 'selected' : ''} ${payee.status === 'disabled' ? 'disabled' : ''}>${payee.name}${payee.status === 'pending_collection' ? ' - Pending Info' : ''}</option>`)
-        ].join('');
+    // Custom payee dropdown (replaces the native <select>) so 'New Payee' is
+    // visually distinct and the menu opens below the trigger, not over it.
+    window.togglePayoutPayeeDropdown = function(rowId, event) {
+        if (event) event.stopPropagation();
+        const menu = document.querySelector(`[data-row-menu="${rowId}"]`);
+        if (!menu) return;
+        const isOpen = menu.style.display === 'block';
+        document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+        if (!isOpen) {
+            menu.style.display = 'block';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    };
+    window.selectPayoutPayee = function(rowId, payeeId) {
+        document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+        window.updatePayoutRequestField(rowId, 'payeeId', payeeId);
+    };
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.payout-payee-dropdown')) {
+            document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+        }
+    });
 
+    function renderPayoutBatchRow(row, batch) {
         const currencyOptions = getPayoutSourceOptions().map(option => `
             <option value="${option.currency}" ${row.payoutCurrency === option.currency ? 'selected' : ''}>${option.currency}</option>
         `).join('');
@@ -16466,14 +16488,47 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const calculation = getPayoutRequestCalculation(row, batch.sourceCurrency);
         const destinationTypeLabel = (window.currentLicenseMode !== 'MSO' && isStablecoinCurrency(row.payoutCurrency)) ? 'Wallet Address / Chain' : 'Bank Account';
 
+        // Build the payee dropdown menu as a custom component so 'New Payee' is
+        // visually distinct from the rest of the payee list, and the menu opens
+        // below the trigger instead of floating over it.
+        const selectedLabel = payee ? payee.name : 'Select payee';
+        const payeeMenuItems = payeeList.map(p => {
+            const isSelected = row.payeeId === p.id;
+            const isDisabled = p.status === 'disabled';
+            const pendingChip = p.status === 'pending_collection' ? '<span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 999px;">Pending Info</span>' : '';
+            const checkMark = isSelected ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563EB; flex-shrink: 0;"></i>' : '';
+            return `<button type="button" ${isDisabled ? 'disabled' : ''} onclick="window.selectPayoutPayee('${row.id}', '${p.id}')"
+                style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 14px; background: ${isSelected ? '#F1F5F9' : '#FFFFFF'}; color: ${isDisabled ? '#CBD5E1' : '#0F172A'}; border: none; cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; font-size: 13px; font-weight: ${isSelected ? '700' : '500'}; text-align: left; font-family: inherit; transition: background 0.1s ease;"
+                ${isDisabled ? '' : `onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='${isSelected ? '#F1F5F9' : '#FFFFFF'}'"`}>
+                <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.name}</span>
+                ${pendingChip}
+                ${checkMark}
+            </button>`;
+        }).join('');
+
         const rowIndex = batch.requests.indexOf(row);
         return `
             <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #F1F5F9; align-items: center;">
                 <div style="font-size: 13px; font-weight: 700; color: #CBD5E1; text-align: center;">${String(rowIndex + 1).padStart(2, '0')}</div>
-                <div>
-                    <select data-focus-key="payout-payee-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payeeId', this.value)" aria-label="Payee">
-                        ${payeeOptions}
-                    </select>
+                <div class="payout-payee-dropdown" style="position: relative;">
+                    <button type="button" data-focus-key="payout-payee-${row.id}" class="bank-form-control payout-payee-trigger" onclick="window.togglePayoutPayeeDropdown('${row.id}', event)" aria-haspopup="listbox" aria-label="Select payee" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; ${!payee ? 'color: #94A3B8;' : ''}">
+                        <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${selectedLabel}</span>
+                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>
+                    </button>
+                    <div class="payout-payee-menu" data-row-menu="${row.id}" role="listbox" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; width: 280px; max-width: calc(100vw - 40px); background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.22), 0 4px 10px rgba(15, 23, 42, 0.06); z-index: 120; overflow: hidden;">
+                        <button type="button" onclick="window.selectPayoutPayee('${row.id}', '__new__')"
+                            style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; background: linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%); color: #1D4ED8; border: none; border-bottom: 1px solid #BFDBFE; cursor: pointer; font-size: 13px; font-weight: 700; text-align: left; font-family: inherit; transition: background 0.12s ease;"
+                            onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%)'">
+                            <span style="width: 22px; height: 22px; border-radius: 6px; background: #2563EB; color: white; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+                                <i data-lucide="plus" style="width: 12px; height: 12px;"></i>
+                            </span>
+                            <span style="flex: 1;">Create new payee</span>
+                            <i data-lucide="arrow-right" style="width: 13px; height: 13px; color: #1D4ED8;"></i>
+                        </button>
+                        <div style="max-height: 260px; overflow-y: auto; padding: 4px 0;">
+                            ${payeeMenuItems || '<div style="padding: 14px; text-align: center; font-size: 12px; color: #94A3B8;">No existing payees. Start with &ldquo;Create new payee&rdquo; above.</div>'}
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
