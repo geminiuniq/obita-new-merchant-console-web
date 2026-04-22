@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'transfer-drawer',
         'fiat-transfer-drawer',
         'convert-drawer',
-        'manage-addresses-drawer',
         'bank-account-transactions-drawer',
         'manage-bank-accounts-drawer',
         'activities-drawer',
@@ -625,11 +624,515 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide inbox if open
         const inboxD = document.getElementById('inbox-drawer');
         if(inboxD) inboxD.classList.remove('drawer-active');
-        
+
         document.getElementById('wallet-drawer-address').textContent = address;
         document.getElementById('wallet-drawer-type').textContent = type + ' Wallet';
         document.getElementById('wallet-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
+    };
+
+    // History drawer — right-slide panel listing recent transactions for a specific wallet.
+    // Reuses the existing #wallet-drawer shell; each call swaps in the address + label chip
+    // + a fresh recent-activity stub that reads like per-address history.
+    window.openWalletHistoryDrawer = function(address, name, chain) {
+        const inboxD = document.getElementById('inbox-drawer');
+        if (inboxD) inboxD.classList.remove('drawer-active');
+
+        const drawer = document.getElementById('wallet-drawer');
+        if (!drawer) return;
+
+        // Header chip + address
+        const addrEl = document.getElementById('wallet-drawer-address');
+        const typeEl = document.getElementById('wallet-drawer-type');
+        if (addrEl) addrEl.textContent = address;
+        if (typeEl) {
+            const chainColors = {
+                'Ethereum': { bg: '#E0E7FF', color: '#4338CA' },
+                'TRON':     { bg: '#FEE2E2', color: '#DC2626' }
+            };
+            const c = chainColors[chain] || { bg: '#F1F5F9', color: '#475569' };
+            typeEl.style.background = c.bg;
+            typeEl.style.color = c.color;
+            typeEl.textContent = `${name || 'Wallet'} · ${chain}`;
+        }
+
+        // Replace the drawer title to reflect history intent
+        const title = drawer.querySelector('.drawer-header h3');
+        if (title) title.textContent = 'Transaction History';
+
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Full-page Wallet Address detail. Rendered into contentBody so it supports
+    // back navigation and deep-link semantics alongside other order detail pages.
+    // Info rows mirror the Add New Address form fields (Owner Type, Wallet Alias,
+    // Wallet Type, Wallet Address, Network). Actions: Delete + Enable/Disable.
+    window.openWalletAddressDetailPage = function(address, name, chain, verificationKey, statusKey, meta) {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        meta = meta || {};
+        const alias       = meta.alias       || name;
+        const ownerType   = meta.ownerType   || 'organization'; // 'individual' | 'organization'
+        const walletType  = meta.walletType  || 'private';      // 'private' | 'exchange'
+
+        // Remember the active wallet so post-2FA re-renders can stay on the same detail page.
+        window._activeWalletAddressDetail = { address, name, chain, verificationKey, statusKey, meta };
+
+        const chainVisual = {
+            'Ethereum': { bg: '#E0E7FF', color: '#4338CA', initial: 'E' },
+            'TRON':     { bg: '#FEE2E2', color: '#DC2626', initial: 'T' },
+            'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', initial: 'B' },
+            'Solana':   { bg: '#F5F3FF', color: '#7C3AED', initial: 'S' }
+        }[chain] || { bg: '#F1F5F9', color: '#475569', initial: (chain || '?')[0] };
+
+        const verifiedChip = verificationKey === 'verified'
+            ? `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="shield-check" style="width:12px;height:12px;color:#16A34A;"></i>Verified</span>`
+            : `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="clock" style="width:12px;height:12px;color:#D97706;"></i>Pending Verification</span>`;
+
+        const statusDot = { enabled: '#16A34A', disabled: '#94A3B8', pending: '#D97706' }[statusKey] || '#94A3B8';
+        const statusLabel = { enabled: 'Enabled', disabled: 'Disabled', pending: 'Pending Activation' }[statusKey] || 'Unknown';
+        const statusChip = `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><span style="width:7px;height:7px;border-radius:999px;background:${statusDot};"></span>${statusLabel}</span>`;
+
+        // Action button labels/logic
+        const isEnabled = statusKey === 'enabled';
+        const canToggle = statusKey !== 'pending'; // pending wallets can't be enabled until verified
+        const toggleLabel = isEnabled ? 'Disable' : 'Enable';
+        const toggleIcon  = isEnabled ? 'power-off' : 'power';
+        const toggleStyle = canToggle
+            ? (isEnabled
+                ? `background: white; color: #475569; border: 1px solid #E2E8F0;`
+                : `background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;`)
+            : `background: #F8FAFC; color: #CBD5E1; border: 1px solid #E2E8F0; cursor: not-allowed;`;
+
+        const ownerTypeLabel  = ownerType === 'individual' ? 'Individual' : 'Company';
+        const walletTypeLabel = walletType === 'exchange'  ? 'Exchange / Custodial' : 'Private Wallet';
+        const masked = formatMaskedAddress(address);
+
+        // When a wallet is disabled, the hero header reads as muted / inactive:
+        // lighter surface, desaturated chain icon, and reduced name opacity so the
+        // page feels clearly paused while actions remain reachable.
+        const isDisabled = statusKey === 'disabled';
+        const headerCardStyle = isDisabled
+            ? 'padding: 22px 28px; background: #F8FAFC; filter: saturate(0.6); opacity: 0.82;'
+            : 'padding: 22px 28px;';
+        const headerNameStyle = isDisabled ? 'color: #475569;' : 'color: #0F172A;';
+        const headerIconBg    = isDisabled ? '#F1F5F9' : chainVisual.bg;
+        const headerIconColor = isDisabled ? '#94A3B8' : chainVisual.color;
+
+        // Pending wallets get a Verify Wallet CTA + an inline verify zone (hidden by default)
+        // that reuses the Micro-Transfer / Wallet Signature pattern. Since the wallet was
+        // already saved, the address + network are shown read-only (user can't edit them here).
+        const isPendingVerification = verificationKey === 'pending';
+        const verifyButtonHtml = isPendingVerification
+            ? `<button onclick="window.showWalletAddressVerifyZone()" style="padding: 8px 14px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; font-size: 13px; font-weight: 700; color: #7C3AED; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F5F3FF'">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Verify Wallet
+            </button>`
+            : '';
+        // Build the verify zone markup — rendered hidden; revealed on Verify Wallet click.
+        const networkForVerify = {
+            'Ethereum': 'Ethereum (ERC-20)',
+            'TRON': 'TRON (TRC-20)',
+            'BNB Chain': 'BNB Chain (BEP-20)',
+            'Solana': 'Solana'
+        }[chain] || chain;
+        // Defensive lookup — `OBITA_VERIFY_ADDRESSES` is declared later in the same scope;
+        // typeof guards against any edge-case TDZ and guarantees a non-empty destination
+        // so the QR + address render reliably.
+        const VERIFY_ADDR_FALLBACK = {
+            'TRON (TRC-20)':     'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+            'Ethereum (ERC-20)': '0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+            'BNB Chain (BEP-20)':'0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+            'Solana':            '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7ViJoyW2'
+        };
+        const _verifyBook = (typeof OBITA_VERIFY_ADDRESSES !== 'undefined') ? OBITA_VERIFY_ADDRESSES : VERIFY_ADDR_FALLBACK;
+        const destAddr = _verifyBook[networkForVerify] || _verifyBook['TRON (TRC-20)'] || VERIFY_ADDR_FALLBACK['TRON (TRC-20)'];
+        const verifyZoneHtml = isPendingVerification ? `
+            <div id="wad-verify-zone" style="display: none; flex-direction: column; gap: 0;">
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Verify Wallet</div>
+                        <button type="button" onclick="window.hideWalletAddressVerifyZone()" style="background: none; border: none; padding: 4px 8px; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                    </div>
+                    <div style="padding: 20px 28px;">
+                        <!-- Tab header -->
+                        <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border: 1px solid #DDD6FE; border-radius: 10px;">
+                            <button type="button" id="wad-verify-tab-micro" onclick="window.setWadVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                            <button type="button" id="wad-verify-tab-sign" onclick="window.setWadVerifyTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
+                        </div>
+
+                        <!-- Read-only wallet summary (address + network) — shared by both tabs -->
+                        <div style="margin-top: 16px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; align-items: center;">
+                                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Wallet Address</div>
+                                <div style="font-family: monospace; font-size: 12px; color: #0F172A; font-weight: 600; word-break: break-all;">${address}</div>
+                                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Network</div>
+                                <div style="font-size: 12px; color: #0F172A; font-weight: 600;">${networkForVerify}</div>
+                            </div>
+                            <div style="font-size: 11px; color: #94A3B8; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="lock" style="width:11px;height:11px;"></i> Address and network are read-only for verification of the saved wallet.</div>
+                        </div>
+
+                        <!-- Micro-Transfer content -->
+                        <div id="wad-verify-micro" style="margin-top: 16px; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; color: #334155; line-height: 1.7;">Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.</div>
+
+                            <!-- Verification Transfer Details — plain block layout (no overflow:hidden wrapper) -->
+                            <div style="border: 1px solid #E2E8F0; border-radius: 10px;">
+                                <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 10px 10px 0 0;">Verification Transfer Details</div>
+
+                                <!-- Amount -->
+                                <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8;">Amount</div>
+                                        <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+
+                                <!-- QR + Obita verification address -->
+                                <div style="padding: 14px 16px; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Obita Verification Address</div>
+                                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}" alt="QR Code" style="width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; flex-shrink: 0; display: block;">
+                                        <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                                            <div id="wad-verify-dest" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.55;">${destAddr}</div>
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('wad-verify-dest').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy Address</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Network -->
+                                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">${networkForVerify}</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('${networkForVerify}')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+                            </div>
+
+                            <!-- Share button -->
+                            <button type="button" onclick="window.shareWadVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                                <i data-lucide="share-2" style="width: 15px; height: 15px;"></i>
+                                Share
+                            </button>
+                            <pre id="wad-verify-share-text" style="display:none;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${networkForVerify}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+
+                            <!-- Amber warning -->
+                            <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised.</span>
+                            </div>
+
+                            <!-- Simulated "transfer detected" confirmation — 2FA-gated -->
+                            <button type="button" onclick="window.completeWalletVerification()" style="padding: 10px 16px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%;" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">
+                                <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> I have sent the transfer — Verify
+                            </button>
+                        </div>
+
+                        <!-- Wallet Signature content -->
+                        <div id="wad-verify-sign" style="margin-top: 16px; display: none; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect the wallet above to sign a verification message and instantly prove ownership.</div>
+                            <div id="wad-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="button" onclick="window.wadSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                    <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                                </button>
+                                <button type="button" onclick="window.wadSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                                    <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                                </button>
+                            </div>
+                            <div id="wad-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                                <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                                <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                            </div>
+                            <div id="wad-sign-result" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                                <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed. Status will update after approval.</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ` : '';
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="${headerCardStyle}">
+                    <button onclick="window.backToStablecoinVaultFromWallet()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Stablecoin Vault</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                            <div style="width: 48px; height: 48px; background: ${headerIconBg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 19px; font-weight: 800; color: ${headerIconColor}; letter-spacing: -0.02em;">${chainVisual.initial}</div>
+                            <div style="min-width: 0;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; ${headerNameStyle}">${alias}</h1>
+                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span style="background: ${chainVisual.bg}; color: ${chainVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${chain}</span>
+                                    ${verifiedChip}
+                                    ${statusChip}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action row: Verify Wallet (pending only) + Enable/Disable toggle + Delete -->
+                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
+                            ${verifyButtonHtml}
+                            <button ${canToggle ? '' : 'disabled'} onclick="window.toggleWalletAddressStatus('${address}')" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
+                                <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
+                            </button>
+                            <button onclick="window.deleteWalletAddress('${address}','${alias.replace(/'/g, "\\'")}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: Basic Information — mirrors Add New Address Section 1 -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Owner Type</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${ownerTypeLabel}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Alias</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${alias}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Wallet Details — mirrors Add New Address Section 2 -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Details</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Type</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${walletTypeLabel}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Network / Chain</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="background: ${chainVisual.bg}; color: ${chainVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${chain}</span>
+                            </div>
+                        </div>
+                        <!-- Wallet Address row spans both columns -->
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Address</div>
+                            <!-- Address + Reveal + Copy sit on a single baseline. The '3ch' margin on the
+                                 Reveal button gives the requested 3-character gap after the address. -->
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                                <span id="wa-detail-address" data-masked="${masked.replace(/"/g, '&quot;')}" data-full="${address.replace(/"/g, '&quot;')}" data-state="masked" style="font-family: monospace; font-size: 14px; color: #0F172A; font-weight: 600; word-break: break-all;">${masked}</span>
+                                <button type="button" onclick="window.toggleWalletAddressMask()" style="margin-left: 3ch; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
+                                    <i data-lucide="eye" id="wa-detail-eye" style="width: 12px; height: 12px;"></i>
+                                    <span id="wa-detail-eye-label">Reveal</span>
+                                </button>
+                                <button type="button" onclick="navigator.clipboard.writeText('${address}')" style="margin-left: 6px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
+                                    <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Ownership Declaration</div>
+                            <div style="font-size: 13px; color: #334155; margin-top: 6px; line-height: 1.55; display: inline-flex; align-items: flex-start; gap: 8px;">
+                                <i data-lucide="check-circle-2" style="width: 15px; height: 15px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
+                                <span>Owner declared that this wallet belongs to the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${verifyZoneHtml}
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+    };
+
+    // --- Pending-wallet verification on the detail page ---
+    window.showWalletAddressVerifyZone = function() {
+        const zone = document.getElementById('wad-verify-zone');
+        if (!zone) return;
+        zone.style.display = 'flex';
+        // Reset to Micro tab each time it opens
+        window.setWadVerifyTab?.('micro');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.hideWalletAddressVerifyZone = function() {
+        const zone = document.getElementById('wad-verify-zone');
+        if (zone) zone.style.display = 'none';
+    };
+
+    window.setWadVerifyTab = function(tab) {
+        const micro = document.getElementById('wad-verify-micro');
+        const sign  = document.getElementById('wad-verify-sign');
+        const tabM  = document.getElementById('wad-verify-tab-micro');
+        const tabS  = document.getElementById('wad-verify-tab-sign');
+        if (tab === 'micro') {
+            if (micro) micro.style.display = 'flex';
+            if (sign)  sign.style.display  = 'none';
+            if (tabM) { tabM.style.background = 'white'; tabM.style.color = '#7C3AED'; tabM.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabS) { tabS.style.background = 'transparent'; tabS.style.color = '#64748B'; tabS.style.boxShadow = 'none'; }
+        } else {
+            if (sign)  sign.style.display  = 'flex';
+            if (micro) micro.style.display = 'none';
+            if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
+            // Reset sign flow to picker when entering
+            const sel = document.getElementById('wad-sign-select');
+            const pend = document.getElementById('wad-sign-pending');
+            const res  = document.getElementById('wad-sign-result');
+            if (sel)  sel.style.display  = 'grid';
+            if (pend) pend.style.display = 'none';
+            if (res)  res.style.display  = 'none';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Share / copy-to-clipboard for the Wallet Address detail verification instructions.
+    window.shareWadVerification = function(btn) {
+        const text = document.getElementById('wad-verify-share-text')?.textContent?.trim() || '';
+        const showFeedback = (label, color) => {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" style="width:15px;height:15px;"></i> ${label}`;
+            btn.style.background = color;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.background = '#0F172A';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1400);
+        };
+        if (navigator.share) {
+            navigator.share({ title: 'Obita Wallet Verification', text })
+                .then(() => showFeedback('Shared', '#059669'))
+                .catch(() => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showFeedback('Copied', '#059669'))
+                        .catch(() => showFeedback('Copied', '#059669'));
+                });
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => showFeedback('Copied', '#059669'))
+                .catch(() => showFeedback('Copied', '#059669'));
+        }
+    };
+
+    const _wadSimulateSign = () => {
+        const sel  = document.getElementById('wad-sign-select');
+        const pend = document.getElementById('wad-sign-pending');
+        const res  = document.getElementById('wad-sign-result');
+        if (sel)  sel.style.display  = 'none';
+        if (pend) pend.style.display = 'flex';
+        if (res)  res.style.display  = 'none';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        setTimeout(() => {
+            if (pend) pend.style.display = 'none';
+            if (res)  res.style.display  = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            // Signature received — now require 2FA to finalise verification.
+            setTimeout(() => window.completeWalletVerification(), 600);
+        }, 1400);
+    };
+    window.wadSignMetaMask = _wadSimulateSign;
+    window.wadSignWC       = _wadSimulateSign;
+
+    // Reveal / mask toggle for the detail page address.
+    window.toggleWalletAddressMask = function() {
+        const el    = document.getElementById('wa-detail-address');
+        const icon  = document.getElementById('wa-detail-eye');
+        const label = document.getElementById('wa-detail-eye-label');
+        if (!el) return;
+        const nextMasked = el.dataset.state === 'full';
+        el.textContent = nextMasked ? el.dataset.masked : el.dataset.full;
+        el.dataset.state = nextMasked ? 'masked' : 'full';
+        if (icon)  icon.setAttribute('data-lucide', nextMasked ? 'eye' : 'eye-off');
+        if (label) label.textContent = nextMasked ? 'Reveal' : 'Hide';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Helper — re-render the detail page with updated state after an action.
+    const _rerenderActiveWalletDetail = (patch) => {
+        const d = window._activeWalletAddressDetail;
+        if (!d) return;
+        const next = Object.assign({}, d, patch || {});
+        window._activeWalletAddressDetail = next;
+        window.openWalletAddressDetailPage(next.address, next.name, next.chain, next.verificationKey, next.statusKey, next.meta);
+    };
+
+    // All detail-page actions go through 2FA (token-argument pattern). On success
+    // the page re-renders in place so the user stays on the wallet detail view.
+    window.toggleWalletAddressStatus = function(address, token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Update Wallet Status',
+                actionSubject: 'wallet status change',
+                onSuccess: () => window.toggleWalletAddressStatus(address, TWO_FA_TOKEN)
+            });
+            return;
+        }
+        const d = window._activeWalletAddressDetail;
+        if (!d) { window.backToStablecoinVaultFromWallet?.(); return; }
+        const nextStatus = d.statusKey === 'enabled' ? 'disabled' : 'enabled';
+        _rerenderActiveWalletDetail({ statusKey: nextStatus });
+    };
+
+    window.deleteWalletAddress = function(address, alias, token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Delete Wallet',
+                actionSubject: 'wallet deletion',
+                onSuccess: () => window.deleteWalletAddress(address, alias, TWO_FA_TOKEN)
+            });
+            return;
+        }
+        // After 2FA-confirmed deletion, the wallet no longer exists — navigate back.
+        alert(`Wallet "${alias}" has been deleted.`);
+        window.backToStablecoinVaultFromWallet?.();
+    };
+
+    // Called by the Micro-Transfer "Confirm Verification" path OR the Wallet Signature
+    // success path. Both are 2FA-gated before marking the wallet as verified.
+    window.completeWalletVerification = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Verify Wallet',
+                actionSubject: 'wallet verification',
+                onSuccess: () => window.completeWalletVerification(TWO_FA_TOKEN)
+            });
+            return;
+        }
+        // After verification: flip verification to 'verified'. Status moves from
+        // 'pending' to 'disabled' — the user explicitly enables from there.
+        _rerenderActiveWalletDetail({ verificationKey: 'verified', statusKey: 'disabled' });
+    };
+
+    // Back link from the Wallet Address detail page re-renders the Stablecoin Vault.
+    window.backToStablecoinVaultFromWallet = function() {
+        const contentBody = document.getElementById('content-body');
+        if (contentBody) contentBody.innerHTML = stablecoinVaultHTML;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
     };
     document.getElementById('close-wallet-btn').addEventListener('click', closeAllDrawers);
     document.getElementById('close-topup-btn').addEventListener('click', closeAllDrawers);
@@ -715,7 +1218,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-transfer-btn',
         'close-fiat-transfer-btn',
         'close-convert-btn',
-        'close-addr-btn',
         'close-bank-account-transactions-btn',
         'close-bank-accounts-btn',
         'close-activities-btn',
@@ -1257,18 +1759,335 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAllDrawers();
     };
 
-    // --- Manage Addresses Drawer Logic ---
+    // --- Address Book (full-page version) ---
+    // Entries are kept as an in-memory array so additions stay consistent whether
+    // the user came in via the Stablecoin Vault or via a detail-page edit.
+    // Newest-first ordering is preserved.
+    window._addressBookEntries = window._addressBookEntries || [
+        { address: 'TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t', alias: 'ABC Trading Pte Ltd',      chain: 'TRON',     verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'private'  },
+        { address: 'TVjsyZ7lNwQxGTCi8q8ZY4pL8otSzgjLj6t', alias: 'MetaMask Trading',          chain: 'TRON',     verification: 'pending',  status: 'disabled', ownerType: 'individual',   walletType: 'private'  },
+        { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', alias: 'Binance Institutional', chain: 'Ethereum', verification: 'pending',  status: 'enabled',  ownerType: 'organization', walletType: 'exchange' },
+        { address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', alias: 'Kraken Corporate',          chain: 'TRON',     verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'exchange' }
+    ];
+
+    const ADDR_CHAIN_VISUAL = {
+        'Ethereum': { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum' },
+        'TRON':     { bg: '#FEE2E2', color: '#DC2626', label: 'TRON' },
+        'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain' },
+        'Solana':   { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana' }
+    };
+
+    function _renderAddressBookRow(entry) {
+        const chain = ADDR_CHAIN_VISUAL[entry.chain] || ADDR_CHAIN_VISUAL['TRON'];
+        const isVerified = entry.verification === 'verified';
+        const isDisabled = entry.status === 'disabled';
+        const isPending  = entry.verification === 'pending';
+        const statusLabel = isDisabled ? 'Disabled' : (isPending ? 'Pending Verification' : 'Enabled');
+        const statusDot   = isDisabled ? '#94A3B8' : (isPending ? '#D97706' : '#16A34A');
+        const rowOpacity  = isDisabled ? '0.6' : '1';
+        const maskedAddr  = formatMaskedAddress(entry.address);
+        const aliasEsc    = entry.alias.replace(/'/g, "\\'");
+        const addrEsc     = entry.address.replace(/'/g, "\\'");
+        const metaJson    = JSON.stringify({ ownerType: entry.ownerType, walletType: entry.walletType, alias: entry.alias }).replace(/"/g, '&quot;');
+        const toggleLabel = isDisabled ? 'Enable' : 'Disable';
+        const toggleStyle = isDisabled
+            ? 'border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8;'
+            : 'border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569;';
+
+        return `
+            <div onclick="window.openWalletAddressDetailPage('${addrEsc}','${aliasEsc}','${entry.chain}','${entry.verification}','${entry.status}',JSON.parse(this.dataset.meta))" data-addr="${addrEsc}" data-meta="${metaJson}" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 18px; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#E2E8F0'">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                        <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${entry.alias}</div>
+                        <span style="background: ${chain.bg}; color: ${chain.color}; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${chain.label}</span>
+                        <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:${statusDot};"></span>${statusLabel}</span>
+                    </div>
+                    <div style="font-family: monospace; font-size: 11px; color: #64748B;">${maskedAddr}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <button onclick="event.stopPropagation(); window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="${entry.status}" class="addr-toggle ${entry.status}" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; ${toggleStyle}">${toggleLabel}</button>
+                    <button onclick="event.stopPropagation(); window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8; display: inline-flex; align-items: center;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>
+        `;
+    }
+
+    window.renderAddressBookPage = function() {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        const rowsHtml = window._addressBookEntries.map(_renderAddressBookRow).join('');
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.backToStablecoinVaultFromWallet()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Stablecoin Vault</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Address Book</h1>
+                            <div style="font-size: 13px; color: #64748B;">Manage your registered wallet addresses. ${window._addressBookEntries.length} ${window._addressBookEntries.length === 1 ? 'address' : 'addresses'} saved.</div>
+                        </div>
+                        <button onclick="window.openAddNewAddressDrawer()" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add New Address
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Address list -->
+                <div class="card" style="padding: 22px 28px;">
+                    ${window._addressBookEntries.length
+                        ? `<div id="addr-page-list" style="display: flex; flex-direction: column; gap: 10px;">${rowsHtml}</div>`
+                        : `<div style="padding: 48px 24px; text-align: center; color: #64748B;">
+                             <div style="width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 12px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; color: #94A3B8;"><i data-lucide="book-open" style="width: 20px; height: 20px;"></i></div>
+                             <div style="font-size: 14px; font-weight: 600; color: #0F172A;">No wallet addresses yet</div>
+                             <div style="font-size: 13px; margin-top: 4px;">Click "Add New Address" to register your first wallet.</div>
+                           </div>`}
+                </div>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+    };
+
+    // Legacy name — now routes to the full page instead of opening the drawer.
+    // Keeps every existing onclick="window.openManageAddressesDrawer()" site working.
     window.openManageAddressesDrawer = function() {
-        ALL_DRAWER_IDS.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('drawer-active');
-        });
-        
-        window.switchToListAddressView();
-        
-        lucide.createIcons();
-        document.getElementById('manage-addresses-drawer').classList.add('drawer-active');
-        document.body.classList.add('drawer-open');
+        window.renderAddressBookPage();
+    };
+
+    // Add New Address — rendered as a full page in contentBody (no drawer).
+    // Mirrors the two-section layout (Basic Information + Wallet Address Details)
+    // with progressive reveal inside Section 2.
+    window.renderAddNewAddressPage = function() {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.renderAddressBookPage()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Address Book</button>
+                    <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Add New Address</h1>
+                    <div style="font-size: 13px; color: #64748B;">Register a new wallet address to your Address Book.</div>
+                </div>
+
+                <!-- SECTION 1: Basic Information -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    </div>
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Owner Type *</div>
+                            <div style="display: flex; gap: 10px;">
+                                <div id="na-owner-indv-label" onclick="window.toggleNewAddrOwnerType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
+                                    <input type="radio" name="newAddrOwnerType" value="individual" checked style="accent-color: #2563EB; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #1D4ED8;">Individual</div>
+                                        <div style="font-size: 11px; color: #64748B;">Natural person</div>
+                                    </div>
+                                </div>
+                                <div id="na-owner-corp-label" onclick="window.toggleNewAddrOwnerType('organization')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="newAddrOwnerType" value="organization" style="accent-color: #2563EB; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Company</div>
+                                        <div style="font-size: 11px; color: #64748B;">Legal entity / organisation</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Alias *</div>
+                            <input type="text" id="na-wallet-alias" placeholder="e.g. Treasury Hot Wallet" style="width: 100%; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box; font-family: inherit;">
+                            <div style="font-size: 11px; color: #94A3B8;">Display name used to identify this wallet in orders and transactions.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Wallet Address Details (progressive reveal) -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Address Details</h3>
+                    </div>
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+                        <!-- 2A: Declaration -->
+                        <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 12px 14px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                            <input type="checkbox" id="na-decl-check" style="margin-top: 3px; accent-color: #7C3AED; flex-shrink: 0;" onchange="window.onAddrBookDeclarationChange()">
+                            <span style="font-size: 13px; color: #334155; line-height: 1.55;">I declare that this wallet is owned by the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
+                        </label>
+
+                        <!-- 2B: Wallet Type (hidden until declaration ✓) -->
+                        <div id="na-wallet-type-zone" style="display: none; flex-direction: column; gap: 10px;">
+                            <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Wallet Type</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div id="na-type-private-label" onclick="window.onAddrBookWalletTypeSelect('private')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="na-wallet-type" value="private" style="accent-color: #7C3AED; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
+                                        <div style="font-size: 11px; color: #64748B;">MetaMask, TrustWallet, etc.</div>
+                                    </div>
+                                </div>
+                                <div id="na-type-exchange-label" onclick="window.onAddrBookWalletTypeSelect('exchange')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
+                                        <div style="font-size: 11px; color: #64748B;">Binance, OKX, Coinbase, etc.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2C: Verify zone (hidden until wallet type picked) -->
+                        <div id="na-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                <button type="button" id="na-verify-tab-micro" onclick="window.setAddrBookVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                                <button type="button" id="na-verify-tab-sign" onclick="window.setAddrBookVerifyTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
+                            </div>
+
+                            <!-- Micro-Transfer -->
+                            <div id="na-verify-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 18px;">
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">1</div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter the wallet address and network to be verified</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Address *</label>
+                                        <input type="text" id="na-wallet-addr" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; font-family: monospace; box-sizing: border-box;">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Network / Chain *</label>
+                                        <select id="na-wallet-net" onchange="window.onAddrBookNetworkChange()" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; box-sizing: border-box;">
+                                            <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                            <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                            <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                            <option value="Solana">Solana</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="height: 1px; background: #E2E8F0;"></div>
+
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">2</div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Send a micro-transfer from the wallet above</div>
+                                    </div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.7;">Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.</div>
+
+                                    <!-- Verification Transfer Details -->
+                                    <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                                        <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                            <div>
+                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Amount to Send</div>
+                                                <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                            </div>
+                                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                        </div>
+                                        <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                                            <div style="font-size: 11px; color: #94A3B8; font-weight: 500; margin-bottom: 12px;">Obita Verification Address</div>
+                                            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                                <img id="na-verify-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE" alt="QR Code" style="width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; display: block; flex-shrink: 0;">
+                                                <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                                                    <div id="na-verify-dest-addr" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.55;">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+                                                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('na-verify-dest-addr').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy Address</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                            <div>
+                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                                <div id="na-verify-chain" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">TRON (TRC-20)</div>
+                                            </div>
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('na-verify-chain').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" onclick="window.shareAddrBookVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                                        <i data-lucide="share-2" style="width: 15px; height: 15px;"></i> Share
+                                    </button>
+
+                                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                        <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. You can save the address first and complete verification later.</span>
+                                    </div>
+
+                                    <pre id="na-verify-share-text" style="display:none;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE
+  Network: TRON (TRC-20)
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+                                </div>
+                            </div>
+
+                            <!-- Wallet Signature -->
+                            <div id="na-verify-sign" style="padding: 20px; display: none; flex-direction: column; gap: 14px;">
+                                <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership.</div>
+                                <div id="na-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button type="button" onclick="window.addrBookSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                        <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                                    </button>
+                                    <button type="button" onclick="window.addrBookSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                                        <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                                    </button>
+                                </div>
+                                <div id="na-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                                    <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                                    <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                                    <button type="button" onclick="window.addrBookSignReset()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                </div>
+                                <div id="na-sign-result" style="display: none; flex-direction: column; gap: 14px;">
+                                    <div id="na-sign-ok" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                        <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                                        <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed</div></div>
+                                    </div>
+                                    <div id="na-sign-fail" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                                        <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i></div>
+                                        <div><div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div><div id="na-sign-fail-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div></div>
+                                    </div>
+                                    <button type="button" onclick="window.addrBookSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Privacy notice (MSO only) -->
+                <div class="mso-only" style="font-size: 12px; color: #94A3B8; line-height: 1.6; padding: 0 4px;">The information you provide will be used for identity verification and regulatory compliance purposes in accordance with Obita's <a href="#" style="color: #7C3AED; text-decoration: underline;">Privacy Policy</a>.</div>
+
+                <!-- Footer actions -->
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button onclick="window.renderAddressBookPage()" class="btn btn-outline" style="padding: 10px 18px;">Cancel</button>
+                    <button onclick="window.submitNewAddress()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">Add Address</button>
+                </div>
+            </div>
+        `;
+
+        // Initial state: reset in-memory verified flag + visual state
+        window._addrBookVerified = false;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        // Sync the destination address/QR/chain to the default TRON selection
+        window.onAddrBookNetworkChange?.();
+        window.scrollContentToTop?.();
+    };
+
+    // Legacy name kept for back-compat — now renders the page instead of a drawer.
+    window.openAddNewAddressDrawer = function() {
+        window.renderAddNewAddressPage();
     };
 
     window.openManageBankAccountsDrawer = function() {
@@ -6457,53 +7276,142 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
 
     window.switchToAddAddressView = function() {
-        // Reset forms
-        document.getElementById('na-form-individual').style.display = 'flex';
-        document.getElementById('na-form-organization').style.display = 'none';
-        const ownerRadios = document.querySelectorAll('input[name="newAddrOwnerType"]');
-        if(ownerRadios[0]) ownerRadios[0].checked = true;
-
-        // Reset wallet fields
-        const addrInput = document.getElementById('na-wallet-addr');
-        if (addrInput) addrInput.value = '';
-        const verifyZone = document.getElementById('na-wallet-verify-zone');
-        if (verifyZone) { verifyZone.style.display = 'none'; verifyZone.innerHTML = ''; }
-        window._addrBookVerified = false;
-
-        document.getElementById('addr-list-view').style.display = 'none';
-        document.getElementById('add-addr-view').style.display = 'flex';
-        lucide.createIcons();
+        // Page-model: rendering the page itself resets the form to its initial state.
+        window.renderAddNewAddressPage?.();
+        return;
     };
 
+    // Both the list and the add form are now full pages. "Cancel" / back / post-submit
+    // all just re-render the Address Book page.
     window.switchToListAddressView = function() {
-        document.getElementById('addr-list-view').style.display = 'flex';
-        document.getElementById('add-addr-view').style.display = 'none';
+        window.renderAddressBookPage?.();
     };
 
     window.toggleNewAddrOwnerType = function(type) {
+        // Pill-card visual selection (brand-blue highlight for active).
+        const indv = document.getElementById('na-owner-indv-label');
+        const corp = document.getElementById('na-owner-corp-label');
+        const setActive = (el) => { if (el) { el.style.border = '2px solid #2563EB'; el.style.background = '#EFF6FF'; const t = el.querySelector('div > div:first-child'); if (t) t.style.color = '#1D4ED8'; } };
+        const setIdle   = (el) => { if (el) { el.style.border = '2px solid #E2E8F0'; el.style.background = 'white';   const t = el.querySelector('div > div:first-child'); if (t) t.style.color = '#0F172A'; } };
         if (type === 'individual') {
-            document.getElementById('na-form-individual').style.display = 'flex';
-            document.getElementById('na-form-organization').style.display = 'none';
+            setActive(indv); setIdle(corp);
+            const r = indv?.querySelector('input[type="radio"]'); if (r) r.checked = true;
         } else {
-            document.getElementById('na-form-individual').style.display = 'none';
-            document.getElementById('na-form-organization').style.display = 'flex';
+            setActive(corp); setIdle(indv);
+            const r = corp?.querySelector('input[type="radio"]'); if (r) r.checked = true;
         }
     };
 
-    // Address Book: wallet verification flow (reuses the same verify zone UI)
+    // Address Book: wallet verification flow (static tabbed zone lives in index.html)
     window._addrBookVerified = false;
 
-    window.onAddrBookVerifyClick = function() {
-        const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
-        const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
-        if (!addr) { alert('Please enter the wallet address first.'); return; }
+    // Progressive reveal: Step A declaration → Step B wallet type → Step C verify zone.
+    window.onAddrBookDeclarationChange = function() {
+        const checked = document.getElementById('na-decl-check')?.checked;
+        const typeZone = document.getElementById('na-wallet-type-zone');
+        const verifyZone = document.getElementById('na-wallet-verify-zone');
+        if (!typeZone) return;
+        if (checked) {
+            typeZone.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => typeZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        } else {
+            // Unchecking collapses downstream steps — prevents user from submitting a wallet
+            // they just un-declared ownership of.
+            typeZone.style.display = 'none';
+            if (verifyZone) verifyZone.style.display = 'none';
+            // Clear any wallet type selection visual state
+            const privateLbl = document.getElementById('na-type-private-label');
+            const exchangeLbl = document.getElementById('na-type-exchange-label');
+            [privateLbl, exchangeLbl].forEach(lbl => { if (lbl) { lbl.style.border = '2px solid #E2E8F0'; lbl.style.background = 'white'; const r = lbl.querySelector('input[type="radio"]'); if (r) r.checked = false; } });
+        }
+    };
 
+    window.onAddrBookWalletTypeSelect = function(type) {
+        const privateLbl  = document.getElementById('na-type-private-label');
+        const exchangeLbl = document.getElementById('na-type-exchange-label');
+        const verifyZone  = document.getElementById('na-wallet-verify-zone');
+        if (type === 'private') {
+            if (privateLbl)  { privateLbl.style.border  = '2px solid #7C3AED'; privateLbl.style.background  = '#F5F3FF'; const r = privateLbl.querySelector('input[type="radio"]'); if (r) r.checked = true; }
+            if (exchangeLbl) { exchangeLbl.style.border = '2px solid #E2E8F0'; exchangeLbl.style.background = 'white'; }
+        } else {
+            if (exchangeLbl) { exchangeLbl.style.border = '2px solid #EA580C'; exchangeLbl.style.background = '#FFF7ED'; const r = exchangeLbl.querySelector('input[type="radio"]'); if (r) r.checked = true; }
+            if (privateLbl)  { privateLbl.style.border  = '2px solid #E2E8F0'; privateLbl.style.background  = 'white'; }
+        }
+        if (verifyZone) {
+            verifyZone.style.display = 'flex';
+            window.setAddrBookVerifyTab?.('micro');
+            window.onAddrBookNetworkChange?.();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+    };
+
+    // Keep the Micro-Transfer destination (QR + address + chain display + share text)
+    // in sync with whichever network the user picks in Step 1 of the Address Book verify zone.
+    window.onAddrBookNetworkChange = function() {
+        const network  = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
         const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
-        const zone = document.getElementById('na-wallet-verify-zone');
-        if (!zone) return;
+        const destEl   = document.getElementById('na-verify-dest-addr');
+        const qrEl     = document.getElementById('na-verify-qr');
+        const chainEl  = document.getElementById('na-verify-chain');
+        const shareEl  = document.getElementById('na-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
 
-        // Render the verification zone inline (unique IDs with "na-" prefix to avoid collision)
-        zone.innerHTML = `
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
+    };
+
+    // Share / copy-to-clipboard for the Address Book verification transfer instructions.
+    window.shareAddrBookVerification = function(btn) {
+        const text = document.getElementById('na-verify-share-text')?.textContent?.trim() || '';
+        const showFeedback = (label, color) => {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" style="width:14px;height:14px;"></i> ${label}`;
+            btn.style.background = color;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.background = '#0F172A';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1400);
+        };
+        if (navigator.share) {
+            navigator.share({ title: 'Obita Wallet Verification', text })
+                .then(() => showFeedback('Shared', '#059669'))
+                .catch(() => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showFeedback('Copied', '#059669'))
+                        .catch(() => showFeedback('Copied', '#059669'));
+                });
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => showFeedback('Copied', '#059669'))
+                .catch(() => showFeedback('Copied', '#059669'));
+        }
+    };
+
+    // Legacy entry point — retained for backwards compatibility. The static zone is always
+    // visible now, so this just scrolls it into view.
+    window.onAddrBookVerifyClick = function() {
+        const zone = document.getElementById('na-wallet-verify-zone');
+        if (zone) setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    // Orphaned template — retained to keep the long string lookup below from breaking.
+    // Not referenced anywhere after the static zone refactor. Intentionally left unused.
+    // eslint-disable-next-line no-unused-vars
+    const _unusedAddrBookVerifyTemplate = function(destAddr, network, addr) { return `
             <div style="border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
                 <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
                     <button type="button" id="na-verify-tab-micro" onclick="window.setAddrBookVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro Transfer Verification</button>
@@ -6574,11 +7482,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <button type="button" onclick="window.addrBookSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
                     </div>
                 </div>
-            </div>`;
-        zone.style.display = 'block';
-        lucide.createIcons();
-        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-    };
+            </div>`; };
 
     window.setAddrBookVerifyTab = function(tab) {
         const micro = document.getElementById('na-verify-micro');
@@ -6595,6 +7499,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             if (micro) micro.style.display = 'none';
             if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
             if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
+            // Refresh the message each time the sign tab is opened.
+            const nonce = 'OBT-' + Date.now().toString(36).toUpperCase();
+            const msgEl = document.getElementById('na-sign-message');
+            if (msgEl) msgEl.textContent = `Obita Address Book Verification · Nonce: ${nonce}`;
             window.addrBookSignReset();
         }
     };
@@ -6609,37 +7517,48 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.addrBookSignMetaMask = async function() {
-        if (!window.ethereum) {
-            document.getElementById('na-sign-select').style.display = 'none';
-            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
-            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
-            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
-            const msg = document.getElementById('na-sign-fail-msg'); if (msg) msg.textContent = 'MetaMask not detected. Please install the browser extension.';
-            lucide.createIcons();
-            return;
-        }
+        // Show pending state up front (both real and mock paths use it).
         document.getElementById('na-sign-select').style.display = 'none';
         const pend = document.getElementById('na-sign-pending'); if (pend) pend.style.display = 'flex';
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const message = document.getElementById('na-sign-message')?.textContent?.trim() || 'Obita Address Book Verification';
-            await window.ethereum.request({ method: 'personal_sign', params: [message, accounts[0]] });
+
+        const markVerified = (address) => {
             if (pend) pend.style.display = 'none';
             const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
             const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'flex';
             const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'none';
             const vab = document.getElementById('na-sign-result')?.querySelector('button');
-            if (vab) vab.style.display = 'none'; // hide Verify Again on success
+            if (vab) vab.style.display = 'none';
+            if (address) {
+                // Auto-fill the wallet address input so Save just works.
+                const addrInput = document.getElementById('na-wallet-addr');
+                if (addrInput && !addrInput.value) addrInput.value = address;
+            }
             window._addrBookVerified = true;
-        } catch (err) {
+            lucide.createIcons();
+        };
+        const markFailed = (text) => {
             if (pend) pend.style.display = 'none';
             const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
             const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
             const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
-            const msg = document.getElementById('na-sign-fail-msg');
-            if (msg) msg.textContent = err.code === 4001 ? 'Signature request was rejected.' : (err.message || 'Signing failed.');
+            const msg = document.getElementById('na-sign-fail-msg'); if (msg) msg.textContent = text;
+            lucide.createIcons();
+        };
+
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const message = document.getElementById('na-sign-message')?.textContent?.trim() || 'Obita Address Book Verification';
+                await window.ethereum.request({ method: 'personal_sign', params: [message, accounts[0]] });
+                markVerified(accounts[0]);
+                return;
+            } catch (err) {
+                markFailed(err.code === 4001 ? 'Signature request was rejected.' : (err.message || 'Signing failed.'));
+                return;
+            }
         }
-        lucide.createIcons();
+        // Demo fallback — simulate MetaMask handshake + signature.
+        setTimeout(() => markVerified('0x74a2C8F1b9e41c3A6BdE82D1A4cF7F9b3C20e58a'), 1400);
     };
 
     window.addrBookSignWC = function() {
@@ -6659,10 +7578,29 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.toggleAddressStatus = function(btn) {
+        // Page-row path: locate the entry in the in-memory array and re-render.
+        const pageRow = btn.closest('[data-addr]');
+        if (pageRow && window._addressBookEntries) {
+            const addr = pageRow.dataset.addr;
+            const entry = window._addressBookEntries.find(e => e.address === addr);
+            if (entry) {
+                if (entry.status === 'enabled') {
+                    entry.status = 'disabled';
+                } else {
+                    if (entry.verification === 'not-supported') {
+                        alert('This wallet address cannot be enabled until it is supported.');
+                        return;
+                    }
+                    entry.status = 'enabled';
+                }
+                window.renderAddressBookPage?.();
+                return;
+            }
+        }
+        // Legacy drawer-row path (kept for anything still using the old markup).
         const card = btn.closest('.addr-item');
         if (!card) return;
         const currentStatus = card.dataset.status || (btn.classList.contains('enabled') ? 'enabled' : 'disabled');
-
         if (currentStatus === 'enabled') {
             card.dataset.status = 'disabled';
             btn.dataset.status = 'disabled';
@@ -6678,54 +7616,56 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.deleteAddress = function(btn) {
-        if(confirm("Are you sure you want to delete this address?")) {
-            btn.closest('.addr-item').remove();
+        if (!confirm('Are you sure you want to delete this address?')) return;
+        // Page-row path: remove from the array and re-render.
+        const pageRow = btn.closest('[data-addr]');
+        if (pageRow && window._addressBookEntries) {
+            const addr = pageRow.dataset.addr;
+            window._addressBookEntries = window._addressBookEntries.filter(e => e.address !== addr);
+            window.renderAddressBookPage?.();
+            return;
         }
+        // Legacy drawer-row path.
+        btn.closest('.addr-item')?.remove();
+    };
+
+    // Per-chain distinct tag colors. Card surface stays uniformly white; only the chain
+    // chip carries chain identity via color.
+    const ADDR_BOOK_CHAIN_COLORS = {
+        'TRON (TRC-20)':      { bg: '#FEE2E2', color: '#DC2626', label: 'TRON' },
+        'Ethereum (ERC-20)':  { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum' },
+        'BNB Chain (BEP-20)': { bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain' },
+        'Solana':             { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana' }
     };
 
     window.submitNewAddress = function() {
-        const isIndividual = document.querySelector('input[name="newAddrOwnerType"][value="individual"]').checked;
         const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
+        const alias   = document.getElementById('na-wallet-alias')?.value?.trim();
         const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
         const walletType = document.querySelector('input[name="na-wallet-type"]:checked')?.value || 'private';
+        const ownerType  = document.querySelector('input[name="newAddrOwnerType"]:checked')?.value === 'organization' ? 'organization' : 'individual';
 
-        if (!addr) { alert('Please enter the wallet address.'); return; }
-
-        let name = isIndividual ?
-            ((document.getElementById('na-fname').value || 'New') + ' ' + (document.getElementById('na-lname').value || 'User')) :
-            (document.getElementById('na-orgname').value || 'New Organization');
+        if (!alias) { alert('Please enter the wallet alias.'); return; }
+        if (!addr)  { alert('Please enter the wallet address.'); return; }
 
         const verified = window._addrBookVerified;
-        const verificationAttr = verified ? 'verified' : 'pending';
-        const statusLabel = verified ? 'Verified' : 'Pending Verification';
-        const statusBg = verified ? '#DCFCE7' : '#FEF3C7';
-        const statusColor = verified ? '#15803D' : '#B45309';
-        const walletTypeBadge = walletType === 'exchange'
-            ? '<span style="background:#FFF7ED;color:#EA580C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Exchange</span>'
-            : '<span style="background:#F5F3FF;color:#7C3AED;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Private</span>';
-        const shortAddr = formatWalletListAddress(addr, network);
+        const chainBase = (ADDR_BOOK_CHAIN_COLORS[network]?.label) || 'Ethereum';
 
-        const newHtml = `
-        <div class="addr-item" data-verification="${verificationAttr}" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                    <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${name}</div>
-                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${network}</span>
-                    ${walletTypeBadge}
-                    <span data-role="entity-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${statusLabel}</span>
-                </div>
-                <div style="font-family: monospace; font-size: 12px; color: #64748B;">${shortAddr}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-            </div>
-        </div>`;
+        // Push to the in-memory address book (newest at the top).
+        window._addressBookEntries = window._addressBookEntries || [];
+        window._addressBookEntries.unshift({
+            address: addr,
+            alias: alias,
+            chain: chainBase,
+            verification: verified ? 'verified' : 'pending',
+            status: verified ? 'enabled' : 'disabled',
+            ownerType,
+            walletType
+        });
 
-        document.getElementById('addr-list-container').insertAdjacentHTML('beforeend', newHtml);
-        applyManagedEntityCardState(document.querySelector('#addr-list-container .addr-item:last-child'));
-        lucide.createIcons();
         alert(verified ? 'Address added and verified.' : 'Address added. Verification is pending.');
+        // Close the drawer and render the Address Book page (which now includes
+        // the new entry at the top).
         window.switchToListAddressView();
     };
 
@@ -9393,83 +10333,71 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             <div class="card">
                 <div class="card-header-flex" style="margin-bottom: 20px;">
                     <h2 class="card-title" style="margin-bottom: 0;">Address Book</h2>
-                    <a href="#" class="view-all-link" onclick="window.openManageAddressesDrawer(); return false;">Manage Addresses</a>
+                    <button onclick="window.openManageAddressesDrawer()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18); transition: background 0.15s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                        <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                        Manage Addresses
+                    </button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(325px, 1fr)); gap: 14px;">
 
-                    <!-- Vendor Binance — ERC-20 · Verified · Enabled -->
-                    <div onclick="openWalletDrawer('0xabcdef1234567890abcdef1234567890abcdef12', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
-                        </div>
+                    <!-- Vendor Binance — Verified · Enabled -->
+                    <div onclick="window.openWalletAddressDetailPage('0xabcdef1234567890abcdef1234567890abcdef12','Vendor Binance','Ethereum','verified','enabled',{ownerType:'organization',walletType:'exchange',alias:'Vendor Binance'})" style="position: relative; background: #FFFFFF; border: 1px solid #C7D2FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(79,70,229,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(79,70,229,0.14)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(79,70,229,0.06)'">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #4F46E5, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Vendor Binance</div>
-                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
+                            <div style="width: 38px; height: 38px; background: #E0E7FF; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; font-weight: 800; color: #4338CA; letter-spacing: -0.02em;">E</div>
+                            <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Vendor Binance</div>
+                                <span style="background: #E0E7FF; color: #4338CA; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Ethereum</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="shield-check" style="width:10px;height:10px;color:#16A34A;"></i>Verified</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;"></span>Enabled</span>
                             </div>
                         </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatMaskedAddress('0xabcdef1234567890abcdef1234567890abcdef12')}</div>
                         <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
-                            </div>
-                            <span style="background: #DCFCE7; color: #16A34A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已启用</span>
+                        <div style="display: flex; align-items: center; justify-content: flex-end;">
+                            <button type="button" onclick="event.stopPropagation(); window.openWalletHistoryDrawer('0xabcdef1234567890abcdef1234567890abcdef12','Vendor Binance','Ethereum')" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1';this.style.color='#1D4ED8'" onmouseout="this.style.background='transparent';this.style.borderColor='#E2E8F0';this.style.color='#475569'">
+                                <i data-lucide="history" style="width: 12px; height: 12px;"></i> History
+                            </button>
                         </div>
                     </div>
 
-                    <!-- OKX Trading — TRC-20 · Verified · Disabled -->
-                    <div onclick="openWalletDrawer('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FAFAFA); border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; opacity: 0.82; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
-                        </div>
+                    <!-- OKX Trading — Verified · Disabled -->
+                    <div onclick="window.openWalletAddressDetailPage('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','OKX Trading','TRON','verified','disabled',{ownerType:'organization',walletType:'exchange',alias:'OKX Trading'})" style="position: relative; background: #FFFFFF; border: 1px solid #C7D2FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; opacity: 0.72; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(79,70,229,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(79,70,229,0.14)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(79,70,229,0.06)'">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #374151, #6B7280); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">OKX Trading</div>
-                                <div style="font-size: 11px; color: #64748B;">TRON · TRC-20</div>
+                            <div style="width: 38px; height: 38px; background: #FEE2E2; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; font-weight: 800; color: #DC2626; letter-spacing: -0.02em;">T</div>
+                            <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">OKX Trading</div>
+                                <span style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="shield-check" style="width:10px;height:10px;color:#16A34A;"></i>Verified</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:#94A3B8;"></span>Disabled</span>
                             </div>
                         </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatMaskedAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')}</div>
                         <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
-                            </div>
-                            <span style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已禁用</span>
+                        <div style="display: flex; align-items: center; justify-content: flex-end;">
+                            <button type="button" onclick="event.stopPropagation(); window.openWalletHistoryDrawer('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t','OKX Trading','TRON')" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1';this.style.color='#1D4ED8'" onmouseout="this.style.background='transparent';this.style.borderColor='#E2E8F0';this.style.color='#475569'">
+                                <i data-lucide="history" style="width: 12px; height: 12px;"></i> History
+                            </button>
                         </div>
                     </div>
 
-                    <!-- New Wallet — ERC-20 · Pending Verification -->
-                    <div onclick="openWalletDrawer('0x1234567890abcdef1234567890abcdef12345678', 'Inbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFFBEB); border: 1px solid #FDE68A; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(245,158,11,0.07);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(245,158,11,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(245,158,11,0.07)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
-                        </div>
+                    <!-- Partner Treasury — Pending Verification -->
+                    <div onclick="window.openWalletAddressDetailPage('0x1234567890abcdef1234567890abcdef12345678','Partner Treasury','Ethereum','pending','pending',{ownerType:'organization',walletType:'private',alias:'Partner Treasury'})" style="position: relative; background: #FFFFFF; border: 1px solid #C7D2FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(79,70,229,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(79,70,229,0.14)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(79,70,229,0.06)'">
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B45309, #D97706); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(217,119,6,0.28);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Partner Treasury</div>
-                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
+                            <div style="width: 38px; height: 38px; background: #E0E7FF; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; font-weight: 800; color: #4338CA; letter-spacing: -0.02em;">E</div>
+                            <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Partner Treasury</div>
+                                <span style="background: #E0E7FF; color: #4338CA; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Ethereum</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="clock" style="width:10px;height:10px;color:#D97706;"></i>Pending</span>
+                                <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:#D97706;"></span>Pending Verification</span>
                             </div>
                         </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</div>
+                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatMaskedAddress('0x1234567890abcdef1234567890abcdef12345678')}</div>
                         <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="clock" style="width: 12px; height: 12px; color: #D97706;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #D97706;">待验证</span>
-                            </div>
-                            <span style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">待激活</span>
+                        <div style="display: flex; align-items: center; justify-content: flex-end;">
+                            <button type="button" onclick="event.stopPropagation(); window.openWalletHistoryDrawer('0x1234567890abcdef1234567890abcdef12345678','Partner Treasury','Ethereum')" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1';this.style.color='#1D4ED8'" onmouseout="this.style.background='transparent';this.style.borderColor='#E2E8F0';this.style.color='#475569'">
+                                <i data-lucide="history" style="width: 12px; height: 12px;"></i> History
+                            </button>
                         </div>
                     </div>
 
@@ -9479,8 +10407,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
                         </div>
                         <div style="text-align: center;">
-                            <div style="font-size: 13px; font-weight: 600; color: #475569;">添加新地址</div>
-                            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Add Wallet Address</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #475569;">Add Wallet Address</div>
                         </div>
                     </div>
 
@@ -13124,10 +14051,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${isPayoutPayeeMode ? 'Payee List' : isInvoicePayerMode ? 'Payer List for Invoice' : isContactManagementMode ? 'Contact Management' : 'External Contacts'}</h2>
                             <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${isPayoutPayeeMode ? (window.currentLicenseMode === 'MSO' ? 'Manage payout-ready payees and their saved bank account destinations.' : 'Manage payout-ready payees and their saved wallet or bank destinations.') : isInvoicePayerMode ? (window.currentLicenseMode === 'MSO' ? 'Manage invoice payers and their saved bank account destinations.' : 'Manage invoice payers and their saved wallet or bank destinations.') : isContactManagementMode ? 'View the combined directory of payout payees and invoice payers in one place.' : 'Manage all registered external contacts for payouts, collections, and refunds.'}</div>
                         </div>
+                        ${isContactManagementMode ? '' : `
                         <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700;">
                             <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
                             ${isPayoutPayeeMode ? 'Add New Payee' : isInvoicePayerMode ? 'Add New Payer' : 'Add New'}
-                        </button>
+                        </button>`}
                     </div>
                 </div>
 
@@ -13445,9 +14373,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const pageTitle = isPayoutForm ? 'New Payee' : isInvoicePayerForm ? 'New Payer for Invoice' : 'New Contact';
         const backLabel = isPayoutForm ? 'Back to Payee List' : isInvoicePayerForm ? 'Back to Payer List for Invoice' : 'Back to External Contacts';
         const pageDescription = isPayoutForm
-            ? 'Register a new payee. Provide a display alias and an optional payment method (wallet or bank account) to enable payout transactions.'
+            ? 'Complete and accurate payee details significantly improve payout success rates and processing speed.'
             : isInvoicePayerForm
-                ? 'Register a new payer for invoice. Provide a display alias and an optional payment method (wallet or bank account) to enable invoice transactions.'
+                ? 'Complete and accurate payer details significantly improve invoice processing speed and accuracy.'
             : 'Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.';
         const basicInfoDescription = isRestrictedUsageForm
             ? ''
@@ -13779,7 +14707,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
 
                             <!-- Step 2b: Wallet form (hidden initially; unreachable in MSO since wallet type button is hidden) -->
-                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 16px;">
+                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; background: white;">
+                                <!-- Header strip (mirrors Bank Account Details) -->
+                                <div style="padding: 16px 20px; background: linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 60%, #FFFFFF 100%); border-bottom: 1px solid #DDD6FE; display: flex; align-items: center; gap: 12px; position: relative;">
+                                    <div style="position: absolute; top: -20px; right: -20px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #7C3AED, #6D28D9); border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 3px 10px rgba(124,58,237,0.25);">
+                                        <i data-lucide="wallet" style="width: 19px; height: 19px; color: white;"></i>
+                                    </div>
+                                    <div style="position: relative;">
+                                        <div style="font-size: 14px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Wallet Address Details</div>
+                                        <div style="font-size: 11px; color: #64748B; margin-top: 2px;">All fields are required</div>
+                                    </div>
+                                </div>
+
+                                <!-- Wallet body -->
+                                <div style="padding: 22px 20px; display: flex; flex-direction: column; gap: 16px;">
 
                                 <!-- Declaration checkbox -->
                                 <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
@@ -13812,48 +14754,50 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     </div>
                                 </div>
 
-                                <!-- Wallet inputs — hidden until type selected -->
-                                <div id="payee-invoice-wallet-inputs" style="display: none; flex-direction: column; gap: 16px; padding: 20px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #E2E8F0;">
-                                        <div style="width: 34px; height: 34px; background: #F5F3FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i data-lucide="wallet" style="width: 16px; height: 16px; color: #7C3AED;"></i>
-                                        </div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Wallet Address Details</div>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Wallet Address *</label>
-                                        <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Network / Chain *</label>
-                                        <select id="payee-invoice-wallet-network" class="bank-form-control">
-                                            <option value="TRON (TRC-20)">TRON (TRC-20)</option>
-                                            <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
-                                            <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
-                                            <option value="Solana">Solana</option>
-                                        </select>
+                                <!-- Verify zone — appears directly after wallet type selection. -->
+                                <!-- The verification method tabs (Micro-Transfer / Wallet Signature) are the first step. -->
+                                <!-- Micro-Transfer owns the Address + Network inputs (Step 1); Wallet Signature doesn't need them. -->
+                                <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                                    <!-- Tab header -->
+                                    <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
                                     </div>
 
-                                    <!-- Verify Wallet button + zone -->
-                                    <div style="padding-top: 12px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px;">
-                                        <button type="button" id="payee-verify-wallet-btn" onclick="window.onPayeeVerifyWalletClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
-                                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
-                                            验证钱包 (Verify Wallet)
-                                        </button>
-
-                                        <!-- Verification zone (hidden initially) -->
-                                        <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
-                                            <!-- Tab header -->
-                                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
-                                                <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
-                                                <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                                    <!-- Micro transfer content (default) -->
+                                    <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                                        <!-- STEP 1: Wallet Address + Network -->
+                                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">1</div>
+                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter the wallet address and network to be verified</div>
                                             </div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Wallet Address *</label>
+                                                <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Network / Chain *</label>
+                                                <select id="payee-invoice-wallet-network" class="bank-form-control" onchange="window.onPayeeVerifyNetworkChange()">
+                                                    <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                                    <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                                    <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                                    <option value="Solana">Solana</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
-                                            <!-- Micro transfer content (default) -->
-                                            <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-                                                <div style="font-size: 13px; color: #334155; line-height: 1.75;">
-                                                    To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
-                                                </div>
+                                        <!-- Divider between steps -->
+                                        <div style="height: 1px; background: #E2E8F0;"></div>
+
+                                        <!-- STEP 2: Micro-transfer instructions -->
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">2</div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Send a micro-transfer from the wallet above</div>
+                                        </div>
+                                        <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                                            Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
+                                        </div>
 
                                                 <!-- Details card -->
                                                 <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
@@ -14010,10 +14954,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                                             </div>
                                         </div>
-                                    </div>
 
-                                </div>
+                                </div><!-- /verify zone -->
 
+                                </div><!-- /wallet body -->
                             </div>
 
                         </div>
@@ -14126,7 +15070,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                 </div>
                 `}
 
-                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>' : ''}
+                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">The information you provide will be used for identity verification and regulatory compliance purposes in accordance with Obita\'s <a href="#" style="color: #7C3AED; text-decoration: underline;">Privacy Policy</a>.</div>' : ''}
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -14256,8 +15200,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             const detailVerifyZoneHtml = `
                 <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden; margin-top: 14px;">
                     <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
-                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
-                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
                     </div>
                     <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                         <div style="font-size: 13px; color: #334155; line-height: 1.75;">
@@ -15338,6 +16282,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         window.scrollContentToTop();
     };
 
+    // Entry point from the Payout Orders page "New Payee" action — navigates
+    // into the Payee List context (so sidebar + page title update) and then
+    // opens the add-payee form.
+    window.openNewPayeeFromPayouts = function() {
+        pageTitle.textContent = 'Payee List';
+        payeeDirectoryMode = 'payeeList';
+        activeExternalContactsUsageFilter = 'payout';
+        window.openAddPayeePage();
+    };
+
     window.editPayee = function(id, detailType = null) {
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
@@ -15747,23 +16701,23 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     window.onPayeeInvoiceWalletClaimChange = function() {
         const claimed    = document.getElementById('payee-invoice-wallet-claim')?.checked;
         const typeZone   = document.getElementById('payee-invoice-wallet-type-zone');
-        const inputsZone = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
         if (!typeZone) return;
         if (claimed) {
             typeZone.style.display = 'flex';
-            if (inputsZone) inputsZone.style.display = 'none'; // reset if unchecked and re-checked
+            if (verifyZone) verifyZone.style.display = 'none'; // reset if unchecked and re-checked
             lucide.createIcons();
             setTimeout(() => typeZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         } else {
             typeZone.style.display   = 'none';
-            if (inputsZone) inputsZone.style.display = 'none';
+            if (verifyZone) verifyZone.style.display = 'none';
         }
     };
 
     window.onPayeeWalletTypeSelect = function(type) {
         const privateBtn  = document.getElementById('payee-wallet-type-private-btn');
         const exchangeBtn = document.getElementById('payee-wallet-type-exchange-btn');
-        const inputsZone  = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone  = document.getElementById('payee-wallet-verify-zone');
         // Highlight selected button
         if (type === 'private') {
             if (privateBtn)  { privateBtn.style.border = '2px solid #7C3AED'; privateBtn.style.background = '#F5F3FF'; }
@@ -15772,11 +16726,40 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             if (exchangeBtn) { exchangeBtn.style.border = '2px solid #EA580C'; exchangeBtn.style.background = '#FFF7ED'; }
             if (privateBtn)  { privateBtn.style.border = '2px solid #E2E8F0'; privateBtn.style.background = 'white'; }
         }
-        if (inputsZone) {
-            inputsZone.style.display = 'flex';
+        // Show the verification method tabs directly; Micro-Transfer is the default tab
+        // and owns the Address + Network inputs as its Step 1.
+        if (verifyZone) {
+            verifyZone.style.display = 'flex';
+            // Ensure the micro tab is the initial view and seed its destination from the current network.
+            window.setPayeeVerifyMethod?.('micro');
+            window.onPayeeVerifyNetworkChange?.();
             lucide.createIcons();
-            setTimeout(() => inputsZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+            setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         }
+    };
+
+    // Keep the micro-transfer destination address + QR + share text in sync with
+    // whichever network the user has selected in Step 1.
+    window.onPayeeVerifyNetworkChange = function() {
+        const network  = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destEl   = document.getElementById('payee-verify-dest-addr');
+        const chainEl  = document.getElementById('payee-verify-chain-display');
+        const qrEl     = document.getElementById('payee-verify-qr');
+        const shareEl  = document.getElementById('payee-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
     };
 
     // Triggered from the Payer detail page Payment Method card for pending-verification wallets.
@@ -15938,24 +16921,32 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     };
 
     window.signWithMetaMask = async function() {
-        if (!window.ethereum) {
-            window._showWalletSignState('failed', null, 'MetaMask not detected. Please install the MetaMask browser extension.');
-            return;
-        }
+        // Demo-first flow: simulate the MetaMask connect + personal_sign handshake
+        // so the happy path can be walked through without a real wallet extension.
+        // If a real provider is present we still prefer it.
         window._showWalletSignState('pending');
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const account  = accounts[0];
-            const msgEl    = document.getElementById('payee-sign-message');
-            const message  = msgEl ? msgEl.textContent.trim() : `Obita Wallet Verification · Nonce: ${walletVerifyNonce}`;
-            await window.ethereum.request({ method: 'personal_sign', params: [message, account] });
-            window._showWalletSignState('verified', account);
-        } catch (err) {
-            const msg = err.code === 4001
-                ? 'Signature request was rejected.'
-                : (err.message || 'Signing failed. Please try again.');
-            window._showWalletSignState('failed', null, msg);
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const account  = accounts[0];
+                const msgEl    = document.getElementById('payee-sign-message');
+                const message  = msgEl ? msgEl.textContent.trim() : `Obita Wallet Verification · Nonce: ${walletVerifyNonce}`;
+                await window.ethereum.request({ method: 'personal_sign', params: [message, account] });
+                window._showWalletSignState('verified', account);
+                return;
+            } catch (err) {
+                const msg = err.code === 4001
+                    ? 'Signature request was rejected.'
+                    : (err.message || 'Signing failed. Please try again.');
+                window._showWalletSignState('failed', null, msg);
+                return;
+            }
         }
+        // Mock path — pretend MetaMask opened, the user approved, and the signature verified.
+        setTimeout(() => {
+            const mockAddress = '0x74a2C8F1b9e41c3A6BdE82D1A4cF7F9b3C20e58a';
+            window._showWalletSignState('verified', mockAddress);
+        }, 1400);
     };
 
     window.signWithWalletConnect = function() {
@@ -16625,9 +17616,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             't-coin', 't-wallet',
             'fiat-transfer-target-account', 'fiat-transfer-currency', 'fiat-transfer-purpose',
             'cv-source-coin', 'cv-target-coin',
-            'pg-cv-vault', 'pg-cv-from-coin', 'pg-cv-to-coin'
+            'pg-cv-vault', 'pg-cv-from-coin', 'pg-cv-to-coin',
+            'payout-source-currency'
         ];
         ids.forEach(id => window.enhanceSelect(id));
+        // Per-row payout batch selects (currency + destination) — enhance any
+        // that are present in the DOM. IDs are generated per row.
+        document.querySelectorAll('select[id^="payout-row-currency-"], select[id^="payout-row-destination-"]').forEach(sel => {
+            if (sel.id) window.enhanceSelect(sel.id);
+        });
     };
 
     // Generic custom dropdown (used in Add Bank Account + any form that wants
@@ -16754,7 +17751,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     </div>
                 </div>
                 <div>
-                    <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
+                    <select id="payout-row-currency-${row.id}" data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
                         ${currencyOptions}
                     </select>
                 </div>
@@ -16768,7 +17765,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div data-role="fx-rate" style="font-size: 10px; color: #94A3B8; margin-top: 4px;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : ''}</div>
                 </div>
                 <div>
-                    <select data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
+                    <select id="payout-row-destination-${row.id}" data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
                         <option value="">Select destination</option>
                         ${destinationOptions.length
                             ? destinationOptions.map(option => `<option value="${option.key}" ${row.destinationKey === option.key ? 'selected' : ''}>${option.label}</option>`).join('')
@@ -16810,6 +17807,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             warningEl.style.display = insufficient ? 'block' : 'none';
             warningEl.textContent = insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : '';
         }
+
+        // Keep the Confirm button state in sync with form validity. Without this,
+        // typing an amount doesn't re-enable the button because refreshPayoutRow
+        // is skipped for the 'amount' field (only derived values refresh).
+        const confirmBtn = document.getElementById('payout-batch-confirm-btn');
+        if (confirmBtn) {
+            const canConfirm = Boolean(batch.sourceCurrency) && batch.requests.some(r => r.payeeId && parseFloat(r.amount) > 0) && !insufficient;
+            confirmBtn.disabled = !canConfirm;
+            confirmBtn.style.opacity = canConfirm ? '' : '0.45';
+            confirmBtn.style.cursor = canConfirm ? '' : 'not-allowed';
+        }
     }
 
     function refreshPayoutRow(rowId, preserveFocus = false) {
@@ -16824,6 +17832,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         currentRow.replaceWith(wrapper.firstElementChild);
         lucide.createIcons();
         refreshPayoutBatchTotalsPanel();
+        // Enhance the newly rendered row's selects.
+        queueMicrotask(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
         if (snapshot) restorePayoutFocus(snapshot);
     }
 
@@ -16934,7 +17944,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
                         <div>
                             <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px;">New Payout Batch</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.5; max-width: 700px;">Select the source of funds first, then add payout requests. The batch calculates source amounts, FX rates, and fees automatically.</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;">
                             <div>
@@ -17024,7 +18033,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div id="payout-batch-balance-warning" style="font-size: 12px; color: #DC2626; font-weight: 700; display: ${insufficient ? 'block' : 'none'};">${insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : ''}</div>
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
-                                <button class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px; ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'opacity: 0.45; cursor: not-allowed;' : ''}" ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'disabled' : ''}>Confirm</button>
+                                <button id="payout-batch-confirm-btn" class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px; ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'opacity: 0.45; cursor: not-allowed;' : ''}" ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'disabled' : ''}>Confirm</button>
                             </div>
                         </div>
                     </div>
@@ -17032,6 +18041,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div>
         `;
         lucide.createIcons();
+        // Upgrade the Source Asset + per-row currency/destination <select>s to
+        // the custom-dropdown so they open below the trigger instead of overlay.
+        queueMicrotask(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
+        requestAnimationFrame(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
     }
 
     function truncateAddress(addr = '') {
@@ -17452,7 +18465,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payees</div>
                         <button onclick="window.openPayeeManagementPage()" style="background: none; border: none; padding: 0; font-size: 13px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i></button>
                     </div>
-                    <div style="flex: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; justify-content: center;">
+                    <div style="flex: 1; padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; justify-content: center;">
                         <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
                             <div style="font-size: 13px; color: #64748B; font-weight: 500;">Total</div>
                             <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1;">${payoutPayeeSummary.total}</div>
@@ -17473,6 +18486,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.pending}</div>
                         </div>
                     </div>
+                    <button onclick="window.openNewPayeeFromPayouts()" style="border: none; border-top: 1px solid #DBEAFE; padding: 14px 24px; background: linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%); color: #1D4ED8; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%)'">
+                        <span style="width: 22px; height: 22px; border-radius: 6px; background: #2563EB; color: white; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+                            <i data-lucide="plus" style="width: 12px; height: 12px;"></i>
+                        </span>
+                        New Payee
+                    </button>
                 </div>
             </div>
         `;
