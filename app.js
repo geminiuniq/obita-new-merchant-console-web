@@ -3992,6 +3992,17 @@ document.addEventListener('DOMContentLoaded', () => {
         activeExternalContactsUsageFilter = 'collectionInvoice';
         renderPayeeListPage();
     };
+    window.openAddPayerForInvoice = function() {
+        pageTitle.textContent = 'New Payer for Invoice';
+        payeeListView = 'form';
+        activePayeeId = null;
+        payeeDirectoryMode = 'invoicePayerList';
+        activeExternalContactsUsageFilter = 'collectionInvoice';
+        invoicePayerAccounts = [];
+        payeeFormContext = { mode: 'page', payoutRowId: null };
+        renderPayeeListPage();
+        window.scrollContentToTop();
+    };
 
     window.openPayeeManagementPage = function() {
         pageTitle.textContent = 'Payee List';
@@ -10955,11 +10966,45 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Payee *</label>
-                                        <select id="invoice-recipient" class="bank-form-control" onchange="window.selectInvoiceRecipient(this.value)">
-                                            <option value="">Select payee</option>
-                                            ${contacts.map(contact => `<option value="${contact.id}" ${activeInvoiceDraft.recipientId === contact.id ? 'selected' : ''}>${contact.name}</option>`).join('')}
-                                        </select>
+                                        <label class="bank-form-label">Payer *</label>
+                                        ${(() => {
+                                            const activeContact = contacts.find(c => c.id === activeInvoiceDraft.recipientId);
+                                            const selectedLabel = activeContact ? activeContact.name : 'Select payer';
+                                            const items = contacts.map(c => {
+                                                const isSelected = activeInvoiceDraft.recipientId === c.id;
+                                                const isDisabled = c.status === 'disabled';
+                                                const pendingChip = c.status === 'pending_collection' ? '<span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 999px;">Pending Info</span>' : '';
+                                                const checkMark = isSelected ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563EB; flex-shrink: 0;"></i>' : '';
+                                                return `<button type="button" ${isDisabled ? 'disabled' : ''} onclick="window.selectInvoicePayerFromDropdown('${c.id}')"
+                                                    style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 14px; background: ${isSelected ? '#F1F5F9' : '#FFFFFF'}; color: ${isDisabled ? '#CBD5E1' : '#0F172A'}; border: none; cursor: ${isDisabled ? 'not-allowed' : 'pointer'}; font-size: 13px; font-weight: ${isSelected ? '700' : '500'}; text-align: left; font-family: inherit; transition: background 0.1s ease;"
+                                                    ${isDisabled ? '' : `onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='${isSelected ? '#F1F5F9' : '#FFFFFF'}'"`}>
+                                                    <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.name}</span>
+                                                    ${pendingChip}
+                                                    ${checkMark}
+                                                </button>`;
+                                            }).join('');
+                                            return `
+                                            <div class="invoice-payer-dropdown" style="position: relative;">
+                                                <button type="button" id="invoice-recipient" class="bank-form-control invoice-payer-trigger" onclick="window.toggleInvoicePayerDropdown(event)" aria-haspopup="listbox" aria-label="Select payer" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; ${!activeContact ? 'color: #94A3B8;' : ''}">
+                                                    <span style="flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${selectedLabel}</span>
+                                                    <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>
+                                                </button>
+                                                <div class="invoice-payer-menu" role="listbox" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; width: 100%; min-width: 280px; max-width: calc(100vw - 40px); background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.22), 0 4px 10px rgba(15, 23, 42, 0.06); z-index: 120; overflow: hidden;">
+                                                    <button type="button" onclick="window.openAddPayerForInvoice()"
+                                                        style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; background: linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%); color: #1D4ED8; border: none; border-bottom: 1px solid #BFDBFE; cursor: pointer; font-size: 13px; font-weight: 700; text-align: left; font-family: inherit; transition: background 0.12s ease;"
+                                                        onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='linear-gradient(180deg, #F0F7FF 0%, #EFF6FF 100%)'">
+                                                        <span style="width: 22px; height: 22px; border-radius: 6px; background: #2563EB; color: white; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(37,99,235,0.3);">
+                                                            <i data-lucide="plus" style="width: 12px; height: 12px;"></i>
+                                                        </span>
+                                                        <span style="flex: 1;">Create new payer</span>
+                                                        <i data-lucide="arrow-right" style="width: 13px; height: 13px; color: #1D4ED8;"></i>
+                                                    </button>
+                                                    <div style="max-height: 260px; overflow-y: auto; padding: 4px 0;">
+                                                        ${items || '<div style="padding: 14px; text-align: center; font-size: 12px; color: #94A3B8;">No existing payers. Start with &ldquo;Create new payer&rdquo; above.</div>'}
+                                                    </div>
+                                                </div>
+                                            </div>`;
+                                        })()}
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">Email</label>
@@ -11055,7 +11100,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Summary</h3>
                         </div>
                         <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payee</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.buyerName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.buyerName}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer Email</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.payerEmail}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Invoice ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.externalInvoiceId}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due Date</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${formatInvoiceDisplayDate(activeInvoiceDraft.dueDate)}</div></div>
@@ -16467,14 +16512,35 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
         window.updatePayoutRequestField(rowId, 'payeeId', payeeId);
     };
+    // Invoice payer dropdown — same visual model as the payout payee dropdown.
+    window.toggleInvoicePayerDropdown = function(event) {
+        if (event) event.stopPropagation();
+        const menu = document.querySelector('.invoice-payer-menu');
+        if (!menu) return;
+        const isOpen = menu.style.display === 'block';
+        document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
+        if (!isOpen) {
+            menu.style.display = 'block';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    };
+    window.selectInvoicePayerFromDropdown = function(recipientId) {
+        document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
+        window.selectInvoiceRecipient(recipientId);
+    };
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.payout-payee-dropdown')) {
             document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+        }
+        if (!e.target.closest('.invoice-payer-dropdown')) {
+            document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
         }
     });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
+            document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
         }
     });
 
