@@ -2283,6 +2283,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('add-bank-view').style.display = 'flex';
         document.getElementById('bank-account-form').reset();
         document.getElementById('bank-statement-file-name').textContent = 'No file selected';
+        // Reset custom dropdowns (form.reset() only clears native controls)
+        const bankNameHidden = document.getElementById('bank-name');
+        if (bankNameHidden) bankNameHidden.value = '';
+        const bankNameLabel = document.querySelector('.custom-dropdown[data-name="bank-name"] .custom-dropdown-label');
+        if (bankNameLabel) { bankNameLabel.textContent = 'Select bank'; bankNameLabel.classList.add('placeholder'); }
+        document.querySelectorAll('.custom-dropdown[data-name="bank-name"] .custom-dropdown-option').forEach(o => o.classList.remove('selected'));
+        const currencyHidden = document.getElementById('bank-currency');
+        if (currencyHidden) currencyHidden.value = 'USD';
+        const currencyLabel = document.querySelector('.custom-dropdown[data-name="bank-currency"] .custom-dropdown-label');
+        if (currencyLabel) { currencyLabel.textContent = 'USD'; currencyLabel.classList.remove('placeholder'); }
+        document.querySelectorAll('.custom-dropdown[data-name="bank-currency"] .custom-dropdown-option').forEach(o => {
+            o.classList.toggle('selected', o.dataset.value === 'USD');
+        });
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     window.switchToBankAccountsListView = function() {
@@ -16512,6 +16526,41 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
         window.updatePayoutRequestField(rowId, 'payeeId', payeeId);
     };
+    // Generic custom dropdown (used in Add Bank Account + any form that wants
+    // the menu to open below the trigger instead of overlaying it).
+    window.toggleCustomDropdown = function(name, event) {
+        if (event) event.stopPropagation();
+        const container = document.querySelector(`.custom-dropdown[data-name="${name}"]`);
+        if (!container) return;
+        const menu = container.querySelector('.custom-dropdown-menu');
+        if (!menu) return;
+        const isOpen = menu.classList.contains('open');
+        document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+        if (!isOpen) menu.classList.add('open');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    window.selectCustomDropdown = function(name, value, label) {
+        const container = document.querySelector(`.custom-dropdown[data-name="${name}"]`);
+        if (!container) return;
+        const menu = container.querySelector('.custom-dropdown-menu');
+        if (menu) menu.classList.remove('open');
+        const hidden = document.getElementById(name);
+        if (hidden) {
+            hidden.value = value;
+            if (typeof hidden.dispatchEvent === 'function') {
+                hidden.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        const labelEl = container.querySelector('.custom-dropdown-label');
+        if (labelEl) {
+            labelEl.textContent = label;
+            labelEl.classList.remove('placeholder');
+        }
+        container.querySelectorAll('.custom-dropdown-option').forEach(o => {
+            o.classList.toggle('selected', o.dataset.value === value);
+        });
+    };
+
     // Invoice payer dropdown — same visual model as the payout payee dropdown.
     window.toggleInvoicePayerDropdown = function(event) {
         if (event) event.stopPropagation();
@@ -16536,11 +16585,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         if (!e.target.closest('.invoice-payer-dropdown')) {
             document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
         }
+        if (!e.target.closest('.custom-dropdown')) {
+            document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+        }
     });
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
             document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
+            document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
         }
     });
 

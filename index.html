@@ -1677,15 +1677,21 @@
                         <div class="bank-form-grid">
                             <div class="bank-form-field bank-form-field-full">
                                 <label class="bank-form-label">Bank Name *</label>
-                                <select id="bank-name" class="bank-form-control">
-                                    <option value="">Select bank</option>
-                                    <option value="DBS Bank">DBS Bank</option>
-                                    <option value="OCBC Bank">OCBC Bank</option>
-                                    <option value="UOB">UOB</option>
-                                    <option value="HSBC Hong Kong">HSBC Hong Kong</option>
-                                    <option value="Chase Bank">Chase Bank</option>
-                                    <option value="Deutsche Bank">Deutsche Bank</option>
-                                </select>
+                                <div class="custom-dropdown" data-name="bank-name">
+                                    <button type="button" class="bank-form-control custom-dropdown-trigger" onclick="window.toggleCustomDropdown('bank-name', event)" aria-haspopup="listbox" aria-label="Select bank">
+                                        <span class="custom-dropdown-label placeholder">Select bank</span>
+                                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8;"></i>
+                                    </button>
+                                    <input type="hidden" id="bank-name" value="">
+                                    <div class="custom-dropdown-menu" role="listbox">
+                                        <button type="button" class="custom-dropdown-option" data-value="DBS Bank"         onclick="window.selectCustomDropdown('bank-name', 'DBS Bank', 'DBS Bank')">DBS Bank<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option" data-value="OCBC Bank"        onclick="window.selectCustomDropdown('bank-name', 'OCBC Bank', 'OCBC Bank')">OCBC Bank<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option" data-value="UOB"              onclick="window.selectCustomDropdown('bank-name', 'UOB', 'UOB')">UOB<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option" data-value="HSBC Hong Kong"   onclick="window.selectCustomDropdown('bank-name', 'HSBC Hong Kong', 'HSBC Hong Kong')">HSBC Hong Kong<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option" data-value="Chase Bank"       onclick="window.selectCustomDropdown('bank-name', 'Chase Bank', 'Chase Bank')">Chase Bank<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option" data-value="Deutsche Bank"    onclick="window.selectCustomDropdown('bank-name', 'Deutsche Bank', 'Deutsche Bank')">Deutsche Bank<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="bank-form-field bank-form-field-full">
@@ -1695,12 +1701,19 @@
 
                             <div class="bank-form-field">
                                 <label class="bank-form-label">Currency *</label>
-                                <select id="bank-currency" class="bank-form-control">
-                                    <option value="USD">USD</option>
-                                    <option value="HKD">HKD</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="BRL">BRL</option>
-                                </select>
+                                <div class="custom-dropdown" data-name="bank-currency">
+                                    <button type="button" class="bank-form-control custom-dropdown-trigger" onclick="window.toggleCustomDropdown('bank-currency', event)" aria-haspopup="listbox" aria-label="Select currency">
+                                        <span class="custom-dropdown-label">USD</span>
+                                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8;"></i>
+                                    </button>
+                                    <input type="hidden" id="bank-currency" value="USD">
+                                    <div class="custom-dropdown-menu" role="listbox">
+                                        <button type="button" class="custom-dropdown-option selected" data-value="USD" onclick="window.selectCustomDropdown('bank-currency', 'USD', 'USD')">USD<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option"          data-value="HKD" onclick="window.selectCustomDropdown('bank-currency', 'HKD', 'HKD')">HKD<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option"          data-value="EUR" onclick="window.selectCustomDropdown('bank-currency', 'EUR', 'EUR')">EUR<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                        <button type="button" class="custom-dropdown-option"          data-value="BRL" onclick="window.selectCustomDropdown('bank-currency', 'BRL', 'BRL')">BRL<i data-lucide="check" class="custom-dropdown-option-check"></i></button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="bank-form-field">
