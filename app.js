@@ -3513,53 +3513,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeRule = activeApprovalRuleId ? getApprovalRuleById(activeApprovalRuleId) : null;
 
         if (approvalRuleView === 'detail' && activeRule) {
+            const statusLabel = activeRule.status === 'enabled' ? 'Enabled' : 'Disabled';
+            const toggleLabel = activeRule.status === 'enabled' ? 'Disable' : 'Enable';
             contentBody.innerHTML = `
-                <div class="fade-in" style="max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
-                    <div class="card" style="padding: 24px;">
+                <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+                    <!-- Header card: title + status + single row of actions (edit · enable/disable · delete) -->
+                    <div class="card" style="padding: 22px 24px;">
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <button onclick="window.openApprovalRulesList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Approval Rules</button>
+                            <div style="min-width: 0;">
+                                <button onclick="window.openApprovalRulesList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 10px;">← Back to Approval Rules</button>
                                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                    <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0;">${activeRule.name}</h2>
-                                    <span style="background: ${activeRule.status === 'enabled' ? '#D1FAE5' : '#E2E8F0'}; color: ${activeRule.status === 'enabled' ? '#059669' : '#64748B'}; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">${activeRule.status}</span>
+                                    <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0; letter-spacing: -0.01em;">${activeRule.name}</h2>
+                                    <span style="background: ${activeRule.status === 'enabled' ? '#D1FAE5' : '#E2E8F0'}; color: ${activeRule.status === 'enabled' ? '#059669' : '#64748B'}; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.05em;">${statusLabel}</span>
                                 </div>
-                                <div style="font-size: 13px; color: #64748B; margin-top: 8px;">Rule ID: ${activeRule.id} · Updated ${activeRule.updatedAt}</div>
+                                <div style="font-size: 12.5px; color: #94A3B8; margin-top: 8px;">Rule ID ${activeRule.id} &middot; Updated ${activeRule.updatedAt}</div>
                             </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn btn-outline" onclick="window.editApprovalRule('${activeRule.id}')" style="padding: 10px 16px; font-size: 13px;">Edit</button>
-                                <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${activeRule.id}')" style="padding: 10px 16px; font-size: 13px;">${activeRule.status === 'enabled' ? 'Disable' : 'Enable'}</button>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;">
+                                <button class="btn btn-outline" onclick="window.editApprovalRule('${activeRule.id}')" style="padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="pencil" style="width: 13px; height: 13px;"></i>Edit</button>
+                                <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${activeRule.id}')" style="padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="${activeRule.status === 'enabled' ? 'pause' : 'play'}" style="width: 13px; height: 13px;"></i>${toggleLabel}</button>
+                                <button onclick="window.deleteApprovalRule('${activeRule.id}')" style="padding: 9px 16px; font-size: 13px; font-weight: 700; color: #B91C1C; background: #FFFFFF; border: 1px solid #FECACA; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.12s ease, border-color 0.12s ease;" onmouseover="this.style.background='#FEF2F2';this.style.borderColor='#FCA5A5'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#FECACA'"><i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>Delete</button>
                             </div>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px;">
-                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px;">
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Scope</div>
-                                <div style="font-size: 15px; font-weight: 600; color: #0F172A;">${activeRule.scope}</div>
+                    <!-- Rule details -->
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 22px 24px 20px; display: flex; flex-direction: column; gap: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px;">
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Scope</div>
+                                    <div style="font-size: 14.5px; font-weight: 700; color: #0F172A;">${activeRule.scope}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Trigger Condition</div>
+                                    <div style="font-size: 14px; color: #334155; line-height: 1.6;">${formatApprovalRuleTrigger(activeRule)}</div>
+                                </div>
                             </div>
                             <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Trigger Condition</div>
-                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${formatApprovalRuleTrigger(activeRule)}</div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Approval Flow</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.6;">${formatApprovalFlow(activeRule)}</div>
                             </div>
                             <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Approval Flow</div>
-                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${formatApprovalFlow(activeRule)}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Notes</div>
-                                <div style="font-size: 14px; color: #334155; line-height: 1.7;">${activeRule.notes || '-'}</div>
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Notes</div>
+                                <div style="font-size: 14px; color: #334155; line-height: 1.6;">${activeRule.notes || '—'}</div>
                             </div>
                         </div>
-
-                        <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Rule Actions</div>
-                            <button class="btn btn-outline" onclick="window.editApprovalRule('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">Edit Rule</button>
-                            <button class="btn btn-outline" onclick="window.toggleApprovalRuleStatus('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">${activeRule.status === 'enabled' ? 'Disable Rule' : 'Enable Rule'}</button>
-                            <button class="btn btn-outline text-danger" onclick="window.deleteApprovalRule('${activeRule.id}')" style="justify-content: center; padding: 10px 14px;">Delete Rule</button>
-                            <div style="margin-top: 8px; padding: 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; font-size: 12px; color: #64748B; line-height: 1.6;">
-                                Rule changes take effect immediately for newly created orders and approval tasks.
-                            </div>
+                        <div style="padding: 12px 24px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="info" style="width: 13px; height: 13px; color: #94A3B8; flex-shrink: 0;"></i>
+                            <span style="font-size: 12px; color: #64748B; line-height: 1.55;">Rule changes take effect immediately for newly created orders and approval tasks.</span>
                         </div>
                     </div>
                 </div>
