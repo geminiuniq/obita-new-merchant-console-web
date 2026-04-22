@@ -6335,25 +6335,41 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         if (removeButton) removeButton.style.display = approvalRuleFormLevels > 1 ? 'inline-flex' : 'none';
     };
 
-    window.toggleApprovalRuleStatus = function(ruleId) {
+    window.toggleApprovalRuleStatus = function(ruleId, token) {
         const rule = getApprovalRuleById(ruleId);
         if (!rule) return;
+        if (token !== TWO_FA_TOKEN) {
+            const turningOn = rule.status !== 'enabled';
+            window.openTwoFactorModal({
+                actionLabel: turningOn ? 'Enable Approval Rule' : 'Disable Approval Rule',
+                actionSubject: 'approval-rule change',
+                onSuccess: () => window.toggleApprovalRuleStatus(ruleId, TWO_FA_TOKEN)
+            });
+            return;
+        }
         rule.status = rule.status === 'enabled' ? 'disabled' : 'enabled';
         rule.updatedAt = 'Just now';
         renderApprovalRulesPage();
     };
 
-    window.deleteApprovalRule = function(ruleId) {
+    window.deleteApprovalRule = function(ruleId, token) {
         const index = approvalRules.findIndex(rule => rule.id === ruleId);
         if (index === -1) return;
-        if (!confirm('Are you sure you want to delete this approval rule?')) return;
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Delete Approval Rule',
+                actionSubject: 'approval-rule deletion',
+                onSuccess: () => window.deleteApprovalRule(ruleId, TWO_FA_TOKEN)
+            });
+            return;
+        }
         approvalRules.splice(index, 1);
         approvalRuleView = 'list';
         activeApprovalRuleId = null;
         renderApprovalRulesPage();
     };
 
-    window.saveApprovalRule = function(ruleId) {
+    window.saveApprovalRule = function(ruleId, token) {
         const name = document.getElementById('approval-rule-name').value.trim();
         const scope = document.getElementById('approval-rule-scope').value;
         const triggerOperator = document.getElementById('approval-rule-trigger-operator').value;
@@ -6365,6 +6381,15 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
         if (!name || !scope || !triggerOperator || !triggerValue || !approverLevel1) {
             alert('Please complete all required approval rule fields.');
+            return;
+        }
+
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: ruleId ? 'Update Approval Rule' : 'Create Approval Rule',
+                actionSubject: ruleId ? 'approval-rule update' : 'new approval rule',
+                onSuccess: () => window.saveApprovalRule(ruleId, TWO_FA_TOKEN)
+            });
             return;
         }
 
