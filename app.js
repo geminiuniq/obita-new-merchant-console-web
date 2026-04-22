@@ -2604,7 +2604,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'my-merchant', label: 'My Merchant', level: 'primary' },
         { id: 'merchant-profile', label: 'Merchant Profile', level: 'secondary' },
         { id: 'members', label: 'Members', level: 'secondary' },
-        { id: 'settings', label: 'Settings', level: 'secondary' }
+        { id: 'security-center', label: 'Security Center', level: 'secondary' }
     ];
 
     let approvalRuleView = 'list';
@@ -10085,6 +10085,137 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         </div>
     `;
     }
+
+    // Security Center — admin-only page with IP allowlist + member login audit log.
+    const SECURITY_IP_ALLOWLIST = [
+        { label: 'HQ Office — Hong Kong',    cidr: '203.198.12.0/24', addedBy: 'Nancy User', addedAt: 'Feb 4, 2026' },
+        { label: 'Singapore Finance Desk',    cidr: '118.200.84.17',   addedBy: 'Nancy User', addedAt: 'Feb 4, 2026' },
+        { label: 'London Treasury Workstation', cidr: '81.132.201.44', addedBy: 'Ethan Lee',  addedAt: 'Mar 11, 2026' }
+    ];
+    const SECURITY_LOGIN_LOG = [
+        { member: 'Nancy User',  email: 'nancy@obita.demo',      ip: '203.198.12.84',  location: 'Hong Kong SAR', device: 'Chrome · macOS',  time: 'Today, 09:12',    result: 'success' },
+        { member: 'Ethan Lee',   email: 'ethan.lee@obita.demo',  ip: '118.200.84.17',  location: 'Singapore',     device: 'Safari · macOS',  time: 'Today, 08:47',    result: 'success' },
+        { member: 'Emily Chen',  email: 'emily.chen@obita.demo', ip: '58.212.19.203',  location: 'Shanghai, CN',  device: 'Chrome · Windows',time: 'Yesterday, 22:03', result: 'blocked-ip' },
+        { member: 'Bob Lee',     email: 'bob.lee@obita.demo',    ip: '81.132.201.44',  location: 'London, UK',    device: 'Firefox · Windows',time: 'Yesterday, 17:35', result: 'success' },
+        { member: 'Nancy User',  email: 'nancy@obita.demo',      ip: '203.198.12.84',  location: 'Hong Kong SAR', device: 'Chrome · macOS',  time: 'Apr 20, 09:04',   result: 'success' },
+        { member: 'Alice Wong',  email: 'alice.wong@obita.demo', ip: '219.77.203.11',  location: 'Hong Kong SAR', device: 'Safari · iOS',    time: 'Apr 19, 18:22',   result: '2fa-failed' },
+        { member: 'Ethan Lee',   email: 'ethan.lee@obita.demo',  ip: '118.200.84.17',  location: 'Singapore',     device: 'Safari · macOS',  time: 'Apr 19, 10:12',   result: 'success' }
+    ];
+    function getSecurityCenterHTML() {
+        const resultMeta = {
+            'success':     { label: 'Success',         bg: '#ECFDF5', color: '#047857', border: '#A7F3D0' },
+            'blocked-ip':  { label: 'Blocked (IP)',    bg: '#FEF2F2', color: '#B91C1C', border: '#FECACA' },
+            '2fa-failed':  { label: '2FA Failed',      bg: '#FEF3C7', color: '#B45309', border: '#FDE68A' }
+        };
+        return `
+        <div class="fade-in" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
+
+            <!-- Page header -->
+            <div class="card" style="padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; display: inline-flex; align-items: center; justify-content: center;">
+                        <i data-lucide="shield-check" style="width: 18px; height: 18px; color: #1D4ED8;"></i>
+                    </div>
+                    <div>
+                        <h1 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">Security Center</h1>
+                        <div style="font-size: 13px; color: #64748B; margin-top: 3px;">Control how your team accesses the portal and review login activity across the organization.</div>
+                    </div>
+                </div>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">
+                    <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>Admin · Nancy User
+                </span>
+            </div>
+
+            <!-- IP Allowlist -->
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                    <div>
+                        <h2 class="card-title" style="margin: 0;">IP Allowlist</h2>
+                        <div style="font-size: 12.5px; color: #64748B; margin-top: 4px; line-height: 1.55;">Only addresses on this list can reach the merchant portal. Logins from any other IP are blocked and recorded in the audit log below.</div>
+                    </div>
+                    <button class="btn btn-primary" style="padding: 9px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openAddIpAllowlistPrompt()"><i data-lucide="plus" style="width: 14px; height: 14px;"></i>Add IP / Range</button>
+                </div>
+                <div style="padding: 6px 12px 16px;">
+                    <div style="display: grid; grid-template-columns: 1.4fr 1.1fr 1fr 0.8fr auto; gap: 14px; padding: 12px 12px 10px; font-size: 10.5px; font-weight: 800; color: #94A3B8; letter-spacing: 0.08em; text-transform: uppercase;">
+                        <div>Label</div>
+                        <div>IP / CIDR</div>
+                        <div>Added By</div>
+                        <div>Added</div>
+                        <div></div>
+                    </div>
+                    ${SECURITY_IP_ALLOWLIST.map((entry, idx) => `
+                        <div style="display: grid; grid-template-columns: 1.4fr 1.1fr 1fr 0.8fr auto; gap: 14px; padding: 14px 12px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} align-items: center;">
+                            <div style="font-size: 13.5px; font-weight: 700; color: #0F172A;">${entry.label}</div>
+                            <div style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 12.5px; color: #334155;">${entry.cidr}</div>
+                            <div style="font-size: 12.5px; color: #475569;">${entry.addedBy}</div>
+                            <div style="font-size: 12px; color: #64748B;">${entry.addedAt}</div>
+                            <button onclick="alert('Removed ${entry.cidr} (demo).')" class="btn btn-outline" style="padding: 5px 11px; font-size: 12px;">Remove</button>
+                        </div>`).join('')}
+                </div>
+                <div style="padding: 12px 24px 18px; display: flex; align-items: center; gap: 8px; background: #F8FAFC; border-top: 1px solid #F1F5F9;">
+                    <i data-lucide="info" style="width: 13px; height: 13px; color: #94A3B8; flex-shrink: 0;"></i>
+                    <span style="font-size: 11.5px; color: #64748B; line-height: 1.55;">Changes apply within 2 minutes across all sessions. Your current session is always preserved so you can't lock yourself out by accident.</span>
+                </div>
+            </div>
+
+            <!-- Login Activity Log -->
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                    <div>
+                        <h2 class="card-title" style="margin: 0;">Member Login Activity</h2>
+                        <div style="font-size: 12.5px; color: #64748B; margin-top: 4px;">Every sign-in attempt across your organization, successful or blocked. Last 30 days retained — exportable on request.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <select style="padding: 8px 12px; font-size: 12.5px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; color: #334155; outline: none; cursor: pointer;">
+                            <option>All members</option>
+                            ${merchantMembers.map(m => `<option>${m.name}</option>`).join('')}
+                        </select>
+                        <select style="padding: 8px 12px; font-size: 12.5px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; color: #334155; outline: none; cursor: pointer;">
+                            <option>All results</option>
+                            <option>Success</option>
+                            <option>Blocked (IP)</option>
+                            <option>2FA Failed</option>
+                        </select>
+                        <button class="btn btn-outline" style="padding: 8px 12px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;" onclick="alert('Exporting login log (demo).')"><i data-lucide="download" style="width: 13px; height: 13px;"></i>Export</button>
+                    </div>
+                </div>
+                <div style="padding: 0 12px 12px;">
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr 0.9fr 0.9fr; gap: 14px; padding: 14px 12px 10px; font-size: 10.5px; font-weight: 800; color: #94A3B8; letter-spacing: 0.08em; text-transform: uppercase;">
+                        <div>Member</div>
+                        <div>IP Address</div>
+                        <div>Location</div>
+                        <div>Device</div>
+                        <div>Time</div>
+                        <div>Result</div>
+                    </div>
+                    ${SECURITY_LOGIN_LOG.map((row, idx) => {
+                        const meta = resultMeta[row.result] || resultMeta['success'];
+                        return `
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr 0.9fr 0.9fr; gap: 14px; padding: 14px 12px; ${idx === 0 ? 'border-top: 1px solid #E2E8F0;' : 'border-top: 1px solid #F1F5F9;'} align-items: center;">
+                            <div style="min-width: 0;">
+                                <div style="font-size: 13.5px; font-weight: 700; color: #0F172A;">${row.member}</div>
+                                <div style="font-size: 11.5px; color: #94A3B8; margin-top: 2px;">${row.email}</div>
+                            </div>
+                            <div style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 12px; color: #334155;">${row.ip}</div>
+                            <div style="font-size: 12.5px; color: #475569;">${row.location}</div>
+                            <div style="font-size: 12.5px; color: #475569;">${row.device}</div>
+                            <div style="font-size: 12px; color: #64748B;">${row.time}</div>
+                            <div>
+                                <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: ${meta.bg}; color: ${meta.color}; border: 1px solid ${meta.border}; border-radius: 999px; font-size: 11px; font-weight: 700;">
+                                    ${row.result === 'success' ? '<i data-lucide="check" style="width: 11px; height: 11px;"></i>' : row.result === 'blocked-ip' ? '<i data-lucide="shield-off" style="width: 11px; height: 11px;"></i>' : '<i data-lucide="alert-triangle" style="width: 11px; height: 11px;"></i>'}
+                                    ${meta.label}
+                                </span>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+        </div>`;
+    }
+    window.openAddIpAllowlistPrompt = function() {
+        const value = window.prompt('Add an IP address or CIDR range to the allowlist:', '');
+        if (value && value.trim()) alert('Added "' + value.trim() + '" to the allowlist (demo).');
+    };
 
     const ORDER_REPORT_TABS = [
         { id: 'vault', label: 'Vault', tone: { color: '#1D4ED8', bg: '#EFF6FF', border: '#BFDBFE' } },
@@ -18277,6 +18408,18 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         } else if (title === 'Merchant Profile') {
             contentBody.innerHTML = getMerchantProfileHTML();
             lucide.createIcons();
+        } else if (title === 'Security Center') {
+            if (!currentUserIsAdmin) {
+                contentBody.innerHTML = `<div class="fade-in" style="max-width: 560px; margin: 60px auto; text-align: center; color: #64748B;">
+                    <div style="width: 44px; height: 44px; margin: 0 auto 14px; border-radius: 12px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; color: #94A3B8;"><i data-lucide="lock" style="width: 20px; height: 20px;"></i></div>
+                    <div style="font-size: 16px; font-weight: 700; color: #0F172A;">Admin access required</div>
+                    <div style="font-size: 13px; margin-top: 6px;">Security Center is available to merchant administrators only.</div>
+                </div>`;
+                lucide.createIcons();
+            } else {
+                contentBody.innerHTML = getSecurityCenterHTML();
+                lucide.createIcons();
+            }
         } else if (title === 'Invoice Orders') {
             invoiceOrdersView = 'list';
             activeInvoiceOrderId = null;
@@ -19143,6 +19286,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     
     // Initialize first page
     syncManagedEntityStatuses();
+    // Hide admin-only surfaces (e.g. Security Center nav link) for non-admin users.
+    if (!currentUserIsAdmin) {
+        document.querySelectorAll('.admin-only').forEach(el => { el.style.display = 'none'; });
+    }
     renderPlaceholderContent('Overview');
 
     // Brand panel timestamp — refreshes once a minute while the login screen is up.
