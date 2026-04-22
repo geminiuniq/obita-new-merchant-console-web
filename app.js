@@ -145,6 +145,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contentBody) contentBody.scrollTop = 0;
     };
 
+    // Balance visibility toggle — blurs all .balance-figure elements inside
+    // the target block. Default state is hidden; click the eye button to show.
+    window.toggleBalanceVisibility = function(targetId) {
+        const el = document.getElementById(targetId);
+        if (!el) return;
+        if (el.classList.contains('balances-visible')) {
+            el.classList.remove('balances-visible');
+            el.classList.add('balances-hidden');
+        } else {
+            el.classList.remove('balances-hidden');
+            el.classList.add('balances-visible');
+        }
+        // Re-init any toggled icons
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
     // Two-Factor Authentication (Google Authenticator OTP) gate.
     // Used to guard critical actions: Confirm Convert, Send Invoice, Execute
     // Transfer (fiat & stablecoin), Submit Payout Batch. Any 6-digit code is
@@ -7396,14 +7412,20 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             <!-- Main Column -->
             <div class="overview-main">
                 <!-- Unified Assets Card -->
-                <div class="card unified-assets-card" style="padding: 0; overflow: hidden;">
+                <div class="card unified-assets-card balances-hidden" id="overview-asset-card" style="padding: 0; overflow: hidden;">
                     <!-- At a Glance Section -->
                     <div class="summary-section" style="padding: 24px; border-bottom: 1px solid var(--clr-border);">
                         <h2 class="card-title">At a Glance</h2>
                         <div class="summary-content">
                             <div class="balance-section">
-                                <span class="label">Total Availables</span>
-                                <h3 class="balance-amount">$1,234,567.89 <span class="currency">USD</span></h3>
+                                <span class="label" style="display: inline-flex; align-items: center; gap: 8px;">
+                                    Total Availables
+                                    <button type="button" class="balance-eye-btn on-light" onclick="window.toggleBalanceVisibility('overview-asset-card')" aria-label="Toggle balance visibility" title="Show/hide balances">
+                                        <i data-lucide="eye-off" class="eye-when-hidden"></i>
+                                        <i data-lucide="eye" class="eye-when-visible"></i>
+                                    </button>
+                                </span>
+                                <h3 class="balance-amount balance-figure">$1,234,567.89 <span class="currency">USD</span></h3>
                             </div>
                             <div class="action-buttons">
                                 ${window.currentLicenseMode === 'MSO'
@@ -7423,7 +7445,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div class="asset-card-inner">
                             <div class="asset-header">
                                 <h2 class="card-title">Stablecoins</h2>
-                                <span class="asset-total">≈ $450,000.00 USD</span>
+                                <span class="asset-total balance-figure">≈ $450,000.00 USD</span>
                             </div>
                             <div class="asset-list">
                                 <div class="asset-item">
@@ -7431,21 +7453,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         <div class="asset-icon usdt">₮</div>
                                         <span class="asset-name">USDT</span>
                                     </div>
-                                    <span class="asset-balance">250,000.00</span>
+                                    <span class="asset-balance balance-figure">250,000.00</span>
                                 </div>
                                 <div class="asset-item">
                                     <div class="asset-info">
                                         <div class="asset-icon usdc">C</div>
                                         <span class="asset-name">USDC</span>
                                     </div>
-                                    <span class="asset-balance">200,000.00</span>
+                                    <span class="asset-balance balance-figure">200,000.00</span>
                                 </div>
                             </div>
                         </div>` : `
                         <div class="asset-card-inner">
                             <div class="asset-header">
                                 <h2 class="card-title">Fiat Account Summary</h2>
-                                <span class="asset-total">≈ $784,567.89 USD</span>
+                                <span class="asset-total balance-figure">≈ $784,567.89 USD</span>
                             </div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 4px; margin-bottom: 12px;">Bank account balances overview</div>
                             <div class="asset-list">
@@ -7457,7 +7479,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                             <div style="font-size:11px;color:#94A3B8;">HSBC ••••3842</div>
                                         </div>
                                     </div>
-                                    <span class="asset-balance">500,000.00</span>
+                                    <span class="asset-balance balance-figure">500,000.00</span>
                                 </div>
                                 <div class="asset-item" style="cursor:pointer;" onclick="window.renderPlaceholderContent('Fiat Vault')">
                                     <div class="asset-info">
@@ -7467,7 +7489,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                             <div style="font-size:11px;color:#94A3B8;">Hang Seng ••••1057</div>
                                         </div>
                                     </div>
-                                    <span class="asset-balance">1,500,000.00</span>
+                                    <span class="asset-balance balance-figure">1,500,000.00</span>
                                 </div>
                             </div>
                         </div>`}
@@ -7475,7 +7497,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div class="asset-card-inner">
                             <div class="asset-header">
                                 <h2 class="card-title">Fiat</h2>
-                                <span class="asset-total">≈ $784,567.89 USD</span>
+                                <span class="asset-total balance-figure">≈ $784,567.89 USD</span>
                             </div>
                             <div class="asset-list">
                                 <div class="asset-item">
@@ -7483,21 +7505,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                         <div class="asset-icon usd">$</div>
                                         <span class="asset-name">USD</span>
                                     </div>
-                                    <span class="asset-balance">500,000.00</span>
+                                    <span class="asset-balance balance-figure">500,000.00</span>
                                 </div>
                                 <div class="asset-item">
                                     <div class="asset-info">
                                         <div class="asset-icon hkd">HK$</div>
                                         <span class="asset-name">HKD</span>
                                     </div>
-                                    <span class="asset-balance">1,500,000.00</span>
+                                    <span class="asset-balance balance-figure">1,500,000.00</span>
                                 </div>
                                 <div class="asset-item">
                                     <div class="asset-info">
                                         <div class="asset-icon eur">€</div>
                                         <span class="asset-name">EUR</span>
                                     </div>
-                                    <span class="asset-balance">85,000.00</span>
+                                    <span class="asset-balance balance-figure">85,000.00</span>
                                 </div>
                             </div>
                         </div>
@@ -8062,13 +8084,19 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 32px;">
 
             <!-- Total Availables header + 4 currency rows -->
-            <div class="card" style="padding: 0; overflow: hidden;">
+            <div class="card balances-hidden" id="fiat-vault-overview-card" style="padding: 0; overflow: hidden;">
                 <div style="padding: 28px 32px; background: linear-gradient(135deg, #1E293B, #0F172A); color: white; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Total Availables</div>
-                        <div style="font-size: 36px; font-weight: 700;">$3,482,150.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD Equiv.</span></div>
+                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 10px;">
+                            Total Availables
+                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('fiat-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances">
+                                <i data-lucide="eye-off" class="eye-when-hidden"></i>
+                                <i data-lucide="eye" class="eye-when-visible"></i>
+                            </button>
+                        </div>
+                        <div class="balance-figure" style="font-size: 36px; font-weight: 700;">$3,482,150.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD Equiv.</span></div>
                     </div>
-                    <div style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $8,400.00 Today</div>
+                    <div class="balance-figure" style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $8,400.00 Today</div>
                 </div>
                 <!-- USD -->
                 <div style="padding: 20px 32px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 24px;">
@@ -8076,7 +8104,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #2563EB; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">USD</div>
                         <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">US Dollar</div><div style="font-size: 13px; color: var(--clr-text-muted);">United States Dollar</div></div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">1,500,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">USD</span></div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">1,500,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">USD</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('USD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('USD')">Transfer</button>
@@ -8089,7 +8117,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #DC2626; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">HKD</div>
                         <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">HK Dollar</div><div style="font-size: 13px; color: var(--clr-text-muted);">Hong Kong Dollar</div></div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">8,200,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">HKD</span></div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">8,200,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">HKD</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('HKD')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('HKD')">Transfer</button>
@@ -8102,7 +8130,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #7C3AED; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">EUR</div>
                         <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">Euro</div><div style="font-size: 13px; color: var(--clr-text-muted);">European Euro</div></div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">320,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">EUR</span></div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">320,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">EUR</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('EUR')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('EUR')">Transfer</button>
@@ -8115,7 +8143,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #059669; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">BRL</div>
                         <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">Brazilian Real</div><div style="font-size: 13px; color: var(--clr-text-muted);">Brazil Real</div></div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">980,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">BRL</span></div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">980,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">BRL</span></div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('BRL')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('BRL')">Transfer</button>
@@ -9168,14 +9196,20 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 32px;">
             
             <!-- Top Section: Unified Asset Card -->
-            <div class="card" style="padding: 0; overflow: hidden;">
+            <div class="card balances-hidden" id="stablecoin-vault-overview-card" style="padding: 0; overflow: hidden;">
                 <!-- Total Availables Header -->
                 <div style="padding: 28px 32px; background: linear-gradient(135deg, #1E293B, #0F172A); color: white; display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Total Availables</div>
-                        <div style="font-size: 36px; font-weight: 700;">$24,050,000.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD</span></div>
+                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 10px;">
+                            Total Availables
+                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('stablecoin-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances">
+                                <i data-lucide="eye-off" class="eye-when-hidden"></i>
+                                <i data-lucide="eye" class="eye-when-visible"></i>
+                            </button>
+                        </div>
+                        <div class="balance-figure" style="font-size: 36px; font-weight: 700;">$24,050,000.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD</span></div>
                     </div>
-                    <div style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $2,300.00 Today</div>
+                    <div class="balance-figure" style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $2,300.00 Today</div>
                 </div>
 
                 <!-- USDT Row -->
@@ -9187,7 +9221,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 13px; color: var(--clr-text-muted);">Tether USD</div>
                         </div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">14,000,000.00</div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">14,000,000.00</div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="openTopUpDrawer('USDT')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openTransferDrawer('USDT')">Transfer</button>
@@ -9204,7 +9238,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 13px; color: var(--clr-text-muted);">USD Coin</div>
                         </div>
                     </div>
-                    <div style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">10,050,000.00</div>
+                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">10,050,000.00</div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="openTopUpDrawer('USDC')">Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openTransferDrawer('USDC')">Transfer</button>

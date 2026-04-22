@@ -2322,3 +2322,42 @@ body:not(.is-logged-out) .login-screen { display: none; }
 @media (prefers-reduced-motion: reduce) {
     .twofa-modal-card, .twofa-modal-backdrop { animation: none !important; }
 }
+
+/* =============================================================
+   Balance Visibility Toggle
+   Any .balance-figure element inside a .balances-hidden container
+   is visually masked. Click the eye button next to the block's
+   balance label to toggle the whole block's numbers at once.
+   ============================================================= */
+.balances-hidden .balance-figure {
+    filter: blur(6px);
+    user-select: none;
+    transition: filter 0.15s ease;
+}
+.balance-figure { transition: filter 0.15s ease; }
+
+.balance-eye-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+.balance-eye-btn:hover { opacity: 1; background: rgba(255, 255, 255, 0.08); }
+.balance-eye-btn.on-light { border-color: #E2E8F0; color: #64748B; }
+.balance-eye-btn.on-light:hover { background: #F1F5F9; border-color: #CBD5E1; color: #0F172A; }
+.balance-eye-btn svg { width: 14px; height: 14px; }
+/* hide the alternate icon based on container state */
+.balance-eye-btn .eye-when-visible { display: none; }
+.balance-eye-btn .eye-when-hidden  { display: inline-block; }
+.balances-visible .balance-eye-btn .eye-when-hidden  { display: none; }
+.balances-visible .balance-eye-btn .eye-when-visible { display: inline-block; }
