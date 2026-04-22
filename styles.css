@@ -2329,12 +2329,14 @@ body:not(.is-logged-out) .login-screen { display: none; }
    is visually masked. Click the eye button next to the block's
    balance label to toggle the whole block's numbers at once.
    ============================================================= */
+/* When a container is .balances-hidden the .balance-figure content is
+   swapped via JS for a bullet mask. This class lightly styles the mask
+   so it feels consistent regardless of the surrounding font weight. */
 .balances-hidden .balance-figure {
-    filter: blur(6px);
+    letter-spacing: 0.08em;
     user-select: none;
-    transition: filter 0.15s ease;
+    font-variant-numeric: tabular-nums;
 }
-.balance-figure { transition: filter 0.15s ease; }
 
 .balance-eye-btn {
     display: inline-flex;

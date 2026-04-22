@@ -145,19 +145,45 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contentBody) contentBody.scrollTop = 0;
     };
 
-    // Balance visibility toggle — blurs all .balance-figure elements inside
-    // the target block. Default state is hidden; click the eye button to show.
+    // Balance visibility toggle — swaps every .balance-figure inside the
+    // target block with a bullet mask. Default state is hidden; clicking the
+    // eye button restores the real numbers.
+    window.applyBalanceMask = function(scope) {
+        const root = scope || document;
+        root.querySelectorAll('.balance-figure').forEach(el => {
+            if (el.dataset.balanceOriginal !== undefined) return;
+            el.dataset.balanceOriginal = el.innerHTML;
+            const plain = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            const n = Math.min(Math.max(plain.length, 6), 10);
+            el.innerHTML = '•'.repeat(n);
+        });
+    };
+    window.removeBalanceMask = function(scope) {
+        const root = scope || document;
+        root.querySelectorAll('.balance-figure').forEach(el => {
+            if (el.dataset.balanceOriginal !== undefined) {
+                el.innerHTML = el.dataset.balanceOriginal;
+                delete el.dataset.balanceOriginal;
+            }
+        });
+    };
+    // Apply masks to every .balances-hidden container currently in the DOM.
+    // Called after each page render so default-hidden blocks come in masked.
+    window.initBalanceMasks = function() {
+        document.querySelectorAll('.balances-hidden').forEach(c => window.applyBalanceMask(c));
+    };
     window.toggleBalanceVisibility = function(targetId) {
         const el = document.getElementById(targetId);
         if (!el) return;
         if (el.classList.contains('balances-visible')) {
             el.classList.remove('balances-visible');
             el.classList.add('balances-hidden');
+            window.applyBalanceMask(el);
         } else {
             el.classList.remove('balances-hidden');
             el.classList.add('balances-visible');
+            window.removeBalanceMask(el);
         }
-        // Re-init any toggled icons
         if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
@@ -7193,7 +7219,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
     function getGroupOverviewHTML() {
         return `
-        <div class="fade-in" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
+        <div class="fade-in balances-hidden" id="group-overview-root" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
 
             <!-- Header: Group name + consolidated KPIs -->
             <div style="background: white; border: 1px solid var(--clr-border); border-radius: 14px; padding: 0; overflow: hidden;">
@@ -7207,19 +7233,23 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 2px;">Consolidated overview &middot; Read-only</div>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
                         <span style="font-size: 11px; font-weight: 700; color: #059669; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 4px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:12px;height:12px;"></i> All Entities Verified</span>
+                        <button type="button" class="balance-eye-btn on-light" onclick="window.toggleBalanceVisibility('group-overview-root')" aria-label="Toggle balance visibility" title="Show/hide balances">
+                            <i data-lucide="eye-off" class="eye-when-hidden"></i>
+                            <i data-lucide="eye" class="eye-when-visible"></i>
+                        </button>
                     </div>
                 </div>
                 <!-- KPI Strip -->
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--clr-border);">
                     <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
-                        <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$33.2M</div>
+                        <div class="balance-figure" style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$33.2M</div>
                     </div>
                     <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">30d Volume</div>
-                        <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$12.4M</div>
+                        <div class="balance-figure" style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$12.4M</div>
                     </div>
                     <div style="padding: 18px 20px; text-align: center; border-right: 1px solid var(--clr-border);">
                         <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
@@ -7253,7 +7283,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
                         <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
                             <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
-                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$24,050,000</div>
+                            <div class="balance-figure" style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$24,050,000</div>
                         </div>
                         <div style="padding: 16px 22px;">
                             <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
@@ -7276,7 +7306,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
                                 <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
                                 <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
-                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                                <span class="balance-figure" style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
                             </div>`).join('')}
                         </div>
                     </div>
@@ -7333,7 +7363,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     <div style="display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #F1F5F9;">
                         <div style="padding: 16px 22px; border-right: 1px solid #F1F5F9;">
                             <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Total Assets</div>
-                            <div style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$9,180,000</div>
+                            <div class="balance-figure" style="font-size: 22px; font-weight: 800; color: #0F172A; margin-top: 4px; letter-spacing: -0.02em;">$9,180,000</div>
                         </div>
                         <div style="padding: 16px 22px;">
                             <div style="font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.06em;">Pending Approvals</div>
@@ -7356,7 +7386,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0;">
                                 <div style="width: 26px; height: 26px; border-radius: 6px; background: ${a.bg}; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: ${a.color}; flex-shrink: 0;">${a.icon}</div>
                                 <span style="font-size: 12px; font-weight: 600; color: #64748B; width: 36px;">${a.symbol}</span>
-                                <span style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
+                                <span class="balance-figure" style="flex: 1; font-size: 13px; font-weight: 700; color: #0F172A; text-align: right; font-variant-numeric: tabular-nums;">${a.amount}</span>
                             </div>`).join('')}
                         </div>
                     </div>
@@ -18202,6 +18232,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     function renderPlaceholderContent(title) {
         window.scrollContentToTop();
+        // After every page render, sweep for .balances-hidden containers and
+        // mask any .balance-figure inside them. Uses microtask + rAF for
+        // robustness against sync / async render paths inside each branch.
+        const sweepBalances = () => window.initBalanceMasks && window.initBalanceMasks();
+        queueMicrotask(sweepBalances);
+        requestAnimationFrame(sweepBalances);
         if (title === 'Overview') {
             contentBody.innerHTML = getOverviewHTML();
             // Initialize Chart after injecting HTML
