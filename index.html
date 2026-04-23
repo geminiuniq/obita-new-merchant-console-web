@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obita 商户操作台</title>
-    <!-- Modern Font: Inter -->
+    <!-- Modern Font: Inter (body, dense UI) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Display Font: Clash Display (Fontshare) — used for the login brand headline only -->
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500&display=swap" rel="stylesheet">
+    <!-- Display Font: Clash Display (Fontshare) — used for hero headlines -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+    <!-- Mono: JetBrains Mono — numerical & operational labels at brand surfaces -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <!-- Chart.js for Fund Flow -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,36 +19,50 @@
 <body class="is-logged-out">
     <!-- Login screen — shown on initial load until the user signs in. -->
     <div class="login-screen" id="login-screen">
-        <!-- Brand panel (left): dominant brand moment, hero typography, layered motif -->
+        <!-- Brand panel (left): dominant brand moment, editorial hero, data motif -->
         <section class="login-brand-panel" aria-hidden="true">
-            <div class="login-brand-layers">
-                <span class="login-brand-layer layer-a"></span>
-                <span class="login-brand-layer layer-b"></span>
-                <span class="login-brand-layer layer-c"></span>
+            <!-- Oversized emblem — negative-space wordmark bleeding off the canvas -->
+            <div class="login-brand-emblem" aria-hidden="true">
+                <span class="login-brand-emblem-glyph">O</span>
             </div>
+            <!-- Index markers — a single vertical "file tab" of live signals -->
+            <aside class="login-brand-index" aria-hidden="true">
+                <span class="login-brand-index-item"><em>01</em> Treasury</span>
+                <span class="login-brand-index-item"><em>02</em> Compliance</span>
+                <span class="login-brand-index-item"><em>03</em> Ledger</span>
+                <span class="login-brand-index-item is-active"><em>04</em> Portal</span>
+            </aside>
+
             <header class="login-brand-head">
                 <div class="login-brand-lockup">
                     <span class="login-brand-mark"><i data-lucide="layers"></i></span>
                     <span class="login-brand-wordmark">Obita</span>
                 </div>
-                <span class="login-brand-env">merchant · portal</span>
+                <span class="login-brand-env">
+                    <span class="login-brand-env-dot"></span>
+                    merchant · portal · v4.2
+                </span>
             </header>
+
             <div class="login-brand-hero">
-                <p class="login-brand-eyebrow">Enterprise treasury</p>
+                <p class="login-brand-eyebrow"><span>Vol.04</span> · Enterprise treasury</p>
                 <h2 class="login-brand-headline">
                     Make<br>
                     Payments<br>
-                    <em>Borderless</em>
+                    <em>Borderless.</em>
                 </h2>
                 <p class="login-brand-sub">
                     Group-level oversight with entity-level precision — built for the treasury desk.
                 </p>
             </div>
+
             <footer class="login-brand-foot">
                 <span class="login-brand-dot"></span>
                 <span class="login-brand-status">Live · HK Central</span>
                 <span class="login-brand-sep">//</span>
                 <span class="login-brand-time" id="login-brand-time">—</span>
+                <span class="login-brand-sep">//</span>
+                <span class="login-brand-seal">TCSP · MSO · Regulated</span>
             </footer>
         </section>
 
@@ -1344,94 +1360,6 @@
                 </div>
 
                 <div id="bank-list-container" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                    <div class="bank-account-item" data-bank-name="Chase Bank" data-account-name="Obita Treasury Main Account" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #EFF6FF; border-radius: 10px; border: 1px solid #BFDBFE; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #2563EB; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Chase Bank — Obita Treasury Main Account</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Enabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 4821 | Routing: 021000021 | SWIFT: CHASUS33</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Today</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="HSBC Hong Kong" data-account-name="Operations Clearing Account" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #FEF2F2; border-radius: 10px; border: 1px solid #FECACA; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #DC2626; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">HSBC Hong Kong — Operations Clearing Account</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">HKD</span>
-                                <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 9230 | Bank Code: 004 | SWIFT: HSBCHKHHHKH</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Yesterday</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="Deutsche Bank" data-account-name="Obita Europe Treasury" data-verification="verified" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #F5F3FF; border-radius: 10px; border: 1px solid #DDD6FE; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #7C3AED; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Deutsche Bank — Obita Europe Treasury</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">EUR</span>
-                                <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">IBAN: DE89 3704 0044 0532 0130 00 | SWIFT: DEUTDEDB</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Oct 23</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="Banco do Brasil" data-account-name="Treasury Reserve Account" data-verification="not-supported" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; opacity: 0.72; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #F8FAFC; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #64748B; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Banco do Brasil — Treasury</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">BRL</span>
-                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 1058 | Branch: 3321 | SWIFT: BRASBRRJRJO</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Transfers from this account are currently not supported.</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
                 </div>
             </div>
 
@@ -1621,8 +1549,7 @@
                     <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #B45309;"></i>
                 </div>
                 <div>
-                    <h3 id="edd-fill-drawer-title" style="margin: 0;">Enhanced Due Diligence</h3>
-                    <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Fill in on behalf of the contact. You are responsible for the accuracy and authenticity of the data.</div>
+                    <h3 id="edd-fill-drawer-title" style="margin: 0;">More Information Required</h3>
                 </div>
             </div>
             <button class="icon-btn" onclick="window.closeEddFillDrawer()"><i data-lucide="x"></i></button>
