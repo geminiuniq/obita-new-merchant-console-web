@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Obita 商户操作台</title>
-    <!-- Modern Font: Inter -->
+    <!-- Modern Font: Inter (body, dense UI) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Display Font: Clash Display (Fontshare) — used for the login brand headline only -->
-    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500&display=swap" rel="stylesheet">
+    <!-- Display Font: Clash Display (Fontshare) — used for hero headlines -->
+    <link href="https://api.fontshare.com/v2/css?f[]=clash-display@700,600,500,400&display=swap" rel="stylesheet">
+    <!-- Mono: JetBrains Mono — numerical & operational labels at brand surfaces -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <!-- Chart.js for Fund Flow -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -17,36 +19,50 @@
 <body class="is-logged-out">
     <!-- Login screen — shown on initial load until the user signs in. -->
     <div class="login-screen" id="login-screen">
-        <!-- Brand panel (left): dominant brand moment, hero typography, layered motif -->
+        <!-- Brand panel (left): dominant brand moment, editorial hero, data motif -->
         <section class="login-brand-panel" aria-hidden="true">
-            <div class="login-brand-layers">
-                <span class="login-brand-layer layer-a"></span>
-                <span class="login-brand-layer layer-b"></span>
-                <span class="login-brand-layer layer-c"></span>
+            <!-- Oversized emblem — negative-space wordmark bleeding off the canvas -->
+            <div class="login-brand-emblem" aria-hidden="true">
+                <span class="login-brand-emblem-glyph">O</span>
             </div>
+            <!-- Index markers — a single vertical "file tab" of live signals -->
+            <aside class="login-brand-index" aria-hidden="true">
+                <span class="login-brand-index-item"><em>01</em> Treasury</span>
+                <span class="login-brand-index-item"><em>02</em> Compliance</span>
+                <span class="login-brand-index-item"><em>03</em> Ledger</span>
+                <span class="login-brand-index-item is-active"><em>04</em> Portal</span>
+            </aside>
+
             <header class="login-brand-head">
                 <div class="login-brand-lockup">
                     <span class="login-brand-mark"><i data-lucide="layers"></i></span>
                     <span class="login-brand-wordmark">Obita</span>
                 </div>
-                <span class="login-brand-env">merchant · portal</span>
+                <span class="login-brand-env">
+                    <span class="login-brand-env-dot"></span>
+                    merchant · portal · v4.2
+                </span>
             </header>
+
             <div class="login-brand-hero">
-                <p class="login-brand-eyebrow">Enterprise treasury</p>
+                <p class="login-brand-eyebrow"><span>Vol.04</span> · Enterprise treasury</p>
                 <h2 class="login-brand-headline">
                     Make<br>
                     Payments<br>
-                    <em>Borderless</em>
+                    <em>Borderless.</em>
                 </h2>
                 <p class="login-brand-sub">
                     Group-level oversight with entity-level precision — built for the treasury desk.
                 </p>
             </div>
+
             <footer class="login-brand-foot">
                 <span class="login-brand-dot"></span>
                 <span class="login-brand-status">Live · HK Central</span>
                 <span class="login-brand-sep">//</span>
                 <span class="login-brand-time" id="login-brand-time">—</span>
+                <span class="login-brand-sep">//</span>
+                <span class="login-brand-seal">TCSP · MSO · Regulated</span>
             </footer>
         </section>
 
@@ -1297,222 +1313,6 @@
         </div>
     </div>
 
-    <!-- Manage Addresses Drawer (Width: 500px for table fit) -->
-    <div class="inbox-drawer" id="manage-addresses-drawer" style="width: 500px; right: -500px;">
-        <div class="drawer-header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
-                    <i data-lucide="book-open" style="width: 14px; height: 14px; color: #0F172A;"></i>
-                </div>
-                <h3>Address Book</h3>
-            </div>
-            <button class="icon-btn" id="close-addr-btn">
-                <i data-lucide="x"></i>
-            </button>
-        </div>
-        
-        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
-            <!-- VIEW A: List Addresses -->
-            <div id="addr-list-view" style="display: flex; flex-direction: column; height: 100%;">
-                <div style="padding: 16px 24px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--clr-border);">
-                    <button onclick="window.switchToAddAddressView()" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #2563EB; color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
-                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add New
-                    </button>
-                </div>
-                
-                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;" id="addr-list-container">
-                    
-                    <!-- Item 1: Kraken Corporate - Verified -->
-                    <div class="addr-item tcsp-only" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Kraken Corporate</div>
-                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Enabled</span>
-                            </div>
-                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Item 2: Binance Institutional - Pending Verification -->
-                    <div class="addr-item tcsp-only" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">Binance Institutional</div>
-                                <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">ETH</span>
-                                <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Pending Verification</span>
-                            </div>
-                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">0xA0b86991c6218b36c1d...eB48</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Item 3: MetaMask Trading - Not Supported -->
-                    <div class="addr-item tcsp-only" data-verification="not-supported" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; opacity: 0.6; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">MetaMask Trading</div>
-                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">Disabled</span>
-                            </div>
-                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVjsyZ7lNwQxGTCi8q8ZY...Lj6t</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="disabled" class="addr-toggle disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
-                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Item 4: ABC Trading Pte Ltd - Verified -->
-                    <div class="addr-item tcsp-only" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                                <div style="font-weight: 600; font-size: 14px; color: #0F172A;">ABC Trading Pte Ltd</div>
-                                <span style="background: #EFF6FF; color: #2563EB; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">TRON</span>
-                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: flex; align-items: center; gap: 3px;">Enabled</span>
-                            </div>
-                            <div style="font-family: monospace; font-size: 11px; color: #64748B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t</div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px; margin-left: 12px; flex-shrink: 0;">
-                            <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                            <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- VIEW B: ADD ADDRESS FORM -->
-            <div id="add-addr-view" style="display: none; flex-direction: column; height: 100%;">
-                <div style="padding: 16px 24px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 12px;">
-                    <button onclick="window.switchToListAddressView()" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px; display: flex; align-items: center; justify-content: center;"><i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i></button>
-                    <div style="font-weight: 600; font-size: 14px; color: #1E293B;">Add New Address</div>
-                </div>
-                
-                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
-                    
-                    <div style="display: flex; gap: 20px;">
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="newAddrOwnerType" value="individual" checked onchange="window.toggleNewAddrOwnerType('individual')"> Owned by Individual
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; font-weight: 500;">
-                            <input type="radio" name="newAddrOwnerType" value="organization" onchange="window.toggleNewAddrOwnerType('organization')"> Owned by Organization
-                        </label>
-                    </div>
-
-                    <!-- Individual Form -->
-                    <div id="na-form-individual" style="display: flex; flex-direction: column; gap: 12px; background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px;">
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">First Name *</label>
-                            <input type="text" id="na-fname" class="form-input" placeholder="e.g. John" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Middle Name <span style="font-weight: 400; text-transform: none;">(optional)</span></label>
-                            <input type="text" id="na-mname" class="form-input" placeholder="e.g. Michael" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Surname *</label>
-                            <input type="text" id="na-lname" class="form-input" placeholder="e.g. Doe" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Date of Birth *</label>
-                            <input type="date" id="na-dob" class="form-input" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; color: #334155;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Residential Address *</label>
-                            <input type="text" id="na-iaddr" class="form-input" placeholder="e.g. 10 Anson Road, Singapore 079903" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                    </div>
-
-                    <!-- Organization Form -->
-                    <div id="na-form-organization" style="display: none; flex-direction: column; gap: 12px; background: #F8FAFC; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px;">
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Entity / Company Name *</label>
-                            <input type="text" id="na-orgname" class="form-input" placeholder="e.g. ABC Trading Pte Ltd" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Registered Address *</label>
-                            <input type="text" id="na-orgaddr" class="form-input" placeholder="e.g. 1 Marina Boulevard, #28-00, Singapore 018989" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                        </div>
-                    </div>
-
-                    <label class="tcsp-only" style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 12px; border-radius: 6px; cursor: pointer; margin-top: 4px;">
-                        <input type="checkbox" checked style="margin-top: 3px;">
-                        <span style="font-size: 12px; color: #475569; line-height: 1.5;">I declare that this wallet is owned by the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
-                    </label>
-
-                    <div class="tcsp-only" style="height: 1px; background: var(--clr-border);"></div>
-
-                    <!-- Wallet Address Details -->
-                    <div class="tcsp-only" style="display: flex; flex-direction: column; gap: 14px;">
-                        <div style="font-size: 13px; font-weight: 700; color: #334155;">Wallet Address Details</div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Address *</label>
-                            <input type="text" id="na-wallet-addr" class="form-input" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; font-family: monospace;">
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Network / Chain *</label>
-                            <select id="na-wallet-net" class="form-input" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white;">
-                                <option value="TRON (TRC-20)">TRON (TRC-20)</option>
-                                <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
-                                <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
-                                <option value="Solana">Solana</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Wallet Type Selector -->
-                    <div class="tcsp-only" style="display: flex; flex-direction: column; gap: 10px;">
-                        <div style="font-size: 13px; font-weight: 700; color: #334155;">Wallet Type</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <label style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onclick="this.style.border='2px solid #7C3AED';this.style.background='#F5F3FF';this.parentElement.children[1].style.border='2px solid #E2E8F0';this.parentElement.children[1].style.background='white'">
-                                <input type="radio" name="na-wallet-type" value="private" checked style="accent-color: #7C3AED;">
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
-                                    <div style="font-size: 11px; color: #64748B;">MetaMask, TrustWallet, etc.</div>
-                                </div>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; transition: all 0.2s;" onclick="this.style.border='2px solid #EA580C';this.style.background='#FFF7ED';this.parentElement.children[0].style.border='2px solid #E2E8F0';this.parentElement.children[0].style.background='white'">
-                                <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C;">
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
-                                    <div style="font-size: 11px; color: #64748B;">Binance, OKX, Coinbase, etc.</div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div style="height: 1px; background: var(--clr-border);"></div>
-
-                    <!-- Verify Wallet button + zone -->
-                    <div class="tcsp-only" style="display: flex; flex-direction: column; gap: 14px;">
-                        <button type="button" id="na-verify-wallet-btn" onclick="window.onAddrBookVerifyClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
-                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
-                            Verify Wallet Address
-                        </button>
-                        <div id="na-wallet-verify-zone" style="display: none;"></div>
-                    </div>
-
-                </div>
-                <!-- Privacy Policy (MSO) -->
-                <div class="mso-only" style="padding: 0 24px 8px;">
-                    <div style="font-size: 12px; color: #94A3B8; line-height: 1.6;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>
-                </div>
-                <!-- Footer Submit Button -->
-                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button onclick="window.submitNewAddress()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Add Address</button>
-                </div>
-            </div>
-
-        </div>
-    </div>
 
     <div class="inbox-drawer" id="bank-account-transactions-drawer" style="width: 560px; right: -560px;">
         <div class="drawer-header">
@@ -1560,94 +1360,6 @@
                 </div>
 
                 <div id="bank-list-container" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
-                    <div class="bank-account-item" data-bank-name="Chase Bank" data-account-name="Obita Treasury Main Account" data-verification="verified" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #EFF6FF; border-radius: 10px; border: 1px solid #BFDBFE; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #2563EB; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Chase Bank — Obita Treasury Main Account</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Enabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 4821 | Routing: 021000021 | SWIFT: CHASUS33</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Today</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="HSBC Hong Kong" data-account-name="Operations Clearing Account" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #FEF2F2; border-radius: 10px; border: 1px solid #FECACA; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #DC2626; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">HSBC Hong Kong — Operations Clearing Account</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #FEE2E2; color: #DC2626; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">HKD</span>
-                                <span data-role="entity-status" style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 9230 | Bank Code: 004 | SWIFT: HSBCHKHHHKH</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Yesterday</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="Deutsche Bank" data-account-name="Obita Europe Treasury" data-verification="verified" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #F5F3FF; border-radius: 10px; border: 1px solid #DDD6FE; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #7C3AED; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Deutsche Bank — Obita Europe Treasury</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #EDE9FE; color: #7C3AED; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">EUR</span>
-                                <span style="background: #DBEAFE; color: #1D4ED8; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">USD</span>
-                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">IBAN: DE89 3704 0044 0532 0130 00 | SWIFT: DEUTDEDB</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Last used: Oct 23</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
-
-                    <div class="bank-account-item" data-bank-name="Banco do Brasil" data-account-name="Treasury Reserve Account" data-verification="not-supported" data-status="disabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; opacity: 0.72; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: #F8FAFC; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
-                            <i data-lucide="landmark" style="color: #64748B; width: 18px; height: 18px;"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">Banco do Brasil — Treasury</span>
-                                <span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>
-                                <span data-role="bank-currency" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">BRL</span>
-                                <span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>
-                            </div>
-                            <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: •••• 1058 | Branch: 3321 | SWIFT: BRASBRRJRJO</div>
-                            <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Transfers from this account are currently not supported.</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="disabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8; cursor: pointer;">Enable</button>
-                        <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
-                </div>
                 </div>
             </div>
 
@@ -1837,8 +1549,7 @@
                     <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #B45309;"></i>
                 </div>
                 <div>
-                    <h3 id="edd-fill-drawer-title" style="margin: 0;">Enhanced Due Diligence</h3>
-                    <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Fill in on behalf of the contact. You are responsible for the accuracy and authenticity of the data.</div>
+                    <h3 id="edd-fill-drawer-title" style="margin: 0;">More Information Required</h3>
                 </div>
             </div>
             <button class="icon-btn" onclick="window.closeEddFillDrawer()"><i data-lucide="x"></i></button>

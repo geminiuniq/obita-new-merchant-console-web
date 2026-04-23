@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'transfer-drawer',
         'fiat-transfer-drawer',
         'convert-drawer',
-        'manage-addresses-drawer',
         'bank-account-transactions-drawer',
         'manage-bank-accounts-drawer',
         'activities-drawer',
@@ -625,11 +624,1009 @@ document.addEventListener('DOMContentLoaded', () => {
         // Hide inbox if open
         const inboxD = document.getElementById('inbox-drawer');
         if(inboxD) inboxD.classList.remove('drawer-active');
-        
+
         document.getElementById('wallet-drawer-address').textContent = address;
         document.getElementById('wallet-drawer-type').textContent = type + ' Wallet';
         document.getElementById('wallet-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
+    };
+
+    // History drawer — right-slide panel listing recent transactions for a specific wallet.
+    // Reuses the existing #wallet-drawer shell; each call swaps in the address + label chip
+    // + a fresh recent-activity stub that reads like per-address history.
+    window.openWalletHistoryDrawer = function(address, name, chain) {
+        const inboxD = document.getElementById('inbox-drawer');
+        if (inboxD) inboxD.classList.remove('drawer-active');
+
+        const drawer = document.getElementById('wallet-drawer');
+        if (!drawer) return;
+
+        // Header chip + address
+        const addrEl = document.getElementById('wallet-drawer-address');
+        const typeEl = document.getElementById('wallet-drawer-type');
+        if (addrEl) addrEl.textContent = address;
+        if (typeEl) {
+            const chainColors = {
+                'Ethereum': { bg: '#E0E7FF', color: '#4338CA' },
+                'TRON':     { bg: '#FEE2E2', color: '#DC2626' }
+            };
+            const c = chainColors[chain] || { bg: '#F1F5F9', color: '#475569' };
+            typeEl.style.background = c.bg;
+            typeEl.style.color = c.color;
+            typeEl.textContent = `${name || 'Wallet'} · ${chain}`;
+        }
+
+        // Replace the drawer title to reflect history intent
+        const title = drawer.querySelector('.drawer-header h3');
+        if (title) title.textContent = 'Transaction History';
+
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Full-page Wallet Address detail. Rendered into contentBody so it supports
+    // back navigation and deep-link semantics alongside other order detail pages.
+    // Info rows mirror the Add New Address form fields (Owner Type, Wallet Alias,
+    // Wallet Type, Wallet Address, Network). Actions: Delete + Enable/Disable.
+    window.openWalletAddressDetailPage = function(address, name, chain, verificationKey, statusKey, meta) {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        meta = meta || {};
+        const alias       = meta.alias       || name;
+        const ownerType   = meta.ownerType   || 'organization'; // 'individual' | 'organization'
+        const walletType  = meta.walletType  || 'private';      // 'private' | 'exchange'
+        const unsupported = meta.unsupported === true;
+        const unsupportedSince = meta.unsupportedSince || '';
+        const eddRequired = meta.eddRequired === true;
+
+        // Remember the active wallet so post-2FA re-renders can stay on the same detail page.
+        window._activeWalletAddressDetail = { address, name, chain, verificationKey, statusKey, meta };
+        // Register this page as the current renderer so navBack() restores it exactly.
+        window._currentRender = function() {
+            window.openWalletAddressDetailPage(address, name, chain, verificationKey, statusKey, meta);
+        };
+
+        const chainVisual = {
+            'Ethereum': { bg: '#E0E7FF', color: '#4338CA', initial: 'E' },
+            'TRON':     { bg: '#FEE2E2', color: '#DC2626', initial: 'T' },
+            'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', initial: 'B' },
+            'Solana':   { bg: '#F5F3FF', color: '#7C3AED', initial: 'S' }
+        }[chain] || { bg: '#F1F5F9', color: '#475569', initial: (chain || '?')[0] };
+
+        // Verified chip is a confident green so users immediately register "this wallet is trusted".
+        const verifiedChip = verificationKey === 'verified'
+            ? `<span style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="shield-check" style="width:12px;height:12px;color:#15803D;"></i>Verified</span>`
+            : `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="clock" style="width:12px;height:12px;color:#B45309;"></i>Pending Verification</span>`;
+
+        // A wallet's status is binary: Enabled or Disabled. Pending-verification
+        // wallets are simply Disabled until verification completes.
+        const normalizedStatus = (statusKey === 'enabled') ? 'enabled' : 'disabled';
+        const statusDot   = normalizedStatus === 'enabled' ? '#16A34A' : '#94A3B8';
+        const statusLabel = normalizedStatus === 'enabled' ? 'Enabled'  : 'Disabled';
+        const statusChip = `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><span style="width:7px;height:7px;border-radius:999px;background:${statusDot};"></span>${statusLabel}</span>`;
+
+        // Action button labels/logic
+        const isEnabled = normalizedStatus === 'enabled';
+        // A pending-verification wallet can't be enabled until it's verified.
+        const canToggle = verificationKey !== 'pending';
+        const toggleLabel = isEnabled ? 'Disable' : 'Enable';
+        const toggleIcon  = isEnabled ? 'power-off' : 'power';
+        const toggleStyle = canToggle
+            ? (isEnabled
+                ? `background: white; color: #475569; border: 1px solid #E2E8F0;`
+                : `background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;`)
+            : `background: #F8FAFC; color: #CBD5E1; border: 1px solid #E2E8F0; cursor: not-allowed;`;
+
+        const ownerTypeLabel  = ownerType === 'individual' ? 'Individual' : 'Company';
+        const walletTypeLabel = walletType === 'exchange'  ? 'Exchange / Custodial' : 'Private Wallet';
+        const masked = formatMaskedAddress(address);
+
+        // When a wallet is disabled, the hero header reads as muted / inactive:
+        // lighter surface, desaturated chain icon, and reduced name opacity so the
+        // page feels clearly paused while actions remain reachable.
+        const isDisabled = statusKey === 'disabled';
+        const headerCardStyle = isDisabled
+            ? 'padding: 22px 28px; background: #F8FAFC; filter: saturate(0.6); opacity: 0.82;'
+            : 'padding: 22px 28px;';
+        const headerNameStyle = isDisabled ? 'color: #475569;' : 'color: #0F172A;';
+        const headerIconBg    = isDisabled ? '#F1F5F9' : chainVisual.bg;
+        const headerIconColor = isDisabled ? '#94A3B8' : chainVisual.color;
+
+        // Pending wallets get a Verify Wallet CTA + an inline verify zone (hidden by default)
+        // that reuses the Micro-Transfer / Wallet Signature pattern. Since the wallet was
+        // already saved, the address + network are shown read-only (user can't edit them here).
+        const isPendingVerification = verificationKey === 'pending';
+        const verifyButtonHtml = isPendingVerification
+            ? `<button onclick="window.showWalletAddressVerifyZone()" style="padding: 8px 14px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; font-size: 13px; font-weight: 700; color: #7C3AED; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F5F3FF'">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Verify Wallet
+            </button>`
+            : '';
+        // Build the verify zone markup — rendered hidden; revealed on Verify Wallet click.
+        const networkForVerify = {
+            'Ethereum': 'Ethereum (ERC-20)',
+            'TRON': 'TRON (TRC-20)',
+            'BNB Chain': 'BNB Chain (BEP-20)',
+            'Solana': 'Solana'
+        }[chain] || chain;
+        // Defensive lookup — `OBITA_VERIFY_ADDRESSES` is declared later in the same scope;
+        // typeof guards against any edge-case TDZ and guarantees a non-empty destination
+        // so the QR + address render reliably.
+        const VERIFY_ADDR_FALLBACK = {
+            'TRON (TRC-20)':     'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
+            'Ethereum (ERC-20)': '0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+            'BNB Chain (BEP-20)':'0x742d35Cc6634C0532925a3b8D4C8C3e1b96b8532',
+            'Solana':            '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7ViJoyW2'
+        };
+        const _verifyBook = (typeof OBITA_VERIFY_ADDRESSES !== 'undefined') ? OBITA_VERIFY_ADDRESSES : VERIFY_ADDR_FALLBACK;
+        const destAddr = _verifyBook[networkForVerify] || _verifyBook['TRON (TRC-20)'] || VERIFY_ADDR_FALLBACK['TRON (TRC-20)'];
+        const verifyZoneHtml = isPendingVerification ? `
+            <div id="wad-verify-zone" style="display: none; flex-direction: column; gap: 0;">
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Verify Wallet</div>
+                        <button type="button" onclick="window.hideWalletAddressVerifyZone()" style="background: none; border: none; padding: 4px 8px; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                    </div>
+                    <div style="padding: 20px 28px;">
+                        <!-- Tab header -->
+                        <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border: 1px solid #DDD6FE; border-radius: 10px;">
+                            <button type="button" id="wad-verify-tab-micro" onclick="window.setWadVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                            <button type="button" id="wad-verify-tab-sign" onclick="window.setWadVerifyTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
+                        </div>
+
+                        <!-- Read-only wallet summary (address + network) — shared by both tabs -->
+                        <div style="margin-top: 16px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; align-items: center;">
+                                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Wallet Address</div>
+                                <div style="font-family: monospace; font-size: 12px; color: #0F172A; font-weight: 600; word-break: break-all;">${address}</div>
+                                <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Network</div>
+                                <div style="font-size: 12px; color: #0F172A; font-weight: 600;">${networkForVerify}</div>
+                            </div>
+                            <div style="font-size: 11px; color: #94A3B8; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="lock" style="width:11px;height:11px;"></i> Address and network are read-only for verification of the saved wallet.</div>
+                        </div>
+
+                        <!-- Micro-Transfer content -->
+                        <div id="wad-verify-micro" style="margin-top: 16px; display: flex; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; color: #334155; line-height: 1.7;">Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.</div>
+
+                            <!-- Verification Transfer Details — plain block layout (no overflow:hidden wrapper) -->
+                            <div style="border: 1px solid #E2E8F0; border-radius: 10px;">
+                                <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; border-radius: 10px 10px 0 0;">Verification Transfer Details</div>
+
+                                <!-- Amount -->
+                                <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8;">Amount</div>
+                                        <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+
+                                <!-- QR + Obita verification address -->
+                                <div style="padding: 14px 16px; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 11px; color: #94A3B8; margin-bottom: 10px;">Obita Verification Address</div>
+                                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}" alt="QR Code" style="width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; flex-shrink: 0; display: block;">
+                                        <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                                            <div id="wad-verify-dest" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.55;">${destAddr}</div>
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('wad-verify-dest').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy Address</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Network -->
+                                <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                        <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">${networkForVerify}</div>
+                                    </div>
+                                    <button type="button" onclick="navigator.clipboard.writeText('${networkForVerify}')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                </div>
+                            </div>
+
+                            <!-- Share button -->
+                            <button type="button" onclick="window.shareWadVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                                <i data-lucide="share-2" style="width: 15px; height: 15px;"></i>
+                                Share
+                            </button>
+                            <pre id="wad-verify-share-text" style="display:none;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${networkForVerify}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+
+                            <!-- Amber warning -->
+                            <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised.</span>
+                            </div>
+
+                            <!-- Simulated "transfer detected" confirmation — 2FA-gated -->
+                            <button type="button" onclick="window.completeWalletVerification()" style="padding: 10px 16px; background: #7C3AED; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%;" onmouseover="this.style.background='#6D28D9'" onmouseout="this.style.background='#7C3AED'">
+                                <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> I have sent the transfer — Verify
+                            </button>
+                        </div>
+
+                        <!-- Wallet Signature content -->
+                        <div id="wad-verify-sign" style="margin-top: 16px; display: none; flex-direction: column; gap: 14px;">
+                            <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect the wallet above to sign a verification message and instantly prove ownership.</div>
+                            <div id="wad-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="button" onclick="window.wadSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                    <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                                </button>
+                                <button type="button" onclick="window.wadSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                                    <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                                </button>
+                            </div>
+                            <div id="wad-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                                <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                                <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                            </div>
+                            <div id="wad-sign-result" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                                <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed. Status will update after approval.</div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ` : '';
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="${headerCardStyle}">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                            <div style="width: 48px; height: 48px; background: ${headerIconBg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 19px; font-weight: 800; color: ${headerIconColor}; letter-spacing: -0.02em;">${chainVisual.initial}</div>
+                            <div style="min-width: 0;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; ${headerNameStyle}">${alias}</h1>
+                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    ${verifiedChip}
+                                    ${statusChip}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Action row: Verify Wallet (pending only) + Enable/Disable toggle + Delete -->
+                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
+                            ${verifyButtonHtml}
+                            <button ${canToggle ? '' : 'disabled'} onclick="window.toggleWalletAddressStatus('${address}')" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
+                                <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
+                            </button>
+                            <button onclick="window.deleteWalletAddress('${address}','${alias.replace(/'/g, "\\'")}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: Basic Information — mirrors Add New Address Section 1 -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Owner Type</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${ownerTypeLabel}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Alias</div>
+                            <!-- Display mode: alias + pencil to edit -->
+                            <div id="wa-alias-display" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;">
+                                <span id="wa-alias-text" style="font-size: 14px; font-weight: 700; color: #0F172A;">${alias}</span>
+                                <button type="button" onclick="window.startEditWalletAlias()" aria-label="Edit wallet alias" title="Edit alias" style="background: none; border: none; padding: 4px; color: #94A3B8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.background='#EFF6FF'" onmouseout="this.style.color='#94A3B8';this.style.background='transparent'">
+                                    <i data-lucide="pencil" style="width: 13px; height: 13px;"></i>
+                                </button>
+                            </div>
+                            <!-- Edit mode: input + save / cancel -->
+                            <div id="wa-alias-edit" style="display: none; align-items: center; gap: 8px; margin-top: 5px;">
+                                <input id="wa-alias-input" type="text" value="${alias.replace(/"/g, '&quot;')}" style="flex: 1; min-width: 0; padding: 6px 10px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; background: white; box-sizing: border-box; font-family: inherit; outline: none;" onkeydown="if(event.key==='Enter'){event.preventDefault();window.saveEditWalletAlias()} if(event.key==='Escape'){window.cancelEditWalletAlias()}">
+                                <button type="button" onclick="window.saveEditWalletAlias()" style="padding: 5px 10px; border: 1px solid #2563EB; background: #2563EB; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                                    <i data-lucide="check" style="width: 12px; height: 12px;"></i> Save
+                                </button>
+                                <button type="button" onclick="window.cancelEditWalletAlias()" style="padding: 5px 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${unsupported ? `
+                <!-- Unsupported-wallet banner — surfaces the same notice the user saw on the Stablecoin Vault's Important Notices -->
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FED7AA; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                    <div style="padding: 16px 24px; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #FEF3C7; color: #D97706; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px;">UNSUPPORTED</span>
+                                <div style="font-size: 14px; font-weight: 800; color: #9A3412;">This wallet is no longer supported for transactions</div>
+                            </div>
+                            <div style="font-size: 13px; color: #7C2D12; margin-top: 8px; line-height: 1.6;">This destination can't be used for new transfers. Please whitelist a replacement address — contact support if you need help.</div>
+                            ${unsupportedSince ? `<div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 14px; font-size: 11px; color: #92400E;">
+                                <span><strong style="color: #7C2D12;">Time:</strong> ${unsupportedSince}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${eddRequired ? `
+                <!-- EDD (Enhanced Due Diligence) required — reuses the Payee detail page pattern but
+                     surfaces only the "Fill in on behalf" mode. -->
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FDE68A; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                    <div style="padding: 20px 24px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid #FDE68A;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #FDE68A;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px; color: #B45309;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="font-size: 16px; font-weight: 800; color: #0F172A;">More Information Required</div>
+                                <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Action Needed</span>
+                            </div>
+                            <div style="font-size: 12.5px; color: #64748B; margin-top: 6px; line-height: 1.6;">Enhanced Due Diligence has been triggered for this wallet. Please complete the additional information on behalf of the wallet owner.</div>
+                        </div>
+                    </div>
+
+                    <!-- Single "Fill in on behalf" action -->
+                    <div style="padding: 20px 24px;">
+                        <div style="padding: 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 28px; height: 28px; border-radius: 7px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="pencil" style="width: 13px; height: 13px; color: #2563EB;"></i>
+                                </div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Fill in on behalf</div>
+                            </div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.6;">You are responsible for the <strong style="color: #334155;">accuracy and authenticity</strong> of the information entered. Any discrepancies may delay or block future transactions.</div>
+                            <button class="btn btn-primary" onclick="window.startWalletEddFill()" style="padding: 9px 14px; font-size: 12px; font-weight: 700; align-self: flex-start;">Start Filling</button>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- SECTION 2: Wallet Details — mirrors Add New Address Section 2 -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Details</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Type</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${walletTypeLabel}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Network / Chain</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; display: inline-flex; align-items: center; gap: 6px;">
+                                <span style="background: ${chainVisual.bg}; color: ${chainVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${chain}</span>
+                            </div>
+                        </div>
+                        <!-- Wallet Address row spans both columns -->
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Address</div>
+                            <!-- Address + Reveal + Copy sit on a single baseline. The '3ch' margin on the
+                                 Reveal button gives the requested 3-character gap after the address. -->
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                                <span id="wa-detail-address" data-masked="${masked.replace(/"/g, '&quot;')}" data-full="${address.replace(/"/g, '&quot;')}" data-state="masked" style="font-family: monospace; font-size: 14px; color: #0F172A; font-weight: 600; word-break: break-all;">${masked}</span>
+                                <button type="button" onclick="window.toggleWalletAddressMask()" style="margin-left: 3ch; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
+                                    <i data-lucide="eye" id="wa-detail-eye" style="width: 12px; height: 12px;"></i>
+                                    <span id="wa-detail-eye-label">Reveal</span>
+                                </button>
+                                <button type="button" onclick="navigator.clipboard.writeText('${address}')" style="margin-left: 6px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
+                                    <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Ownership Declaration</div>
+                            <div style="font-size: 13px; color: #334155; margin-top: 6px; line-height: 1.55; display: inline-flex; align-items: flex-start; gap: 8px;">
+                                <i data-lucide="check-circle-2" style="width: 15px; height: 15px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
+                                <span>Owner declared that this wallet belongs to the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${verifyZoneHtml}
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+
+        // When arriving with meta.autoOpenVerify set (e.g. from the Important
+        // Notices "Verify Wallet" action), open the Verify Wallet zone and
+        // scroll it into view after the page settles.
+        if (meta.autoOpenVerify === true && isPendingVerification) {
+            setTimeout(() => {
+                window.showWalletAddressVerifyZone?.();
+                const zone = document.getElementById('wad-verify-zone');
+                if (zone) zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 120);
+        }
+    };
+
+    // --- Pending-wallet verification on the detail page ---
+    window.showWalletAddressVerifyZone = function() {
+        const zone = document.getElementById('wad-verify-zone');
+        if (!zone) return;
+        zone.style.display = 'flex';
+        // Reset to Micro tab each time it opens
+        window.setWadVerifyTab?.('micro');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    window.hideWalletAddressVerifyZone = function() {
+        const zone = document.getElementById('wad-verify-zone');
+        if (zone) zone.style.display = 'none';
+    };
+
+    window.setWadVerifyTab = function(tab) {
+        const micro = document.getElementById('wad-verify-micro');
+        const sign  = document.getElementById('wad-verify-sign');
+        const tabM  = document.getElementById('wad-verify-tab-micro');
+        const tabS  = document.getElementById('wad-verify-tab-sign');
+        if (tab === 'micro') {
+            if (micro) micro.style.display = 'flex';
+            if (sign)  sign.style.display  = 'none';
+            if (tabM) { tabM.style.background = 'white'; tabM.style.color = '#7C3AED'; tabM.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabS) { tabS.style.background = 'transparent'; tabS.style.color = '#64748B'; tabS.style.boxShadow = 'none'; }
+        } else {
+            if (sign)  sign.style.display  = 'flex';
+            if (micro) micro.style.display = 'none';
+            if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
+            if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
+            // Reset sign flow to picker when entering
+            const sel = document.getElementById('wad-sign-select');
+            const pend = document.getElementById('wad-sign-pending');
+            const res  = document.getElementById('wad-sign-result');
+            if (sel)  sel.style.display  = 'grid';
+            if (pend) pend.style.display = 'none';
+            if (res)  res.style.display  = 'none';
+        }
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Share / copy-to-clipboard for the Wallet Address detail verification instructions.
+    window.shareWadVerification = function(btn) {
+        const text = document.getElementById('wad-verify-share-text')?.textContent?.trim() || '';
+        const showFeedback = (label, color) => {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" style="width:15px;height:15px;"></i> ${label}`;
+            btn.style.background = color;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.background = '#0F172A';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1400);
+        };
+        if (navigator.share) {
+            navigator.share({ title: 'Obita Wallet Verification', text })
+                .then(() => showFeedback('Shared', '#059669'))
+                .catch(() => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showFeedback('Copied', '#059669'))
+                        .catch(() => showFeedback('Copied', '#059669'));
+                });
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => showFeedback('Copied', '#059669'))
+                .catch(() => showFeedback('Copied', '#059669'));
+        }
+    };
+
+    // Shared "present pending panel / present success panel" helpers for the wallet
+    // detail verify zone. Extracted so the real and mock paths can share UI plumbing.
+    const _wadShowPending = () => {
+        const sel  = document.getElementById('wad-sign-select');
+        const pend = document.getElementById('wad-sign-pending');
+        const res  = document.getElementById('wad-sign-result');
+        if (sel)  sel.style.display  = 'none';
+        if (pend) pend.style.display = 'flex';
+        if (res)  res.style.display  = 'none';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    const _wadShowSuccess = () => {
+        const pend = document.getElementById('wad-sign-pending');
+        const res  = document.getElementById('wad-sign-result');
+        if (pend) pend.style.display = 'none';
+        if (res)  res.style.display  = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        // After signature capture, 2FA is required to persist the verified state.
+        setTimeout(() => window.completeWalletVerification(), 600);
+    };
+    const _wadShowFailure = (message) => {
+        const sel  = document.getElementById('wad-sign-select');
+        const pend = document.getElementById('wad-sign-pending');
+        if (pend) pend.style.display = 'none';
+        if (sel)  sel.style.display  = 'grid';
+        alert(message || 'Signature failed. Please try again.');
+    };
+
+    // Invokes the real MetaMask extension (window.ethereum) to produce a signed
+    // verification message. Falls back to a mock handshake only when no provider
+    // is injected, so the demo still works without the extension installed.
+    window.wadSignMetaMask = async function() {
+        _wadShowPending();
+        const d = window._activeWalletAddressDetail;
+        const address = d?.address || '';
+        const message = `Obita Wallet Verification · ${address} · Nonce: OBT-${Date.now().toString(36).toUpperCase()}`;
+        if (window.ethereum && typeof window.ethereum.request === 'function') {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const signer = (accounts && accounts[0]) || '';
+                await window.ethereum.request({ method: 'personal_sign', params: [message, signer] });
+                _wadShowSuccess();
+                return;
+            } catch (err) {
+                const msg = err && err.code === 4001
+                    ? 'Signature request was rejected in MetaMask.'
+                    : (err && err.message) || 'MetaMask signing failed. Please try again.';
+                _wadShowFailure(msg);
+                return;
+            }
+        }
+        // No MetaMask extension detected — fall back to the mock so the demo flows.
+        setTimeout(_wadShowSuccess, 1400);
+    };
+
+    // WalletConnect path stays mocked (real WalletConnect integration requires the
+    // WC SDK + a relay; out of scope for this demo).
+    window.wadSignWC = function() {
+        _wadShowPending();
+        setTimeout(_wadShowSuccess, 1400);
+    };
+
+    // Enters the "Fill in on behalf" EDD flow for a wallet. Reuses the existing
+    // #edd-fill-drawer and mirrors the Payee EDD form layout (amber notice +
+    // structured fields + Submit Information button at the footer).
+    window.startWalletEddFill = function() {
+        const d = window._activeWalletAddressDetail;
+        if (!d) return;
+
+        const entry = Array.isArray(window._addressBookEntries)
+            ? window._addressBookEntries.find(e => e.address === d.address)
+            : null;
+        const alias = (d.meta && d.meta.alias) || d.name || entry?.alias || 'this wallet';
+        const ownerType = (d.meta && d.meta.ownerType) || entry?.ownerType || 'organization';
+        const mi = (entry && entry.eddInfo) || {};
+
+        const drawer = document.getElementById('edd-fill-drawer');
+        const body   = document.getElementById('edd-fill-drawer-body');
+        const title  = document.getElementById('edd-fill-drawer-title');
+        if (!drawer || !body) { alert('EDD form drawer is unavailable.'); return; }
+
+        // Drawer title is fixed copy — "More Information Required" — not personalised.
+        if (title) title.textContent = 'More Information Required';
+
+        const countries = ['Hong Kong','China','United States','United Kingdom','Singapore','Japan','South Korea','Australia','Canada','Germany','France','Netherlands','Switzerland','UAE','India','Brazil','Mexico','Thailand','Vietnam','Malaysia','Indonesia','Philippines'];
+        const industries = ['Technology / Software','E-commerce / Retail','Financial Services','Manufacturing','Logistics / Shipping','Trading / Import-Export','Professional Services','Media / Advertising','Real Estate','Healthcare','Education','Hospitality / F&B','Construction','Energy','Telecommunications','Other'];
+
+        const isCompany = ownerType === 'organization';
+        const fieldsHtml = isCompany ? `
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Company Full Name *</label>
+                <input id="wedd-field-company-name" class="bank-form-control" type="text" placeholder="Full registered company name" value="${(mi.companyName || alias).replace(/"/g, '&quot;')}">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Industry *</label>
+                    <select id="wedd-field-industry" class="bank-form-control">
+                        <option value="">— Select industry —</option>
+                        ${industries.map(i => `<option value="${i}" ${mi.industry === i ? 'selected' : ''}>${i}</option>`).join('')}
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Country of Registration *</label>
+                    <select id="wedd-field-country" class="bank-form-control">
+                        <option value="">— Select country —</option>
+                        ${countries.map(c => `<option value="${c}" ${mi.country === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Company Address *</label>
+                <input id="wedd-field-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${(mi.address || '').replace(/"/g, '&quot;')}">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Tax ID / Business Registration Number *</label>
+                <input id="wedd-field-taxid" class="bank-form-control" type="text" placeholder="e.g. BR-123456789" value="${(mi.taxId || '').replace(/"/g, '&quot;')}">
+            </div>
+        ` : `
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">First Name *</label>
+                    <input id="wedd-field-fname" class="bank-form-control" type="text" value="${(mi.firstName || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Middle Name</label>
+                    <input id="wedd-field-mname" class="bank-form-control" type="text" value="${(mi.middleName || '').replace(/"/g, '&quot;')}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Surname *</label>
+                    <input id="wedd-field-lname" class="bank-form-control" type="text" value="${(mi.lastName || '').replace(/"/g, '&quot;')}">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Date of Birth *</label>
+                    <input id="wedd-field-dob" class="bank-form-control" type="date" value="${mi.dob || ''}">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="bank-form-label">Country of Residence *</label>
+                    <select id="wedd-field-country" class="bank-form-control">
+                        <option value="">— Select country —</option>
+                        ${countries.map(c => `<option value="${c}" ${mi.country === c ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px;">
+                <label class="bank-form-label">Residential Address *</label>
+                <input id="wedd-field-address" class="bank-form-control" type="text" placeholder="Street, City, Postal Code" value="${(mi.address || '').replace(/"/g, '&quot;')}">
+            </div>
+        `;
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 12px; color: #92400E; line-height: 1.65; display: flex; align-items: flex-start; gap: 8px;">
+                        <i data-lucide="shield-alert" style="width: 14px; height: 14px; color: #B45309; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span>You are entering data on behalf of <strong>${alias}</strong>. Please ensure every field is accurate and authentic. Incorrect information may delay or block future transactions.</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label class="bank-form-label">Email *</label>
+                        <input id="wedd-field-email" class="bank-form-control" type="email" value="${(mi.email || '').replace(/"/g, '&quot;')}" placeholder="email@example.com">
+                    </div>
+                    ${fieldsHtml}
+                </div>
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-outline" onclick="window.closeWalletEddFillDrawer()" style="padding: 9px 16px; font-size: 13px;">Cancel</button>
+                    <button class="btn btn-primary" onclick="window.submitWalletEddFill()" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Submit Information</button>
+                </div>
+            </div>
+        `;
+
+        // Close any other drawers, then open this one
+        (window.ALL_DRAWER_IDS || []).forEach(id => {
+            if (id !== 'edd-fill-drawer') {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('drawer-active');
+            }
+        });
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        setTimeout(() => body.querySelector('input, select')?.focus({ preventScroll: true }), 280);
+    };
+
+    window.closeWalletEddFillDrawer = function() {
+        const drawer = document.getElementById('edd-fill-drawer');
+        if (drawer) drawer.classList.remove('drawer-active');
+        document.body.classList.remove('drawer-open');
+    };
+
+    window.submitWalletEddFill = function(token) {
+        const d = window._activeWalletAddressDetail;
+        if (!d) { window.closeWalletEddFillDrawer(); return; }
+        const entry = Array.isArray(window._addressBookEntries)
+            ? window._addressBookEntries.find(e => e.address === d.address)
+            : null;
+        const ownerType = (d.meta && d.meta.ownerType) || entry?.ownerType || 'organization';
+        const isCompany = ownerType === 'organization';
+
+        const val = (id) => (document.getElementById(id)?.value || '').trim();
+        const email   = val('wedd-field-email');
+        const address = val('wedd-field-address');
+        const country = val('wedd-field-country');
+
+        if (!email)   { alert('Email is required.');   return; }
+        if (!address) { alert('Address is required.'); return; }
+        if (!country) { alert('Country is required.'); return; }
+
+        const info = { email, address, country };
+        if (isCompany) {
+            info.companyName = val('wedd-field-company-name');
+            info.industry    = val('wedd-field-industry');
+            info.taxId       = val('wedd-field-taxid');
+            if (!info.companyName) { alert('Company full name is required.'); return; }
+            if (!info.industry)    { alert('Industry is required.');          return; }
+            if (!info.taxId)       { alert('Tax ID is required.');            return; }
+        } else {
+            info.firstName  = val('wedd-field-fname');
+            info.middleName = val('wedd-field-mname');
+            info.lastName   = val('wedd-field-lname');
+            info.dob        = val('wedd-field-dob');
+            if (!info.firstName) { alert('First name is required.'); return; }
+            if (!info.lastName)  { alert('Surname is required.');    return; }
+            if (!info.dob)       { alert('Date of birth is required.'); return; }
+        }
+
+        // 2FA gate — the operator confirming the additional-info submission must
+        // verify with Google Authenticator before the data is persisted. Stash the
+        // validated form values so the re-invocation after 2FA success doesn't
+        // re-read (and possibly miss) inputs if the drawer state has mutated.
+        if (token !== TWO_FA_TOKEN) {
+            window._pendingWalletEddInfo = info;
+            window.openTwoFactorModal({
+                actionLabel: 'Submit Information',
+                actionSubject: 'information submission',
+                onSuccess: () => window.submitWalletEddFill(TWO_FA_TOKEN)
+            });
+            return;
+        }
+
+        // Prefer the stashed values captured pre-2FA (form inputs still exist since
+        // the 2FA modal is an overlay, but this keeps behaviour robust).
+        const finalInfo = window._pendingWalletEddInfo || info;
+        window._pendingWalletEddInfo = null;
+
+        // Persist to the in-memory entry and clear the required flag.
+        if (entry) {
+            entry.eddInfo = finalInfo;
+            entry.eddRequired = false;
+        }
+        // Patch meta so the re-render reflects the completed state.
+        d.meta = Object.assign({}, d.meta || {}, { eddRequired: false, eddInfo: finalInfo });
+        window._activeWalletAddressDetail = d;
+
+        // Swap the drawer body into an inline success state instead of a browser alert.
+        const body = document.getElementById('edd-fill-drawer-body');
+        if (body) {
+            body.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; gap: 18px;">
+                        <div style="width: 64px; height: 64px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC;">
+                            <i data-lucide="check" style="width: 30px; height: 30px; color: #15803D;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Information Submitted</div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.65; max-width: 360px; margin: 0 auto;">Thanks — the additional information has been submitted. You'll be notified by email once the review is complete.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button class="btn btn-primary" onclick="window.closeWalletEddFillDrawer(); window.openWalletAddressDetailPage(window._activeWalletAddressDetail.address, window._activeWalletAddressDetail.name, window._activeWalletAddressDetail.chain, window._activeWalletAddressDetail.verificationKey, window._activeWalletAddressDetail.statusKey, window._activeWalletAddressDetail.meta);" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Done</button>
+                    </div>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+    };
+
+    // Inline edit for the Wallet Alias on the detail page.
+    window.startEditWalletAlias = function() {
+        const display = document.getElementById('wa-alias-display');
+        const edit    = document.getElementById('wa-alias-edit');
+        const input   = document.getElementById('wa-alias-input');
+        if (display) display.style.display = 'none';
+        if (edit)    edit.style.display    = 'inline-flex';
+        if (input)   { input.focus(); input.select(); }
+    };
+
+    window.cancelEditWalletAlias = function() {
+        const display = document.getElementById('wa-alias-display');
+        const edit    = document.getElementById('wa-alias-edit');
+        const input   = document.getElementById('wa-alias-input');
+        const text    = document.getElementById('wa-alias-text');
+        // Revert the input to the last-known good alias (in the display text).
+        if (input && text) input.value = text.textContent;
+        if (edit)    edit.style.display    = 'none';
+        if (display) display.style.display = 'inline-flex';
+    };
+
+    window.saveEditWalletAlias = function() {
+        const input = document.getElementById('wa-alias-input');
+        const newAlias = (input?.value || '').trim();
+        if (!newAlias) { alert('Wallet alias cannot be empty.'); return; }
+        // Update the in-memory entry so it sticks across navigations.
+        const d = window._activeWalletAddressDetail;
+        if (d && Array.isArray(window._addressBookEntries)) {
+            const entry = window._addressBookEntries.find(e => e.address === d.address);
+            if (entry) entry.alias = newAlias;
+        }
+        // Patch active state + re-render the detail page in place so the header,
+        // section heading, and meta all reflect the new alias.
+        if (d) {
+            d.name = newAlias;
+            d.meta = Object.assign({}, d.meta || {}, { alias: newAlias });
+            window._activeWalletAddressDetail = d;
+            window.openWalletAddressDetailPage(d.address, d.name, d.chain, d.verificationKey, d.statusKey, d.meta);
+        }
+    };
+
+    // Reveal / mask toggle for the detail page address.
+    window.toggleWalletAddressMask = function() {
+        const el    = document.getElementById('wa-detail-address');
+        const icon  = document.getElementById('wa-detail-eye');
+        const label = document.getElementById('wa-detail-eye-label');
+        if (!el) return;
+        const nextMasked = el.dataset.state === 'full';
+        el.textContent = nextMasked ? el.dataset.masked : el.dataset.full;
+        el.dataset.state = nextMasked ? 'masked' : 'full';
+        if (icon)  icon.setAttribute('data-lucide', nextMasked ? 'eye' : 'eye-off');
+        if (label) label.textContent = nextMasked ? 'Reveal' : 'Hide';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Helper — re-render the detail page with updated state after an action.
+    const _rerenderActiveWalletDetail = (patch) => {
+        const d = window._activeWalletAddressDetail;
+        if (!d) return;
+        const next = Object.assign({}, d, patch || {});
+        window._activeWalletAddressDetail = next;
+        window.openWalletAddressDetailPage(next.address, next.name, next.chain, next.verificationKey, next.statusKey, next.meta);
+    };
+
+    // All detail-page actions go through 2FA (token-argument pattern). On success
+    // the page re-renders in place so the user stays on the wallet detail view.
+    window.toggleWalletAddressStatus = function(address, token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Update Wallet Status',
+                actionSubject: 'wallet status change',
+                onSuccess: () => window.toggleWalletAddressStatus(address, TWO_FA_TOKEN)
+            });
+            return;
+        }
+        const d = window._activeWalletAddressDetail;
+        if (!d) { window.backToStablecoinVaultFromWallet?.(); return; }
+        const nextStatus = d.statusKey === 'enabled' ? 'disabled' : 'enabled';
+        _rerenderActiveWalletDetail({ statusKey: nextStatus });
+    };
+
+    window.deleteWalletAddress = function(address, alias, token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Delete Wallet',
+                actionSubject: 'wallet deletion',
+                onSuccess: () => window.deleteWalletAddress(address, alias, TWO_FA_TOKEN)
+            });
+            return;
+        }
+        // After 2FA-confirmed deletion, the wallet no longer exists — navigate back.
+        alert(`Wallet "${alias}" has been deleted.`);
+        window.backToStablecoinVaultFromWallet?.();
+    };
+
+    // Called by the Micro-Transfer "Confirm Verification" path OR the Wallet Signature
+    // success path. Both are 2FA-gated before marking the wallet as verified.
+    window.completeWalletVerification = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Verify Wallet',
+                actionSubject: 'wallet verification',
+                onSuccess: () => window.completeWalletVerification(TWO_FA_TOKEN)
+            });
+            return;
+        }
+        // After verification: flip verification to 'verified'. Status moves from
+        // 'pending' to 'disabled' — the user explicitly enables from there.
+        _rerenderActiveWalletDetail({ verificationKey: 'verified', statusKey: 'disabled' });
+    };
+
+    // --- Lightweight in-app navigation stack ---
+    // Every forward navigation between Stablecoin Vault / Address Book / Add New
+    // Address / Wallet Detail calls navGo(newRenderer), which saves the current
+    // page's renderer so the Back button can restore exactly where the user was.
+    window._navStack = [];
+    window._currentRender = null;
+
+    // Internal helper: renders the Stablecoin Vault page and becomes the current
+    // renderer. Used both as a standalone navigation target and as the fallback
+    // when the back-stack is empty.
+    window.renderStablecoinVaultPage = function() {
+        const contentBody = document.getElementById('content-body');
+        if (contentBody && typeof stablecoinVaultHTML !== 'undefined') {
+            contentBody.innerHTML = stablecoinVaultHTML;
+        }
+        window.renderStablecoinVaultAddressCards?.();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+        window._currentRender = window.renderStablecoinVaultPage;
+    };
+
+    // Populates the Stablecoin Vault's Address Book cards section with the 3
+    // most recently added Active (verified + enabled) wallets from the in-memory
+    // address book. Newest first. Always appends the dashed "Add Wallet Address"
+    // tile after the wallet cards.
+    window.renderStablecoinVaultAddressCards = function() {
+        const container = document.getElementById('sv-address-book-cards');
+        if (!container) return;
+        const entries = Array.isArray(window._addressBookEntries) ? window._addressBookEntries : [];
+        const active = entries
+            .filter(e => e.verification === 'verified' && e.status === 'enabled')
+            .slice(0, 3);
+
+        const chainVisual = {
+            'Ethereum': { bg: '#E0E7FF', color: '#4338CA', initial: 'E' },
+            'TRON':     { bg: '#FEE2E2', color: '#DC2626', initial: 'T' },
+            'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', initial: 'B' },
+            'Solana':   { bg: '#F5F3FF', color: '#7C3AED', initial: 'S' }
+        };
+
+        const cardHtml = active.map(entry => {
+            const chain = chainVisual[entry.chain] || { bg: '#F1F5F9', color: '#475569', initial: (entry.chain || '?')[0] };
+            const aliasEsc = entry.alias.replace(/'/g, "\\'");
+            const addrEsc  = entry.address.replace(/'/g, "\\'");
+            const metaPayload = { ownerType: entry.ownerType, walletType: entry.walletType, alias: entry.alias };
+            if (entry.unsupported)       metaPayload.unsupported = true;
+            if (entry.unsupportedSince)  metaPayload.unsupportedSince = entry.unsupportedSince;
+            if (entry.eddRequired)       metaPayload.eddRequired = true;
+            const metaJson = JSON.stringify(metaPayload).replace(/"/g, '&quot;');
+
+            return `
+                <div data-meta="${metaJson}" onclick="if(!window._currentRender)window._currentRender=window.renderStablecoinVaultPage;window.navGo(()=>window.openWalletAddressDetailPage('${addrEsc}','${aliasEsc}','${entry.chain}','${entry.verification}','${entry.status}',JSON.parse(this.dataset.meta)))" style="position: relative; background: #FFFFFF; border: 1px solid #C7D2FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(79,70,229,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 10px 24px rgba(79,70,229,0.14)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(79,70,229,0.06)'">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                        <div style="width: 38px; height: 38px; background: ${chain.bg}; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 15px; font-weight: 800; color: ${chain.color}; letter-spacing: -0.02em;">${chain.initial}</div>
+                        <div style="min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">${entry.alias}</div>
+                            <span style="background: ${chain.bg}; color: ${chain.color}; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${entry.chain}</span>
+                            <span style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="shield-check" style="width:10px;height:10px;color:#15803D;"></i>Verified</span>
+                            <span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:#16A34A;"></span>Enabled</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatMaskedAddress(entry.address)}</div>
+                    <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end;">
+                        <button type="button" onclick="event.stopPropagation(); window.openWalletHistoryDrawer('${addrEsc}','${aliasEsc}','${entry.chain}')" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #475569; cursor: pointer; font-family: inherit;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1';this.style.color='#1D4ED8'" onmouseout="this.style.background='transparent';this.style.borderColor='#E2E8F0';this.style.color='#475569'">
+                            <i data-lucide="history" style="width: 12px; height: 12px;"></i> History
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const addTile = `
+            <div onclick="window.openManageAddressesDrawer()" style="border: 2px dashed #CBD5E1; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 168px; transition: border-color 0.15s, background 0.15s;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 13px; font-weight: 600; color: #475569;">Add Wallet Address</div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = cardHtml + addTile;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Navigate forward — push the current renderer so Back can restore it, then
+    // invoke the new renderer. Call sites pass a function (usually a closure
+    // capturing the specific args for the new page).
+    window.navGo = function(nextRenderer) {
+        if (typeof nextRenderer !== 'function') return;
+        if (window._currentRender) window._navStack.push(window._currentRender);
+        nextRenderer();
+    };
+
+    // Back: pop the stack and invoke. Falls back to the Stablecoin Vault if the
+    // stack is empty (typical entry point for wallet-related flows).
+    window.navBack = function() {
+        const prev = window._navStack.pop();
+        if (typeof prev === 'function') {
+            prev();
+        } else {
+            window.renderStablecoinVaultPage();
+        }
+    };
+
+    // Legacy alias — retained so any stray onclick still works. Goes back through
+    // the stack instead of hardcoding Stablecoin Vault.
+    window.backToStablecoinVaultFromWallet = function() {
+        window.navBack();
     };
     document.getElementById('close-wallet-btn').addEventListener('click', closeAllDrawers);
     document.getElementById('close-topup-btn').addEventListener('click', closeAllDrawers);
@@ -715,7 +1712,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'close-transfer-btn',
         'close-fiat-transfer-btn',
         'close-convert-btn',
-        'close-addr-btn',
         'close-bank-account-transactions-btn',
         'close-bank-accounts-btn',
         'close-activities-btn',
@@ -982,18 +1978,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Wallet signature flow for verify drawer
-    window.vdSignMetaMask = function() {
+    // Wallet signature flow for verify drawer — invokes the real MetaMask extension
+    // via window.ethereum when available, falls back to the mock otherwise.
+    const _vdShowPending = () => {
         document.getElementById('vd-sign-select').style.display = 'none';
         document.getElementById('vd-sign-pending').style.display = 'flex';
-        setTimeout(() => {
-            document.getElementById('vd-sign-pending').style.display = 'none';
-            document.getElementById('vd-sign-result').style.display = 'flex';
-            document.getElementById('vd-sign-ok').style.display = 'flex';
-            lucide.createIcons();
-        }, 2000);
     };
-    window.vdSignWC = window.vdSignMetaMask;
+    const _vdShowSuccess = () => {
+        document.getElementById('vd-sign-pending').style.display = 'none';
+        document.getElementById('vd-sign-result').style.display = 'flex';
+        document.getElementById('vd-sign-ok').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    const _vdShowFailure = (message) => {
+        document.getElementById('vd-sign-pending').style.display = 'none';
+        document.getElementById('vd-sign-select').style.display = 'grid';
+        alert(message || 'Signature failed. Please try again.');
+    };
+    window.vdSignMetaMask = async function() {
+        _vdShowPending();
+        const message = `Obita Verify Drawer · Nonce: OBT-${Date.now().toString(36).toUpperCase()}`;
+        if (window.ethereum && typeof window.ethereum.request === 'function') {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const signer = (accounts && accounts[0]) || '';
+                await window.ethereum.request({ method: 'personal_sign', params: [message, signer] });
+                _vdShowSuccess();
+                return;
+            } catch (err) {
+                const msg = err && err.code === 4001
+                    ? 'Signature request was rejected in MetaMask.'
+                    : (err && err.message) || 'MetaMask signing failed. Please try again.';
+                _vdShowFailure(msg);
+                return;
+            }
+        }
+        // No MetaMask injected — mock the handshake so the demo still works.
+        setTimeout(_vdShowSuccess, 2000);
+    };
+    window.vdSignWC = function() {
+        _vdShowPending();
+        setTimeout(_vdShowSuccess, 2000);
+    };
     window.vdSignReset = function() {
         document.getElementById('vd-sign-select').style.display = 'grid';
         document.getElementById('vd-sign-pending').style.display = 'none';
@@ -1257,18 +2283,400 @@ document.addEventListener('DOMContentLoaded', () => {
         closeAllDrawers();
     };
 
-    // --- Manage Addresses Drawer Logic ---
+    // --- Address Book (full-page version) ---
+    // Entries are kept as an in-memory array so additions stay consistent whether
+    // the user came in via the Stablecoin Vault or via a detail-page edit.
+    // Newest-first ordering is preserved.
+
+    // ---- Canonical bank-account source of truth ----
+    // Both the Fiat Vault page (Connected Bank Accounts card group) AND the
+    // Manage Accounts drawer (list view) read from this array — so adding,
+    // toggling, or deleting a bank account stays consistent across both views.
+    window._bankAccountEntries = window._bankAccountEntries || [
+        // --- Group 1: 由 Obita 开设 ---
+        { group: 'obita',  bank: 'Chase Bank',         alias: 'Corporate Account',      accountHolderName: '华信科技有限公司',     currency: 'USD',                         verification: 'verified',     status: 'enabled',  sameName: true, accountMasked: '•••• 4821',  accountFull: '1234564821',             routing: '021000021',  swift: 'CHASUS33',    country: 'United States',   lastUsed: 'Today',     iconColor: '#1D4ED8', iconBg: '#EFF6FF' },
+        { group: 'obita',  bank: 'HSBC Hong Kong',     alias: 'Operating Account',      accountHolderName: '华信电子商务有限公司', currency: 'HKD',                         verification: 'pending',      status: 'disabled', sameName: true, accountMasked: '•••• 9230',  accountFull: '8081999230',             bankCode: '004',       swift: 'HSBCHKHHHKH', country: 'Hong Kong',       lastUsed: 'Yesterday', iconColor: '#DC2626', iconBg: '#FEF2F2' },
+        { group: 'obita',  bank: 'Deutsche Bank',      alias: 'Euro Settlement',        accountHolderName: '华信科技有限公司',     currency: 'EUR', secondaryCurrency: 'USD', verification: 'verified',    status: 'enabled',  sameName: true, accountMasked: '•••• 0130',  iban: 'DE89 3704 0044 0532 0130 00',                          swift: 'DEUTDEDB',    country: 'Germany',         lastUsed: 'Oct 23',    iconColor: '#7C3AED', iconBg: '#F5F3FF' },
+        // --- Group 2: 客户自行绑定 ---
+        { group: 'client', bank: 'Banco Bradesco',     alias: 'BRL Payments',           accountHolderName: '华信电子商务有限公司', currency: 'BRL',                         verification: 'verified',     status: 'enabled',  sameName: true,  accountMasked: '•••• 7712', accountFull: '013247712',              branch: '0127',        swift: 'BBDEBRSPSPO', country: 'Brazil',          lastUsed: 'Sep 15',    iconColor: '#059669', iconBg: '#ECFDF5' },
+        { group: 'client', bank: 'Itaú Unibanco',      alias: 'Vendor Payments',        accountHolderName: 'Mercado Vendor Services Ltda.', currency: 'BRL',               verification: 'pending',      status: 'disabled', sameName: false, accountMasked: '•••• 4406', accountFull: '091204406',              branch: '0845',        swift: 'ITAUBRSPXXX', country: 'Brazil',          lastUsed: '—',         iconColor: '#EA580C', iconBg: '#FFF7ED' },
+        { group: 'client', bank: 'Banco do Brasil',    alias: 'Treasury Reserve Account', accountHolderName: '华信科技有限公司',   currency: 'BRL',                       verification: 'not-supported', status: 'disabled', sameName: true, accountMasked: '•••• 1058', accountFull: '331121058',              branch: '3321',        swift: 'BRASBRRJRJO', country: 'Brazil',          lastUsed: '—',         iconColor: '#64748B', iconBg: '#F8FAFC', unsupported: true, unsupportedSince: 'Oct 20, 2026 · 14:02', unsupportedReason: 'Transfers from this bank account are currently not supported by the platform.' }
+    ];
+
+    // 10 seed entries spanning every combination of verification × status × chain ×
+    // owner type × wallet type, plus one unsupported wallet. Newest first.
+    window._addressBookEntries = window._addressBookEntries || [
+        // 1. Newly created, verified via signature, actively used.
+        { address: 'TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t',           alias: 'ABC Trading Pte Ltd',       chain: 'TRON',      verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'private'  },
+        // 2. Individual's self-custody wallet, freshly added, not yet verified.
+        { address: '9WZQQDx8fZ4N9u1DHn3fAwHUe3TjVxqzKmF8oApRc1B7', alias: 'John Doe Personal',          chain: 'Solana',    verification: 'pending',  status: 'disabled', ownerType: 'individual',   walletType: 'private'  },
+        // 3. Company exchange account, still awaiting verification email.
+        { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',   alias: 'Binance Institutional',      chain: 'Ethereum',  verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'exchange', eddRequired: true },
+        // 4. Main verified operational wallet on BNB Chain.
+        { address: '0xbd0000000000000000000000000000000000da01',   alias: 'Shenzhen Apex Settlement',   chain: 'BNB Chain', verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'exchange' },
+        // 5. Treasury hot wallet on Solana — verified, active.
+        { address: '7BgBvyjrZX1YKz4oh9mjb8ZScatkkwb8DzFx7ViJoyW2', alias: 'Treasury Hot Wallet',        chain: 'Solana',    verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'private'  },
+        // 6. Individual pending on TRON.
+        { address: 'TVjsyZ7lNwQxGTCi8q8ZY4pL8otSzgjLj6t',           alias: 'MetaMask Trading',           chain: 'TRON',      verification: 'pending',  status: 'disabled', ownerType: 'individual',   walletType: 'private'  },
+        // 7. Partner counterparty — pending, awaiting micro-transfer from owner.
+        { address: '0x1234567890abcdef1234567890abcdef12345678',   alias: 'Partner Treasury',           chain: 'Ethereum',  verification: 'pending',  status: 'disabled', ownerType: 'organization', walletType: 'private'  },
+        // 8. Vendor exchange account — verified, active.
+        { address: '0xabcdef1234567890abcdef1234567890abcdef12',   alias: 'Vendor Binance',             chain: 'Ethereum',  verification: 'verified', status: 'enabled',  ownerType: 'organization', walletType: 'exchange' },
+        // 9. Previously used exchange destination — verified but manually disabled.
+        { address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',           alias: 'Kraken Corporate',           chain: 'TRON',      verification: 'verified', status: 'disabled', ownerType: 'organization', walletType: 'exchange' },
+        // 10. Grandfathered address — verified but platform no longer supports it.
+        { address: '0xab000000000000000000000000000000000000ef12', alias: 'Legacy Settlement Channel',  chain: 'Ethereum',  verification: 'verified', status: 'disabled', ownerType: 'organization', walletType: 'exchange', unsupported: true, unsupportedSince: 'Oct 23, 2026 · 10:15' }
+    ];
+
+    const ADDR_CHAIN_VISUAL = {
+        'Ethereum': { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum' },
+        'TRON':     { bg: '#FEE2E2', color: '#DC2626', label: 'TRON' },
+        'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain' },
+        'Solana':   { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana' }
+    };
+
+    function _renderAddressBookRow(entry) {
+        const chain = ADDR_CHAIN_VISUAL[entry.chain] || ADDR_CHAIN_VISUAL['TRON'];
+        const isVerified = entry.verification === 'verified';
+        const isPending  = entry.verification === 'pending';
+        // Status is strictly Enabled or Disabled — pending-verification wallets are Disabled.
+        const normalizedStatus = entry.status === 'enabled' ? 'enabled' : 'disabled';
+        const isDisabled = normalizedStatus === 'disabled';
+        const rowOpacity  = isDisabled ? '0.6' : '1';
+        const maskedAddr  = formatMaskedAddress(entry.address);
+        const aliasEsc    = entry.alias.replace(/'/g, "\\'");
+        const addrEsc     = entry.address.replace(/'/g, "\\'");
+        const metaPayload = { ownerType: entry.ownerType, walletType: entry.walletType, alias: entry.alias };
+        if (entry.unsupported) {
+            metaPayload.unsupported = true;
+            if (entry.unsupportedSince) metaPayload.unsupportedSince = entry.unsupportedSince;
+        }
+        if (entry.eddRequired) metaPayload.eddRequired = true;
+        const metaJson    = JSON.stringify(metaPayload).replace(/"/g, '&quot;');
+        const toggleLabel = isDisabled ? 'Enable' : 'Disable';
+        const toggleStyle = isDisabled
+            ? 'border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8;'
+            : 'border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569;';
+
+        // Verified chip reads as a confident green pill; pending is amber.
+        const verifiedChip = isVerified
+            ? `<span style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="shield-check" style="width:10px;height:10px;color:#15803D;"></i>Verified</span>`
+            : `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="clock" style="width:10px;height:10px;color:#B45309;"></i>Pending Verification</span>`;
+        const statusChip = `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><span style="width:6px;height:6px;border-radius:999px;background:${isDisabled ? '#94A3B8' : '#16A34A'};"></span>${isDisabled ? 'Disabled' : 'Enabled'}</span>`;
+        const unsupportedChip = entry.unsupported
+            ? `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="alert-triangle" style="width:10px;height:10px;color:#B45309;"></i>Unsupported</span>`
+            : '';
+        const eddChip = entry.eddRequired
+            ? `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="file-warning" style="width:10px;height:10px;color:#B45309;"></i>Info Required</span>`
+            : '';
+
+        return `
+            <div onclick="window.navGo(() => window.openWalletAddressDetailPage('${addrEsc}','${aliasEsc}','${entry.chain}','${entry.verification}','${normalizedStatus}',JSON.parse(this.dataset.meta)))" data-addr="${addrEsc}" data-meta="${metaJson}" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 18px; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#E2E8F0'">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                        <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${entry.alias}</div>
+                        ${verifiedChip}
+                        ${statusChip}
+                        ${unsupportedChip}
+                        ${eddChip}
+                    </div>
+                    <div style="font-family: monospace; font-size: 11px; color: #64748B;">${maskedAddr}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <button onclick="event.stopPropagation(); window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="${entry.status}" class="addr-toggle ${entry.status}" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; ${toggleStyle}">${toggleLabel}</button>
+                    <button onclick="event.stopPropagation(); window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8; display: inline-flex; align-items: center;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                </div>
+            </div>
+        `;
+    }
+
+    window.renderAddressBookPage = function() {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        // Register as the current page renderer for navBack().
+        window._currentRender = window.renderAddressBookPage;
+
+        const rowsHtml = window._addressBookEntries.map(_renderAddressBookRow).join('');
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div>
+                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Address Book</h1>
+                            <div style="font-size: 13px; color: #64748B;">Manage your registered wallet addresses. ${window._addressBookEntries.length} ${window._addressBookEntries.length === 1 ? 'address' : 'addresses'} saved.</div>
+                        </div>
+                        <button onclick="window.navGo(window.renderAddNewAddressPage)" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add New Address
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Address list -->
+                <div class="card" style="padding: 22px 28px;">
+                    ${window._addressBookEntries.length
+                        ? `<div id="addr-page-list" style="display: flex; flex-direction: column; gap: 10px;">${rowsHtml}</div>`
+                        : `<div style="padding: 48px 24px; text-align: center; color: #64748B;">
+                             <div style="width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 12px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; color: #94A3B8;"><i data-lucide="book-open" style="width: 20px; height: 20px;"></i></div>
+                             <div style="font-size: 14px; font-weight: 600; color: #0F172A;">No wallet addresses yet</div>
+                             <div style="font-size: 13px; margin-top: 4px;">Click "Add New Address" to register your first wallet.</div>
+                           </div>`}
+                </div>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+    };
+
+    // Legacy name — now routes to the full page instead of opening the drawer.
+    // Keeps every existing onclick="window.openManageAddressesDrawer()" site working.
+    // Uses navGo so Back restores the caller page (typically Stablecoin Vault).
     window.openManageAddressesDrawer = function() {
-        ALL_DRAWER_IDS.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.classList.remove('drawer-active');
-        });
-        
-        window.switchToListAddressView();
-        
-        lucide.createIcons();
-        document.getElementById('manage-addresses-drawer').classList.add('drawer-active');
-        document.body.classList.add('drawer-open');
+        // Ensure Stablecoin Vault is on the back-stack if we came from it with
+        // no renderer tracked yet.
+        if (!window._currentRender) window._currentRender = window.renderStablecoinVaultPage;
+        window.navGo(window.renderAddressBookPage);
+    };
+
+    // Add New Address — rendered as a full page in contentBody (no drawer).
+    // Mirrors the two-section layout (Basic Information + Wallet Address Details)
+    // with progressive reveal inside Section 2.
+    window.renderAddNewAddressPage = function() {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        // Register as the current page renderer so navBack() can restore it.
+        window._currentRender = window.renderAddNewAddressPage;
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="padding: 22px 28px;">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
+                    <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Add New Address</h1>
+                    <div style="font-size: 13px; color: #64748B;">Register a new wallet address to your Address Book.</div>
+                </div>
+
+                <!-- SECTION 1: Basic Information -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    </div>
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Owner Type *</div>
+                            <div style="display: flex; gap: 10px;">
+                                <div id="na-owner-indv-label" onclick="window.toggleNewAddrOwnerType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
+                                    <input type="radio" name="newAddrOwnerType" value="individual" checked style="accent-color: #2563EB; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #1D4ED8;">Individual</div>
+                                        <div style="font-size: 11px; color: #64748B;">Natural person</div>
+                                    </div>
+                                </div>
+                                <div id="na-owner-corp-label" onclick="window.toggleNewAddrOwnerType('organization')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="newAddrOwnerType" value="organization" style="accent-color: #2563EB; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Company</div>
+                                        <div style="font-size: 11px; color: #64748B;">Legal entity / organisation</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Alias *</div>
+                            <input type="text" id="na-wallet-alias" placeholder="e.g. Treasury Hot Wallet" style="width: 100%; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box; font-family: inherit;">
+                            <div style="font-size: 11px; color: #94A3B8;">Display name used to identify this wallet in orders and transactions.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Wallet Address Details (progressive reveal) -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Address Details</h3>
+                    </div>
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;">
+
+                        <!-- 2A: Declaration -->
+                        <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 12px 14px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
+                            <input type="checkbox" id="na-decl-check" style="margin-top: 3px; accent-color: #7C3AED; flex-shrink: 0;" onchange="window.onAddrBookDeclarationChange()">
+                            <span style="font-size: 13px; color: #334155; line-height: 1.55;">I declare that this wallet is owned by the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
+                        </label>
+
+                        <!-- 2B: Wallet Type (hidden until declaration ✓) -->
+                        <div id="na-wallet-type-zone" style="display: none; flex-direction: column; gap: 10px;">
+                            <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Wallet Type</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div id="na-type-private-label" onclick="window.onAddrBookWalletTypeSelect('private')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="na-wallet-type" value="private" style="accent-color: #7C3AED; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
+                                        <div style="font-size: 11px; color: #64748B;">MetaMask, TrustWallet, etc.</div>
+                                    </div>
+                                </div>
+                                <div id="na-type-exchange-label" onclick="window.onAddrBookWalletTypeSelect('exchange')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
+                                    <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C; pointer-events: none;">
+                                    <div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
+                                        <div style="font-size: 11px; color: #64748B;">Binance, OKX, Coinbase, etc.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2C: Verify zone (hidden until wallet type picked) -->
+                        <div id="na-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                <button type="button" id="na-verify-tab-micro" onclick="window.setAddrBookVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                                <button type="button" id="na-verify-tab-sign" onclick="window.setAddrBookVerifyTab('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
+                            </div>
+
+                            <!-- Micro-Transfer -->
+                            <div id="na-verify-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 18px;">
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">1</div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter the wallet address and network to be verified</div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Address *</label>
+                                        <input type="text" id="na-wallet-addr" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; font-family: monospace; box-sizing: border-box;">
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                                        <label style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Network / Chain *</label>
+                                        <select id="na-wallet-net" onchange="window.onAddrBookNetworkChange()" style="width: 100%; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; background: white; box-sizing: border-box;">
+                                            <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                            <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                            <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                            <option value="Solana">Solana</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div style="height: 1px; background: #E2E8F0;"></div>
+
+                                <div style="display: flex; flex-direction: column; gap: 14px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">2</div>
+                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Send a micro-transfer from the wallet above</div>
+                                    </div>
+                                    <div style="font-size: 13px; color: #334155; line-height: 1.7;">Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.</div>
+
+                                    <!-- Verification Transfer Details -->
+                                    <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
+                                        <div style="background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Verification Transfer Details</div>
+                                        <div style="padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                            <div>
+                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Amount to Send</div>
+                                                <div style="font-size: 18px; font-weight: 800; color: #7C3AED; margin-top: 2px;">0.0123 USDT</div>
+                                            </div>
+                                            <button type="button" onclick="navigator.clipboard.writeText('0.0123')" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                        </div>
+                                        <div style="padding: 16px; border-bottom: 1px solid #F1F5F9;">
+                                            <div style="font-size: 11px; color: #94A3B8; font-weight: 500; margin-bottom: 12px;">Obita Verification Address</div>
+                                            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                                                <img id="na-verify-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE" alt="QR Code" style="width: 120px; height: 120px; border: 1px solid #E2E8F0; border-radius: 8px; display: block; flex-shrink: 0;">
+                                                <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 8px;">
+                                                    <div id="na-verify-dest-addr" style="font-size: 12px; font-weight: 600; color: #0F172A; font-family: monospace; word-break: break-all; line-height: 1.55;">TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE</div>
+                                                    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('na-verify-dest-addr').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy Address</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style="padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                                            <div>
+                                                <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Network / Chain</div>
+                                                <div id="na-verify-chain" style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 2px;">TRON (TRC-20)</div>
+                                            </div>
+                                            <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('na-verify-chain').textContent)" style="padding: 5px 10px; border: 1px solid #E2E8F0; border-radius: 6px; background: white; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;"><i data-lucide="copy" style="width:12px;height:12px;"></i> Copy</button>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" onclick="window.shareAddrBookVerification(this)" style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; background: #0F172A; border: none; border-radius: 9px; color: white; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; width: 100%;" onmouseover="this.style.background='#1E293B'" onmouseout="this.style.background='#0F172A'">
+                                        <i data-lucide="share-2" style="width: 15px; height: 15px;"></i> Share
+                                    </button>
+
+                                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #92400E; line-height: 1.6; display: flex; gap: 8px; align-items: flex-start;">
+                                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px;"></i>
+                                        <span>Send <strong>exactly 0.0123 USDT</strong>. Any other amount will not be recognised. You can save the address first and complete verification later.</span>
+                                    </div>
+
+                                    <pre id="na-verify-share-text" style="display:none;">[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE
+  Network: TRON (TRC-20)
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
+                                </div>
+                            </div>
+
+                            <!-- Wallet Signature -->
+                            <div id="na-verify-sign" style="padding: 20px; display: none; flex-direction: column; gap: 14px;">
+                                <div style="font-size: 13px; color: #334155; line-height: 1.7;">Connect your wallet to sign a verification message and instantly prove ownership.</div>
+                                <div id="na-sign-select" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button type="button" onclick="window.addrBookSignMetaMask()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #FEF3E2; display: flex; align-items: center; justify-content: center; font-size: 22px;">🦊</div>
+                                        <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">MetaMask</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Browser extension</div></div>
+                                    </button>
+                                    <button type="button" onclick="window.addrBookSignWC()" style="padding: 16px 12px; border: 2px solid #E2E8F0; border-radius: 12px; background: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: all 0.2s; text-align: center;">
+                                        <div style="width: 44px; height: 44px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;"><i data-lucide="qr-code" style="width: 24px; height: 24px; color: #3B99FC;"></i></div>
+                                        <div><div style="font-size: 13px; font-weight: 700; color: #0F172A;">WalletConnect</div><div style="font-size: 11px; color: #64748B; margin-top: 2px;">Scan with mobile</div></div>
+                                    </button>
+                                </div>
+                                <div id="na-sign-pending" style="display: none; flex-direction: column; align-items: center; gap: 16px; padding: 28px 0; text-align: center;">
+                                    <div style="width: 48px; height: 48px; border: 3px solid #E2E8F0; border-top-color: #7C3AED; border-radius: 50%; animation: payee-spin 0.8s linear infinite;"></div>
+                                    <div><div style="font-size: 14px; font-weight: 700; color: #0F172A;">Waiting for signature…</div><div style="font-size: 12px; color: #64748B; margin-top: 4px;">Please confirm in your wallet</div></div>
+                                    <button type="button" onclick="window.addrBookSignReset()" style="padding: 7px 16px; border: 1px solid #E2E8F0; border-radius: 7px; background: white; font-size: 12px; font-weight: 600; color: #64748B; cursor: pointer;">Cancel</button>
+                                </div>
+                                <div id="na-sign-result" style="display: none; flex-direction: column; gap: 14px;">
+                                    <div id="na-sign-ok" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; text-align: center;">
+                                        <div style="width: 52px; height: 52px; background: #DCFCE7; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="check-circle-2" style="width: 28px; height: 28px; color: #16A34A;"></i></div>
+                                        <div><div style="font-size: 15px; font-weight: 800; color: #15803D;">Verified</div><div style="font-size: 12px; color: #166534; margin-top: 4px;">Wallet ownership confirmed</div></div>
+                                    </div>
+                                    <div id="na-sign-fail" style="display: none; flex-direction: column; align-items: center; gap: 12px; padding: 24px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; text-align: center;">
+                                        <div style="width: 52px; height: 52px; background: #FEE2E2; border-radius: 999px; display: flex; align-items: center; justify-content: center;"><i data-lucide="x-circle" style="width: 28px; height: 28px; color: #DC2626;"></i></div>
+                                        <div><div style="font-size: 15px; font-weight: 800; color: #DC2626;">Verification Failed</div><div id="na-sign-fail-msg" style="font-size: 12px; color: #991B1B; margin-top: 4px;"></div></div>
+                                    </div>
+                                    <button type="button" onclick="window.addrBookSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Privacy notice (MSO only) -->
+                <div class="mso-only" style="font-size: 12px; color: #94A3B8; line-height: 1.6; padding: 0 4px;">The information you provide will be used for identity verification and regulatory compliance purposes in accordance with Obita's <a href="#" style="color: #7C3AED; text-decoration: underline;">Privacy Policy</a>.</div>
+
+                <!-- Footer actions -->
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button onclick="window.navBack()" class="btn btn-outline" style="padding: 10px 18px;">Cancel</button>
+                    <button onclick="window.submitNewAddress()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">Add Address</button>
+                </div>
+            </div>
+        `;
+
+        // Initial state: reset in-memory verified flag + visual state
+        window._addrBookVerified = false;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        // Sync the destination address/QR/chain to the default TRON selection
+        window.onAddrBookNetworkChange?.();
+        window.scrollContentToTop?.();
+    };
+
+    // Legacy name kept for back-compat — now renders the page instead of a drawer.
+    // Uses navGo so Back restores the previous page (Address Book).
+    window.openAddNewAddressDrawer = function() {
+        window.navGo(window.renderAddNewAddressPage);
     };
 
     window.openManageBankAccountsDrawer = function() {
@@ -1278,9 +2686,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         window.switchToBankAccountsListView();
+        // Populate the list from the canonical bank-account array so Manage
+        // Accounts always reflects the same set of accounts as the Fiat Vault.
+        window.renderManageBankAccountsList?.();
         lucide.createIcons();
         document.getElementById('manage-bank-accounts-drawer').classList.add('drawer-active');
         document.body.classList.add('drawer-open');
+    };
+
+    // Renders the Manage Accounts drawer list from window._bankAccountEntries.
+    window.renderManageBankAccountsList = function() {
+        const container = document.getElementById('bank-list-container');
+        if (!container) return;
+        const entries = Array.isArray(window._bankAccountEntries) ? window._bankAccountEntries : [];
+
+        const rowHtml = (d) => {
+            const detailsJson = JSON.stringify(d).replace(/"/g, '&quot;');
+            const isDisabled = d.status !== 'enabled';
+            const isNotSupported = d.verification === 'not-supported';
+            // State pill: UNSUPPORTED > PENDING > ENABLED / DISABLED (matches Fiat Vault).
+            let pill;
+            if (isNotSupported) {
+                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i>Unsupported</span>`;
+            } else if (d.verification === 'pending') {
+                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>`;
+            } else if (isDisabled) {
+                pill = `<span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>`;
+            } else {
+                pill = `<span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Enabled</span>`;
+            }
+            const currencyChip = `<span data-role="bank-currency" style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${d.currency || '—'}</span>`;
+            const secondary = d.secondaryCurrency ? `<span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${d.secondaryCurrency}</span>` : '';
+            const sameName = d.sameName ? `<span title="Same-name account" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>` : '';
+            const meta = [
+                d.iban ? `IBAN: ${d.iban}` : (d.accountMasked ? `Account: ${d.accountMasked}` : ''),
+                d.routing ? `Routing: ${d.routing}` : (d.bankCode ? `Bank Code: ${d.bankCode}` : (d.branch ? `Branch: ${d.branch}` : '')),
+                d.swift ? `SWIFT: ${d.swift}` : ''
+            ].filter(Boolean).join(' | ');
+            const lastUsedLine = d.lastUsed ? `Last used: ${d.lastUsed}` : (isNotSupported ? 'Transfers from this account are currently not supported.' : '');
+            const toggleDataStatus = isDisabled ? 'disabled' : 'enabled';
+            const toggleLabel = isDisabled ? 'Enable' : 'Disable';
+            const toggleStyle = isDisabled
+                ? 'border: 1px solid #BFDBFE; background: #EFF6FF; color: #1D4ED8;'
+                : 'border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569;';
+            const rowOpacity = isNotSupported ? '0.72' : '1';
+
+            return `
+                <div class="bank-account-item" data-bank-name="${d.bank.replace(/"/g, '&quot;')}" data-account-name="${d.alias.replace(/"/g, '&quot;')}" data-verification="${d.verification}" data-status="${toggleDataStatus}" data-details='${detailsJson}' onclick="window.navToBankAccountDetail(this)" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#FFF';this.style.borderColor='#E2E8F0'">
+                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
+                        <div style="padding: 10px; background-color: ${d.iconBg || '#F8FAFC'}; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
+                            <i data-lucide="landmark" style="color: ${d.iconColor || '#64748B'}; width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
+                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">${d.bank} — ${d.alias}</span>
+                                ${sameName}
+                                ${currencyChip}
+                                ${secondary}
+                                ${pill}
+                            </div>
+                            ${meta ? `<div style="font-size: 12px; color: #64748B; line-height: 1.6;">${meta}</div>` : ''}
+                            ${lastUsedLine ? `<div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">${lastUsedLine}</div>` : ''}
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <button onclick="event.stopPropagation(); window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="${toggleDataStatus}" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; ${toggleStyle}">${toggleLabel}</button>
+                        <button onclick="event.stopPropagation(); window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+            `;
+        };
+
+        container.innerHTML = entries.map(rowHtml).join('');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     const FIAT_TOPUP_RECIPIENTS = {
@@ -1380,37 +2858,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.addr-item, .bank-account-item').forEach(applyManagedEntityCardState);
     }
 
-    function getBoundBankAccounts() {
-        return Array.from(document.querySelectorAll('#bank-list-container .bank-account-item')).map((item, index) => {
-            const actionBtn = item.querySelector('button[data-status]');
-            const currencyTag = item.querySelector('[data-role="bank-currency"]');
-            const bankName = item.dataset.bankName || `Linked Bank ${index + 1}`;
-            const accountName = item.dataset.accountName || 'Bank Account';
-            const verification = item.dataset.verification || 'pending';
-            const enabled = (item.dataset.status || actionBtn?.dataset.status || 'enabled') === 'enabled';
-            // All bank accounts connected via Obita are opened under the merchant's
-            // own name — so every connected account is a same-name (同名) account by definition.
-            const sameName = true;
-            const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
-
-            let reason = '';
-            if (lifecycleStatus !== 'Enabled') {
-                reason = lifecycleStatus;
-            }
-
-            return {
-                bankName,
-                accountName,
-                verification,
-                enabled,
-                lifecycleStatus,
-                sameName,
-                selectable: lifecycleStatus === 'Enabled' && sameName,
-                reason,
-                currency: currencyTag ? currencyTag.textContent.trim() : '',
-                summary: item.querySelectorAll('div[style*="font-size: 12px; color: #64748B; line-height: 1.6;"]')[0]?.textContent || ''
-            };
-        });
+    function getBoundBankAccounts(currencyFilter) {
+        // Single source of truth is window._bankAccountEntries. Reading from the
+        // DOM only worked when the Manage Bank Accounts drawer was already
+        // rendered — which isn't the case when Transfer is opened straight from
+        // the Fiat Vault page.
+        const entries = Array.isArray(window._bankAccountEntries) ? window._bankAccountEntries : [];
+        const matchesCurrency = (entry) => {
+            if (!currencyFilter) return true;
+            return entry.currency === currencyFilter || entry.secondaryCurrency === currencyFilter;
+        };
+        return entries
+            .filter(matchesCurrency)
+            .map(entry => {
+                const verification = entry.verification || 'pending';
+                const enabled = (entry.status || 'disabled') === 'enabled';
+                const sameName = entry.sameName === true;
+                const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
+                let reason = '';
+                if (lifecycleStatus !== 'Enabled') reason = lifecycleStatus;
+                else if (!sameName) reason = 'Non same-name';
+                const countryPart = entry.country ? ` · ${entry.country}` : '';
+                const maskedPart  = entry.accountMasked ? ` · ${entry.accountMasked}` : '';
+                return {
+                    bankName: entry.bank,
+                    accountName: entry.alias,
+                    verification,
+                    enabled,
+                    lifecycleStatus,
+                    sameName,
+                    // Only enabled, verified, same-name accounts can be picked;
+                    // others are listed but disabled so the user can see them
+                    // and understand why they're unavailable.
+                    selectable: lifecycleStatus === 'Enabled' && sameName,
+                    reason,
+                    currency: entry.currency || '',
+                    summary: `${entry.bank}${countryPart}${maskedPart}`
+                };
+            });
     }
 
     function formatTransferMoney(value, currency) {
@@ -1420,7 +2905,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function getSelectedFiatTransferAccount() {
         const select = document.getElementById('fiat-transfer-target-account');
         const accountName = select?.value || '';
-        return getBoundBankAccounts().find(account => account.accountName === accountName) || null;
+        const currency = currentFiatTransferCurrency || document.getElementById('fiat-transfer-currency')?.value || '';
+        return getBoundBankAccounts(currency).find(account => account.accountName === accountName) || null;
     }
 
     function populateFiatTransferAccountOptions() {
@@ -1428,7 +2914,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const note = document.getElementById('fiat-transfer-account-note');
         if (!select || !note) return;
 
-        const accounts = getBoundBankAccounts();
+        // Filter by the currently selected transfer currency — only accounts
+        // supporting this currency are relevant targets.
+        const currency = currentFiatTransferCurrency || document.getElementById('fiat-transfer-currency')?.value || '';
+        const accounts = getBoundBankAccounts(currency);
         const options = ['<option value="">Select a connected bank account</option>'];
 
         accounts.forEach(account => {
@@ -1438,9 +2927,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         select.innerHTML = options.join('');
-        note.textContent = accounts.some(account => account.selectable)
+        const hasSelectable = accounts.some(account => account.selectable);
+        note.textContent = hasSelectable
             ? 'Same-name (同名) accounts are marked with a [同名] tag in the list below. Only enabled, verified same-name accounts can be selected.'
-            : 'No eligible same-name (同名) connected bank accounts are currently available.';
+            : (accounts.length === 0
+                ? `No connected bank accounts support ${currency || 'this currency'} yet.`
+                : 'Same-name accounts are listed but currently not selectable (disabled or pending verification).');
     }
 
     function renderFiatTransferReceivingInfo(account) {
@@ -2310,6 +3802,17 @@ document.addEventListener('DOMContentLoaded', () => {
         label.textContent = file ? file.name : 'No file selected';
     };
 
+    // Reconciles a bank account card's status change into the canonical
+    // window._bankAccountEntries list. Returns the matched entry (or null).
+    const _syncBankEntryFromCard = function(card, nextStatus) {
+        if (!card || !Array.isArray(window._bankAccountEntries)) return null;
+        const bank  = card.dataset.bankName   || '';
+        const alias = card.dataset.accountName || '';
+        const entry = window._bankAccountEntries.find(e => e.bank === bank && e.alias === alias);
+        if (entry) entry.status = nextStatus;
+        return entry;
+    };
+
     window.toggleBankAccountStatus = function(btn) {
         const card = btn.closest('.bank-account-item');
         const currentStatus = card?.dataset.status || btn.dataset.status || 'enabled';
@@ -2318,6 +3821,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentStatus === 'enabled') {
             card.dataset.status = 'disabled';
             btn.dataset.status = 'disabled';
+            _syncBankEntryFromCard(card, 'disabled');
         } else {
             if (card.dataset.verification === 'not-supported') {
                 alert('This bank account cannot be enabled until it is supported.');
@@ -2325,16 +3829,736 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             card.dataset.status = 'enabled';
             btn.dataset.status = 'enabled';
+            _syncBankEntryFromCard(card, 'enabled');
         }
 
         applyManagedEntityCardState(card);
     };
 
     window.deleteBankAccount = function(btn) {
-        if (confirm('Are you sure you want to delete this bank account?')) {
-            btn.closest('.bank-account-item').remove();
+        if (!confirm('Are you sure you want to delete this bank account?')) return;
+        const card = btn.closest('.bank-account-item');
+        const bank  = card?.dataset.bankName    || '';
+        const alias = card?.dataset.accountName || '';
+        if (Array.isArray(window._bankAccountEntries)) {
+            window._bankAccountEntries = window._bankAccountEntries.filter(e => !(e.bank === bank && e.alias === alias));
+        }
+        card?.remove();
+    };
+
+    // --- Bank Account detail page (parallel to the wallet detail page) ---
+    // Reads the card's data-details blob, closes the drawer, pushes the current
+    // page onto the nav stack, and renders the detail page in contentBody.
+    window.navToBankAccountDetail = function(cardEl) {
+        let details = {};
+        try { details = JSON.parse(cardEl?.dataset?.details || '{}'); }
+        catch (e) { console.warn('Invalid bank-account data-details JSON', e); }
+        // Fallback to data attributes if JSON absent
+        if (!details.bank)  details.bank  = cardEl?.dataset?.bankName    || '';
+        if (!details.alias) details.alias = cardEl?.dataset?.accountName || '';
+        if (!details.verification) details.verification = cardEl?.dataset?.verification || 'verified';
+        if (!details.status) details.status = cardEl?.dataset?.status || 'enabled';
+
+        // Seed "current page" with Overview if nothing tracked (Manage Bank Accounts
+        // is opened from the Overview page).
+        if (!window._currentRender) {
+            window._currentRender = function() { window.renderPlaceholderContent?.('Overview'); };
+        }
+        window.navGo(function() { window.openBankAccountDetailPage(details); });
+    };
+
+    window.openBankAccountDetailPage = function(details) {
+        const contentBody = document.getElementById('content-body');
+        if (!contentBody) return;
+        closeAllDrawers?.();
+
+        const bank        = details.bank        || 'Bank';
+        const alias       = details.alias       || '';
+        const currency    = details.currency    || '';
+        const secondaryCurrency = details.secondaryCurrency || '';
+        const verification = details.verification === 'not-supported' ? 'not-supported' : (details.verification === 'pending' ? 'pending' : 'verified');
+        const statusKey   = details.status === 'enabled' ? 'enabled' : 'disabled';
+        const unsupported = details.unsupported === true || verification === 'not-supported';
+        const unsupportedReason = details.unsupportedReason || 'Transfers from this bank account are currently not supported by the platform.';
+        const unsupportedSince  = details.unsupportedSince  || '';
+        // "More Information Required" equivalent for bank accounts (parallels the wallet EDD block).
+        const eddRequired = details.eddRequired === true;
+        // Flag a pending-verification account so the detail page surfaces the
+        // "LOCKED / Verify Bank Account" notice (parallels the Stablecoin Vault LOCKED notice).
+        const needsBankVerification = verification === 'pending';
+        const sameName    = details.sameName === true;
+        // Bank Account Name — the legal name the account is registered under.
+        // For same-name accounts (held in the merchant's own legal entity), it
+        // must match the currently active merchant entity shown in the header
+        // (TCSP → 华信科技有限公司, MSO → 华信电子商务有限公司). Non-same-name
+        // accounts keep the third-party name stored on the seed entry.
+        const _activeEntityName = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode] && window.ENTITY_CONFIG[window.currentLicenseMode].name) || '华信科技有限公司';
+        const accountHolderName = sameName ? _activeEntityName : (details.accountHolderName || '—');
+        const accountMasked = details.accountMasked || '—';
+        const accountFull   = details.accountFull   || '';
+        const routing  = details.routing  || '';
+        const swift    = details.swift    || '';
+        const bankCode = details.bankCode || '';
+        const branch   = details.branch   || '';
+        const iban     = details.iban     || '';
+        const country  = details.country  || '';
+        const lastUsed = details.lastUsed || '—';
+        const iconColor = details.iconColor || '#2563EB';
+        const iconBg    = details.iconBg    || '#EFF6FF';
+
+        // Currency chip palette mirrors the existing currency colours used across the portal.
+        const currencyVisual = {
+            USD: { bg: '#DBEAFE', color: '#1D4ED8' },
+            HKD: { bg: '#FEE2E2', color: '#DC2626' },
+            EUR: { bg: '#EDE9FE', color: '#7C3AED' },
+            BRL: { bg: '#DCFCE7', color: '#15803D' },
+            SGD: { bg: '#FEF3C7', color: '#B45309' },
+            GBP: { bg: '#F1F5F9', color: '#334155' }
+        }[currency] || { bg: '#F1F5F9', color: '#334155' };
+
+        // --- Back-navigation ---
+        // The bank account detail page is reached from many places (Fiat Vault
+        // notices, Manage Bank Accounts drawer, Overview, inbox message links,
+        // 2FA returns, etc.). Rather than relying on a shared nav stack whose
+        // state can leak between pages, we snapshot a "previous page" renderer
+        // on entry and wire the Back button to invoke it directly.
+        //
+        // Priority for the return function:
+        //   1. Explicit details.backFn (caller passed one)
+        //   2. The existing window._currentRender IF it isn't this page itself
+        //      (guards against re-entry / self-rerender loops such as 2FA).
+        //   3. window._bankDetailReturnFn if one was previously captured
+        //      (survives re-renders triggered by "Done" after 2FA).
+        //   4. Safe fallback: go to Overview.
+        const _selfRenderer = function() { window.openBankAccountDetailPage(details); };
+        const _priorRenderer = window._currentRender;
+        const _isSelf = _priorRenderer && _priorRenderer._isBankDetail === true;
+        if (typeof details.backFn === 'function') {
+            window._bankDetailReturnFn = details.backFn;
+        } else if (_priorRenderer && !_isSelf) {
+            window._bankDetailReturnFn = _priorRenderer;
+        } else if (typeof window._bankDetailReturnFn !== 'function') {
+            window._bankDetailReturnFn = function() { window.renderPlaceholderContent?.('Overview'); };
+        }
+
+        // Register self as the current renderer so mid-flow returns (2FA, etc.)
+        // bring the user right back to this detail page.
+        _selfRenderer._isBankDetail = true;
+        window._activeBankAccountDetail = details;
+        window._currentRender = _selfRenderer;
+
+        // Chips — consistent with the wallet detail page styling.
+        const verifiedChip = verification === 'verified'
+            ? `<span style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="shield-check" style="width:12px;height:12px;color:#15803D;"></i>Verified</span>`
+            : (verification === 'pending'
+                ? `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="clock" style="width:12px;height:12px;color:#B45309;"></i>Pending Verification</span>`
+                : `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="alert-triangle" style="width:12px;height:12px;color:#B45309;"></i>Unsupported</span>`);
+
+        const statusDot   = statusKey === 'enabled' ? '#16A34A' : '#94A3B8';
+        const statusLabel = statusKey === 'enabled' ? 'Enabled'  : 'Disabled';
+        const statusChip = `<span style="background: #F8FAFC; color: #334155; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px;"><span style="width:7px;height:7px;border-radius:999px;background:${statusDot};"></span>${statusLabel}</span>`;
+        const sameNameChip = sameName
+            ? `<span title="Same-name account — eligible for transfers" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">同名</span>`
+            : '';
+
+        const isEnabled = statusKey === 'enabled';
+        const canToggle = verification !== 'pending' && verification !== 'not-supported';
+        const toggleLabel = isEnabled ? 'Disable' : 'Enable';
+        const toggleIcon  = isEnabled ? 'power-off' : 'power';
+        const toggleStyle = canToggle
+            ? (isEnabled
+                ? 'background: white; color: #475569; border: 1px solid #E2E8F0;'
+                : 'background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;')
+            : 'background: #F8FAFC; color: #CBD5E1; border: 1px solid #E2E8F0; cursor: not-allowed;';
+
+        // Muted header chrome for disabled accounts (same treatment as wallets).
+        const isDisabled = statusKey === 'disabled';
+        const headerCardStyle = isDisabled
+            ? 'padding: 22px 28px; background: #F8FAFC; filter: saturate(0.6); opacity: 0.82;'
+            : 'padding: 22px 28px;';
+        const headerNameStyle = isDisabled ? 'color: #475569;' : 'color: #0F172A;';
+        const headerIconBg    = isDisabled ? '#F1F5F9' : iconBg;
+        const headerIconColor = isDisabled ? '#94A3B8' : iconColor;
+
+        contentBody.innerHTML = `
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
+                <!-- Page header -->
+                <div class="card" style="${headerCardStyle}">
+                    <button onclick="window.backFromBankAccountDetail()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                            <div style="width: 48px; height: 48px; background: ${headerIconBg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="landmark" style="width: 22px; height: 22px; color: ${headerIconColor};"></i>
+                            </div>
+                            <div style="min-width: 0;">
+                                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; ${headerNameStyle}">${alias || bank}</h1>
+                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span style="font-size: 13px; color: #64748B; font-weight: 600;">${bank}</span>
+                                    ${currency ? `<span style="background: ${currencyVisual.bg}; color: ${currencyVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${currency}</span>` : ''}
+                                    ${secondaryCurrency ? `<span style="background: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${secondaryCurrency}</span>` : ''}
+                                    ${sameNameChip}
+                                    ${verifiedChip}
+                                    ${statusChip}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
+                            <button ${canToggle ? '' : 'disabled'} onclick="window.bankDetailToggleStatus()" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
+                                <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
+                            </button>
+                            <button onclick="window.bankDetailDelete()" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                ${needsBankVerification ? `
+                <!-- LOCKED — bank is still pending verification, so inbound transfers are held.
+                     Mirrors the Stablecoin Vault's LOCKED wallet banner. -->
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FECACA; background: linear-gradient(180deg, #FFFBFB 0%, #FFFFFF 100%);">
+                    <div style="padding: 16px 24px; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #FEE2E2; color: #DC2626; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px;">LOCKED</span>
+                                <div style="font-size: 14px; font-weight: 800; color: #9A3412;">Bank verification is required to unlock this account</div>
+                            </div>
+                            <div style="font-size: 13px; color: #7C2D12; margin-top: 8px; line-height: 1.6;">Inbound transfers to this account are held until verification is complete. Please provide the required bank documents to finish verification.</div>
+                            <div style="margin-top: 12px;">
+                                ${(() => {
+                                    const _subKey = `${alias || ''}|${accountMasked || ''}`;
+                                    const _subRec = window._bankVerificationSubmissions && window._bankVerificationSubmissions[_subKey];
+                                    const _submitted = details.verificationSubmitted === true || !!_subRec;
+                                    const _submittedAt = details.verificationSubmittedAt || (_subRec && _subRec.label) || '';
+                                    if (!_submitted) {
+                                        return `<button class="btn btn-primary" onclick="window.startBankAccountVerification()" style="padding: 9px 16px; font-size: 12px; font-weight: 700;">Verify Bank Account</button>`;
+                                    }
+                                    return `
+                                        <button class="btn btn-primary" disabled aria-disabled="true" title="Your submission is under Obita review." style="padding: 9px 16px; font-size: 12px; font-weight: 700; background: #E2E8F0; color: #64748B; border-color: #E2E8F0; cursor: not-allowed; box-shadow: none; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="clock" style="width: 12px; height: 12px;"></i>Information Submitted for Review</button>
+                                        ${_submittedAt ? `<div style="margin-top: 8px; font-size: 11px; color: #92400E; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="calendar-clock" style="width: 12px; height: 12px; color: #B45309;"></i>Information submitted on <span style="font-family: monospace; color: #7C2D12; font-weight: 700;">${_submittedAt}</span></div>` : ''}
+                                    `;
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${eddRequired ? `
+                <!-- More Information Required — EDD-equivalent block for bank accounts. -->
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FDE68A; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                    <div style="padding: 20px 24px; display: flex; align-items: flex-start; gap: 14px; border-bottom: 1px solid #FDE68A;">
+                        <div style="width: 40px; height: 40px; border-radius: 10px; background: #FEF3C7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #FDE68A;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px; color: #B45309;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="font-size: 16px; font-weight: 800; color: #0F172A;">More Information Required</div>
+                                <span style="font-size: 10px; font-weight: 700; color: #B45309; background: white; border: 1px solid #FDE68A; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Action Needed</span>
+                            </div>
+                            <div style="font-size: 12.5px; color: #64748B; margin-top: 6px; line-height: 1.6;">Additional compliance information is required for this bank account. Please complete the additional information on behalf of the account owner.</div>
+                        </div>
+                    </div>
+                    <div style="padding: 20px 24px;">
+                        <div style="padding: 18px; background: white; border: 1px solid #E2E8F0; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 28px; height: 28px; border-radius: 7px; background: #EFF6FF; display: flex; align-items: center; justify-content: center;">
+                                    <i data-lucide="pencil" style="width: 13px; height: 13px; color: #2563EB;"></i>
+                                </div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Fill in on behalf</div>
+                            </div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.6;">You are responsible for the <strong style="color: #334155;">accuracy and authenticity</strong> of the information entered. Any discrepancies may delay or block future transactions.</div>
+                            <button class="btn btn-primary" onclick="alert('Bank account EDD form — demo stub.');" style="padding: 9px 14px; font-size: 12px; font-weight: 700; align-self: flex-start;">Start Filling</button>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                ${unsupported ? `
+                <!-- Unsupported bank banner -->
+                <div class="card" style="padding: 0; overflow: hidden; border: 1px solid #FED7AA; background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%);">
+                    <div style="padding: 16px 24px; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #FEF3C7; color: #D97706; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i data-lucide="alert-triangle" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px;">UNSUPPORTED</span>
+                                <div style="font-size: 14px; font-weight: 800; color: #9A3412;">Transfers from this bank account aren't supported</div>
+                            </div>
+                            <div style="font-size: 13px; color: #7C2D12; margin-top: 8px; line-height: 1.6;">${unsupportedReason}</div>
+                            ${unsupportedSince ? `<div style="margin-top: 10px; display: inline-flex; align-items: center; gap: 14px; font-size: 11px; color: #92400E;">
+                                <span><strong style="color: #7C2D12;">Time:</strong> ${unsupportedSince}</span>
+                            </div>` : ''}
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Section 1: Basic Information -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Account Alias</div>
+                            <div id="ba-alias-display" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;">
+                                <span id="ba-alias-text" style="font-size: 14px; font-weight: 700; color: #0F172A;">${alias || '—'}</span>
+                                <button type="button" onclick="window.startEditBankAlias()" aria-label="Edit account alias" title="Edit alias" style="background: none; border: none; padding: 4px; color: #94A3B8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.background='#EFF6FF'" onmouseout="this.style.color='#94A3B8';this.style.background='transparent'">
+                                    <i data-lucide="pencil" style="width: 13px; height: 13px;"></i>
+                                </button>
+                            </div>
+                            <div id="ba-alias-edit" style="display: none; align-items: center; gap: 8px; margin-top: 5px;">
+                                <input id="ba-alias-input" type="text" value="${String(alias).replace(/"/g, '&quot;')}" style="flex: 1; min-width: 0; padding: 6px 10px; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 14px; font-weight: 700; color: #0F172A; background: white; box-sizing: border-box; font-family: inherit; outline: none;" onkeydown="if(event.key==='Enter'){event.preventDefault();window.saveEditBankAlias()} if(event.key==='Escape'){window.cancelEditBankAlias()}">
+                                <button type="button" onclick="window.saveEditBankAlias()" style="padding: 5px 10px; border: 1px solid #2563EB; background: #2563EB; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="check" style="width: 12px; height: 12px;"></i> Save</button>
+                                <button type="button" onclick="window.cancelEditBankAlias()" style="padding: 5px 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer;">Cancel</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Currency</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; display: inline-flex; align-items: center; gap: 6px;">
+                                ${currency ? `<span style="background: ${currencyVisual.bg}; color: ${currencyVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${currency}</span>` : '—'}
+                                ${secondaryCurrency ? `<span style="background: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${secondaryCurrency}</span>` : ''}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Country</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${country || '—'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Last Used</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${lastUsed}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Bank Details -->
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
+                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Bank Details</h3>
+                    </div>
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Bank Name</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${bank}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">SWIFT / BIC</div>
+                            <div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 5px; font-family: monospace;">${swift || '—'}</div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Bank Account Name</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px; flex-wrap: wrap;">
+                                <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${accountHolderName}</div>
+                                ${sameName ? `<span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border: 1px solid #86EFAC; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.02em;">Same as merchant</span>` : ''}
+                            </div>
+                        </div>
+                        <!-- Account number with reveal/copy -->
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">${iban ? 'IBAN' : 'Account Number'}</div>
+                            <div style="display: flex; align-items: center; flex-wrap: wrap; margin-top: 6px;">
+                                <span id="ba-account-text" data-masked="${(iban || accountMasked).replace(/"/g, '&quot;')}" data-full="${(iban || accountFull || accountMasked).replace(/"/g, '&quot;')}" data-state="masked" style="font-family: monospace; font-size: 14px; color: #0F172A; font-weight: 600; word-break: break-all;">${iban || accountMasked}</span>
+                                ${accountFull || iban ? `<button type="button" onclick="window.toggleBankAccountMask()" style="margin-left: 3ch; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'"><i data-lucide="eye" id="ba-account-eye" style="width: 12px; height: 12px;"></i><span id="ba-account-eye-label">Reveal</span></button>` : ''}
+                                <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('ba-account-text').textContent)" style="margin-left: 6px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'"><i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy</button>
+                            </div>
+                        </div>
+                        ${routing ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Routing Number</div><div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 5px; font-family: monospace;">${routing}</div></div>` : ''}
+                        ${bankCode ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Bank Code</div><div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 5px; font-family: monospace;">${bankCode}</div></div>` : ''}
+                        ${branch ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Branch</div><div style="font-size: 13px; font-weight: 600; color: #0F172A; margin-top: 5px; font-family: monospace;">${branch}</div></div>` : ''}
+                    </div>
+                </div>
+
+                ${(() => {
+                    // Recent Transactions section — pulls from BANK_ACCOUNT_TRANSACTIONS using
+                    // the "{bank}|{alias}" key. Falls back to an empty state if none found.
+                    const key = (typeof getBankAccountTransactionKey === 'function')
+                        ? getBankAccountTransactionKey(bank, alias)
+                        : `${bank}|${alias}`;
+                    const txs = (typeof BANK_ACCOUNT_TRANSACTIONS !== 'undefined' && BANK_ACCOUNT_TRANSACTIONS[key]) || [];
+                    const statusPillHtml = (status) => {
+                        if (status === 'Completed') return `<span style="background: #DCFCE7; color: #15803D; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">Completed</span>`;
+                        if (status === 'In Progress' || status === 'Confirming') return `<span style="background: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">${status}</span>`;
+                        return `<span style="background: #F1F5F9; color: #334155; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px;">${status}</span>`;
+                    };
+                    const rows = txs.length
+                        ? txs.map(tx => `
+                            <div style="display: grid; grid-template-columns: 0.8fr 1.2fr 0.9fr 1.3fr 1fr 0.9fr; gap: 14px; padding: 14px 28px; border-bottom: 1px solid #F1F5F9; align-items: center;">
+                                <div style="font-size: 12px; color: #64748B;">${tx.time}</div>
+                                <div style="font-family: monospace; font-size: 12px; color: #2563EB;">${tx.id}</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #0F172A;">${tx.type}</div>
+                                <div style="font-size: 12px; color: #475569; line-height: 1.5;">${tx.counterparty}</div>
+                                <div style="font-size: 13px; font-weight: 700; color: ${tx.direction === 'Inbound' ? '#059669' : '#0F172A'}; font-variant-numeric: tabular-nums;">${tx.amount}</div>
+                                <div>${statusPillHtml(tx.status)}</div>
+                            </div>
+                        `).join('')
+                        : `<div style="padding: 44px 28px; text-align: center; color: #64748B; font-size: 13px;">No transactions have been recorded under this bank account yet.</div>`;
+
+                    return `
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 18px 28px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <div style="display: inline-flex; align-items: center; gap: 10px;">
+                                    <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Recent Transactions</div>
+                                    ${txs.length ? `<span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; padding: 2px 9px; font-size: 11px; font-weight: 700;">${txs.length}</span>` : ''}
+                                </div>
+                                ${txs.length ? `<button onclick="window.openBankAccountTransactionsDrawer('${bank.replace(/'/g, "\\'")}', '${alias.replace(/'/g, "\\'")}')" style="background: none; border: none; padding: 0; font-size: 12px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">View all <i data-lucide="arrow-right" style="width: 12px; height: 12px;"></i></button>` : ''}
+                            </div>
+                            ${txs.length ? `
+                                <div style="display: grid; grid-template-columns: 0.8fr 1.2fr 0.9fr 1.3fr 1fr 0.9fr; gap: 14px; padding: 10px 28px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                                    <div>Time</div><div>ID</div><div>Type</div><div>Counterparty</div><div>Amount</div><div>Status</div>
+                                </div>
+                            ` : ''}
+                            ${rows}
+                        </div>
+                    `;
+                })()}
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        window.scrollContentToTop?.();
+    };
+
+    // Back button on the bank account detail page. Invokes the return function
+    // captured when the page was opened (see openBankAccountDetailPage above).
+    window.backFromBankAccountDetail = function() {
+        const back = window._bankDetailReturnFn;
+        // Clear markers BEFORE invoking back so re-entry (via 2FA, notifications,
+        // etc.) captures a fresh referrer instead of chaining into this one.
+        window._bankDetailReturnFn = null;
+        window._activeBankAccountDetail = null;
+        // Reset any Fiat Vault sub-view state (e.g. a stale 'detail' sub-view
+        // marker) so re-rendering Fiat Vault shows its list view, not a lingering
+        // old-style detail page.
+        try { window.resetFiatVaultSubviews?.(); } catch (e) {}
+        // Clear _currentRender so the back target can re-register itself cleanly.
+        window._currentRender = null;
+        if (typeof back === 'function') {
+            try { back(); return; } catch (e) { console.warn('[backFromBankAccountDetail]', e); }
+        }
+        // Safe default — Overview rather than Stablecoin Vault (the old default
+        // was wrong for bank-account flows rooted in Fiat Vault / Overview).
+        if (typeof window.renderPlaceholderContent === 'function') {
+            window.renderPlaceholderContent('Overview');
         }
     };
+
+    // Mask / reveal for the detail-page account number.
+    window.toggleBankAccountMask = function() {
+        const el    = document.getElementById('ba-account-text');
+        const icon  = document.getElementById('ba-account-eye');
+        const label = document.getElementById('ba-account-eye-label');
+        if (!el) return;
+        const nextMasked = el.dataset.state === 'full';
+        el.textContent = nextMasked ? el.dataset.masked : el.dataset.full;
+        el.dataset.state = nextMasked ? 'masked' : 'full';
+        if (icon)  icon.setAttribute('data-lucide', nextMasked ? 'eye' : 'eye-off');
+        if (label) label.textContent = nextMasked ? 'Reveal' : 'Hide';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+
+    // Inline alias edit on the bank account detail page.
+    window.startEditBankAlias = function() {
+        const display = document.getElementById('ba-alias-display');
+        const edit    = document.getElementById('ba-alias-edit');
+        const input   = document.getElementById('ba-alias-input');
+        if (display) display.style.display = 'none';
+        if (edit)    edit.style.display    = 'inline-flex';
+        if (input)   { input.focus(); input.select(); }
+    };
+    window.cancelEditBankAlias = function() {
+        const display = document.getElementById('ba-alias-display');
+        const edit    = document.getElementById('ba-alias-edit');
+        const input   = document.getElementById('ba-alias-input');
+        const text    = document.getElementById('ba-alias-text');
+        if (input && text) input.value = text.textContent;
+        if (edit)    edit.style.display    = 'none';
+        if (display) display.style.display = 'inline-flex';
+    };
+    window.saveEditBankAlias = function() {
+        const input = document.getElementById('ba-alias-input');
+        const newAlias = (input?.value || '').trim();
+        if (!newAlias) { alert('Account alias cannot be empty.'); return; }
+        const d = window._activeBankAccountDetail;
+        if (d) {
+            d.alias = newAlias;
+            window._activeBankAccountDetail = d;
+            window.openBankAccountDetailPage(d);
+        }
+    };
+
+    // Status + delete stubs on the detail page (kept consistent with the wallet detail page).
+    window.bankDetailToggleStatus = function() {
+        if (!confirm('Update this bank account\u2019s status?')) return;
+        const d = window._activeBankAccountDetail;
+        if (!d) { window.navBack(); return; }
+        d.status = d.status === 'enabled' ? 'disabled' : 'enabled';
+        window._activeBankAccountDetail = d;
+        window.openBankAccountDetailPage(d);
+    };
+    window.bankDetailDelete = function() {
+        const d = window._activeBankAccountDetail;
+        if (!confirm(`Delete bank account "${d?.alias || d?.bank || 'this account'}"? This cannot be undone.`)) return;
+        alert('Bank account has been deleted.');
+        window.navBack();
+    };
+
+    // --- Bank Account Verification flow (reuses the EDD drawer shell) ---
+    // Flow: Form → Confirmation → 2FA → Success (pending Obita review)
+    // Also fires the inbox message + push notification on success.
+    window._bankVerificationState = null;
+
+    // Local HTML-escape helper for this flow (rendered into innerHTML).
+    const escapeHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    window.startBankAccountVerification = function() {
+        const d = window._activeBankAccountDetail;
+        if (!d) { alert('No bank account selected.'); return; }
+        window._bankVerificationState = {
+            bank: d.bank,
+            alias: d.alias,
+            currency: d.currency,
+            accountMasked: d.accountMasked,
+            statementFileName: '',
+            statementDate: '',
+            reference: ''
+        };
+        _renderBankVerificationForm();
+    };
+
+    function _openBankVerificationDrawer() {
+        const drawer = document.getElementById('edd-fill-drawer');
+        const title  = document.getElementById('edd-fill-drawer-title');
+        if (!drawer) return;
+        if (title) title.textContent = 'Bank Account Verification';
+        (window.ALL_DRAWER_IDS || []).forEach(id => {
+            if (id !== 'edd-fill-drawer') {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('drawer-active');
+            }
+        });
+        drawer.classList.add('drawer-active');
+        document.body.classList.add('drawer-open');
+    }
+
+    function _renderBankVerificationForm() {
+        const body = document.getElementById('edd-fill-drawer-body');
+        if (!body) return;
+        const s = window._bankVerificationState || {};
+
+        // Compute the earliest acceptable statement date (6 months ago) and today as the latest.
+        const pad = (n) => String(n).padStart(2, '0');
+        const today = new Date();
+        const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, today.getDate());
+        const maxDate = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+        const minDate = `${sixMonthsAgo.getFullYear()}-${pad(sixMonthsAgo.getMonth() + 1)}-${pad(sixMonthsAgo.getDate())}`;
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                    <!-- Amber notice — accuracy disclaimer -->
+                    <div style="padding: 12px 14px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 12px; color: #92400E; line-height: 1.65; display: flex; align-items: flex-start; gap: 8px;">
+                        <i data-lucide="shield-alert" style="width: 14px; height: 14px; color: #B45309; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span>You are submitting verification for <strong>${escapeHtml(s.bank || '')} · ${escapeHtml(s.alias || '')}</strong>. Please ensure the statement is authentic, issued within the last 6 months, and matches the account details below.</span>
+                    </div>
+
+                    <!-- Read-only bank summary -->
+                    <div style="padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; display: grid; grid-template-columns: 110px 1fr; gap: 8px 12px; align-items: center;">
+                        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Bank</div>
+                        <div style="font-size: 13px; color: #0F172A; font-weight: 700;">${escapeHtml(s.bank || '')}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Account</div>
+                        <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${escapeHtml(s.alias || '')}${s.accountMasked ? ` · <span style="font-family:monospace;color:#475569;">${escapeHtml(s.accountMasked)}</span>` : ''}</div>
+                        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em;">Currency</div>
+                        <div style="font-size: 13px; color: #0F172A; font-weight: 600;">${escapeHtml(s.currency || '—')}</div>
+                    </div>
+
+                    <!-- Bank Account Verification section — upload 6-month statement -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
+                            <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Bank Account Verification</div>
+                        </div>
+                        <div style="font-size: 12.5px; color: #64748B; line-height: 1.65;">Upload an official bank statement for this account issued within the <strong style="color: #334155;">last 6 months</strong>. The statement must clearly show the bank name, account holder, and account number.</div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label class="bank-form-label">Bank Statement (PDF, PNG, JPG) *</label>
+                            <label style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px dashed #CBD5E1; border-radius: 10px; background: white; cursor: pointer;">
+                                <i data-lucide="upload-cloud" style="width: 18px; height: 18px; color: #2563EB; flex-shrink: 0;"></i>
+                                <span id="bv-statement-label" style="font-size: 13px; color: ${s.statementFileName ? '#0F172A' : '#64748B'};">${s.statementFileName ? escapeHtml(s.statementFileName) : 'Choose a file or drag & drop here'}</span>
+                                <input id="bv-statement-file" type="file" accept=".pdf,.png,.jpg,.jpeg" style="display: none;" onchange="(function(e){ const f=e.target.files&&e.target.files[0]; if(!f){return;} if(f.size>20*1024*1024){alert('File is too large (max 20 MB).'); e.target.value=''; return;} window._bankVerificationState.statementFileName=f.name; document.getElementById('bv-statement-label').textContent=f.name; document.getElementById('bv-statement-label').style.color='#0F172A'; })(event);">
+                            </label>
+                            <div style="font-size: 11px; color: #94A3B8;">Max 20 MB. Accepted formats: PDF, PNG, JPG.</div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label class="bank-form-label">Statement Issue Date *</label>
+                            <input id="bv-statement-date" class="bank-form-control" type="date" min="${minDate}" max="${maxDate}" value="${s.statementDate || ''}">
+                            <div style="font-size: 11px; color: #94A3B8;">Must be within the last 6 months (on or after ${minDate}).</div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <label class="bank-form-label">Reference / Notes <span style="font-weight:400;color:#94A3B8;">(optional)</span></label>
+                            <textarea id="bv-reference" class="bank-form-control" rows="3" placeholder="Add any additional context for Obita reviewers…" style="resize: vertical;">${escapeHtml(s.reference || '')}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-outline" onclick="window.closeBankAccountVerificationDrawer()" style="padding: 9px 16px; font-size: 13px;">Cancel</button>
+                    <button class="btn btn-primary" onclick="window.submitBankAccountVerificationForm()" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Submit</button>
+                </div>
+            </div>
+        `;
+        _openBankVerificationDrawer();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    window.closeBankAccountVerificationDrawer = function() {
+        const drawer = document.getElementById('edd-fill-drawer');
+        if (drawer) drawer.classList.remove('drawer-active');
+        document.body.classList.remove('drawer-open');
+    };
+
+    // Step 1 → Step 2 (confirmation)
+    window.submitBankAccountVerificationForm = function() {
+        const s = window._bankVerificationState;
+        if (!s) return;
+        const date = document.getElementById('bv-statement-date')?.value || '';
+        const ref  = document.getElementById('bv-reference')?.value?.trim() || '';
+
+        if (!s.statementFileName) { alert('Please upload the bank statement.'); return; }
+        if (!date) { alert('Please enter the statement issue date.'); return; }
+
+        // Validate within 6 months
+        const six = new Date(); six.setMonth(six.getMonth() - 6);
+        const now = new Date();
+        const picked = new Date(date);
+        if (isNaN(picked.getTime()) || picked < six || picked > now) {
+            alert('Statement date must be within the last 6 months.');
+            return;
+        }
+
+        s.statementDate = date;
+        s.reference = ref;
+        _renderBankVerificationConfirm();
+    };
+
+    function _renderBankVerificationConfirm() {
+        const body = document.getElementById('edd-fill-drawer-body');
+        if (!body) return;
+        const s = window._bankVerificationState || {};
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="padding: 12px 14px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; font-size: 12px; color: #1E3A8A; line-height: 1.65; display: flex; align-items: flex-start; gap: 8px;">
+                        <i data-lucide="info" style="width: 14px; height: 14px; color: #1D4ED8; margin-top: 2px; flex-shrink: 0;"></i>
+                        <span>Please review the information below. Once confirmed, the submission will be sent to Obita for review and can't be modified directly.</span>
+                    </div>
+
+                    <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+                        <div style="padding: 14px 18px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 13px; font-weight: 700; color: #0F172A;">Bank Account</div>
+                        <div style="padding: 14px 18px; display: grid; grid-template-columns: 140px 1fr; gap: 10px 16px; font-size: 13px; color: #0F172A;">
+                            <div style="color: #64748B; font-weight: 600;">Bank</div>
+                            <div style="font-weight: 700;">${escapeHtml(s.bank || '')}</div>
+                            <div style="color: #64748B; font-weight: 600;">Account</div>
+                            <div>${escapeHtml(s.alias || '')}${s.accountMasked ? ` · <span style="font-family:monospace;color:#475569;">${escapeHtml(s.accountMasked)}</span>` : ''}</div>
+                            <div style="color: #64748B; font-weight: 600;">Currency</div>
+                            <div>${escapeHtml(s.currency || '—')}</div>
+                        </div>
+                    </div>
+
+                    <div style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+                        <div style="padding: 14px 18px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; font-size: 13px; font-weight: 700; color: #0F172A;">Bank Account Verification</div>
+                        <div style="padding: 14px 18px; display: grid; grid-template-columns: 140px 1fr; gap: 10px 16px; font-size: 13px; color: #0F172A;">
+                            <div style="color: #64748B; font-weight: 600;">Statement File</div>
+                            <div style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="file-text" style="width: 14px; height: 14px; color: #2563EB;"></i>${escapeHtml(s.statementFileName || '—')}</div>
+                            <div style="color: #64748B; font-weight: 600;">Statement Date</div>
+                            <div>${escapeHtml(s.statementDate || '—')}</div>
+                            <div style="color: #64748B; font-weight: 600;">Reference / Notes</div>
+                            <div style="white-space: pre-wrap; color: ${s.reference ? '#0F172A' : '#94A3B8'};">${escapeHtml(s.reference || '—')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-outline" onclick="window._renderBankVerificationFormBack()" style="padding: 9px 16px; font-size: 13px;">Back</button>
+                    <button class="btn btn-primary" onclick="window.confirmBankAccountVerification()" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Confirm</button>
+                </div>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    // Expose the Back handler (form body is rebuilt fresh so state is preserved via _bankVerificationState).
+    window._renderBankVerificationFormBack = function() { _renderBankVerificationForm(); };
+
+    // Step 2 → 2FA → Step 3 (success)
+    window.confirmBankAccountVerification = function(token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Submit Bank Verification',
+                actionSubject: 'bank account verification submission',
+                onSuccess: () => window.confirmBankAccountVerification(TWO_FA_TOKEN)
+            });
+            return;
+        }
+        _renderBankVerificationSuccess();
+    };
+
+    function _renderBankVerificationSuccess() {
+        const s = window._bankVerificationState || {};
+        const body = document.getElementById('edd-fill-drawer-body');
+        if (!body) return;
+
+        // Record the submission so the bank detail page swaps the verify button
+        // for a disabled "Information Submitted for Review" pill on re-render,
+        // plus a formatted submission timestamp shown below the button.
+        window._bankVerificationSubmissions = window._bankVerificationSubmissions || {};
+        const submissionKey = `${s.alias || ''}|${s.accountMasked || ''}`;
+        const _now = new Date();
+        const _pad = (n) => String(n).padStart(2, '0');
+        const submittedAtLabel = `${_now.getFullYear()}-${_pad(_now.getMonth() + 1)}-${_pad(_now.getDate())} ${_pad(_now.getHours())}:${_pad(_now.getMinutes())}`;
+        window._bankVerificationSubmissions[submissionKey] = { at: _now.getTime(), label: submittedAtLabel };
+        if (window._activeBankAccountDetail) {
+            window._activeBankAccountDetail.verificationSubmitted = true;
+            window._activeBankAccountDetail.verificationSubmittedAt = submittedAtLabel;
+        }
+
+        // Build a human reference id and fire the inbox message + push notification.
+        const refId = 'BV-' + Date.now().toString().slice(-8);
+        const msgTitle = 'Bank Account Verification Submitted';
+        const msgPreview = `${s.bank} · ${s.alias} verification is pending Obita review. We'll notify you once a decision is made.`;
+        try { notifyOrderCreated(msgTitle, msgPreview, 'View Bank Account', () => {
+            // Re-open the bank detail page for this account if possible.
+            window.closeBankAccountVerificationDrawer();
+            const d = window._activeBankAccountDetail;
+            if (d) window.openBankAccountDetailPage(d);
+        }); } catch (e) { /* non-fatal */ }
+
+        body.innerHTML = `
+            <div style="display: flex; flex-direction: column; height: 100%;">
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; gap: 18px;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: #FEF3C7; display: flex; align-items: center; justify-content: center; border: 1px solid #FDE68A;">
+                        <i data-lucide="clock" style="width: 30px; height: 30px; color: #B45309;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Under Review</div>
+                        <div style="font-size: 13px; color: #64748B; line-height: 1.65; max-width: 360px; margin: 0 auto;">Your bank account verification has been submitted and is pending Obita review. You'll be notified via inbox and push notification once a decision is made.</div>
+                    </div>
+                    <div style="margin-top: 4px; padding: 10px 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 12px; color: #475569; display: inline-flex; align-items: center; gap: 8px;">
+                        <i data-lucide="hash" style="width: 12px; height: 12px; color: #94A3B8;"></i>
+                        Reference <span style="font-family: monospace; color: #0F172A; font-weight: 700;">${escapeHtml(refId)}</span>
+                    </div>
+                </div>
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-primary" onclick="window.closeBankAccountVerificationDrawer(); window.openBankAccountDetailPage(window._activeBankAccountDetail);" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Done</button>
+                </div>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
 
     window.submitNewBankAccount = function() {
         const bankName = document.getElementById('bank-name').value;
@@ -3229,31 +5453,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentStatus = document.getElementById('approval-list-status-filter')?.value || 'all';
         const currentSearch = document.getElementById('approval-list-search')?.value || '';
 
+        // --- KPI summary (mclean-restyle) ---
+        const currentUser = getCurrentUser()?.name || '';
+        const scopeFilterByLicense = (r) => {
+            if (window.currentLicenseMode === 'MSO') {
+                if (['USDT', 'USDC'].includes(r.currency)) return false;
+                if (/stablecoin/i.test(r.scope || '')) return false;
+            }
+            return true;
+        };
+        const kpi = {
+            needsMe:   approvalRequests.filter(r => scopeFilterByLicense(r) && r.status === 'pending' && r.requester !== currentUser).length,
+            myPending: approvalRequests.filter(r => scopeFilterByLicense(r) && r.status === 'pending' && r.requester === currentUser).length,
+            approved:  approvalRequests.filter(r => scopeFilterByLicense(r) && r.status === 'approved').length,
+            rejected:  approvalRequests.filter(r => scopeFilterByLicense(r) && r.status === 'rejected').length,
+        };
+
         contentBody.innerHTML = `
-            <div class="fade-in" style="display: flex; flex-direction: column; gap: 16px;">
-                <div class="card" style="padding: 24px;">
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Approval List</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Review all approval requests in reverse chronological order and take action on pending items.</div>
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                <!-- Unified hero: identity + KPI summary -->
+                <div class="card entity-hero-card invoice-hero" style="margin: 0; padding: 0; overflow: hidden; position: relative;">
+                    <div class="invoice-hero-top">
+                        <div class="invoice-hero-ident">
+                            <h1 class="invoice-page-title">Approval List</h1>
+                            <p class="invoice-hero-sub">Review pending requests and act on items that need your approval.</p>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                            <div style="display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: linear-gradient(180deg, #EFF6FF 0%, #DBEAFE 100%); color: #1D4ED8; border: 1px solid #BFDBFE; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);">
-                                <div style="width: 28px; height: 28px; border-radius: 999px; background: rgba(255,255,255,0.75); display: flex; align-items: center; justify-content: center;">
-                                    <i data-lucide="bell-ring" style="width: 14px; height: 14px;"></i>
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.75;">Needs Attention</div>
-                                    <div style="font-size: 14px; font-weight: 800; line-height: 1;">${approvalRequests.filter(request => {
-                                        if (request.status !== 'pending') return false;
-                                        if (window.currentLicenseMode === 'MSO') {
-                                            if (['USDT', 'USDC'].includes(request.currency)) return false;
-                                            if (/stablecoin/i.test(request.scope || '')) return false;
-                                        }
-                                        return true;
-                                    }).length} Awaiting Approval</div>
-                                </div>
+                    </div>
+                    <div class="invoice-kpi-grid">
+                        <div class="invoice-kpi invoice-kpi--hero">
+                            <div class="invoice-kpi-label">Needs My Approval</div>
+                            <div class="invoice-kpi-amount">${kpi.needsMe}</div>
+                            <div class="invoice-kpi-meta">${kpi.needsMe === 1 ? 'request' : 'requests'} awaiting you</div>
+                        </div>
+                        <div class="invoice-kpi">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4 20-7z"/></svg></span>
+                                My Submissions
                             </div>
+                            <div class="invoice-kpi-count">${kpi.myPending}</div>
+                            <div class="invoice-kpi-meta" style="color:#1D4ED8;">pending outcome</div>
+                        </div>
+                        <div class="invoice-kpi">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                Approved
+                            </div>
+                            <div class="invoice-kpi-count">${kpi.approved}</div>
+                            <div class="invoice-kpi-meta" style="color:#15803D;">historical</div>
+                        </div>
+                        <div class="invoice-kpi invoice-kpi--last">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                Rejected
+                            </div>
+                            <div class="invoice-kpi-count">${kpi.rejected}</div>
+                            <div class="invoice-kpi-meta" style="color:#B91C1C;">historical</div>
                         </div>
                     </div>
                 </div>
@@ -3299,9 +5553,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </div>
                             `;
 
-                            const renderRow = (request, accentColor = null) => {
+                            const renderRow = (request, accentColor = null, isMySubmission = false) => {
                                 const statusPill = getApprovalRequestStatusPill(request.status);
                                 const rowBorder = accentColor ? `border-left: 3px solid ${accentColor};` : 'border-left: 3px solid transparent;';
+                                // A user can't approve their own submission — My Submissions always show View,
+                                // never the Review action, regardless of the request's status.
+                                const showReview = request.status === 'pending' && !isMySubmission;
                                 return `
                                     <div style="border-bottom: 1px solid var(--clr-border);">
                                         <div onclick="window.openApprovalRequestDetail('${request.id}')" style="padding: 18px 24px; display: grid; grid-template-columns: 1.3fr 0.9fr 0.75fr 0.75fr 0.85fr 0.85fr; gap: 16px; align-items: center; cursor: pointer; ${rowBorder}">
@@ -3314,7 +5571,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                             <div><span style="background: ${statusPill.background}; color: ${statusPill.color}; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1px solid #E2E8F0; border-radius: 999px; text-transform: uppercase;">${statusPill.label}</span></div>
                                             <div style="font-size: 13px; color: #334155;">${request.approver || '—'}</div>
                                             <div style="display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;">
-                                                ${request.status === 'pending'
+                                                ${showReview
                                                     ? `<button class="btn btn-primary" onclick="window.toggleApprovalActionMenu('${request.id}'); event.stopPropagation();" style="padding: 7px 14px; font-size: 12px; box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);">Review</button>`
                                                     : `<button class="btn btn-outline" onclick="window.openApprovalRequestDetail('${request.id}'); event.stopPropagation();" style="padding: 6px 12px; font-size: 12px;">View</button>`
                                                 }
@@ -3335,26 +5592,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                             let html = '';
 
-                            if (mySubmissions.length) {
-                                html += `
-                                    <div style="padding: 9px 24px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE; display: flex; align-items: center; gap: 8px;">
-                                        <i data-lucide="send" style="width: 13px; height: 13px; color: #2563EB; flex-shrink: 0;"></i>
-                                        <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">My Submissions</span>
-                                        <span style="font-size: 11px; font-weight: 700; background: #DBEAFE; color: #1D4ED8; padding: 1px 7px; border-radius: 999px;">${mySubmissions.length}</span>
-                                    </div>
-                                `;
-                                html += mySubmissions.map(r => renderRow(r, '#2563EB')).join('');
-                            }
-
+                            // "Needs My Approval" comes first — it's actionable work and deserves priority.
                             if (needsMyApproval.length) {
                                 html += `
-                                    <div style="padding: 9px 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; border-top: ${mySubmissions.length ? '2px solid #E2E8F0' : 'none'}; display: flex; align-items: center; gap: 8px;">
+                                    <div style="padding: 9px 24px; background: #FFFBEB; border-bottom: 1px solid #FDE68A; display: flex; align-items: center; gap: 8px;">
                                         <i data-lucide="bell-ring" style="width: 13px; height: 13px; color: #D97706; flex-shrink: 0;"></i>
                                         <span style="font-size: 11px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em;">Needs My Approval</span>
                                         <span style="font-size: 11px; font-weight: 700; background: #FEF3C7; color: #92400E; padding: 1px 7px; border-radius: 999px;">${needsMyApproval.length}</span>
                                     </div>
                                 `;
                                 html += needsMyApproval.map(r => renderRow(r, '#D97706')).join('');
+                            }
+
+                            if (mySubmissions.length) {
+                                html += `
+                                    <div style="padding: 9px 24px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE; border-top: ${needsMyApproval.length ? '2px solid #E2E8F0' : 'none'}; display: flex; align-items: center; gap: 8px;">
+                                        <i data-lucide="send" style="width: 13px; height: 13px; color: #2563EB; flex-shrink: 0;"></i>
+                                        <span style="font-size: 11px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">My Submissions</span>
+                                        <span style="font-size: 11px; font-weight: 700; background: #DBEAFE; color: #1D4ED8; padding: 1px 7px; border-radius: 999px;">${mySubmissions.length}</span>
+                                    </div>
+                                `;
+                                html += mySubmissions.map(r => renderRow(r, '#2563EB', true)).join('');
                             }
 
                             return html;
@@ -3978,6 +6236,197 @@ document.addEventListener('DOMContentLoaded', () => {
         lastCreatedInvoiceSuccess = null;
         renderInvoiceOrdersPage();
         window.scrollContentToTop();
+    };
+
+    // Payer-facing invoice view — opens a rendered invoice PDF-style document in a
+    // new tab. This is the same view the payer receives via the invoice link.
+    window.openPayerInvoiceView = function(invoiceOrderId) {
+        const order = typeof getInvoiceOrderById === 'function' ? getInvoiceOrderById(invoiceOrderId) : null;
+        const detail = (typeof INVOICE_ORDER_DETAILS !== 'undefined') ? INVOICE_ORDER_DETAILS[invoiceOrderId] : null;
+        if (!order) { alert('Invoice not found.'); return; }
+
+        // Merchant identity comes from the active entity config (华信科技有限公司 for TCSP,
+        // 华信电子商务有限公司 for MSO). The payer sees the merchant's registered name —
+        // not the internal collection account label.
+        const merchant = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: 'Obita Merchant' };
+        const issuerName = merchant.name || detail?.recipientEntity || order.recipient || 'Merchant';
+        const payerName  = order.buyer || '—';
+        const lineItems  = (detail?.lineItems) || [];
+
+        // Sum the line item amounts — purely cosmetic; falls back to the order amount if parsing fails.
+        const computeTotal = () => {
+            try {
+                const sum = lineItems.reduce((acc, li) => {
+                    const n = parseFloat(String(li.amount).replace(/[^0-9.\-]/g, ''));
+                    return isNaN(n) ? acc : acc + n;
+                }, 0);
+                return sum;
+            } catch (e) { return 0; }
+        };
+        const totalNumeric = computeTotal();
+        const totalDisplay = totalNumeric > 0 ? totalNumeric.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : order.amount;
+        const currency = order.settlementCurrency || order.currency || '';
+        // Obita checkout payment link — fallback URL keeps the payer flow demoable even
+        // if no specific link was recorded.
+        const payLink = detail?.invoiceLink || `https://obita.com/pay/${encodeURIComponent(order.invoiceNo)}`;
+
+        const win = window.open('', '_blank');
+        if (!win) { alert('Please allow pop-ups to view the invoice.'); return; }
+
+        const escapeHtml = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const rowsHtml = lineItems.length
+            ? lineItems.map(li => `
+                <tr>
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #0F172A;">${escapeHtml(li.item)}</td>
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #475569; text-align: right;">${escapeHtml(li.quantity)}</td>
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #475569; text-align: right;">${escapeHtml(li.unitPrice)}</td>
+                    <td style="padding: 12px 14px; border-bottom: 1px solid #F1F5F9; font-size: 13px; color: #0F172A; font-weight: 700; text-align: right;">${escapeHtml(li.amount)}</td>
+                </tr>
+            `).join('')
+            : `<tr><td colspan="4" style="padding: 20px 14px; text-align: center; color: #94A3B8; font-size: 13px;">No line items recorded.</td></tr>`;
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Invoice ${escapeHtml(order.invoiceNo)} · ${escapeHtml(payerName)}</title>
+<style>
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; background: #F1F5F9; color: #0F172A; margin: 0; padding: 32px 16px; }
+  .toolbar { max-width: 820px; margin: 0 auto 16px; display: flex; justify-content: flex-end; gap: 10px; }
+  .toolbar button { padding: 9px 16px; border-radius: 8px; border: 1px solid #E2E8F0; background: white; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .toolbar button.primary { background: #2563EB; color: white; border-color: #2563EB; }
+  .doc { max-width: 820px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; padding: 44px 52px; box-shadow: 0 12px 40px rgba(15,23,42,0.06); }
+  .doc-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; border-bottom: 1px solid #E2E8F0; padding-bottom: 24px; }
+  .brand { display: flex; align-items: center; gap: 16px; }
+  .brand-mark { width: 56px; height: 56px; border-radius: 12px; background: linear-gradient(135deg, #2563EB, #1D4ED8); color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; box-shadow: 0 4px 10px rgba(37,99,235,0.22); flex-shrink: 0; }
+  .brand-meta { min-width: 0; }
+  .brand-eyebrow { font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 4px; }
+  .brand-name { font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25; word-break: break-word; }
+  .brand-sub { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+  .doc-title { text-align: right; }
+  .doc-title h1 { font-size: 30px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.03em; }
+  .doc-title .num { font-family: ui-monospace, monospace; font-size: 13px; color: #475569; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .meta-block { }
+  .meta-label { font-size: 10.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .meta-value { font-size: 13px; color: #0F172A; line-height: 1.65; }
+  .meta-value strong { font-weight: 700; }
+  table.items { width: 100%; border-collapse: collapse; margin-top: 28px; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; }
+  table.items thead th { background: #F8FAFC; padding: 10px 14px; font-size: 11px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; text-align: left; border-bottom: 1px solid #E2E8F0; }
+  table.items thead th.num { text-align: right; }
+  .totals { margin-top: 20px; display: flex; justify-content: flex-end; }
+  .totals-box { min-width: 280px; border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden; }
+  .totals-row { display: flex; justify-content: space-between; padding: 10px 16px; font-size: 13px; color: #475569; }
+  .totals-row + .totals-row { border-top: 1px solid #F1F5F9; }
+  .totals-row.grand { background: #0F172A; color: white; font-weight: 800; font-size: 15px; padding: 14px 16px; }
+  .notes { margin-top: 28px; padding: 16px 18px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 12px; color: #475569; line-height: 1.7; }
+  /* Payment Instructions CTA — soft blue panel with primary button, direct URL,
+     dashed divider, and wire-transfer fallback instructions. */
+  .pay-cta { margin-top: 32px; padding: 26px 28px; background: #F5F8FF; border: 1px solid #DBEAFE; border-radius: 14px; }
+  .pay-cta-label { font-size: 12px; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.24em; margin-bottom: 16px; }
+  .pay-cta-button { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 18px 22px; background: #2563EB; color: #FFFFFF !important; font-size: 18px; font-weight: 800; text-decoration: none; border-radius: 12px; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22); letter-spacing: -0.01em; }
+  .pay-cta-button:hover { background: #1D4ED8; }
+  .pay-cta-amount { letter-spacing: -0.01em; }
+  .pay-cta-arrow { font-size: 22px; font-weight: 800; line-height: 1; }
+  .pay-cta-url { margin-top: 14px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; color: #475569; word-break: break-all; line-height: 1.55; }
+  .pay-cta-divider { margin: 20px 0; border-top: 1px dashed #CBD5E1; }
+  .pay-cta-wire-label { font-size: 12.5px; color: #64748B; line-height: 1.6; }
+  .pay-cta-wire-account { margin-top: 2px; font-size: 14px; font-weight: 700; color: #0F172A; letter-spacing: -0.005em; }
+  .pay-cta-wire-ref { margin-top: 8px; font-size: 12.5px; color: #64748B; line-height: 1.6; }
+  .pay-cta-wire-code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: #0F172A; font-weight: 700; }
+  .footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid #F1F5F9; font-size: 11px; color: #94A3B8; text-align: center; line-height: 1.6; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+  <div class="toolbar no-print">
+    <button onclick="window.print()" class="primary">⬇ Download / Print</button>
+    <button onclick="window.close()">Close</button>
+  </div>
+  <div class="doc">
+    <div class="doc-header">
+      <div class="brand">
+        <!-- Merchant logo tile (accent-tinted in production this would render the
+             merchant's uploaded logo image). -->
+        <div class="brand-mark" style="background: linear-gradient(135deg, ${escapeHtml(merchant.accent || '#2563EB')}, ${escapeHtml((merchant.accent || '#1D4ED8'))}cc);">${escapeHtml((issuerName || 'O').trim().charAt(0))}</div>
+        <div class="brand-meta">
+          <div class="brand-eyebrow">Merchant</div>
+          <div class="brand-name">${escapeHtml(issuerName)}</div>
+        </div>
+      </div>
+      <div class="doc-title">
+        <h1>Invoice</h1>
+        <div class="num">${escapeHtml(order.invoiceNo)}</div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div class="meta-block">
+        <div class="meta-label">Bill To</div>
+        <div class="meta-value"><strong>${escapeHtml(payerName)}</strong></div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">From</div>
+        <div class="meta-value"><strong>${escapeHtml(issuerName)}</strong></div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Issued On</div>
+        <div class="meta-value">${escapeHtml(order.issuedOn)}</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Due On</div>
+        <div class="meta-value">${escapeHtml(order.dueOn)}</div>
+      </div>
+      <div class="meta-block">
+        <div class="meta-label">Payment Method</div>
+        <div class="meta-value">${escapeHtml(order.method)}</div>
+      </div>
+    </div>
+
+    <table class="items">
+      <thead>
+        <tr>
+          <th>Description</th>
+          <th class="num">Qty</th>
+          <th class="num">Unit Price</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row"><span>Subtotal</span><span>${escapeHtml(totalDisplay)} ${escapeHtml(currency)}</span></div>
+        <div class="totals-row"><span>Fees</span><span>—</span></div>
+        <div class="totals-row grand"><span>Total Due</span><span>${escapeHtml(totalDisplay)} ${escapeHtml(currency)}</span></div>
+      </div>
+    </div>
+
+    <div class="pay-cta">
+      <div class="pay-cta-label">Pay via Obita Cashier</div>
+      <a href="${escapeHtml(payLink)}" target="_blank" rel="noopener" class="pay-cta-button">
+        <span class="pay-cta-amount">Pay ${escapeHtml(totalDisplay)} ${escapeHtml(currency)} now</span>
+        <span class="pay-cta-arrow">→</span>
+      </a>
+      <div class="pay-cta-url">${escapeHtml(payLink)}</div>
+      <div class="pay-cta-divider"></div>
+      <div class="pay-cta-wire">
+        <div class="pay-cta-wire-label">Or wire directly to</div>
+        <div class="pay-cta-wire-account">Merchant ${escapeHtml(currency)} Settlement Account</div>
+        <div class="pay-cta-wire-ref">Reference <span class="pay-cta-wire-code">${escapeHtml(order.invoiceNo)}</span> on your payment.</div>
+      </div>
+    </div>
+
+    <div class="footer">Powered by Obita</div>
+  </div>
+</body>
+</html>`;
+
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
     };
 
     window.openCheckoutOrderDetail = function(checkoutId) {
@@ -6457,53 +8906,142 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
 
 
     window.switchToAddAddressView = function() {
-        // Reset forms
-        document.getElementById('na-form-individual').style.display = 'flex';
-        document.getElementById('na-form-organization').style.display = 'none';
-        const ownerRadios = document.querySelectorAll('input[name="newAddrOwnerType"]');
-        if(ownerRadios[0]) ownerRadios[0].checked = true;
-
-        // Reset wallet fields
-        const addrInput = document.getElementById('na-wallet-addr');
-        if (addrInput) addrInput.value = '';
-        const verifyZone = document.getElementById('na-wallet-verify-zone');
-        if (verifyZone) { verifyZone.style.display = 'none'; verifyZone.innerHTML = ''; }
-        window._addrBookVerified = false;
-
-        document.getElementById('addr-list-view').style.display = 'none';
-        document.getElementById('add-addr-view').style.display = 'flex';
-        lucide.createIcons();
+        // Page-model: rendering the page itself resets the form to its initial state.
+        window.renderAddNewAddressPage?.();
+        return;
     };
 
+    // Both the list and the add form are now full pages. "Cancel" / back / post-submit
+    // all just re-render the Address Book page.
     window.switchToListAddressView = function() {
-        document.getElementById('addr-list-view').style.display = 'flex';
-        document.getElementById('add-addr-view').style.display = 'none';
+        window.renderAddressBookPage?.();
     };
 
     window.toggleNewAddrOwnerType = function(type) {
+        // Pill-card visual selection (brand-blue highlight for active).
+        const indv = document.getElementById('na-owner-indv-label');
+        const corp = document.getElementById('na-owner-corp-label');
+        const setActive = (el) => { if (el) { el.style.border = '2px solid #2563EB'; el.style.background = '#EFF6FF'; const t = el.querySelector('div > div:first-child'); if (t) t.style.color = '#1D4ED8'; } };
+        const setIdle   = (el) => { if (el) { el.style.border = '2px solid #E2E8F0'; el.style.background = 'white';   const t = el.querySelector('div > div:first-child'); if (t) t.style.color = '#0F172A'; } };
         if (type === 'individual') {
-            document.getElementById('na-form-individual').style.display = 'flex';
-            document.getElementById('na-form-organization').style.display = 'none';
+            setActive(indv); setIdle(corp);
+            const r = indv?.querySelector('input[type="radio"]'); if (r) r.checked = true;
         } else {
-            document.getElementById('na-form-individual').style.display = 'none';
-            document.getElementById('na-form-organization').style.display = 'flex';
+            setActive(corp); setIdle(indv);
+            const r = corp?.querySelector('input[type="radio"]'); if (r) r.checked = true;
         }
     };
 
-    // Address Book: wallet verification flow (reuses the same verify zone UI)
+    // Address Book: wallet verification flow (static tabbed zone lives in index.html)
     window._addrBookVerified = false;
 
-    window.onAddrBookVerifyClick = function() {
-        const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
-        const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
-        if (!addr) { alert('Please enter the wallet address first.'); return; }
+    // Progressive reveal: Step A declaration → Step B wallet type → Step C verify zone.
+    window.onAddrBookDeclarationChange = function() {
+        const checked = document.getElementById('na-decl-check')?.checked;
+        const typeZone = document.getElementById('na-wallet-type-zone');
+        const verifyZone = document.getElementById('na-wallet-verify-zone');
+        if (!typeZone) return;
+        if (checked) {
+            typeZone.style.display = 'flex';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => typeZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        } else {
+            // Unchecking collapses downstream steps — prevents user from submitting a wallet
+            // they just un-declared ownership of.
+            typeZone.style.display = 'none';
+            if (verifyZone) verifyZone.style.display = 'none';
+            // Clear any wallet type selection visual state
+            const privateLbl = document.getElementById('na-type-private-label');
+            const exchangeLbl = document.getElementById('na-type-exchange-label');
+            [privateLbl, exchangeLbl].forEach(lbl => { if (lbl) { lbl.style.border = '2px solid #E2E8F0'; lbl.style.background = 'white'; const r = lbl.querySelector('input[type="radio"]'); if (r) r.checked = false; } });
+        }
+    };
 
+    window.onAddrBookWalletTypeSelect = function(type) {
+        const privateLbl  = document.getElementById('na-type-private-label');
+        const exchangeLbl = document.getElementById('na-type-exchange-label');
+        const verifyZone  = document.getElementById('na-wallet-verify-zone');
+        if (type === 'private') {
+            if (privateLbl)  { privateLbl.style.border  = '2px solid #7C3AED'; privateLbl.style.background  = '#F5F3FF'; const r = privateLbl.querySelector('input[type="radio"]'); if (r) r.checked = true; }
+            if (exchangeLbl) { exchangeLbl.style.border = '2px solid #E2E8F0'; exchangeLbl.style.background = 'white'; }
+        } else {
+            if (exchangeLbl) { exchangeLbl.style.border = '2px solid #EA580C'; exchangeLbl.style.background = '#FFF7ED'; const r = exchangeLbl.querySelector('input[type="radio"]'); if (r) r.checked = true; }
+            if (privateLbl)  { privateLbl.style.border  = '2px solid #E2E8F0'; privateLbl.style.background  = 'white'; }
+        }
+        if (verifyZone) {
+            verifyZone.style.display = 'flex';
+            window.setAddrBookVerifyTab?.('micro');
+            window.onAddrBookNetworkChange?.();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+    };
+
+    // Keep the Micro-Transfer destination (QR + address + chain display + share text)
+    // in sync with whichever network the user picks in Step 1 of the Address Book verify zone.
+    window.onAddrBookNetworkChange = function() {
+        const network  = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
         const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
-        const zone = document.getElementById('na-wallet-verify-zone');
-        if (!zone) return;
+        const destEl   = document.getElementById('na-verify-dest-addr');
+        const qrEl     = document.getElementById('na-verify-qr');
+        const chainEl  = document.getElementById('na-verify-chain');
+        const shareEl  = document.getElementById('na-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
 
-        // Render the verification zone inline (unique IDs with "na-" prefix to avoid collision)
-        zone.innerHTML = `
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
+    };
+
+    // Share / copy-to-clipboard for the Address Book verification transfer instructions.
+    window.shareAddrBookVerification = function(btn) {
+        const text = document.getElementById('na-verify-share-text')?.textContent?.trim() || '';
+        const showFeedback = (label, color) => {
+            if (!btn) return;
+            const original = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" style="width:14px;height:14px;"></i> ${label}`;
+            btn.style.background = color;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                btn.innerHTML = original;
+                btn.style.background = '#0F172A';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 1400);
+        };
+        if (navigator.share) {
+            navigator.share({ title: 'Obita Wallet Verification', text })
+                .then(() => showFeedback('Shared', '#059669'))
+                .catch(() => {
+                    navigator.clipboard.writeText(text)
+                        .then(() => showFeedback('Copied', '#059669'))
+                        .catch(() => showFeedback('Copied', '#059669'));
+                });
+        } else {
+            navigator.clipboard.writeText(text)
+                .then(() => showFeedback('Copied', '#059669'))
+                .catch(() => showFeedback('Copied', '#059669'));
+        }
+    };
+
+    // Legacy entry point — retained for backwards compatibility. The static zone is always
+    // visible now, so this just scrolls it into view.
+    window.onAddrBookVerifyClick = function() {
+        const zone = document.getElementById('na-wallet-verify-zone');
+        if (zone) setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    };
+
+    // Orphaned template — retained to keep the long string lookup below from breaking.
+    // Not referenced anywhere after the static zone refactor. Intentionally left unused.
+    // eslint-disable-next-line no-unused-vars
+    const _unusedAddrBookVerifyTemplate = function(destAddr, network, addr) { return `
             <div style="border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
                 <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
                     <button type="button" id="na-verify-tab-micro" onclick="window.setAddrBookVerifyTab('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro Transfer Verification</button>
@@ -6574,11 +9112,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <button type="button" onclick="window.addrBookSignReset()" style="display: flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border: 1px solid #E2E8F0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #475569; cursor: pointer; width: 100%;"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Verify Again</button>
                     </div>
                 </div>
-            </div>`;
-        zone.style.display = 'block';
-        lucide.createIcons();
-        setTimeout(() => zone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
-    };
+            </div>`; };
 
     window.setAddrBookVerifyTab = function(tab) {
         const micro = document.getElementById('na-verify-micro');
@@ -6595,6 +9129,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             if (micro) micro.style.display = 'none';
             if (tabS) { tabS.style.background = 'white'; tabS.style.color = '#7C3AED'; tabS.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }
             if (tabM) { tabM.style.background = 'transparent'; tabM.style.color = '#64748B'; tabM.style.boxShadow = 'none'; }
+            // Refresh the message each time the sign tab is opened.
+            const nonce = 'OBT-' + Date.now().toString(36).toUpperCase();
+            const msgEl = document.getElementById('na-sign-message');
+            if (msgEl) msgEl.textContent = `Obita Address Book Verification · Nonce: ${nonce}`;
             window.addrBookSignReset();
         }
     };
@@ -6609,37 +9147,48 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.addrBookSignMetaMask = async function() {
-        if (!window.ethereum) {
-            document.getElementById('na-sign-select').style.display = 'none';
-            const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
-            const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
-            const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
-            const msg = document.getElementById('na-sign-fail-msg'); if (msg) msg.textContent = 'MetaMask not detected. Please install the browser extension.';
-            lucide.createIcons();
-            return;
-        }
+        // Show pending state up front (both real and mock paths use it).
         document.getElementById('na-sign-select').style.display = 'none';
         const pend = document.getElementById('na-sign-pending'); if (pend) pend.style.display = 'flex';
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const message = document.getElementById('na-sign-message')?.textContent?.trim() || 'Obita Address Book Verification';
-            await window.ethereum.request({ method: 'personal_sign', params: [message, accounts[0]] });
+
+        const markVerified = (address) => {
             if (pend) pend.style.display = 'none';
             const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
             const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'flex';
             const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'none';
             const vab = document.getElementById('na-sign-result')?.querySelector('button');
-            if (vab) vab.style.display = 'none'; // hide Verify Again on success
+            if (vab) vab.style.display = 'none';
+            if (address) {
+                // Auto-fill the wallet address input so Save just works.
+                const addrInput = document.getElementById('na-wallet-addr');
+                if (addrInput && !addrInput.value) addrInput.value = address;
+            }
             window._addrBookVerified = true;
-        } catch (err) {
+            lucide.createIcons();
+        };
+        const markFailed = (text) => {
             if (pend) pend.style.display = 'none';
             const res = document.getElementById('na-sign-result'); if (res) res.style.display = 'flex';
             const ok = document.getElementById('na-sign-ok'); if (ok) ok.style.display = 'none';
             const fail = document.getElementById('na-sign-fail'); if (fail) fail.style.display = 'flex';
-            const msg = document.getElementById('na-sign-fail-msg');
-            if (msg) msg.textContent = err.code === 4001 ? 'Signature request was rejected.' : (err.message || 'Signing failed.');
+            const msg = document.getElementById('na-sign-fail-msg'); if (msg) msg.textContent = text;
+            lucide.createIcons();
+        };
+
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const message = document.getElementById('na-sign-message')?.textContent?.trim() || 'Obita Address Book Verification';
+                await window.ethereum.request({ method: 'personal_sign', params: [message, accounts[0]] });
+                markVerified(accounts[0]);
+                return;
+            } catch (err) {
+                markFailed(err.code === 4001 ? 'Signature request was rejected.' : (err.message || 'Signing failed.'));
+                return;
+            }
         }
-        lucide.createIcons();
+        // Demo fallback — simulate MetaMask handshake + signature.
+        setTimeout(() => markVerified('0x74a2C8F1b9e41c3A6BdE82D1A4cF7F9b3C20e58a'), 1400);
     };
 
     window.addrBookSignWC = function() {
@@ -6659,10 +9208,29 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.toggleAddressStatus = function(btn) {
+        // Page-row path: locate the entry in the in-memory array and re-render.
+        const pageRow = btn.closest('[data-addr]');
+        if (pageRow && window._addressBookEntries) {
+            const addr = pageRow.dataset.addr;
+            const entry = window._addressBookEntries.find(e => e.address === addr);
+            if (entry) {
+                if (entry.status === 'enabled') {
+                    entry.status = 'disabled';
+                } else {
+                    if (entry.verification === 'not-supported') {
+                        alert('This wallet address cannot be enabled until it is supported.');
+                        return;
+                    }
+                    entry.status = 'enabled';
+                }
+                window.renderAddressBookPage?.();
+                return;
+            }
+        }
+        // Legacy drawer-row path (kept for anything still using the old markup).
         const card = btn.closest('.addr-item');
         if (!card) return;
         const currentStatus = card.dataset.status || (btn.classList.contains('enabled') ? 'enabled' : 'disabled');
-
         if (currentStatus === 'enabled') {
             card.dataset.status = 'disabled';
             btn.dataset.status = 'disabled';
@@ -6678,54 +9246,56 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     };
 
     window.deleteAddress = function(btn) {
-        if(confirm("Are you sure you want to delete this address?")) {
-            btn.closest('.addr-item').remove();
+        if (!confirm('Are you sure you want to delete this address?')) return;
+        // Page-row path: remove from the array and re-render.
+        const pageRow = btn.closest('[data-addr]');
+        if (pageRow && window._addressBookEntries) {
+            const addr = pageRow.dataset.addr;
+            window._addressBookEntries = window._addressBookEntries.filter(e => e.address !== addr);
+            window.renderAddressBookPage?.();
+            return;
         }
+        // Legacy drawer-row path.
+        btn.closest('.addr-item')?.remove();
+    };
+
+    // Per-chain distinct tag colors. Card surface stays uniformly white; only the chain
+    // chip carries chain identity via color.
+    const ADDR_BOOK_CHAIN_COLORS = {
+        'TRON (TRC-20)':      { bg: '#FEE2E2', color: '#DC2626', label: 'TRON' },
+        'Ethereum (ERC-20)':  { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum' },
+        'BNB Chain (BEP-20)': { bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain' },
+        'Solana':             { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana' }
     };
 
     window.submitNewAddress = function() {
-        const isIndividual = document.querySelector('input[name="newAddrOwnerType"][value="individual"]').checked;
         const addr    = document.getElementById('na-wallet-addr')?.value?.trim();
+        const alias   = document.getElementById('na-wallet-alias')?.value?.trim();
         const network = document.getElementById('na-wallet-net')?.value || 'TRON (TRC-20)';
         const walletType = document.querySelector('input[name="na-wallet-type"]:checked')?.value || 'private';
+        const ownerType  = document.querySelector('input[name="newAddrOwnerType"]:checked')?.value === 'organization' ? 'organization' : 'individual';
 
-        if (!addr) { alert('Please enter the wallet address.'); return; }
-
-        let name = isIndividual ?
-            ((document.getElementById('na-fname').value || 'New') + ' ' + (document.getElementById('na-lname').value || 'User')) :
-            (document.getElementById('na-orgname').value || 'New Organization');
+        if (!alias) { alert('Please enter the wallet alias.'); return; }
+        if (!addr)  { alert('Please enter the wallet address.'); return; }
 
         const verified = window._addrBookVerified;
-        const verificationAttr = verified ? 'verified' : 'pending';
-        const statusLabel = verified ? 'Verified' : 'Pending Verification';
-        const statusBg = verified ? '#DCFCE7' : '#FEF3C7';
-        const statusColor = verified ? '#15803D' : '#B45309';
-        const walletTypeBadge = walletType === 'exchange'
-            ? '<span style="background:#FFF7ED;color:#EA580C;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Exchange</span>'
-            : '<span style="background:#F5F3FF;color:#7C3AED;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Private</span>';
-        const shortAddr = formatWalletListAddress(addr, network);
+        const chainBase = (ADDR_BOOK_CHAIN_COLORS[network]?.label) || 'Ethereum';
 
-        const newHtml = `
-        <div class="addr-item" data-verification="${verificationAttr}" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px; background: #FFF; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                    <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${name}</div>
-                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${network}</span>
-                    ${walletTypeBadge}
-                    <span data-role="entity-status" style="background: ${statusBg}; color: ${statusColor}; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;">${statusLabel}</span>
-                </div>
-                <div style="font-family: monospace; font-size: 12px; color: #64748B;">${shortAddr}</div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button onclick="window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="enabled" class="addr-toggle enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                <button onclick="window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-            </div>
-        </div>`;
+        // Push to the in-memory address book (newest at the top).
+        window._addressBookEntries = window._addressBookEntries || [];
+        window._addressBookEntries.unshift({
+            address: addr,
+            alias: alias,
+            chain: chainBase,
+            verification: verified ? 'verified' : 'pending',
+            status: verified ? 'enabled' : 'disabled',
+            ownerType,
+            walletType
+        });
 
-        document.getElementById('addr-list-container').insertAdjacentHTML('beforeend', newHtml);
-        applyManagedEntityCardState(document.querySelector('#addr-list-container .addr-item:last-child'));
-        lucide.createIcons();
         alert(verified ? 'Address added and verified.' : 'Address added. Verification is pending.');
+        // Close the drawer and render the Address Book page (which now includes
+        // the new entry at the top).
         window.switchToListAddressView();
     };
 
@@ -7492,11 +10062,11 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         <div class="overview-grid fade-in">
             <!-- Main Column -->
             <div class="overview-main">
-                <!-- Unified Assets Card -->
-                <div class="card unified-assets-card balances-hidden" id="overview-asset-card" style="padding: 0; overflow: hidden;">
+                <!-- Unified Assets Card — elevated to a brand moment via entity-hero-card
+                     (adds the brass hairline trim on top). -->
+                <div class="card unified-assets-card balances-hidden entity-hero-card" id="overview-asset-card" style="padding: 0; overflow: hidden; position: relative;">
                     <!-- At a Glance Section -->
-                    <div class="summary-section" style="padding: 24px; border-bottom: 1px solid var(--clr-border);">
-                        <h2 class="card-title">At a Glance</h2>
+                    <div class="summary-section" style="padding: 28px; border-bottom: 1px solid var(--clr-border);">
                         <div class="summary-content">
                             <div class="balance-section">
                                 <span class="label" style="display: inline-flex; align-items: center; gap: 8px;">
@@ -8233,39 +10803,76 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                 </div>
             </div>
 
-            <!-- Important Notices -->
+            <!-- Important Notices — parity with Stablecoin Vault pattern -->
             <div class="card" style="border: 1px solid #E2E8F0;" id="fiat-notices-card">
                 <div class="card-header-flex" style="margin-bottom: 16px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #FEE2E2; display: flex; align-items: center; justify-content: center;">
                             <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #DC2626;"></i>
                         </div>
-                        <h2 class="card-title" style="margin-bottom: 0;">重要通知</h2>
+                        <h2 class="card-title" style="margin-bottom: 0;">Important Notices</h2>
                     </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 12px;" id="fiat-notices-list">
-                    <div style="background: #FFFBFB; border: 1px solid #FECACA; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">ON HOLD</span>
-                                <span style="font-weight: 600; font-size: 14px; color: #1E293B;">Inbound USD — 200,000.00</span>
-                            </div>
-                            <p style="font-size: 13px; color: #64748B; margin: 0 0 10px 0; line-height: 1.6;">This inbound wire transfer is currently pending verification. Please await further instructions from the Obita operations team via your registered email.</p>
-                            <div style="display: flex; gap: 20px; font-size: 12px; color: #94A3B8;">
-                                <span><strong style="color: #475569;">Order ID:</strong> FV-20261025-0012</span>
-                                <span><strong style="color: #475569;">Time:</strong> Today, 10:15</span>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 14px; align-items: stretch;" id="fiat-notices-list">
+
+                    <!-- Notice 1: Locked inbound — parallels Stablecoin Vault's LOCKED card. -->
+                    <div data-notice style="background: #FFFBFB; border: 1px solid #FECACA; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i> LOCKED
+                            </span>
+                            <button onclick="this.closest('[data-notice]').remove(); const list=document.getElementById('fiat-notices-list'); if(!list.children.length) document.getElementById('fiat-notices-card').style.display='none';" aria-label="Dismiss" style="flex-shrink:0; background:none; border:none; padding:4px; color:#94A3B8; cursor:pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'">
+                                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-weight: 700; font-size: 14px; color: #0F172A; line-height: 1.35;">Inbound HKD — 1,200,000.00 is locked</div>
+                            <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.55;">Please complete the required information and bank verification.</p>
+                            <div style="margin-top: auto; padding-top: 6px; border-top: 1px dashed #FECACA; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Order ID</div><div style="color: #334155; font-family: monospace; font-size: 12px; margin-top: 2px;">FV-20261025-0012</div></div>
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Time</div><div style="color: #334155; font-size: 12px; margin-top: 2px;">Today, 10:15</div></div>
                             </div>
                         </div>
-                        <button onclick="this.closest('div[style*=border-radius]').remove(); const list=document.getElementById('fiat-notices-list'); if(!list.children.length) document.getElementById('fiat-notices-card').style.display='none';" style="flex-shrink:0; background:none; border:1px solid #E2E8F0; border-radius:6px; padding:4px 10px; font-size:12px; color:#64748B; cursor:pointer; transition: all 0.2s;">Dismiss</button>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="window._currentRender=function(){window.renderPlaceholderContent?.('Fiat Vault');};window.navGo(function(){window.openBankAccountDetailPage({bank:'HSBC Hong Kong',alias:'Operating Account',currency:'HKD',verification:'pending',status:'disabled',sameName:true,accountMasked:'•••• 9230',accountFull:'8081999230',bankCode:'004',swift:'HSBCHKHHHKH',country:'Hong Kong',lastUsed:'Yesterday',iconColor:'#DC2626',iconBg:'#FEF2F2'});})">Verify Bank Account</button>
+                        </div>
                     </div>
+
+                    <!-- Notice 2: Unsupported bank account — parallels Stablecoin Vault's UNSUPPORTED card (single Time meta field). -->
+                    <div data-notice style="background: #FFFDF5; border: 1px solid #FED7AA; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i> UNSUPPORTED
+                            </span>
+                            <button onclick="this.closest('[data-notice]').remove(); const list=document.getElementById('fiat-notices-list'); if(!list.children.length) document.getElementById('fiat-notices-card').style.display='none';" aria-label="Dismiss" style="flex-shrink:0; background:none; border:none; padding:4px; color:#94A3B8; cursor:pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'">
+                                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-weight: 700; font-size: 14px; color: #0F172A; line-height: 1.35;">Treasury Reserve Account no longer supported</div>
+                            <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.55;">This destination can't be used for new transfers. Please whitelist a replacement account — contact support if you need help.</p>
+                            <div style="margin-top: auto; padding-top: 6px; border-top: 1px dashed #FED7AA;">
+                                <div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Time</div>
+                                <div style="color: #334155; font-size: 12px; margin-top: 2px;">Oct 20, 2026 · 14:02</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="window._currentRender=function(){window.renderPlaceholderContent?.('Fiat Vault');};window.navGo(function(){window.openBankAccountDetailPage({bank:'Banco do Brasil',alias:'Treasury Reserve Account',currency:'BRL',verification:'not-supported',status:'disabled',sameName:true,accountMasked:'•••• 1058',branch:'3321',swift:'BRASBRRJRJO',country:'Brazil',lastUsed:'—',unsupported:true,unsupportedReason:'Transfers from this bank account are currently not supported by the platform.',unsupportedSince:'Oct 20, 2026 · 14:02',iconColor:'#64748B',iconBg:'#F8FAFC'});})">View Bank Account</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- Connected Bank Accounts -->
+            <!-- Connected Bank Accounts — 10 entries covering verified/pending/unsupported × enabled/disabled × currency -->
             <div class="card">
                 <div class="card-header-flex" style="margin-bottom: 20px;">
                     <h2 class="card-title" style="margin-bottom: 0;">Connected Bank Accounts</h2>
-                    <a href="#" class="view-all-link" onclick="window.openManageBankAccountsDrawer(); return false;">Manage Accounts</a>
+                    <button onclick="window.openManageBankAccountsDrawer()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18); transition: background 0.15s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                        <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                        Manage Accounts
+                    </button>
                 </div>
 
                 <!-- Group 1: Obita 开设的账户 -->
@@ -8277,100 +10884,73 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <span style="font-size: 11px; color: #94A3B8;">平台代开，合规托管</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
+                    ${(() => {
+                        // Data-driven rendering: each bank account becomes a card with the
+                        // same visual language (chip per state) and opens the detail page
+                        // via navToBankAccountDetail(this).
+                        const currencyChip = {
+                            USD: { bg: '#DBEAFE', color: '#1D4ED8' },
+                            HKD: { bg: '#FEE2E2', color: '#DC2626' },
+                            EUR: { bg: '#EDE9FE', color: '#7C3AED' },
+                            BRL: { bg: '#DCFCE7', color: '#15803D' },
+                            SGD: { bg: '#FEF3C7', color: '#B45309' },
+                            GBP: { bg: '#F1F5F9', color: '#334155' },
+                            JPY: { bg: '#FFE4E6', color: '#BE123C' }
+                        };
+                        const statePill = (d) => {
+                            if (d.verification === 'not-supported' || d.unsupported) return `<span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i>Unsupported</span>`;
+                            if (d.verification === 'pending')        return `<span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>`;
+                            if (d.status === 'disabled')             return `<span style="font-size: 10px; font-weight: 700; color: #64748B; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><span style="width:6px;height:6px;border-radius:999px;background:#94A3B8;"></span>Disabled</span>`;
+                            return `<span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Verified</span>`;
+                        };
+                        const renderCard = (d) => {
+                            const currChip = currencyChip[d.currency] || { bg: '#F1F5F9', color: '#475569' };
+                            const secondary = d.secondaryCurrency ? (currencyChip[d.secondaryCurrency] || { bg: '#F1F5F9', color: '#475569' }) : null;
+                            const addrLine = d.iban ? d.iban : (d.accountMasked ? `•••• •••• •••• ${d.accountMasked.replace(/[^0-9A-Za-z]/g,'').slice(-4)}` : '');
+                            const rowOpacity = (d.status === 'disabled' || d.verification === 'not-supported' || d.unsupported) ? '0.72' : '1';
+                            const detailsJson = JSON.stringify(d).replace(/"/g, '&quot;');
+                            return `
+                                <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04); opacity: ${rowOpacity};" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
+                                    <div data-details="${detailsJson}" data-bank-name="${d.bank}" data-account-name="${d.alias}" data-verification="${d.verification}" data-status="${d.status}" onclick="window.navToBankAccountDetail(this)" style="padding: 18px 18px 14px; cursor: pointer;">
+                                        <div style="position: absolute; top: 12px; right: 12px;">${statePill(d)}</div>
+                                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-right: 100px;">
+                                            <div style="width: 38px; height: 38px; background: ${d.iconBg || '#F1F5F9'}; border: 1px solid #E2E8F0; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                                <i data-lucide="landmark" style="width: 18px; height: 18px; color: ${d.iconColor || '#64748B'};"></i>
+                                            </div>
+                                            <div style="min-width: 0;">
+                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.bank}</div>
+                                                <div style="font-size: 11px; color: #64748B; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${d.alias}</div>
+                                            </div>
+                                        </div>
+                                        <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px; word-break: break-all;">${addrLine}</div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                                ${d.sameName ? '<span title="Same-name account" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>' : ''}
+                                                <span style="background: ${currChip.bg}; color: ${currChip.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.currency}</span>
+                                                ${secondary ? `<span style="background: ${secondary.bg}; color: ${secondary.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.secondaryCurrency}</span>` : ''}
+                                            </div>
+                                            <span style="font-size: 10px; color: #94A3B8; flex-shrink: 0;">Last used: ${d.lastUsed || '—'}</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="event.stopPropagation(); window.openBankAccountTransactionsDrawer('${d.bank.replace(/'/g, "\\'")}', '${d.alias.replace(/'/g, "\\'")}')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
+                                        View Transactions
+                                        <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
+                                    </button>
+                                </div>
+                            `;
+                        };
 
-                        <!-- Chase Bank -->
-                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
-                            <div onclick="window.openFiatVaultBankAccountDetail('Chase Bank', 'Corporate Account')" style="padding: 18px 18px 14px; cursor: pointer;">
-                            <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #1D4ED8;"></i>
-                                </div>
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Chase Bank</div>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Corporate Account</div>
-                                </div>
-                            </div>
-                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 4821</div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
-                                </div>
-                                <span style="font-size: 10px; color: #94A3B8;">Last used: Today</span>
-                            </div>
-                            </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Chase Bank', 'Corporate Account')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
-                                View Transactions
-                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                            </button>
-                        </div>
+                        // Read the canonical bank account list so Fiat Vault and the
+                        // Manage Accounts drawer stay in sync.
+                        const allAccounts = Array.isArray(window._bankAccountEntries) ? window._bankAccountEntries : [];
+                        const obitaAccounts  = allAccounts.filter(a => a.group !== 'client');
+                        const clientAccounts = allAccounts.filter(a => a.group === 'client');
 
-                        <!-- HSBC -->
-                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
-                            <div onclick="window.openFiatVaultBankAccountDetail('HSBC Hong Kong', 'Operating Account')" style="padding: 18px 18px 14px; cursor: pointer;">
-                            <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #B45309; background: #FEF3C7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #DC2626;"></i>
-                                </div>
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">HSBC Hong Kong</div>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Operating Account</div>
-                                </div>
-                            </div>
-                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 9230</div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">HKD</span>
-                                </div>
-                                <span style="font-size: 10px; color: #94A3B8;">Last used: Yesterday</span>
-                            </div>
-                            </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('HSBC Hong Kong', 'Operating Account')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
-                                View Transactions
-                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                            </button>
-                        </div>
-
-                        <!-- Deutsche Bank -->
-                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
-                            <div onclick="window.openFiatVaultBankAccountDetail('Deutsche Bank', 'Euro Settlement')" style="padding: 18px 18px 14px; cursor: pointer;">
-                            <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #7C3AED;"></i>
-                                </div>
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Deutsche Bank</div>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Euro Settlement</div>
-                                </div>
-                            </div>
-                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">DE89 •••• •••• •••• 0130</div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">EUR</span>
-                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">USD</span>
-                                </div>
-                                <span style="font-size: 10px; color: #94A3B8;">Last used: Oct 23</span>
-                            </div>
-                            </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Deutsche Bank', 'Euro Settlement')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
-                                View Transactions
-                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                            </button>
-                        </div>
-
-                    </div>
+                        // Expose renderers for the two groups
+                        window._fiatVaultRenderObitaCards  = () => obitaAccounts.map(renderCard).join('');
+                        window._fiatVaultRenderClientCards = () => clientAccounts.map(renderCard).join('');
+                        return `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">${obitaAccounts.map(renderCard).join('')}</div>`;
+                    })()}
                 </div>
 
                 <!-- Divider -->
@@ -8386,37 +10966,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         <span style="font-size: 11px; color: #94A3B8;">需经 Obita 审核后激活</span>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;">
-
-                        <!-- Banco Bradesco -->
-                        <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(15,23,42,0.08)';this.style.borderColor='#CBD5E1'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)';this.style.borderColor='#E2E8F0'">
-                            <div onclick="window.openFiatVaultBankAccountDetail('Banco Bradesco', 'BRL Payments')" style="padding: 18px 18px 14px; cursor: pointer;">
-                            <div style="position: absolute; top: 12px; right: 12px;">
-                                <span style="font-size: 10px; font-weight: 700; color: #15803D; background: #DCFCE7; border-radius: 999px; padding: 3px 9px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Enabled</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                                <div style="width: 38px; height: 38px; background: #ECFDF5; border: 1px solid #BBF7D0; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                    <i data-lucide="landmark" style="width: 18px; height: 18px; color: #059669;"></i>
-                                </div>
-                                <div>
-                                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.2;">Banco Bradesco</div>
-                                    <div style="font-size: 11px; color: #64748B; margin-top: 2px;">BRL Payments</div>
-                                </div>
-                            </div>
-                            <div style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: #334155; letter-spacing: 1.5px; margin-bottom: 12px;">•••• •••• •••• 7712</div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                    <span title="Same-name account — bank account name matches merchant" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>
-                                    <span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">BRL</span>
-                                </div>
-                                <span style="font-size: 10px; color: #94A3B8;">Last used: Sep 15</span>
-                            </div>
-                            </div>
-                            <button onclick="window.openBankAccountTransactionsDrawer('Banco Bradesco', 'BRL Payments')" style="width: 100%; border: none; border-top: 1px solid #E2E8F0; background: #F8FAFC; padding: 11px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 600; color: #475569; transition: background 0.15s ease, color 0.15s ease;" onmouseover="this.style.background='#F1F5F9';this.style.color='#0F172A'" onmouseout="this.style.background='#F8FAFC';this.style.color='#475569'">
-                                View Transactions
-                                <i data-lucide="chevron-right" style="width: 14px; height: 14px;"></i>
-                            </button>
-                        </div>
-
+                        ${window._fiatVaultRenderClientCards ? window._fiatVaultRenderClientCards() : ''}
                         <!-- Add Account card -->
                         <div onclick="window.openManageBankAccountsDrawer()" style="border: 1.5px dashed #CBD5E1; border-radius: 14px; padding: 18px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 172px; transition: border-color 0.15s ease, background 0.15s ease;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
                             <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
@@ -8424,7 +10974,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
                             <div style="font-size: 13px; font-weight: 600; color: #475569;">Add Bank Account</div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -8517,6 +11066,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
     let activeFiatVaultTxId = null;
     let fiatVaultBankAccountView = 'list';
     let activeFiatVaultBankAccountKey = null;
+
+    // Exposed resetter so external flows (e.g. Back from the bank-account
+    // detail page) can force Fiat Vault to re-render its list view instead of
+    // re-opening a stale sub-detail view it was last on.
+    window.resetFiatVaultSubviews = function() {
+        fiatVaultTxView = 'list';
+        activeFiatVaultTxId = null;
+        fiatVaultBankAccountView = 'list';
+        activeFiatVaultBankAccountKey = null;
+    };
 
     const FIAT_VAULT_BANK_ACCOUNT_DETAILS = {
         'Chase Bank|Corporate Account': {
@@ -9339,51 +11898,60 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                     </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 12px;" id="sc-notices-list">
+                <!-- Grid — wider cards with a natural landscape aspect ratio.
+                     align-items: stretch keeps sibling cards at the same height in the same row. -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 14px; align-items: stretch;" id="sc-notices-list">
 
                     <!-- Notice Item 1: Locked deposit -->
-                    <div style="background: #FFFBFB; border: 1px solid #FECACA; border-radius: 10px; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
-                            <div style="flex: 1;">
-                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                    <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">LOCKED</span>
-                                    <span style="font-weight: 600; font-size: 14px; color: #1E293B;">Inbound USDT — 40,000.00 is locked.</span>
-                                </div>
-                                <p style="font-size: 13px; color: #64748B; margin: 0 0 10px 0; line-height: 1.6;">Please complete the required information and wallet verification.</p>
-                                <div style="display: flex; gap: 20px; font-size: 12px; color: #94A3B8;">
-                                    <span><strong style="color: #475569;">Order ID:</strong> VT-20261025-0008</span>
-                                    <span><strong style="color: #475569;">Time:</strong> Today, 08:40</span>
-                                </div>
-                            </div>
-                            <button onclick="this.closest('div[style*=border-radius]').remove(); const list=document.getElementById('sc-notices-list'); if(!list.children.length) document.getElementById('sc-notices-card').style.display='none';" style="flex-shrink:0; background:none; border:1px solid #E2E8F0; border-radius:6px; padding:4px 10px; font-size:12px; color:#64748B; cursor:pointer;">Dismiss</button>
+                    <div data-notice style="background: #FFFBFB; border: 1px solid #FECACA; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Header row (chip + dismiss) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <span style="background-color: #FEE2E2; color: #DC2626; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i> LOCKED
+                            </span>
+                            <button onclick="this.closest('[data-notice]').remove(); const list=document.getElementById('sc-notices-list'); if(!list.children.length) document.getElementById('sc-notices-card').style.display='none';" aria-label="Dismiss" style="flex-shrink:0; background:none; border:none; padding:4px; color:#94A3B8; cursor:pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'">
+                                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            </button>
                         </div>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="window.openVerifyDrawer()">Verify Wallet</button>
-                            <button class="btn btn-outline" style="font-size: 13px; padding: 8px 16px;" onclick="window.toggleNotifyPanel(this)">Notify Wallet Owner</button>
-                        </div>
-                        <!-- Inline Email Panel -->
-                        <div class="notify-email-panel" style="display: none; background: white; border: 1px solid var(--clr-border); border-radius: 8px; padding: 16px; margin-top: 4px;">
-                            <label style="font-size: 12px; font-weight: 600; color: var(--clr-text-main); display: block; margin-bottom: 8px;">Wallet Owner Email</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="email" placeholder="owner@domain.com" style="flex: 1; padding: 8px 12px; border: 1px solid var(--clr-border); border-radius: 6px; font-size: 13px; outline: none;" />
-                                <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="window.sendNotifyEmail(this)">Send</button>
+                        <!-- Body (grows to fill so action row stays pinned regardless of text length) -->
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-weight: 700; font-size: 14px; color: #0F172A; line-height: 1.35;">Inbound USDT — 40,000.00 is locked</div>
+                            <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.55;">Please complete the required information and wallet verification.</p>
+                            <div style="margin-top: auto; padding-top: 6px; border-top: 1px dashed #FECACA; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Order ID</div><div style="color: #334155; font-family: monospace; font-size: 12px; margin-top: 2px;">VT-20261025-0008</div></div>
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Time</div><div style="color: #334155; font-size: 12px; margin-top: 2px;">Today, 08:40</div></div>
                             </div>
+                        </div>
+                        <!-- Action row — Verify Wallet opens the wallet detail page and auto-scrolls to the Verify zone. -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="if(!window._currentRender)window._currentRender=window.renderStablecoinVaultPage;window.navGo(()=>window.openWalletAddressDetailPage('0x1234567890abcdef1234567890abcdef12345678','Partner Treasury','Ethereum','pending','pending',{ownerType:'organization',walletType:'private',alias:'Partner Treasury',autoOpenVerify:true}))">Verify Wallet</button>
                         </div>
                     </div>
 
-                    <!-- Notice Item 2: Unsupported wallet -->
-                    <div style="background: #FFFDF5; border: 1px solid #FED7AA; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
-                        <div style="flex: 1;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px;">NOT SUPPORTED</span>
-                                <span style="font-weight: 600; font-size: 14px; color: #1E293B;">Wallet 0xab...ef12</span>
-                            </div>
-                            <p style="font-size: 13px; color: #64748B; margin: 0 0 10px 0; line-height: 1.6;">This wallet address is no longer supported for transactions with your account. Please update your withdrawal destination. Contact support if you have questions.</p>
-                            <div style="display: flex; gap: 20px; font-size: 12px; color: #94A3B8;">
-                                <span><strong style="color: #475569;">Since:</strong> Oct 23, 2026</span>
+                    <!-- Notice Item 2: Unsupported wallet — "View Wallet" opens the detail page with the unsupported banner. -->
+                    <div data-notice style="background: #FFFDF5; border: 1px solid #FED7AA; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Header row (chip + dismiss) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <span style="background-color: #FEF3C7; color: #D97706; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i> UNSUPPORTED
+                            </span>
+                            <button onclick="this.closest('[data-notice]').remove(); const list=document.getElementById('sc-notices-list'); if(!list.children.length) document.getElementById('sc-notices-card').style.display='none';" aria-label="Dismiss" style="flex-shrink:0; background:none; border:none; padding:4px; color:#94A3B8; cursor:pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'">
+                                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                        <!-- Body -->
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-weight: 700; font-size: 14px; color: #0F172A; line-height: 1.35;">Legacy Settlement Channel no longer supported</div>
+                            <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.55;">This destination can't be used for new transfers. Please whitelist a replacement address — contact support if you need help.</p>
+                            <div style="margin-top: auto; padding-top: 6px; border-top: 1px dashed #FED7AA;">
+                                <div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Time</div>
+                                <div style="color: #334155; font-size: 12px; margin-top: 2px;">Oct 23, 2026 · 10:15</div>
                             </div>
                         </div>
-                        <button onclick="this.closest('div[style*=border-radius]').remove(); const list=document.getElementById('sc-notices-list'); if(!list.children.length) document.getElementById('sc-notices-card').style.display='none';" style="flex-shrink:0; background:none; border:1px solid #E2E8F0; border-radius:6px; padding:4px 10px; font-size:12px; color:#64748B; cursor:pointer;">Dismiss</button>
+                        <!-- Action row — opens the wallet detail with the entry's real alias preserved -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="if(!window._currentRender)window._currentRender=window.renderStablecoinVaultPage;window.navGo(()=>window.openWalletAddressDetailPage('0xab000000000000000000000000000000000000ef12','Legacy Settlement Channel','Ethereum','verified','disabled',{ownerType:'organization',walletType:'exchange',alias:'Legacy Settlement Channel',unsupported:true,unsupportedSince:'Oct 23, 2026 · 10:15'}))">View Wallet</button>
+                        </div>
                     </div>
 
                 </div>
@@ -9393,98 +11961,15 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
             <div class="card">
                 <div class="card-header-flex" style="margin-bottom: 20px;">
                     <h2 class="card-title" style="margin-bottom: 0;">Address Book</h2>
-                    <a href="#" class="view-all-link" onclick="window.openManageAddressesDrawer(); return false;">Manage Addresses</a>
+                    <button onclick="window.openManageAddressesDrawer()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18); transition: background 0.15s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                        <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                        Manage Addresses
+                    </button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;">
-
-                    <!-- Vendor Binance — ERC-20 · Verified · Enabled -->
-                    <div onclick="openWalletDrawer('0xabcdef1234567890abcdef1234567890abcdef12', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #F5F3FF); border: 1px solid #DDD6FE; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(124,58,237,0.06);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(124,58,237,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(124,58,237,0.06)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #D97706; background: #FEF3C7; border-radius: 20px; padding: 2px 8px;">Transfer</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #4F46E5, #7C3AED); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Vendor Binance</div>
-                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0xabcdef1234567890abcdef1234567890abcdef12', 'Ethereum')}</div>
-                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
-                            </div>
-                            <span style="background: #DCFCE7; color: #16A34A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已启用</span>
-                        </div>
-                    </div>
-
-                    <!-- OKX Trading — TRC-20 · Verified · Disabled -->
-                    <div onclick="openWalletDrawer('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'Outbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FAFAFA); border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; opacity: 0.82; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 20px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #374151, #6B7280); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">OKX Trading</div>
-                                <div style="font-size: 11px; color: #64748B;">TRON · TRC-20</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</div>
-                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="shield-check" style="width: 12px; height: 12px; color: #059669;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #059669;">已验证</span>
-                            </div>
-                            <span style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">已禁用</span>
-                        </div>
-                    </div>
-
-                    <!-- New Wallet — ERC-20 · Pending Verification -->
-                    <div onclick="openWalletDrawer('0x1234567890abcdef1234567890abcdef12345678', 'Inbound')" style="position: relative; background: linear-gradient(145deg, #FFFFFF, #FFFBEB); border: 1px solid #FDE68A; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; transition: transform 0.18s ease, box-shadow 0.18s ease; box-shadow: 0 1px 4px rgba(245,158,11,0.07);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(245,158,11,0.13)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 1px 4px rgba(245,158,11,0.07)'">
-                        <div style="position: absolute; top: 12px; right: 12px;">
-                            <span style="font-size: 10px; font-weight: 700; color: #059669; background: #D1FAE5; border-radius: 20px; padding: 2px 8px;">Top Up</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                            <div style="width: 38px; height: 38px; background: linear-gradient(135deg, #B45309, #D97706); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 6px rgba(217,119,6,0.28);">
-                                <i data-lucide="wallet" style="width: 18px; height: 18px; color: white;"></i>
-                            </div>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #1E293B; line-height: 1.2;">Partner Treasury</div>
-                                <div style="font-size: 11px; color: #64748B;">Ethereum · ERC-20</div>
-                            </div>
-                        </div>
-                        <div style="font-size: 12px; font-family: monospace; color: #475569; letter-spacing: 0.5px; margin-bottom: 12px; word-break: break-all;">${formatWalletListAddress('0x1234567890abcdef1234567890abcdef12345678', 'Ethereum')}</div>
-                        <div style="height: 1px; background: #F1F5F9; margin-bottom: 10px;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 5px;">
-                                <i data-lucide="clock" style="width: 12px; height: 12px; color: #D97706;"></i>
-                                <span style="font-size: 11px; font-weight: 600; color: #D97706;">待验证</span>
-                            </div>
-                            <span style="background: #FEF3C7; color: #B45309; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;">待激活</span>
-                        </div>
-                    </div>
-
-                    <!-- Add Address card -->
-                    <div onclick="window.openManageAddressesDrawer()" style="border: 2px dashed #CBD5E1; border-radius: 14px; padding: 18px 18px 14px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 168px; transition: border-color 0.15s, background 0.15s;" onmouseover="this.style.borderColor='#94A3B8';this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1';this.style.background='transparent'">
-                        <div style="width: 36px; height: 36px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center;">
-                            <i data-lucide="plus" style="width: 18px; height: 18px; color: #64748B;"></i>
-                        </div>
-                        <div style="text-align: center;">
-                            <div style="font-size: 13px; font-weight: 600; color: #475569;">添加新地址</div>
-                            <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Add Wallet Address</div>
-                        </div>
-                    </div>
-
-                </div>
+                <!-- 3 most recently added Active (verified + enabled) wallet cards + Add tile.
+                     Populated by window.renderStablecoinVaultAddressCards() after the page renders. -->
+                <div id="sv-address-book-cards" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(325px, 1fr)); gap: 14px;"></div>
             </div>
 
             <!-- Transaction History Data Table -->
@@ -11186,7 +13671,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Information</h3>
                         </div>
                         <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Buyer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.buyerName}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.buyerName}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.recipientName}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Total</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.amount}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Service Fee</div><div style="font-size: 14px; font-weight: 700; color: #C2410C; margin-top: 6px;">${lastCreatedInvoiceSuccess.fee}</div></div>
@@ -11247,12 +13732,20 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                         </div>
                         <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Invoice ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.externalInvoiceId || '-'}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Buyer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.buyer}</div></div>
+                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.buyer}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Issued On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.issuedOn}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.dueOn}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Collection Channel</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.collectionChannel || '-'}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.method}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Link</div><div style="font-size: 14px; font-weight: 700; color: #2563EB; margin-top: 6px; word-break: break-all;">${detail?.invoiceLink || '-'}</div></div>
+                            <div style="grid-column: 1 / -1;">
+                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Link</div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap;">
+                                    ${detail?.invoiceLink
+                                        ? `<a href="#" onclick="event.preventDefault(); window.openPayerInvoiceView('${activeInvoiceOrderId}')" style="font-size: 14px; font-weight: 700; color: #2563EB; word-break: break-all; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i data-lucide="external-link" style="width: 13px; height: 13px;"></i>${detail.invoiceLink}</a>
+                                           <button onclick="navigator.clipboard.writeText('${(detail.invoiceLink || '').replace(/'/g, "\\'")}')" type="button" style="padding: 4px 10px; background: white; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'"><i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy</button>`
+                                        : `<div style="font-size: 14px; font-weight: 700; color: #94A3B8;">-</div>`}
+                                </div>
+                            </div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Recipient Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${detail?.recipientEntity || order.recipient}</div></div>
                         </div>
                     </div>
@@ -11558,7 +14051,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             <thead>
                                 <tr>
                                     <th>Invoice</th>
-                                    <th>Buyer</th>
+                                    <th>Payer</th>
                                     <th>Method</th>
                                     <th>Due On</th>
                                     <th class="text-right">Amount</th>
@@ -13114,80 +15607,109 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const payeeCount = isContactManagementMode ? scopedContacts.filter(p => p.directoryType === 'payee').length : 0;
         const invoicePayerCount = isContactManagementMode ? scopedContacts.filter(p => p.directoryType === 'invoicePayer').length : 0;
 
+        // --- Unified hero copy (mclean-restyle) ---
+        const pageTitle = isPayoutPayeeMode ? 'Payee List'
+                        : isInvoicePayerMode ? 'Payer List for Invoice'
+                        : isContactManagementMode ? 'Contact Management'
+                        : 'External Contacts';
+        const pageSub = isPayoutPayeeMode
+                            ? (window.currentLicenseMode === 'MSO'
+                                ? 'Manage payout-ready payees and their saved bank account destinations.'
+                                : 'Manage payout-ready payees and their saved wallet or bank destinations.')
+                        : isInvoicePayerMode
+                            ? (window.currentLicenseMode === 'MSO'
+                                ? 'Manage invoice payers and their saved bank account destinations.'
+                                : 'Manage invoice payers and their saved wallet or bank destinations.')
+                        : isContactManagementMode
+                            ? 'The combined directory of payout payees and invoice payers in one place.'
+                            : 'Manage all registered external contacts for payouts, collections, and refunds.';
+        const addLabel = isPayoutPayeeMode ? 'Add Payee'
+                       : isInvoicePayerMode ? 'Add Payer'
+                       : 'Add Contact';
+
+        let kpiGridHTML = '';
+        if (isContactManagementMode) {
+            const isMSO = window.currentLicenseMode === 'MSO';
+            kpiGridHTML = `
+                <div class="invoice-kpi-grid" style="grid-template-columns: 1.3fr 1fr 1fr;">
+                    <div class="invoice-kpi invoice-kpi--hero">
+                        <div class="invoice-kpi-label">Total Contacts</div>
+                        <div class="invoice-kpi-amount">${totalContacts}</div>
+                        <div class="invoice-kpi-meta">${activeCount} active · ${pendingCount} pending</div>
+                    </div>
+                    <div class="invoice-kpi">
+                        <div class="invoice-kpi-label">
+                            <span class="invoice-kpi-dot" style="background:#FFF7ED;color:#C2410C;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></span>
+                            Payees
+                        </div>
+                        <div class="invoice-kpi-count">${payeeCount}</div>
+                        <div class="invoice-kpi-meta">Payout destinations</div>
+                    </div>
+                    <div class="invoice-kpi invoice-kpi--last">
+                        <div class="invoice-kpi-label">
+                            <span class="invoice-kpi-dot" style="background:#ECFDF5;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></span>
+                            Invoice Payers
+                        </div>
+                        <div class="invoice-kpi-count" style="${isMSO ? 'font-size: 16px; color: #94A3B8;' : ''}">${isMSO ? 'Coming soon' : invoicePayerCount}</div>
+                        <div class="invoice-kpi-meta">${isMSO ? 'Not available in MSO' : 'Invoice sources'}</div>
+                    </div>
+                </div>`;
+        } else {
+            const totalLabel = isPayoutPayeeMode ? 'Total Payees' : isInvoicePayerMode ? 'Total Payers' : 'Total Contacts';
+            const totalMeta  = isPayoutPayeeMode ? 'Payout destinations' : isInvoicePayerMode ? 'Invoice sources' : 'Registered';
+            kpiGridHTML = `
+                <div class="invoice-kpi-grid">
+                    <div class="invoice-kpi invoice-kpi--hero">
+                        <div class="invoice-kpi-label">${totalLabel}</div>
+                        <div class="invoice-kpi-amount">${totalContacts}</div>
+                        <div class="invoice-kpi-meta">${totalMeta}</div>
+                    </div>
+                    <div class="invoice-kpi">
+                        <div class="invoice-kpi-label">
+                            <span class="invoice-kpi-dot" style="background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                            Active
+                        </div>
+                        <div class="invoice-kpi-count">${activeCount}</div>
+                        <div class="invoice-kpi-meta" style="color:#15803D;">Ready to use</div>
+                    </div>
+                    <div class="invoice-kpi">
+                        <div class="invoice-kpi-label">
+                            <span class="invoice-kpi-dot" style="background:#FEF3C7;color:#B45309;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                            Pending
+                        </div>
+                        <div class="invoice-kpi-count">${pendingCount}</div>
+                        <div class="invoice-kpi-meta" style="color:#B45309;">Awaiting info</div>
+                    </div>
+                    <div class="invoice-kpi invoice-kpi--last">
+                        <div class="invoice-kpi-label">
+                            <span class="invoice-kpi-dot" style="background:#F1F5F9;color:#64748B;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                            Disabled
+                        </div>
+                        <div class="invoice-kpi-count">${disabledCount}</div>
+                        <div class="invoice-kpi-meta">Inactive</div>
+                    </div>
+                </div>`;
+        }
+
         contentBody.innerHTML = `
-            <div class="fade-in" style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="fade-in" style="max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
 
-                <!-- Page header -->
-                <div class="card" style="padding: 24px;">
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 6px;">${isPayoutPayeeMode ? 'Payee List' : isInvoicePayerMode ? 'Payer List for Invoice' : isContactManagementMode ? 'Contact Management' : 'External Contacts'}</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">${isPayoutPayeeMode ? (window.currentLicenseMode === 'MSO' ? 'Manage payout-ready payees and their saved bank account destinations.' : 'Manage payout-ready payees and their saved wallet or bank destinations.') : isInvoicePayerMode ? (window.currentLicenseMode === 'MSO' ? 'Manage invoice payers and their saved bank account destinations.' : 'Manage invoice payers and their saved wallet or bank destinations.') : isContactManagementMode ? 'View the combined directory of payout payees and invoice payers in one place.' : 'Manage all registered external contacts for payouts, collections, and refunds.'}</div>
+                <!-- Unified hero: identity + KPI summary -->
+                <div class="card entity-hero-card invoice-hero" style="margin: 0; padding: 0; overflow: hidden; position: relative;">
+                    <div class="invoice-hero-top">
+                        <div class="invoice-hero-ident">
+                            <h1 class="invoice-page-title">${pageTitle}</h1>
+                            <p class="invoice-hero-sub">${pageSub}</p>
                         </div>
-                        <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; font-size: 14px; font-weight: 700;">
-                            <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                            ${isPayoutPayeeMode ? 'Add New Payee' : isInvoicePayerMode ? 'Add New Payer' : 'Add New'}
-                        </button>
+                        <div class="invoice-hero-actions">
+                            <button class="btn btn-primary" id="payee-add-new-btn" onclick="window.openAddPayeePage()" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; font-weight: 600;">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                                ${addLabel}
+                            </button>
+                        </div>
                     </div>
+                    ${kpiGridHTML}
                 </div>
-
-                <!-- Summary Block -->
-                ${isPayoutPayeeMode ? `
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Payees</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${activeCount}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Pending Info</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${pendingCount}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Disabled</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${disabledCount}</div>
-                        </div>
-                    </div>
-                ` : isInvoicePayerMode ? `
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total Payers</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Active</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${activeCount}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Pending Info</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${pendingCount}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Disabled</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${disabledCount}</div>
-                        </div>
-                    </div>
-                ` : `
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Total</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${totalContacts}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payee</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${payeeCount}</div>
-                        </div>
-                        <div class="card" style="padding: 20px; text-align: center;${window.currentLicenseMode === 'MSO' ? ' opacity: 0.7;' : ''}">
-                            <div style="font-size: 12px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">Payer for Invoice</div>
-                            ${window.currentLicenseMode === 'MSO'
-                                ? '<div style="font-size: 14px; font-weight: 700; color: #94A3B8; margin-top: 14px; letter-spacing: 0.02em;">Coming Soon</div>'
-                                : `<div style="font-size: 28px; font-weight: 800; color: #0F172A; margin-top: 8px;">${invoicePayerCount}</div>`}
-                        </div>
-                    </div>
-                `}
 
                 <!-- Filters + Table as one card -->
                 <div class="card" style="padding: 0; overflow: hidden;">
@@ -13445,9 +15967,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
         const pageTitle = isPayoutForm ? 'New Payee' : isInvoicePayerForm ? 'New Payer for Invoice' : 'New Contact';
         const backLabel = isPayoutForm ? 'Back to Payee List' : isInvoicePayerForm ? 'Back to Payer List for Invoice' : 'Back to External Contacts';
         const pageDescription = isPayoutForm
-            ? 'Register a new payee. Provide a display alias and an optional payment method (wallet or bank account) to enable payout transactions.'
+            ? 'Complete and accurate payee details significantly improve payout success rates and processing speed.'
             : isInvoicePayerForm
-                ? 'Register a new payer for invoice. Provide a display alias and an optional payment method (wallet or bank account) to enable invoice transactions.'
+                ? 'Complete and accurate payer details significantly improve invoice processing speed and accuracy.'
             : 'Register a new external contact. An email invitation will be sent to collect basic information and complete identity verification before this contact can be used in any order or transaction.';
         const basicInfoDescription = isRestrictedUsageForm
             ? ''
@@ -13779,7 +16301,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                             </div>
 
                             <!-- Step 2b: Wallet form (hidden initially; unreachable in MSO since wallet type button is hidden) -->
-                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 16px;">
+                            <div id="payee-wallet-add-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; background: white;">
+                                <!-- Header strip (mirrors Bank Account Details) -->
+                                <div style="padding: 16px 20px; background: linear-gradient(135deg, #F5F3FF 0%, #FAF5FF 60%, #FFFFFF 100%); border-bottom: 1px solid #DDD6FE; display: flex; align-items: center; gap: 12px; position: relative;">
+                                    <div style="position: absolute; top: -20px; right: -20px; width: 90px; height: 90px; background: radial-gradient(circle, rgba(124,58,237,0.10) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+                                    <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #7C3AED, #6D28D9); border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 3px 10px rgba(124,58,237,0.25);">
+                                        <i data-lucide="wallet" style="width: 19px; height: 19px; color: white;"></i>
+                                    </div>
+                                    <div style="position: relative;">
+                                        <div style="font-size: 14px; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">Wallet Address Details</div>
+                                        <div style="font-size: 11px; color: #64748B; margin-top: 2px;">All fields are required</div>
+                                    </div>
+                                </div>
+
+                                <!-- Wallet body -->
+                                <div style="padding: 22px 20px; display: flex; flex-direction: column; gap: 16px;">
 
                                 <!-- Declaration checkbox -->
                                 <label style="display: flex; align-items: flex-start; gap: 10px; background: #F8FAFC; padding: 14px 16px; border-radius: 10px; border: 1px solid #E2E8F0; cursor: pointer;">
@@ -13812,48 +16348,50 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-
                                     </div>
                                 </div>
 
-                                <!-- Wallet inputs — hidden until type selected -->
-                                <div id="payee-invoice-wallet-inputs" style="display: none; flex-direction: column; gap: 16px; padding: 20px; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 12px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #E2E8F0;">
-                                        <div style="width: 34px; height: 34px; background: #F5F3FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                            <i data-lucide="wallet" style="width: 16px; height: 16px; color: #7C3AED;"></i>
-                                        </div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Wallet Address Details</div>
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Wallet Address *</label>
-                                        <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
-                                    </div>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Network / Chain *</label>
-                                        <select id="payee-invoice-wallet-network" class="bank-form-control">
-                                            <option value="TRON (TRC-20)">TRON (TRC-20)</option>
-                                            <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
-                                            <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
-                                            <option value="Solana">Solana</option>
-                                        </select>
+                                <!-- Verify zone — appears directly after wallet type selection. -->
+                                <!-- The verification method tabs (Micro-Transfer / Wallet Signature) are the first step. -->
+                                <!-- Micro-Transfer owns the Address + Network inputs (Step 1); Wallet Signature doesn't need them. -->
+                                <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
+                                    <!-- Tab header -->
+                                    <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
+                                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
                                     </div>
 
-                                    <!-- Verify Wallet button + zone -->
-                                    <div style="padding-top: 12px; border-top: 1px solid #E2E8F0; display: flex; flex-direction: column; gap: 14px;">
-                                        <button type="button" id="payee-verify-wallet-btn" onclick="window.onPayeeVerifyWalletClick()" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; color: #7C3AED; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; width: fit-content;">
-                                            <i data-lucide="shield-check" style="width: 15px; height: 15px;"></i>
-                                            验证钱包 (Verify Wallet)
-                                        </button>
-
-                                        <!-- Verification zone (hidden initially) -->
-                                        <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden;">
-                                            <!-- Tab header -->
-                                            <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
-                                                <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
-                                                <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                                    <!-- Micro transfer content (default) -->
+                                    <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 20px;">
+                                        <!-- STEP 1: Wallet Address + Network -->
+                                        <div style="display: flex; flex-direction: column; gap: 14px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">1</div>
+                                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Enter the wallet address and network to be verified</div>
                                             </div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Wallet Address *</label>
+                                                <input id="payee-invoice-wallet-addr" class="bank-form-control" type="text" placeholder="e.g. 0xaB3f...e812 or TR7NHqJNaMnL7..." style="font-family: monospace;">
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                                <label class="bank-form-label">Network / Chain *</label>
+                                                <select id="payee-invoice-wallet-network" class="bank-form-control" onchange="window.onPayeeVerifyNetworkChange()">
+                                                    <option value="TRON (TRC-20)">TRON (TRC-20)</option>
+                                                    <option value="Ethereum (ERC-20)">Ethereum (ERC-20)</option>
+                                                    <option value="BNB Chain (BEP-20)">BNB Chain (BEP-20)</option>
+                                                    <option value="Solana">Solana</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
-                                            <!-- Micro transfer content (default) -->
-                                            <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
-                                                <div style="font-size: 13px; color: #334155; line-height: 1.75;">
-                                                    To verify ownership, send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
-                                                </div>
+                                        <!-- Divider between steps -->
+                                        <div style="height: 1px; background: #E2E8F0;"></div>
+
+                                        <!-- STEP 2: Micro-transfer instructions -->
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <div style="width: 22px; height: 22px; border-radius: 999px; background: #7C3AED; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0;">2</div>
+                                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Send a micro-transfer from the wallet above</div>
+                                        </div>
+                                        <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+                                            Send exactly <strong style="color: #7C3AED;">0.0123 USDT</strong> from the wallet address above to the Obita Verification Address below. Verification completes automatically once the transaction is detected on-chain.
+                                        </div>
 
                                                 <!-- Details card -->
                                                 <div style="border: 1px solid #E2E8F0; border-radius: 10px; overflow: hidden;">
@@ -14010,10 +16548,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                                             </div>
                                         </div>
-                                    </div>
 
-                                </div>
+                                </div><!-- /verify zone -->
 
+                                </div><!-- /wallet body -->
                             </div>
 
                         </div>
@@ -14126,7 +16664,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                 </div>
                 `}
 
-                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">您提供的资料将依据 Obita <a href="#" style="color: #7C3AED; text-decoration: underline;">私隐政策</a>用于身份核验及监管合规目的。</div>' : ''}
+                ${window.currentLicenseMode === 'MSO' ? '<div style="font-size: 12px; color: #94A3B8; line-height: 1.6; margin-bottom: 8px;">The information you provide will be used for identity verification and regulatory compliance purposes in accordance with Obita\'s <a href="#" style="color: #7C3AED; text-decoration: underline;">Privacy Policy</a>.</div>' : ''}
 
                 <!-- Confirm + Cancel -->
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -14256,8 +16794,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             const detailVerifyZoneHtml = `
                 <div id="payee-wallet-verify-zone" style="display: none; flex-direction: column; gap: 0; border: 1px solid #DDD6FE; border-radius: 12px; overflow: hidden; margin-top: 14px;">
                     <div style="background: #F5F3FF; padding: 6px; display: flex; gap: 4px; border-bottom: 1px solid #DDD6FE;">
-                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">小额打款验证</button>
-                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">钱包签名验证</button>
+                        <button type="button" id="payee-verify-tab-micro" onclick="window.setPayeeVerifyMethod('micro')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: white; color: #7C3AED; font-size: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">Micro-Transfer</button>
+                        <button type="button" id="payee-verify-tab-sign" onclick="window.setPayeeVerifyMethod('sign')" style="flex: 1; padding: 8px 12px; border: none; border-radius: 7px; background: transparent; color: #64748B; font-size: 12px; font-weight: 600; cursor: pointer;">Wallet Signature</button>
                     </div>
                     <div id="payee-verify-content-micro" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
                         <div style="font-size: 13px; color: #334155; line-height: 1.75;">
@@ -15338,6 +17876,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         window.scrollContentToTop();
     };
 
+    // Entry point from the Payout Orders page "New Payee" action — navigates
+    // into the Payee List context (so sidebar + page title update) and then
+    // opens the add-payee form.
+    window.openNewPayeeFromPayouts = function() {
+        pageTitle.textContent = 'Payee List';
+        payeeDirectoryMode = 'payeeList';
+        activeExternalContactsUsageFilter = 'payout';
+        window.openAddPayeePage();
+    };
+
     window.editPayee = function(id, detailType = null) {
         payeeFormContext = { mode: 'page', payoutRowId: null };
         payeeListView = 'form';
@@ -15747,23 +18295,23 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     window.onPayeeInvoiceWalletClaimChange = function() {
         const claimed    = document.getElementById('payee-invoice-wallet-claim')?.checked;
         const typeZone   = document.getElementById('payee-invoice-wallet-type-zone');
-        const inputsZone = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone = document.getElementById('payee-wallet-verify-zone');
         if (!typeZone) return;
         if (claimed) {
             typeZone.style.display = 'flex';
-            if (inputsZone) inputsZone.style.display = 'none'; // reset if unchecked and re-checked
+            if (verifyZone) verifyZone.style.display = 'none'; // reset if unchecked and re-checked
             lucide.createIcons();
             setTimeout(() => typeZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         } else {
             typeZone.style.display   = 'none';
-            if (inputsZone) inputsZone.style.display = 'none';
+            if (verifyZone) verifyZone.style.display = 'none';
         }
     };
 
     window.onPayeeWalletTypeSelect = function(type) {
         const privateBtn  = document.getElementById('payee-wallet-type-private-btn');
         const exchangeBtn = document.getElementById('payee-wallet-type-exchange-btn');
-        const inputsZone  = document.getElementById('payee-invoice-wallet-inputs');
+        const verifyZone  = document.getElementById('payee-wallet-verify-zone');
         // Highlight selected button
         if (type === 'private') {
             if (privateBtn)  { privateBtn.style.border = '2px solid #7C3AED'; privateBtn.style.background = '#F5F3FF'; }
@@ -15772,11 +18320,40 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             if (exchangeBtn) { exchangeBtn.style.border = '2px solid #EA580C'; exchangeBtn.style.background = '#FFF7ED'; }
             if (privateBtn)  { privateBtn.style.border = '2px solid #E2E8F0'; privateBtn.style.background = 'white'; }
         }
-        if (inputsZone) {
-            inputsZone.style.display = 'flex';
+        // Show the verification method tabs directly; Micro-Transfer is the default tab
+        // and owns the Address + Network inputs as its Step 1.
+        if (verifyZone) {
+            verifyZone.style.display = 'flex';
+            // Ensure the micro tab is the initial view and seed its destination from the current network.
+            window.setPayeeVerifyMethod?.('micro');
+            window.onPayeeVerifyNetworkChange?.();
             lucide.createIcons();
-            setTimeout(() => inputsZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+            setTimeout(() => verifyZone.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
         }
+    };
+
+    // Keep the micro-transfer destination address + QR + share text in sync with
+    // whichever network the user has selected in Step 1.
+    window.onPayeeVerifyNetworkChange = function() {
+        const network  = document.getElementById('payee-invoice-wallet-network')?.value || 'TRON (TRC-20)';
+        const destAddr = OBITA_VERIFY_ADDRESSES[network] || OBITA_VERIFY_ADDRESSES['TRON (TRC-20)'];
+        const destEl   = document.getElementById('payee-verify-dest-addr');
+        const chainEl  = document.getElementById('payee-verify-chain-display');
+        const qrEl     = document.getElementById('payee-verify-qr');
+        const shareEl  = document.getElementById('payee-verify-share-text');
+        if (destEl)  destEl.textContent  = destAddr;
+        if (chainEl) chainEl.textContent = network;
+        if (qrEl)    qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=6&data=${encodeURIComponent(destAddr)}`;
+        if (shareEl) shareEl.textContent =
+`[Obita Wallet Verification]
+Please complete the following transfer to verify wallet ownership:
+
+  Amount : 0.0123 USDT
+  Send To: ${destAddr}
+  Network: ${network}
+
+Once the transfer is detected on-chain, verification completes automatically.
+Only 0.0123 USDT will be recognised — do not send any other amount.`;
     };
 
     // Triggered from the Payer detail page Payment Method card for pending-verification wallets.
@@ -15938,24 +18515,32 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     };
 
     window.signWithMetaMask = async function() {
-        if (!window.ethereum) {
-            window._showWalletSignState('failed', null, 'MetaMask not detected. Please install the MetaMask browser extension.');
-            return;
-        }
+        // Demo-first flow: simulate the MetaMask connect + personal_sign handshake
+        // so the happy path can be walked through without a real wallet extension.
+        // If a real provider is present we still prefer it.
         window._showWalletSignState('pending');
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-            const account  = accounts[0];
-            const msgEl    = document.getElementById('payee-sign-message');
-            const message  = msgEl ? msgEl.textContent.trim() : `Obita Wallet Verification · Nonce: ${walletVerifyNonce}`;
-            await window.ethereum.request({ method: 'personal_sign', params: [message, account] });
-            window._showWalletSignState('verified', account);
-        } catch (err) {
-            const msg = err.code === 4001
-                ? 'Signature request was rejected.'
-                : (err.message || 'Signing failed. Please try again.');
-            window._showWalletSignState('failed', null, msg);
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const account  = accounts[0];
+                const msgEl    = document.getElementById('payee-sign-message');
+                const message  = msgEl ? msgEl.textContent.trim() : `Obita Wallet Verification · Nonce: ${walletVerifyNonce}`;
+                await window.ethereum.request({ method: 'personal_sign', params: [message, account] });
+                window._showWalletSignState('verified', account);
+                return;
+            } catch (err) {
+                const msg = err.code === 4001
+                    ? 'Signature request was rejected.'
+                    : (err.message || 'Signing failed. Please try again.');
+                window._showWalletSignState('failed', null, msg);
+                return;
+            }
         }
+        // Mock path — pretend MetaMask opened, the user approved, and the signature verified.
+        setTimeout(() => {
+            const mockAddress = '0x74a2C8F1b9e41c3A6BdE82D1A4cF7F9b3C20e58a';
+            window._showWalletSignState('verified', mockAddress);
+        }, 1400);
     };
 
     window.signWithWalletConnect = function() {
@@ -16625,9 +19210,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             't-coin', 't-wallet',
             'fiat-transfer-target-account', 'fiat-transfer-currency', 'fiat-transfer-purpose',
             'cv-source-coin', 'cv-target-coin',
-            'pg-cv-vault', 'pg-cv-from-coin', 'pg-cv-to-coin'
+            'pg-cv-vault', 'pg-cv-from-coin', 'pg-cv-to-coin',
+            'payout-source-currency'
         ];
         ids.forEach(id => window.enhanceSelect(id));
+        // Per-row payout batch selects (currency + destination) — enhance any
+        // that are present in the DOM. IDs are generated per row.
+        document.querySelectorAll('select[id^="payout-row-currency-"], select[id^="payout-row-destination-"]').forEach(sel => {
+            if (sel.id) window.enhanceSelect(sel.id);
+        });
     };
 
     // Generic custom dropdown (used in Add Bank Account + any form that wants
@@ -16754,7 +19345,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     </div>
                 </div>
                 <div>
-                    <select data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
+                    <select id="payout-row-currency-${row.id}" data-focus-key="payout-currency-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'payoutCurrency', this.value)" aria-label="Currency">
                         ${currencyOptions}
                     </select>
                 </div>
@@ -16768,7 +19359,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div data-role="fx-rate" style="font-size: 10px; color: #94A3B8; margin-top: 4px;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : ''}</div>
                 </div>
                 <div>
-                    <select data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
+                    <select id="payout-row-destination-${row.id}" data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
                         <option value="">Select destination</option>
                         ${destinationOptions.length
                             ? destinationOptions.map(option => `<option value="${option.key}" ${row.destinationKey === option.key ? 'selected' : ''}>${option.label}</option>`).join('')
@@ -16810,6 +19401,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             warningEl.style.display = insufficient ? 'block' : 'none';
             warningEl.textContent = insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : '';
         }
+
+        // Keep the Confirm button state in sync with form validity. Without this,
+        // typing an amount doesn't re-enable the button because refreshPayoutRow
+        // is skipped for the 'amount' field (only derived values refresh).
+        const confirmBtn = document.getElementById('payout-batch-confirm-btn');
+        if (confirmBtn) {
+            const canConfirm = Boolean(batch.sourceCurrency) && batch.requests.some(r => r.payeeId && parseFloat(r.amount) > 0) && !insufficient;
+            confirmBtn.disabled = !canConfirm;
+            confirmBtn.style.opacity = canConfirm ? '' : '0.45';
+            confirmBtn.style.cursor = canConfirm ? '' : 'not-allowed';
+        }
     }
 
     function refreshPayoutRow(rowId, preserveFocus = false) {
@@ -16824,6 +19426,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         currentRow.replaceWith(wrapper.firstElementChild);
         lucide.createIcons();
         refreshPayoutBatchTotalsPanel();
+        // Enhance the newly rendered row's selects.
+        queueMicrotask(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
         if (snapshot) restorePayoutFocus(snapshot);
     }
 
@@ -16934,7 +19538,6 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
                         <div>
                             <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px;">New Payout Batch</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.5; max-width: 700px;">Select the source of funds first, then add payout requests. The batch calculates source amounts, FX rates, and fees automatically.</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;">
                             <div>
@@ -17024,7 +19627,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div id="payout-batch-balance-warning" style="font-size: 12px; color: #DC2626; font-weight: 700; display: ${insufficient ? 'block' : 'none'};">${insufficient ? `Insufficient ${batch.sourceCurrency} balance for this payout batch.` : ''}</div>
                             <div style="display: flex; gap: 10px;">
                                 <button class="btn btn-outline" onclick="window.cancelPayoutBatch()" style="padding: 10px 16px;">Cancel</button>
-                                <button class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px; ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'opacity: 0.45; cursor: not-allowed;' : ''}" ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'disabled' : ''}>Confirm</button>
+                                <button id="payout-batch-confirm-btn" class="btn btn-primary" onclick="window.goToPayoutBatchConfirm()" style="padding: 10px 18px; ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'opacity: 0.45; cursor: not-allowed;' : ''}" ${!batch.sourceCurrency || !batch.requests.some(r => r.payeeId && r.amount) ? 'disabled' : ''}>Confirm</button>
                             </div>
                         </div>
                     </div>
@@ -17032,6 +19635,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div>
         `;
         lucide.createIcons();
+        // Upgrade the Source Asset + per-row currency/destination <select>s to
+        // the custom-dropdown so they open below the trigger instead of overlay.
+        queueMicrotask(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
+        requestAnimationFrame(() => window.enhanceFlowSelects && window.enhanceFlowSelects());
     }
 
     function truncateAddress(addr = '') {
@@ -17234,29 +19841,32 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
             const pill = getOrderReportStatusPill(order.status);
             contentBody.innerHTML = `
-                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                    <div class="card" style="padding: 24px 28px;">
-                        <button onclick="window.backToPayoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Payout Orders</button>
+                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
+                    <div class="card entity-hero-card" style="padding: 22px 28px 24px; position: relative;">
+                        <button onclick="window.backToPayoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'">← Back to Payout Orders</button>
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                             <div>
-                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">Payout Order Detail</h2>
-                                <div style="font-family: monospace; font-size: 13px; color: #2563EB;">${order.orderId}</div>
+                                <h1 class="invoice-page-title" style="margin: 0 0 6px;">Payout Order Detail</h1>
+                                <div style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">${order.orderId}</div>
                             </div>
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-                                <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span>
+                                <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em;">${pill.label}</span>
                                 ${pill.label === 'Completed' ? `
-                                    <button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                    <button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
                                 ` : `
-                                    <button title="Receipt is available once the payout is completed" disabled style="padding: 7px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                    <button title="Receipt is available once the payout is completed" disabled style="padding: 7px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
                                 `}
                             </div>
                         </div>
                     </div>
 
+                    <!-- Order Information (merged): main fields + Amount + Payout Requests as sub-sections -->
                     <div class="card" style="padding: 0; overflow: hidden;">
                         <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
                             <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
                         </div>
+
+                        <!-- Main fields -->
                         <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Created Time</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.time}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Beneficiary</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.beneficiary}</div></div>
@@ -17264,27 +19874,25 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Purpose</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.purpose}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Account'}</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.source}</div></div>
                             <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approval Progress</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.approval}</div></div>
-                            ${order.payoutCount ? `<div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Requests</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.payoutCount}</div></div>` : ''}
                         </div>
-                    </div>
 
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Amount Information</h3>
+                        <!-- Sub-section: Amount Information -->
+                        <div style="padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE;">
+                            <h4 style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Amount Information</h4>
                         </div>
-                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div><div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 6px;">${order.amount}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Current Status</div><div style="margin-top: 6px;"><span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700;">${pill.label}</span></div></div>
+                        <div style="padding: 14px 24px 22px;">
+                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div>
+                            <div style="font-family: var(--font-display); font-size: 30px; font-weight: 500; color: #0B1433; letter-spacing: -0.025em; margin-top: 6px; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
                         </div>
-                    </div>
 
-                    ${detail ? `
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Payout Requests</h3>
+                        ${detail ? `
+                        <!-- Sub-section: Payout Requests -->
+                        <div style="padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <h4 style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Payout Requests</h4>
+                            ${order.payoutCount ? `<span style="font-size: 11px; font-weight: 600; color: #64748B; background: #F1F5F9; padding: 2px 8px; border-radius: 999px;">${order.payoutCount}</span>` : ''}
                         </div>
                         <div style="padding: 0 24px 18px 24px;">
-                            <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
                                 <div>No.</div>
                                 <div>Payee</div>
                                 <div>Destination</div>
@@ -17310,8 +19918,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 </div>
                             `).join('')}
                         </div>
+                        ` : ''}
                     </div>
 
+                    ${detail ? `
                     <div class="card" style="padding: 0; overflow: hidden;">
                         <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
                             <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Approval Information</h3>
@@ -17380,98 +19990,104 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             lastUpdated: 'Updated Apr 12, 2026'
         };
 
+        const s = computePayoutSummary();
         const summaryHTML = `
-            <!-- Page Header -->
-            <div class="card" style="padding: 22px 28px;">
-                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                    <div>
-                        <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Payout Orders</h1>
-                        <div style="font-size: 13px; color: #64748B; line-height: 1.5;">Manage and track all payout transactions across your ${window.currentLicenseMode === 'MSO' ? 'fiat accounts' : 'asset vaults'}.</div>
-                    </div>
-                    <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()" style="padding: 10px 18px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i> New Payout</button>
-                </div>
-            </div>
-
-            <!-- KPI Row: Summary hero + payee side panel -->
+            <!-- Unified hero: page identity + KPIs + Payees (mclean-restyle) -->
             <div style="display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr); gap: 16px; align-items: stretch;">
-                <!-- Payouts Summary with hero + breakdown -->
-                <div class="card" style="margin: 0; padding: 0; overflow: hidden;">
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payouts Summary</div>
-                        <div class="time-selector" style="display: inline-flex; gap: 4px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 3px;">
-                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">1w</span>
-                            <span class="time-option active" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; background: white; color: #0F172A; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">1m</span>
-                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">6m</span>
-                            <span class="time-option" style="font-size: 12px; padding: 5px 12px; border-radius: 5px; cursor: pointer; color: #64748B;">1y</span>
+
+                <div class="card entity-hero-card invoice-hero" style="margin: 0; padding: 0; overflow: hidden; position: relative;">
+                    <!-- Top row: page identity + actions -->
+                    <div class="invoice-hero-top">
+                        <div class="invoice-hero-ident">
+                            <h1 class="invoice-page-title">Payout Orders</h1>
+                            <p class="invoice-hero-sub">Manage and track all payout transactions across your ${window.currentLicenseMode === 'MSO' ? 'fiat accounts' : 'asset vaults'}.</p>
+                        </div>
+                        <div class="invoice-hero-actions">
+                            <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i> New Payout</button>
                         </div>
                     </div>
-                    ${(() => {
-                        const s = computePayoutSummary();
-                        return `
-                    <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 0;">
-                        <!-- Hero: Total Volume -->
-                        <div style="padding: 22px 26px; background: linear-gradient(180deg, #F8FBFF 0%, #EFF6FF 100%); border-right: 1px solid #DBEAFE;">
-                            <div style="font-size: 12px; font-weight: 700; color: #1D4ED8; text-transform: uppercase; letter-spacing: 0.08em;">Total Volume</div>
-                            <div style="font-size: 34px; font-weight: 900; color: #0F172A; margin-top: 10px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1;">${formatUsdAbbrev(s.totalVolume)}</div>
-                            <div style="font-size: 13px; color: #64748B; margin-top: 8px; font-weight: 500;">${s.totalCount} orders</div>
+
+                    <!-- Time-window pill bar -->
+                    <div class="invoice-kpi-bar">
+                        <div class="time-selector">
+                            <span class="time-option">1w</span>
+                            <span class="time-option active">1m</span>
+                            <span class="time-option">6m</span>
+                            <span class="time-option">1y</span>
                         </div>
-                        <!-- Completed -->
-                        <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
-                            <div style="display: flex; align-items: center; gap: 7px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Completed</div>
+                    </div>
+
+                    <!-- KPI strip -->
+                    <div class="invoice-kpi-grid">
+                        <div class="invoice-kpi invoice-kpi--hero">
+                            <div class="invoice-kpi-label">Total Volume</div>
+                            <div class="invoice-kpi-amount">${formatUsdAbbrev(s.totalVolume)}</div>
+                            <div class="invoice-kpi-meta">${s.totalCount} orders</div>
+                        </div>
+                        <div class="invoice-kpi">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#DCFCE7;color:#16A34A;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+                                Completed
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.completedCount}</div>
-                            <div style="font-size: 13px; color: #15803D; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.completedVolume)}</div>
+                            <div class="invoice-kpi-count">${s.completedCount}</div>
+                            <div class="invoice-kpi-meta" style="color:#15803D;">${formatUsdAbbrev(s.completedVolume)}</div>
                         </div>
-                        <!-- In-Transit -->
-                        <div style="padding: 22px 22px; border-right: 1px solid #F1F5F9;">
-                            <div style="display: flex; align-items: center; gap: 7px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">In-Transit</div>
+                        <div class="invoice-kpi">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#DBEAFE;color:#2563EB;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                                In-Transit
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.inTransitCount}</div>
-                            <div style="font-size: 13px; color: #1D4ED8; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.inTransitVolume)}</div>
+                            <div class="invoice-kpi-count">${s.inTransitCount}</div>
+                            <div class="invoice-kpi-meta" style="color:#1D4ED8;">${formatUsdAbbrev(s.inTransitVolume)}</div>
                         </div>
-                        <!-- Failed -->
-                        <div style="padding: 22px 22px;">
-                            <div style="display: flex; align-items: center; gap: 7px;">
-                                <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-                                <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">Failed</div>
+                        <div class="invoice-kpi invoice-kpi--last">
+                            <div class="invoice-kpi-label">
+                                <span class="invoice-kpi-dot" style="background:#FEE2E2;color:#DC2626;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                                Failed
                             </div>
-                            <div style="font-size: 26px; font-weight: 800; color: #0F172A; margin-top: 10px; font-variant-numeric: tabular-nums; line-height: 1;">${s.failedCount}</div>
-                            <div style="font-size: 13px; color: #B91C1C; margin-top: 6px; font-weight: 700; font-variant-numeric: tabular-nums;">${formatUsdAbbrev(s.failedVolume)}</div>
+                            <div class="invoice-kpi-count">${s.failedCount}</div>
+                            <div class="invoice-kpi-meta" style="color:#B91C1C;">${formatUsdAbbrev(s.failedVolume)}</div>
                         </div>
-                    </div>`;
-                    })()}
+                    </div>
                 </div>
 
-                <!-- Payees side panel -->
-                <div class="card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Payees</div>
-                        <button onclick="window.openPayeeManagementPage()" style="background: none; border: none; padding: 0; font-size: 13px; font-weight: 700; color: #2563EB; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">Manage <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i></button>
+                <!-- Payees side panel — distinct card with primary CTA -->
+                <div class="card invoice-payers-card" style="margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; position: relative;">
+                    <div class="payers-head">
+                        <div class="payers-head-ident">
+                            <span class="payers-head-icon"><i data-lucide="users-round"></i></span>
+                            <div>
+                                <div class="payers-head-title">Payees</div>
+                                <div class="payers-head-sub">Directory of payout destinations</div>
+                            </div>
+                        </div>
                     </div>
-                    <div style="flex: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; justify-content: center;">
-                        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
-                            <div style="font-size: 13px; color: #64748B; font-weight: 500;">Total</div>
-                            <div style="font-size: 28px; font-weight: 900; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1;">${payoutPayeeSummary.total}</div>
-                        </div>
-                        <div style="height: 1px; background: #F1F5F9;"></div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 8px;">
-                                <span style="width: 7px; height: 7px; border-radius: 999px; background: #16A34A;"></span>
-                                <span style="font-size: 13px; color: #334155; font-weight: 500;">Active</span>
+                    <div class="payers-body">
+                        <div class="payers-total-row">
+                            <div class="payers-total-n">${payoutPayeeSummary.total}</div>
+                            <div class="payers-total-label">
+                                <div>Total payees</div>
+                                <div class="payers-total-sub">${payoutPayeeSummary.lastUpdated}</div>
                             </div>
-                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.active}</div>
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div style="display: inline-flex; align-items: center; gap: 8px;">
-                                <span style="width: 7px; height: 7px; border-radius: 999px; background: #B45309;"></span>
-                                <span style="font-size: 13px; color: #334155; font-weight: 500;">Pending Setup</span>
+                        <div class="payers-breakdown">
+                            <div class="payers-break-row">
+                                <span class="payers-break-dot" style="background:#16A34A;"></span>
+                                <span class="payers-break-label">Active</span>
+                                <span class="payers-break-n">${payoutPayeeSummary.active}</span>
                             </div>
-                            <div style="font-size: 16px; font-weight: 800; color: #0F172A; font-variant-numeric: tabular-nums;">${payoutPayeeSummary.pending}</div>
+                            <div class="payers-break-row">
+                                <span class="payers-break-dot" style="background:#B45309;"></span>
+                                <span class="payers-break-label">Pending setup</span>
+                                <span class="payers-break-n">${payoutPayeeSummary.pending}</span>
+                            </div>
                         </div>
+                    </div>
+                    <div class="payers-foot">
+                        <button class="btn btn-primary payers-new-btn" onclick="window.openNewPayeeFromPayouts()">
+                            <i data-lucide="user-plus"></i> New Payee
+                        </button>
+                        <button class="payers-manage-link" onclick="window.openPayeeManagementPage()">Manage all <i data-lucide="arrow-right"></i></button>
                     </div>
                 </div>
             </div>
@@ -18183,7 +20799,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 rows: [
                     { label: 'Invoice Number', value: order.invoiceNo },
                     { label: 'External Invoice ID', value: detail?.externalInvoiceId || '—' },
-                    { label: 'Buyer', value: order.buyer },
+                    { label: 'Payer', value: order.buyer },
                     { label: 'Issued On', value: order.issuedOn },
                     { label: 'Due On', value: order.dueOn }
                 ]
@@ -18779,6 +21395,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             } else {
                 stableVaultTxView = 'list';
                 contentBody.innerHTML = stablecoinVaultHTML;
+                // Populate the Address Book cards section (3 newest Active wallets).
+                window.renderStablecoinVaultAddressCards?.();
+                // Sidebar nav clears the back-stack and registers Stablecoin Vault
+                // as the current page so subsequent Back navigations work cleanly.
+                window._navStack = [];
+                window._currentRender = window.renderStablecoinVaultPage;
             }
         } else if (title === 'Conversion') {
             // If a conversion order is selected, show its detail page instead of the form + list
@@ -19490,6 +22112,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 fiatVaultTxView = 'list';
                 fiatVaultBankAccountView = 'list';
                 contentBody.innerHTML = fiatVaultHTML;
+                // Landing on Fiat Vault via sidebar resets the nav stack so that
+                // Back from a downstream detail page (bank account, tx) returns
+                // here instead of a stale Stablecoin Vault / Overview renderer.
+                window._navStack = [];
+                window._currentRender = function() { window.renderPlaceholderContent?.('Fiat Vault'); };
             }
         } else {
             contentBody.innerHTML = `
