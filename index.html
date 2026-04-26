@@ -624,26 +624,28 @@
 
         <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px); gap: 0;">
             <div id="fiat-topup-step-1" style="display: flex; flex-direction: column; height: 100%;">
-                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 1: Select remitting bank account</div>
-                    <div id="fiat-topup-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Only enabled, same-name bank accounts that have completed verification can be used for fiat top up.</div>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 01</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Receiving Details</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">02 · SUBMITTED</span>
+                </div>
+                <div style="padding: 14px 24px 0;">
+                    <div id="fiat-topup-account-note" style="font-size: 12px; color: #64748B; line-height: 1.55;">Pick the Obita-issued account that matches your remittance currency. We'll show you the wire instructions to use.</div>
                 </div>
 
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
                     <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px;">
-                        <label style="display: block; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Remitting Bank Account</label>
+                        <label style="display: block; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Receiving Bank Account</label>
                         <select id="fiat-topup-source-account" class="bank-form-control">
-                            <option value="">Select a linked bank account</option>
+                            <option value="">Select a receiving bank account</option>
                         </select>
                     </div>
 
                     <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div>
-                                <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Receiving Bank Information</div>
-                                <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Use the following details for your <span id="fiat-topup-currency-label">USD</span> remittance.</div>
-                            </div>
-                            <div style="font-size: 11px; font-weight: 700; color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 999px; padding: 4px 10px;">Obita Collection</div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Receiving Bank Information</div>
+                            <div style="font-size: 12px; color: #64748B; margin-top: 4px;">Use the following details for your <span id="fiat-topup-currency-label">USD</span> remittance.</div>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -682,12 +684,15 @@
                                 </div>
                                 <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-swift').textContent, this)" style="background: none; border: none; cursor: pointer; color: #64748B; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
                             </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; background: #EFF6FF; border: 1px dashed #BFDBFE; border-radius: 10px;">
-                                <div>
-                                    <div style="font-size: 11px; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em;">Payment Reference</div>
-                                    <div id="fiat-topup-reference" style="font-size: 13px; font-weight: 700; color: #1D4ED8; margin-top: 4px;">FV-USD-OBITA</div>
+                            <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: #EFF6FF; border: 1px dashed #BFDBFE; border-radius: 10px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                    <div>
+                                        <div style="font-size: 11px; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.08em;">Payment Reference</div>
+                                        <div id="fiat-topup-reference" style="font-size: 13px; font-weight: 700; color: #1D4ED8; margin-top: 4px;">FV-USD-OBITA</div>
+                                    </div>
+                                    <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-reference').textContent, this)" style="background: none; border: none; cursor: pointer; color: #2563EB; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
                                 </div>
-                                <button onclick="window.copyFiatTopUpValue(document.getElementById('fiat-topup-reference').textContent, this)" style="background: none; border: none; cursor: pointer; color: #2563EB; padding: 4px;"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+                                <div style="font-size: 11px; color: #1D4ED8; line-height: 1.5; margin-top: 2px;">Include this reference in your bank's "memo / remittance information" field so we can match the wire to your account quickly.</div>
                             </div>
                         </div>
                     </div>
@@ -697,14 +702,19 @@
                     <div style="font-size: 12px; color: #94A3B8; line-height: 1.6;">您的资金将汇入 Obita Technologies Ltd. 的法人运营账户，并由合作托管银行代为保管，资金受相关法律保护。</div>
                 </div>
                 <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button id="fiat-topup-step1-confirm" onclick="window.goToFiatTopUpStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Confirm Receiving Details</button>
+                    <button id="fiat-topup-step1-confirm" onclick="window.submitFiatTopUpDirect()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">I've Remitted</button>
                 </div>
             </div>
 
             <div id="fiat-topup-step-2" style="display: none; flex-direction: column; height: 100%;">
-                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 2: Submit remittance information</div>
-                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Enter the transfer amount, confirm the currency, and upload the bank transfer proof.</div>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · ACCOUNT</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 02</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Remit</span>
+                </div>
+                <div style="padding: 14px 24px 0;">
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.55;">Enter the transfer amount, confirm the currency, and upload the bank transfer proof.</div>
                 </div>
 
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
@@ -768,13 +778,24 @@
             </div>
 
             <div id="fiat-topup-step-3" style="display: none; flex-direction: column; height: 100%;">
-                <div style="flex: 1; overflow-y: auto; padding: 28px 24px; display: flex; flex-direction: column; gap: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; text-align: center;">
-                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #DBEAFE; color: #2563EB; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
-                            <i data-lucide="clock-3" style="width: 24px; height: 24px;"></i>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 02</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Submitted</span>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 28px 24px 22px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #FAFAF7 0%, #FFFFFF 35%);">
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding-bottom: 18px; border-bottom: 1px dashed #E5E7EB;">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC; box-shadow: 0 8px 24px -10px rgba(21, 128, 61, 0.35);">
+                            <i data-lucide="check" style="width: 26px; height: 26px; color: #15803D;"></i>
                         </div>
-                        <div style="font-size: 18px; font-weight: 700; color: #0F172A;">Fiat Top Up Submitted</div>
-                        <div style="font-size: 13px; color: #64748B; line-height: 1.6; margin-top: 8px;">We have created your fiat top up order. Our team will reconcile the transfer after receiving the bank remittance.</div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                            <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                            Order Received · Pending Reconciliation
+                            <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                        </div>
+                        <div style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25;">Top Up Submitted</div>
+                        <div style="font-size: 12.5px; color: #64748B; line-height: 1.6; max-width: 400px;">We've created your fiat top-up order. Our team will reconcile the transfer once the bank remittance arrives — no further action needed.</div>
                     </div>
 
                     <div class="bank-form-section">
@@ -964,97 +985,143 @@
                 <div style="width: 28px; height: 28px; border-radius: 6px; background-color: #F8FAFC; display: flex; align-items: center; justify-content: center; border: 1px solid var(--clr-border);">
                     <i data-lucide="arrow-up-right" style="width: 14px; height: 14px; color: #0F172A;"></i>
                 </div>
-                <h3>Transfer Assets</h3>
+                <h3 id="transfer-drawer-title">Transfer</h3>
             </div>
             <button class="icon-btn" id="close-transfer-btn">
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
-            
+        <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px); background: linear-gradient(180deg, #FAFAF7 0%, #FFFFFF 35%);">
+
             <!-- STEP 1: Input -->
             <div id="transfer-step-1" style="display: flex; flex-direction: column; height: 100%;">
-                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
-                    
-                    <!-- Coin Selection -->
+                <!-- Step rail -->
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 01</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Enter Details</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">02 · REVIEW</span>
+                </div>
+
+                <div style="flex: 1; overflow-y: auto; padding: 22px 24px; display: flex; flex-direction: column; gap: 20px;">
+
+                    <!-- Asset Selection -->
                     <div>
-                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Select Asset</label>
-                        <select id="t-coin" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 6px; font-weight: 500; appearance: none; background: white;" onchange="window.updateTransferAvailables()">
-                            <option value="USDT">Tether (USDT)</option>
-                            <option value="USDC">USD Coin (USDC)</option>
-                        </select>
+                        <label style="display:block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em;">Select Asset</label>
+                        <div style="position: relative;">
+                            <select id="t-coin" style="width: 100%; border: 1px solid #E2E8F0; padding: 11px 36px 11px 14px; border-radius: 8px; font-weight: 600; font-size: 13.5px; color: #0F172A; appearance: none; background: white; cursor: pointer; outline: none;" onchange="window.updateTransferAvailables()">
+                                <option value="USDT">Tether (USDT)</option>
+                                <option value="USDC">USD Coin (USDC)</option>
+                            </select>
+                            <i data-lucide="chevron-down" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #64748B; pointer-events: none;"></i>
+                        </div>
                     </div>
 
                     <!-- Amount Input -->
                     <div>
-                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Amount</label>
-                        <div style="position: relative;">
-                            <input type="number" id="t-amount" placeholder="0.00" class="form-input" style="width: 100%; border: 1px solid #E2E8F0; padding: 12px 16px; border-radius: 6px; font-size: 16px; font-weight: 600;" />
-                            <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-weight: 600; color: #64748B;" id="t-coin-label">USDT</div>
+                        <label style="display:block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em;">Amount</label>
+                        <div style="position: relative; border: 1px solid #E2E8F0; border-radius: 8px; background: white; padding: 14px 16px; transition: border-color 0.15s;">
+                            <input type="number" id="t-amount" placeholder="0.00" style="width: calc(100% - 56px); border: none; padding: 0; font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; outline: none; background: transparent;" />
+                            <div style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: #64748B; letter-spacing: 0.06em;" id="t-coin-label">USDT</div>
                         </div>
-                        <div id="t-error" style="display: none; color: #DC2626; font-size: 12px; margin-top: 6px; font-weight: 500;">Insufficient balance.</div>
-                        <div style="text-align: right; margin-top: 6px; font-size: 12px; color: #94A3B8;">
-                            Available: <span id="t-avail" style="font-weight: 600; color: #334155;">14,000,000.00</span>
+                        <div id="t-error" style="display: none; color: #DC2626; font-size: 11.5px; margin-top: 6px; font-weight: 600;">Insufficient balance.</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; letter-spacing: 0.18em; text-transform: uppercase;">Available</span>
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; font-weight: 700; color: #0F172A;"><span id="t-avail">14,000,000.00</span></span>
                         </div>
                     </div>
 
-                    <!-- Target Wallet Selector -->
+                    <!-- Destination Wallet -->
                     <div>
-                        <label style="display:block; font-size: 12px; color: #64748B; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Destination Wallet (Connected)</label>
-                        <select id="t-wallet" style="width: 100%; border: 1px solid #E2E8F0; padding: 10px 12px; border-radius: 6px; font-weight: 500; background: white;">
-                            <option value="ABC Trading Pte Ltd|TRON|TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" selected>ABC Trading Pte Ltd (TRON) — TVkx...Lj6t</option>
-                            <option value="Kraken Corporate|TRON|TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>Kraken Corporate (TRON) — TR7N...Lj6t</option>
-                            <option value="Binance Institutional|ETH|0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" disabled>Binance Institutional (ETH) — 0xA0b8...eB48</option>
-                            <option value="MetaMask Trading|TRON|TVjsyZ7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>MetaMask Trading (TRON) — TVjs...Lj6t</option>
-                        </select>
-                        <div style="background: #FEF2F2; border: 1px solid #FECACA; padding: 10px 12px; border-radius: 6px; display: flex; align-items: flex-start; gap: 8px; margin-top: 10px;">
-                            <i data-lucide="info" style="width: 14px; height: 14px; color: #DC2626; flex-shrink: 0; margin-top: 2px;"></i>
-                            <p style="font-size: 11px; color: #991B1B; margin: 0; line-height: 1.5; font-weight: 500;">Note: Only merchant same-name accounts are permitted for outbound transfers. Non-compliant wallets are disabled.</p>
+                        <label style="display:block; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.22em;">Destination Wallet · Connected</label>
+                        <div style="position: relative;">
+                            <select id="t-wallet" style="width: 100%; border: 1px solid #E2E8F0; padding: 11px 36px 11px 14px; border-radius: 8px; font-weight: 600; font-size: 13px; color: #0F172A; appearance: none; background: white; cursor: pointer; outline: none;">
+                                <option value="ABC Trading Pte Ltd|TRON|TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" selected>ABC Trading Pte Ltd (TRON) — TVkx····Lj6t</option>
+                                <option value="Kraken Corporate|TRON|TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>Kraken Corporate (TRON) — TR7N····Lj6t</option>
+                                <option value="Binance Institutional|ETH|0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" disabled>Binance Institutional (ETH) — 0xA0b8····eB48</option>
+                                <option value="MetaMask Trading|TRON|TVjsyZ7lNwQxGTCi8q8ZY4pL8otSzgjLj6t" disabled>MetaMask Trading (TRON) — TVjs····Lj6t</option>
+                            </select>
+                            <i data-lucide="chevron-down" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #64748B; pointer-events: none;"></i>
+                        </div>
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px 14px; border-radius: 8px; display: flex; gap: 10px; margin-top: 12px;">
+                            <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #B45309; flex-shrink: 0; margin-top: 1px;"></i>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #B45309; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 4px;">Same-Name Policy</div>
+                                <p style="font-size: 12px; color: #78350F; margin: 0; line-height: 1.55;">Only merchant same-name accounts are permitted for outbound transfers. Non-compliant wallets are disabled.</p>
+                            </div>
                         </div>
                     </div>
 
                 </div>
-                <!-- Footer Verify Button -->
-                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button onclick="window.goToTransferStep2()" style="width: 100%; padding: 12px; background-color: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Review Details</button>
+                <!-- Footer -->
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; letter-spacing: 0.06em;">2FA required at execute</div>
+                    <button onclick="window.goToTransferStep2()" class="btn btn-primary" style="padding: 9px 22px; font-size: 13px; font-weight: 700;">Review Details →</button>
                 </div>
             </div>
 
             <!-- STEP 2: SUMMARY -->
             <div id="transfer-step-2" style="display: none; flex-direction: column; height: 100%;">
-                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
-                    
-                    <div style="text-align: center; margin-bottom: 8px;">
-                        <div style="font-size: 13px; color: #64748B; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">Please Confirm</div>
-                        <div style="font-size: 32px; font-weight: 700; color: #1E293B;"><span id="ts2-amount">0.00</span> <span id="ts2-coin" style="font-size: 18px; color: #64748B;">USDT</span></div>
+                <!-- Step rail -->
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 02</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Review</span>
+                </div>
+
+                <div style="flex: 1; overflow-y: auto; padding: 26px 24px; display: flex; flex-direction: column; gap: 20px;">
+
+                    <!-- Editorial hero -->
+                    <div style="text-align: center; padding: 8px 0 6px;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 14px;">
+                            <span style="width: 16px; height: 1px; background: #C9A449;"></span>
+                            Confirm Transfer
+                            <span style="width: 16px; height: 1px; background: #C9A449;"></span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; justify-content: center; gap: 10px;">
+                            <span id="ts2-amount" style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 38px; font-weight: 600; color: #0F172A; letter-spacing: -0.015em; line-height: 1;">0.00</span>
+                            <span id="ts2-coin" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: #64748B; letter-spacing: 0.04em;">USDT</span>
+                        </div>
                     </div>
 
-                    <!-- Wallet Review Box -->
-                    <div style="padding: 16px; border: 1px solid #E2E8F0; border-radius: 8px; background: #F8FAFC;">
-                        <h4 style="font-size: 11px; text-transform: uppercase; color: #94A3B8; margin-bottom: 12px; letter-spacing: 0.5px;">Destination Identity</h4>
-                        <div style="display: grid; gap: 12px;">
+                    <!-- Destination card -->
+                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; overflow: hidden;">
+                        <div style="padding: 12px 16px; background: #FAFAF7; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase;">Destination Identity</span>
+                            <span style="display: inline-flex; align-items: center; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #15803D; letter-spacing: 0.18em; text-transform: uppercase;">
+                                <i data-lucide="shield-check" style="width: 12px; height: 12px;"></i>Verified
+                            </span>
+                        </div>
+                        <div style="padding: 16px; display: grid; gap: 14px;">
                             <div>
-                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Name</div>
-                                <div id="ts2-name" style="font-size: 14px; font-weight: 600; color: #1E293B;">-</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 4px;">Name</div>
+                                <div id="ts2-name" style="font-size: 14px; font-weight: 700; color: #0F172A;">—</div>
                             </div>
-                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div style="height: 1px; background: #E5E7EB;"></div>
                             <div>
-                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Network</div>
-                                <div style="display: inline-block; padding: 2px 8px; background: #EFF6FF; color: #2563EB; font-size: 11px; font-weight: 600; border-radius: 4px;" id="ts2-net">-</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 4px;">Network</div>
+                                <div id="ts2-net" style="display: inline-block; padding: 3px 10px; background: #EFF6FF; color: #1D4ED8; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; border-radius: 4px; letter-spacing: 0.06em;">—</div>
                             </div>
-                            <div style="height: 1px; background: #E2E8F0;"></div>
+                            <div style="height: 1px; background: #E5E7EB;"></div>
                             <div>
-                                <div style="font-size: 11px; color: #64748B; margin-bottom: 2px;">Address</div>
-                                <div id="ts2-addr" style="font-size: 13px; font-family: monospace; color: #1E293B; word-break: break-all;">-</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 4px;">Address</div>
+                                <div id="ts2-addr" style="font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #0F172A; word-break: break-all; font-weight: 600; line-height: 1.55;">—</div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Pre-execute notice -->
+                    <div style="background: #F8FAFC; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 14px; display: flex; gap: 10px;">
+                        <i data-lucide="info" style="width: 15px; height: 15px; color: #64748B; flex-shrink: 0; margin-top: 1px;"></i>
+                        <div style="font-size: 12px; color: #475569; line-height: 1.55;">Once submitted, the transfer needs to be approved before it is executed.</div>
+                    </div>
+
                 </div>
-                <!-- Footer Confirm Button -->
-                <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white;">
-                    <button onclick="window.executeTransfer()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Execute Transfer</button>
-                    <button onclick="window.resetTransferDrawer()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 8px;">Back to Edit</button>
+                <!-- Footer -->
+                <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; align-items: center; gap: 10px;">
+                    <button onclick="window.resetTransferDrawer()" class="btn btn-outline" style="padding: 9px 16px; font-size: 13px; font-weight: 600;">← Edit</button>
+                    <button onclick="window.executeTransfer()" class="btn btn-primary" style="flex: 1; padding: 9px 22px; font-size: 13px; font-weight: 700;">Submit Transfer</button>
                 </div>
             </div>
 
@@ -1075,18 +1142,19 @@
         </div>
         <div class="drawer-body" style="padding: 0; display: flex; flex-direction: column; height: calc(100% - 65px);">
             <div id="fiat-transfer-step-1" style="display: flex; flex-direction: column; height: 100%;">
-                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 1: Enter transfer details</div>
-                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 11px; font-weight: 700; color: #1D4ED8; margin-top: 4px; margin-bottom: 8px;">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        Same-name transfers supported
-                    </div>
-                    <div id="fiat-transfer-account-note" style="font-size: 12px; color: #64748B; line-height: 1.5;">Transfers are only permitted to connected bank accounts registered under the same merchant name (同名账号).</div>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 01</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Enter Details</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">02 · REVIEW</span>
+                </div>
+                <div style="padding: 14px 24px 0;">
+                    <div id="fiat-transfer-account-note" style="font-size: 12px; color: #64748B; line-height: 1.55;">Transfers are only permitted to connected bank accounts registered under the same merchant name.</div>
                 </div>
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
                     <div class="bank-form-section">
                         <div class="bank-form-field bank-form-field-full">
-                            <label class="bank-form-label">Target Bank Account *</label>
+                            <label class="bank-form-label">Receiving Bank Account *</label>
                             <select id="fiat-transfer-target-account" class="bank-form-control" onchange="window.onFiatTransferAccountChange()">
                                 <option value="">Select a connected bank account</option>
                             </select>
@@ -1167,9 +1235,14 @@
             </div>
 
             <div id="fiat-transfer-step-2" style="display: none; flex-direction: column; height: 100%;">
-                <div style="padding: 18px 24px; border-bottom: 1px solid var(--clr-border); background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                    <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Step 2: Review and execute</div>
-                    <div style="font-size: 12px; color: #64748B; line-height: 1.5;">Confirm the transfer information, then choose the transfer purpose.</div>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 02</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Review</span>
+                </div>
+                <div style="padding: 14px 24px 0;">
+                    <div style="font-size: 12px; color: #64748B; line-height: 1.55;">Confirm the transfer information, then choose the transfer purpose.</div>
                 </div>
                 <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
                     <div style="background: white; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px;">
@@ -1203,25 +1276,38 @@
                     </div>
                 </div>
                 <div style="padding: 16px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; flex-direction: column; gap: 8px;">
-                    <button onclick="window.executeFiatTransfer()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Execute to Transfer</button>
+                    <button onclick="window.executeFiatTransfer()" style="width: 100%; padding: 12px; background-color: #2563EB; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;">Submit Transfer</button>
                     <button onclick="window.backToFiatTransferStep1()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer;">Back</button>
                 </div>
             </div>
 
             <div id="fiat-transfer-step-3" style="display: none; flex-direction: column; height: 100%;">
-                <div style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);">
-                    <div style="background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 14px;">
-                        <div style="width: 52px; height: 52px; border-radius: 16px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
-                            <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+                <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">02 · REVIEW</span>
+                    <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 03</span>
+                    <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Submitted</span>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 28px 24px 22px; display: flex; flex-direction: column; gap: 18px; background: linear-gradient(180deg, #FAFAF7 0%, #FFFFFF 35%);">
+                    <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding-bottom: 18px; border-bottom: 1px dashed #E5E7EB;">
+                        <div style="width: 56px; height: 56px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC; box-shadow: 0 8px 24px -10px rgba(21, 128, 61, 0.35);">
+                            <i data-lucide="check" style="width: 26px; height: 26px; color: #15803D;"></i>
                         </div>
-                        <div style="font-size: 22px; font-weight: 700; color: #0F172A;">Your transfer was submitted for approval</div>
-                        <div style="font-size: 13px; color: #64748B; line-height: 1.6;">The transfer order is now waiting for approval according to your current approval rules.</div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px;">
-                            <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order ID</div>
-                                <div id="fiat-transfer-success-order-id" style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 4px;">-</div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                            <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                            Order Received · Pending Approval
+                            <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                        </div>
+                        <div style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25;">Transfer Submitted</div>
+                        <div style="font-size: 12.5px; color: #64748B; line-height: 1.6; max-width: 400px;">Transfer 将在审批通过之后执行。</div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: white; border: 1px solid #E5E7EB; border-radius: 10px; width: 100%; max-width: 400px;">
+                            <div style="text-align: left;">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Order ID</div>
+                                <div id="fiat-transfer-success-order-id" style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 4px;">-</div>
                             </div>
-                            <span style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 999px; text-transform: uppercase;">In Progress</span>
+                            <span style="background: #FEF7E0; color: #92670D; border: 1px solid #ECD49A; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.16em;">Pending Approval</span>
                         </div>
                     </div>
 
