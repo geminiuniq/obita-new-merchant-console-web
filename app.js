@@ -268,6 +268,30 @@ document.addEventListener('DOMContentLoaded', () => {
         backdrop.onclick = close;
     };
 
+    window.openConversionPageForCoin = function(coin) {
+        window.navigateToPage('Conversion');
+        setTimeout(() => {
+            const FIAT = ['USD', 'HKD', 'EUR', 'BRL'];
+            const vaultSel = document.getElementById('pg-cv-vault');
+            if (vaultSel) {
+                const targetVault = FIAT.includes(coin) ? 'fiat' : 'stablecoin';
+                const hasOption = Array.from(vaultSel.options).some(o => o.value === targetVault);
+                if (hasOption && vaultSel.value !== targetVault) {
+                    vaultSel.value = targetVault;
+                    if (typeof window.pgCvOnVaultChange === 'function') window.pgCvOnVaultChange();
+                }
+            }
+            const fromSel = document.getElementById('pg-cv-from-coin');
+            if (fromSel) {
+                const opts = Array.from(fromSel.options).map(o => o.value);
+                if (opts.includes(coin)) {
+                    fromSel.value = coin;
+                    if (typeof window.pgCvUpdateQuote === 'function') window.pgCvUpdateQuote();
+                }
+            }
+        }, 30);
+    };
+
     window.navigateToPage = function(title) {
         // Update sidebar active state
         document.querySelectorAll('.sidebar-nav .nav-item, .sidebar-nav .nav-subitem').forEach(el => el.classList.remove('active'));
@@ -2149,10 +2173,14 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             const el = document.getElementById(id);
             if (el) el.classList.remove('drawer-active');
         });
-        
+
         // Reset to Step 1
         window.resetTransferDrawer();
-        
+
+        // Title — match Top Up pattern: "Transfer {COIN}" when preset, else "Transfer"
+        const titleEl = document.getElementById('transfer-drawer-title');
+        if (titleEl) titleEl.textContent = coin ? ('Transfer ' + coin) : 'Transfer';
+
         // Set Data
         document.getElementById('t-coin').value = coin;
         window.updateTransferAvailables();
@@ -2198,6 +2226,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     window.resetTransferDrawer = function() {
         document.getElementById('transfer-step-1').style.display = 'flex';
         document.getElementById('transfer-step-2').style.display = 'none';
+        const s3 = document.getElementById('transfer-step-3');
+        if (s3) s3.style.display = 'none';
     };
 
     window.executeTransfer = function(token) {
@@ -2209,17 +2239,120 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             return;
         }
         const coin = document.getElementById('t-coin').value;
-        const amt = parseFloat(document.getElementById('t-amount').value) || 0;
+        const amtNum = parseFloat(document.getElementById('t-amount').value) || 0;
+        const amt = amtNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const walletRaw = document.getElementById('t-wallet').value;
-        const walletName = walletRaw.split('|')[0] || 'Destination wallet';
+        const [walletName, network, walletAddr] = walletRaw.split('|');
+        const refId = 'TRX-' + Date.now().toString(36).toUpperCase().slice(-6);
+        const now = new Date();
+        const ts = now.toISOString().slice(0,10) + ' ' + now.toTimeString().slice(0,5) + ' UTC';
+        const addrMasked = walletAddr && walletAddr.length > 14
+            ? (walletAddr.slice(0,6) + '····' + walletAddr.slice(-4))
+            : (walletAddr || '—');
+
         notifyOrderCreated(
             'Transfer Order Created',
-            `${amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${coin} transfer to ${walletName} has been created.`,
+            `${amt} ${coin} transfer to ${walletName} has been created.`,
             'View Inbox',
             () => openInbox()
         );
-        alert('Transfer executed successfully.');
-        closeAllDrawers();
+
+        // Render Step 3 success view inline in the drawer (no popup).
+        const step1 = document.getElementById('transfer-step-1');
+        const step2 = document.getElementById('transfer-step-2');
+        if (step1) step1.style.display = 'none';
+        if (step2) step2.style.display = 'none';
+
+        let step3 = document.getElementById('transfer-step-3');
+        if (!step3) {
+            step3 = document.createElement('div');
+            step3.id = 'transfer-step-3';
+            step3.style.cssText = 'flex-direction: column; height: 100%;';
+            step2.parentElement.appendChild(step3);
+        }
+        step3.style.display = 'flex';
+        step3.innerHTML = `
+            <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">02 · REVIEW</span>
+                <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 03</span>
+                <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Submitted</span>
+            </div>
+            <div style="flex: 1; overflow-y: auto; padding: 28px 24px 22px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Editorial hero -->
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding-bottom: 20px; border-bottom: 1px dashed #E5E7EB;">
+                    <div style="width: 56px; height: 56px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC; box-shadow: 0 8px 24px -10px rgba(21,128,61,0.35);">
+                        <i data-lucide="check" style="width: 26px; height: 26px; color: #15803D;"></i>
+                    </div>
+                    <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                        <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                        Order Received · Pending Approval
+                        <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                    </div>
+                    <div style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25;">Transfer Submitted</div>
+                    <div style="display: flex; align-items: baseline; justify-content: center; gap: 8px;">
+                        <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 26px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em;">${amt}</span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; color: #64748B; letter-spacing: 0.04em;">${coin}</span>
+                    </div>
+                </div>
+
+                <!-- Reference + timestamp -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--clr-border); border-radius: 8px; overflow: hidden; background: white;">
+                    <div style="padding: 12px 14px; border-right: 1px solid var(--clr-border);">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Reference</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${refId}</div>
+                    </div>
+                    <div style="padding: 12px 14px;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Submitted</div>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${ts}</div>
+                    </div>
+                </div>
+
+                <!-- Destination summary -->
+                <div style="padding: 14px 16px; border: 1px solid var(--clr-border); border-radius: 8px; background: white;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px;">Destination</div>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                        <div style="min-width: 0;">
+                            <div style="font-size: 13.5px; font-weight: 700; color: #0F172A;">${walletName || '—'}</div>
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; margin-top: 2px;">${network || '—'} · ${addrMasked}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- What happens next -->
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; border-radius: 4px; color: #64748B;">01 → 03</span>
+                        <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: #0F172A;">What happens next</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; border-left: 1px dashed #CBD5E1; margin-left: 8px; padding-left: 18px;">
+                        <div style="position: relative; padding: 4px 0 14px;">
+                            <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #15803D; border: 2px solid white; box-shadow: 0 0 0 1px #15803D;"></span>
+                            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Submitted</div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">Order created and queued for on-chain broadcast.</div>
+                        </div>
+                        <div style="position: relative; padding: 4px 0 14px;">
+                            <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #FEF3C7; border: 2px solid white; box-shadow: 0 0 0 1px #C9A449;"></span>
+                            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Get Approval</div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">Your team approver will take a quick look — we'll ping you the moment it's approved.</div>
+                        </div>
+                        <div style="position: relative; padding: 4px 0 4px;">
+                            <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid white; box-shadow: 0 0 0 1px #CBD5E1;"></span>
+                            <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Settled at Destination</div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">We'll send you a heads-up the moment your funds arrive at the destination.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Footer -->
+            <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; letter-spacing: 0.06em;">No further action required.</div>
+                <button onclick="closeAllDrawers()" class="btn btn-primary" style="padding: 9px 22px; font-size: 13px; font-weight: 700;">Done</button>
+            </div>
+        `;
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     // --- Convert Assets Drawer Logic ---
@@ -2370,10 +2503,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     // Manage Accounts drawer (list view) read from this array — so adding,
     // toggling, or deleting a bank account stays consistent across both views.
     window._bankAccountEntries = window._bankAccountEntries || [
-        // --- Group 1: 由 Obita 开设 ---
-        { group: 'obita',  bank: 'Chase Bank',         alias: 'Corporate Account',      accountHolderName: '华信科技有限公司',     currency: 'USD',                         verification: 'verified',     status: 'enabled',  sameName: true, accountMasked: '•••• 4821',  accountFull: '1234564821',             routing: '021000021',  swift: 'CHASUS33',    country: 'United States',   lastUsed: 'Today',     iconColor: '#1D4ED8', iconBg: '#EFF6FF' },
-        { group: 'obita',  bank: 'HSBC Hong Kong',     alias: 'Operating Account',      accountHolderName: '华信电子商务有限公司', currency: 'HKD',                         verification: 'pending',      status: 'disabled', sameName: true, accountMasked: '•••• 9230',  accountFull: '8081999230',             bankCode: '004',       swift: 'HSBCHKHHHKH', country: 'Hong Kong',       lastUsed: 'Yesterday', iconColor: '#DC2626', iconBg: '#FEF2F2' },
-        { group: 'obita',  bank: 'Deutsche Bank',      alias: 'Euro Settlement',        accountHolderName: '华信科技有限公司',     currency: 'EUR', secondaryCurrency: 'USD', verification: 'verified',    status: 'enabled',  sameName: true, accountMasked: '•••• 0130',  iban: 'DE89 3704 0044 0532 0130 00',                          swift: 'DEUTDEDB',    country: 'Germany',         lastUsed: 'Oct 23',    iconColor: '#7C3AED', iconBg: '#F5F3FF' },
+        // --- Group 1: 由 Obita 开设 — two same-name multi-currency accounts ---
+        { group: 'obita',  bank: 'SGB',                alias: 'SGB USD Operating Account',   accountHolderName: '华信科技有限公司',     currency: 'USD', supportedCurrencies: ['USD'], verification: 'verified', status: 'enabled', sameName: true, accountMasked: '•••• 7188', accountFull: '0099887188', routing: 'SGB-CLG-001', swift: 'SGBKSGSG', country: 'Singapore', lastUsed: 'Today', iconColor: '#1D4ED8', iconBg: '#EFF6FF' },
+        { group: 'obita',  bank: 'GLDB',               alias: 'GLDB Multi-Currency Account', accountHolderName: '华信电子商务有限公司', currency: 'USD', supportedCurrencies: ['USD','HKD','EUR','BRL'], verification: 'verified', status: 'enabled', sameName: true, accountMasked: '•••• 4520', accountFull: '0044664520', routing: 'GLDB-CLG-002', swift: 'GLDBHKHH', country: 'Hong Kong', lastUsed: 'Yesterday', iconColor: '#15803D', iconBg: '#DCFCE7' },
         // --- Group 2: 客户自行绑定 ---
         { group: 'client', bank: 'Banco Bradesco',     alias: 'BRL Payments',           accountHolderName: '华信电子商务有限公司', currency: 'BRL',                         verification: 'verified',     status: 'enabled',  sameName: true,  accountMasked: '•••• 7712', accountFull: '013247712',              branch: '0127',        swift: 'BBDEBRSPSPO', country: 'Brazil',          lastUsed: 'Sep 15',    iconColor: '#059669', iconBg: '#ECFDF5' },
         { group: 'client', bank: 'Itaú Unibanco',      alias: 'Vendor Payments',        accountHolderName: 'Mercado Vendor Services Ltda.', currency: 'BRL',               verification: 'pending',      status: 'disabled', sameName: false, accountMasked: '•••• 4406', accountFull: '091204406',              branch: '0845',        swift: 'ITAUBRSPXXX', country: 'Brazil',          lastUsed: '—',         iconColor: '#EA580C', iconBg: '#FFF7ED' },
@@ -2837,6 +2969,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         if (!container) return;
         const entries = Array.isArray(window._bankAccountEntries) ? window._bankAccountEntries : [];
 
+        const currencyChipColor = {
+            USD: { bg: '#DBEAFE', color: '#1D4ED8' },
+            HKD: { bg: '#FEE2E2', color: '#DC2626' },
+            EUR: { bg: '#EDE9FE', color: '#7C3AED' },
+            BRL: { bg: '#DCFCE7', color: '#15803D' },
+            SGD: { bg: '#FEF3C7', color: '#B45309' },
+            GBP: { bg: '#F1F5F9', color: '#334155' },
+            JPY: { bg: '#FFE4E6', color: '#BE123C' }
+        };
+
         const rowHtml = (d) => {
             const detailsJson = JSON.stringify(d).replace(/"/g, '&quot;');
             const isDisabled = d.status !== 'enabled';
@@ -2844,23 +2986,33 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             // State pill: UNSUPPORTED > PENDING > ENABLED / DISABLED (matches Fiat Vault).
             let pill;
             if (isNotSupported) {
-                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i>Unsupported</span>`;
+                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="alert-triangle" style="width:10px;height:10px;"></i>Unsupported</span>`;
             } else if (d.verification === 'pending') {
-                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>`;
+                pill = `<span data-role="entity-status" style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="clock" style="width:10px;height:10px;"></i>Pending Verification</span>`;
             } else if (isDisabled) {
-                pill = `<span data-role="entity-status" style="background: #F1F5F9; color: #64748B; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Disabled</span>`;
+                pill = `<span data-role="entity-status" style="background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><span style="width:6px;height:6px;border-radius:999px;background:#94A3B8;"></span>Disabled</span>`;
             } else {
-                pill = `<span data-role="entity-status" style="background: #DCFCE7; color: #15803D; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Enabled</span>`;
+                pill = `<span data-role="entity-status" style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="shield-check" style="width:10px;height:10px;"></i>Verified</span>`;
             }
-            const currencyChip = `<span data-role="bank-currency" style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${d.currency || '—'}</span>`;
-            const secondary = d.secondaryCurrency ? `<span style="background: #F1F5F9; color: #475569; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${d.secondaryCurrency}</span>` : '';
-            const sameName = d.sameName ? `<span title="Same-name account" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-flex; align-items: center; gap: 3px;">同名</span>` : '';
-            const meta = [
-                d.iban ? `IBAN: ${d.iban}` : (d.accountMasked ? `Account: ${d.accountMasked}` : ''),
-                d.routing ? `Routing: ${d.routing}` : (d.bankCode ? `Bank Code: ${d.bankCode}` : (d.branch ? `Branch: ${d.branch}` : '')),
-                d.swift ? `SWIFT: ${d.swift}` : ''
-            ].filter(Boolean).join(' | ');
-            const lastUsedLine = d.lastUsed ? `Last used: ${d.lastUsed}` : (isNotSupported ? 'Transfers from this account are currently not supported.' : '');
+            const supported = Array.isArray(d.supportedCurrencies) && d.supportedCurrencies.length
+                ? d.supportedCurrencies
+                : [d.currency, d.secondaryCurrency].filter(Boolean);
+            const currencyChips = supported.map(c => {
+                const ch = currencyChipColor[c] || { bg: '#F1F5F9', color: '#475569' };
+                return `<span style="background: ${ch.bg}; color: ${ch.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${c}</span>`;
+            }).join('');
+            const sameName = d.sameName
+                ? `<span title="Same-name account" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>`
+                : '';
+            const accountLine = d.iban || (d.accountMasked || '');
+            const metaParts = [];
+            if (d.routing) metaParts.push(`Routing ${d.routing}`);
+            else if (d.bankCode) metaParts.push(`Code ${d.bankCode}`);
+            else if (d.branch)   metaParts.push(`Branch ${d.branch}`);
+            if (d.swift)   metaParts.push(`SWIFT ${d.swift}`);
+            if (d.country) metaParts.push(d.country);
+            const metaLine = metaParts.join(' · ');
+            const lastUsedLine = d.lastUsed && d.lastUsed !== '—' ? `Last used: ${d.lastUsed}` : (isNotSupported ? 'Transfers from this account are currently not supported.' : '');
             const toggleDataStatus = isDisabled ? 'disabled' : 'enabled';
             const toggleLabel = isDisabled ? 'Enable' : 'Disable';
             const toggleStyle = isDisabled
@@ -2869,32 +3021,63 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             const rowOpacity = isNotSupported ? '0.72' : '1';
 
             return `
-                <div class="bank-account-item" data-bank-name="${d.bank.replace(/"/g, '&quot;')}" data-account-name="${d.alias.replace(/"/g, '&quot;')}" data-verification="${d.verification}" data-status="${toggleDataStatus}" data-details='${detailsJson}' onclick="window.navToBankAccountDetail(this)" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#FFF';this.style.borderColor='#E2E8F0'">
-                    <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                        <div style="padding: 10px; background-color: ${d.iconBg || '#F8FAFC'}; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0;">
+                <div class="bank-account-item" data-bank-name="${d.bank.replace(/"/g, '&quot;')}" data-account-name="${d.alias.replace(/"/g, '&quot;')}" data-verification="${d.verification}" data-status="${toggleDataStatus}" data-details='${detailsJson}' onclick="window.navToBankAccountDetail(this)" style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 16px 18px; background: #FFF; display: flex; flex-direction: column; gap: 12px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 2px rgba(15,23,42,0.04);" onmouseover="this.style.background='#FAFBFD';this.style.borderColor='#CBD5E1';this.style.boxShadow='0 4px 12px rgba(15,23,42,0.06)'" onmouseout="this.style.background='#FFF';this.style.borderColor='#E2E8F0';this.style.boxShadow='0 1px 2px rgba(15,23,42,0.04)'">
+                    <div style="display: flex; gap: 14px; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; background-color: ${d.iconBg || '#F8FAFC'}; border-radius: 10px; border: 1px solid #E2E8F0; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                             <i data-lucide="landmark" style="color: ${d.iconColor || '#64748B'}; width: 18px; height: 18px;"></i>
                         </div>
                         <div style="flex: 1; min-width: 0;">
-                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                                <span style="font-weight: 600; font-size: 14px; color: #0F172A;">${d.bank} — ${d.alias}</span>
-                                ${sameName}
-                                ${currencyChip}
-                                ${secondary}
-                                ${pill}
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="font-family: 'Clash Display','Inter',sans-serif; font-weight: 600; font-size: 14.5px; color: #0F172A; letter-spacing: -0.005em;">${d.bank}</span>
+                                <span style="font-size: 12.5px; color: #64748B;">·</span>
+                                <span style="font-size: 12.5px; color: #475569;">${d.alias}</span>
                             </div>
-                            ${meta ? `<div style="font-size: 12px; color: #64748B; line-height: 1.6;">${meta}</div>` : ''}
-                            ${lastUsedLine ? `<div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">${lastUsedLine}</div>` : ''}
+                            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+                                ${sameName}${currencyChips}${pill}
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                            <button onclick="event.stopPropagation(); window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="${toggleDataStatus}" style="padding: 5px 12px; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; letter-spacing: 0.02em; ${toggleStyle}">${toggleLabel}</button>
+                            <button onclick="event.stopPropagation(); window.deleteBankAccount(this)" title="Delete" style="background: none; border: 1px solid transparent; border-radius: 6px; padding: 5px; cursor: pointer; color: #94A3B8; transition: color 0.15s, background 0.15s;" onmouseover="this.style.color='#DC2626';this.style.background='#FEF2F2'" onmouseout="this.style.color='#94A3B8';this.style.background='transparent'"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                        <button onclick="event.stopPropagation(); window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="${toggleDataStatus}" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; ${toggleStyle}">${toggleLabel}</button>
-                        <button onclick="event.stopPropagation(); window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                    </div>
+                    ${(accountLine || metaLine) ? `<div style="border-top: 1px dashed #E5E7EB; padding-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+                        ${accountLine ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #0F172A; font-weight: 600; letter-spacing: 0.04em;">${accountLine}</div>` : ''}
+                        ${metaLine ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; letter-spacing: 0.06em;">${metaLine}</div>` : ''}
+                    </div>` : ''}
+                    ${lastUsedLine ? `<div style="font-size: 11px; color: #94A3B8; margin-top: -4px;">${lastUsedLine}</div>` : ''}
                 </div>
             `;
         };
 
-        container.innerHTML = entries.map(rowHtml).join('');
+        const obita  = entries.filter(e => e.group !== 'client');
+        const client = entries.filter(e => e.group === 'client');
+
+        const groupHeader = (eyebrow, headline, subtitle, count) => `
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px;">
+                <div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #C9A449; letter-spacing: 0.22em; text-transform: uppercase;">${eyebrow}</div>
+                    <div style="font-family: 'Clash Display','Inter',sans-serif; font-size: 14.5px; font-weight: 600; color: #0F172A; margin-top: 4px; letter-spacing: -0.005em;">${headline}</div>
+                    <div style="font-size: 11.5px; color: #64748B; margin-top: 3px; line-height: 1.5;">${subtitle}</div>
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 10px; border: 1px solid #E2E8F0; background: #F8FAFC; color: #475569; border-radius: 999px; letter-spacing: 0.06em;">${count} ${count === 1 ? 'account' : 'accounts'}</span>
+            </div>`;
+
+        container.innerHTML = `
+            ${obita.length ? `
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${groupHeader('Obita-Issued', 'Issued by Obita', 'Same-name accounts opened on the merchant\'s behalf and held under regulated custody.', obita.length)}
+                    ${obita.map(rowHtml).join('')}
+                </div>
+            ` : ''}
+            ${(obita.length && client.length) ? '<div style="height: 1px; background: #E5E7EB; margin: 18px 0;"></div>' : ''}
+            ${client.length ? `
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    ${groupHeader('Client-Bound', 'Linked by the merchant', 'Accounts the merchant has bound directly. Each must pass Obita\'s verification before activation.', client.length)}
+                    ${client.map(rowHtml).join('')}
+                </div>
+            ` : ''}
+        `;
         if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
@@ -3051,24 +3234,47 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         const note = document.getElementById('fiat-transfer-account-note');
         if (!select || !note) return;
 
-        // Filter by the currently selected transfer currency — only accounts
-        // supporting this currency are relevant targets.
+        // Transfer = wiring OUT to a client-bound (Group 2) same-name account.
         const currency = currentFiatTransferCurrency || document.getElementById('fiat-transfer-currency')?.value || '';
-        const accounts = getBoundBankAccounts(currency);
-        const options = ['<option value="">Select a connected bank account</option>'];
-
-        accounts.forEach(account => {
-            const sameNameTag = account.sameName ? '[同名] ' : '';
-            const optionLabel = `${sameNameTag}${account.bankName} - ${account.accountName}${account.currency ? ` (${account.currency})` : ''}${account.reason ? ` · ${account.reason}` : ''}`;
-            options.push(`<option value="${account.accountName}" ${account.selectable ? '' : 'disabled'}>${optionLabel}</option>`);
+        const rawEntries = (window._bankAccountEntries || []).filter(e => {
+            if (e.group !== 'client') return false;
+            if (e.sameName !== true) return false;
+            const supports = e.supportedCurrencies || [e.currency, e.secondaryCurrency].filter(Boolean);
+            return !currency || supports.includes(currency);
+        });
+        const accounts = rawEntries.map(entry => {
+            const verification = entry.verification || 'pending';
+            const enabled = (entry.status || 'disabled') === 'enabled';
+            const lifecycleStatus = resolveManagedEntityStatus(verification, enabled);
+            const reason = lifecycleStatus !== 'Enabled' ? lifecycleStatus : '';
+            const countryPart = entry.country ? ` · ${entry.country}` : '';
+            const maskedPart  = entry.accountMasked ? ` · ${entry.accountMasked}` : '';
+            return {
+                bankName: entry.bank,
+                accountName: entry.alias,
+                verification,
+                enabled,
+                lifecycleStatus,
+                sameName: true,
+                selectable: lifecycleStatus === 'Enabled',
+                reason,
+                currency: entry.currency || '',
+                summary: `${entry.bank}${countryPart}${maskedPart}`
+            };
         });
 
+        const options = ['<option value="">Select a connected bank account</option>'];
+        accounts.forEach(account => {
+            const optionLabel = `${account.bankName} — ${account.accountName}${account.currency ? ` (${account.currency})` : ''}${account.reason ? ` · ${account.reason}` : ''}`;
+            options.push(`<option value="${account.accountName}" ${account.selectable ? '' : 'disabled'}>${optionLabel}</option>`);
+        });
         select.innerHTML = options.join('');
+
         const hasSelectable = accounts.some(account => account.selectable);
         note.textContent = hasSelectable
-            ? 'Same-name (同名) accounts are marked with a [同名] tag in the list below. Only enabled, verified same-name accounts can be selected.'
+            ? 'Only same-name (同名) accounts can be selected as the receiving bank account for a transfer.'
             : (accounts.length === 0
-                ? `No connected bank accounts support ${currency || 'this currency'} yet.`
+                ? `No same-name bank accounts support ${currency || 'this currency'} yet.`
                 : 'Same-name accounts are listed but currently not selectable (disabled or pending verification).');
     }
 
@@ -3291,8 +3497,25 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         lucide.createIcons();
     };
 
-    function renderFiatRecipientInfo(currency) {
-        const recipient = FIAT_TOPUP_RECIPIENTS[currency];
+    // Wire info for each (Obita-issued bank, currency) combination.
+    // Key shape: `${bankShortName}|${currency}`
+    const FIAT_TOPUP_BANK_WIRE = {
+        'SGB|USD':  { beneficiary: 'Obita Technologies Ltd. — SGB Multi-Currency Account', bank: 'Standard Global Bank, Singapore Branch', accountNumber: '0099-887188-USD', routing: 'SGB-CLG-001', swift: 'SGBKSGSG', reference: 'FV-USD-OBITA-SGB' },
+        'SGB|HKD':  { beneficiary: 'Obita Technologies Ltd. — SGB Multi-Currency Account', bank: 'Standard Global Bank, Hong Kong Sub-Branch', accountNumber: '0099-887188-HKD', routing: 'SGB-CLG-001', swift: 'SGBKSGSG', reference: 'FV-HKD-OBITA-SGB' },
+        'SGB|EUR':  { beneficiary: 'Obita Technologies Ltd. — SGB Multi-Currency Account', bank: 'Standard Global Bank, Frankfurt Correspondent', accountNumber: 'DE89 7188 0099 8871 8800 99', routing: 'SGB-CLG-001', swift: 'SGBKDEFF', reference: 'FV-EUR-OBITA-SGB' },
+        'SGB|BRL':  { beneficiary: 'Obita Technologies Ltd. — SGB Multi-Currency Account', bank: 'Standard Global Bank, São Paulo Correspondent', accountNumber: 'BR-0099-887188', routing: 'SGB-CLG-001', swift: 'SGBKBRSP', reference: 'FV-BRL-OBITA-SGB' },
+        'GLDB|USD': { beneficiary: 'Obita Technologies Ltd. — GLDB Multi-Currency Account', bank: 'Global Ledger Depository Bank, New York Correspondent', accountNumber: '0044-664520-USD', routing: 'GLDB-CLG-002', swift: 'GLDBHKHH', reference: 'FV-USD-OBITA-GLDB' },
+        'GLDB|HKD': { beneficiary: 'Obita Technologies Ltd. — GLDB Multi-Currency Account', bank: 'Global Ledger Depository Bank, Hong Kong', accountNumber: '0044-664520-HKD', routing: 'GLDB-CLG-002', swift: 'GLDBHKHH', reference: 'FV-HKD-OBITA-GLDB' },
+        'GLDB|EUR': { beneficiary: 'Obita Technologies Ltd. — GLDB Multi-Currency Account', bank: 'Global Ledger Depository Bank, Luxembourg Branch', accountNumber: 'LU28 4466 4520 0044 6645', routing: 'GLDB-CLG-002', swift: 'GLDBLULL', reference: 'FV-EUR-OBITA-GLDB' },
+        'GLDB|BRL': { beneficiary: 'Obita Technologies Ltd. — GLDB Multi-Currency Account', bank: 'Global Ledger Depository Bank, São Paulo Correspondent', accountNumber: 'BR-0044-664520', routing: 'GLDB-CLG-002', swift: 'GLDBBRSP', reference: 'FV-BRL-OBITA-GLDB' }
+    };
+
+    function renderFiatRecipientInfo(currency, bankShort) {
+        // Fall back to the first Obita-issued bank when none is selected yet.
+        const obitaEntries = (window._bankAccountEntries || []).filter(e => e.group === 'obita' && (e.supportedCurrencies || [e.currency]).includes(currency));
+        const fallbackBank = obitaEntries[0] ? obitaEntries[0].bank : 'SGB';
+        const wireKey = `${bankShort || fallbackBank}|${currency}`;
+        const recipient = FIAT_TOPUP_BANK_WIRE[wireKey] || FIAT_TOPUP_BANK_WIRE[`${fallbackBank}|${currency}`] || FIAT_TOPUP_RECIPIENTS[currency];
         if (!recipient) return;
 
         document.getElementById('fiat-topup-currency-label').textContent = currency;
@@ -3302,31 +3525,52 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         document.getElementById('fiat-topup-routing').textContent = recipient.routing;
         document.getElementById('fiat-topup-swift').textContent = recipient.swift;
         document.getElementById('fiat-topup-reference').textContent = recipient.reference;
-        document.getElementById('fiat-topup-step2-currency').value = currency;
-        document.getElementById('fiat-topup-step3-currency').textContent = currency;
+        const step2CcyEl = document.getElementById('fiat-topup-step2-currency');
+        if (step2CcyEl) step2CcyEl.value = currency;
+        const step3CcyEl = document.getElementById('fiat-topup-step3-currency');
+        if (step3CcyEl) step3CcyEl.textContent = currency;
     }
 
     function populateFiatTopUpAccountOptions(currency) {
         const select = document.getElementById('fiat-topup-source-account');
         const note = document.getElementById('fiat-topup-account-note');
         const confirmBtn = document.getElementById('fiat-topup-step1-confirm');
-        const accounts = getBoundBankAccounts();
-        const relevantAccounts = accounts;
 
-        const options = ['<option value="">Select a linked bank account</option>'];
-
-        relevantAccounts.forEach(account => {
-            const sameNameTag = account.sameName ? '[同名] ' : '';
-            const label = `${sameNameTag}${account.bankName} - ${account.accountName}${account.reason ? ` · ${account.reason}` : ''}`;
-            options.push(`<option value="${account.bankName}||${account.accountName}" ${account.selectable ? '' : 'disabled'}>${label}</option>`);
+        // Top Up = wiring INTO an Obita-issued account. Filter to Group 1 (obita)
+        // entries that support this currency, are verified, and enabled.
+        const entries = (window._bankAccountEntries || []).filter(e => {
+            if (e.group !== 'obita') return false;
+            if (e.verification !== 'verified' || (e.status || 'disabled') !== 'enabled') return false;
+            const supports = e.supportedCurrencies || [e.currency];
+            return supports.includes(currency);
         });
 
+        const options = ['<option value="">Select a receiving bank account</option>'];
+        entries.forEach(entry => {
+            const sameNameTag = entry.sameName ? '[同名] ' : '';
+            const label = `${sameNameTag}${entry.bank} — ${entry.alias}`;
+            options.push(`<option value="${entry.bank}||${entry.alias}">${label}</option>`);
+        });
         select.innerHTML = options.join('');
 
-        const hasSelectable = relevantAccounts.some(account => account.selectable);
+        // Auto-select the first available so the receiving info is shown by default.
+        if (entries[0]) {
+            select.value = `${entries[0].bank}||${entries[0].alias}`;
+            renderFiatRecipientInfo(currency, entries[0].bank);
+        }
+
+        // Attach onchange to refresh wire info when the user picks a different bank.
+        select.onchange = function() {
+            const raw = select.value;
+            if (!raw) return;
+            const [bankShort] = raw.split('||');
+            renderFiatRecipientInfo(currency, bankShort);
+        };
+
+        const hasSelectable = entries.length > 0;
         note.textContent = hasSelectable
-            ? 'Same-name (同名) accounts are marked with a [同名] tag in the list. Only enabled, verified same-name accounts can be used for top up.'
-            : 'No eligible same-name (同名) bank account is available. Please bind and enable a bank account under the merchant name after verification is completed.';
+            ? "Pick the Obita-issued account that matches your remittance currency. We'll show you the wire instructions to use."
+            : 'No eligible Obita-issued bank account is available for this currency. Please contact support.';
         note.style.color = hasSelectable ? '#64748B' : '#DC2626';
         confirmBtn.disabled = !hasSelectable;
         confirmBtn.style.opacity = hasSelectable ? '1' : '0.5';
@@ -3850,16 +4094,45 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     };
 
     window.goToFiatTopUpStep2 = function() {
+        // Step 2 has been retired — submit straight to the success state.
+        window.submitFiatTopUpDirect();
+    };
+
+    // Step 2 (proof + amount entry) was removed. Pressing "I've Remitted" on
+    // step 1 creates a placeholder top-up order so Obita's reconciliation team
+    // can match the inbound wire when it arrives, then jumps to the success view.
+    window.submitFiatTopUpDirect = function() {
         const accountRaw = document.getElementById('fiat-topup-source-account').value;
         if (!accountRaw) {
-            alert('Please select an eligible bank account first.');
+            alert('Please select an eligible receiving bank account first.');
             return;
         }
-
         const [bankName, accountName] = accountRaw.split('||');
-        document.getElementById('fiat-topup-step2-source-account').textContent = `${bankName} - ${accountName}`;
-        document.getElementById('fiat-topup-step-2').style.display = 'flex';
+        const currency = currentFiatTopUpCurrency || document.getElementById('fiat-topup-currency-label').textContent;
+        const wire = FIAT_TOPUP_BANK_WIRE[`${bankName}|${currency}`] || {};
+        const orderId = `FV-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const set = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value; };
+        set('fiat-topup-step3-order-id', orderId);
+        set('fiat-topup-step3-source-account', `${bankName} — ${accountName}`);
+        set('fiat-topup-step3-amount', '—');
+        set('fiat-topup-step3-currency', currency);
+        set('fiat-topup-step3-bank', wire.bank || bankName);
+        set('fiat-topup-step3-reference', wire.reference || '');
+        const proofEl = document.getElementById('fiat-topup-step3-proof');
+        if (proofEl) proofEl.textContent = '—';
+
+        notifyOrderCreated(
+            'Fiat Top Up Order Created',
+            `Top up order ${orderId} for ${bankName} (${currency}) is now awaiting reconciliation.`,
+            'View Order',
+            () => openInbox()
+        );
+
         document.getElementById('fiat-topup-step-1').style.display = 'none';
+        document.getElementById('fiat-topup-step-2').style.display = 'none';
+        document.getElementById('fiat-topup-step-3').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     };
 
     window.handleFiatTopUpProofSelected = function(input) {
@@ -4697,7 +4970,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
-    window.submitNewBankAccount = function() {
+    window.submitNewBankAccount = function(token) {
+        // Read fresh form values on the first call; on the post-2FA recursion we
+        // re-read so any drawer DOM that survived stays consistent.
         const bankName = document.getElementById('bank-name').value;
         const accountName = document.getElementById('bank-account-name').value.trim();
         const currency = document.getElementById('bank-currency').value;
@@ -4711,62 +4986,159 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             alert('Please complete all required bank account fields.');
             return;
         }
-
         if (!statementFile) {
             alert('Please upload the latest bank statement for verification.');
             return;
         }
 
+        // 2FA gate — operator must verify before the account is bound.
+        if (token !== TWO_FA_TOKEN) {
+            window.openTwoFactorModal({
+                actionLabel: 'Add Bank Account',
+                actionSubject: 'bank account binding',
+                onSuccess: () => window.submitNewBankAccount(TWO_FA_TOKEN)
+            });
+            return;
+        }
+
         const maskedAccount = accountNumber.length > 4 ? `•••• ${accountNumber.slice(-4)}` : accountNumber;
-        const bankIconStyle = currency === 'USD'
-            ? 'background-color: #EFF6FF; border: 1px solid #BFDBFE;'
-            : currency === 'HKD'
-                ? 'background-color: #FEF2F2; border: 1px solid #FECACA;'
-                : currency === 'EUR'
-                    ? 'background-color: #F5F3FF; border: 1px solid #DDD6FE;'
-                    : 'background-color: #F0FDF4; border: 1px solid #BBF7D0;';
-        const bankIconColor = currency === 'USD'
-            ? '#2563EB'
-            : currency === 'HKD'
-                ? '#DC2626'
-                : currency === 'EUR'
-                    ? '#7C3AED'
-                    : '#15803D';
-        const currencyBadgeStyle = currency === 'USD'
-            ? 'background: #DBEAFE; color: #1D4ED8;'
-            : currency === 'HKD'
-                ? 'background: #FEE2E2; color: #DC2626;'
-                : currency === 'EUR'
-                    ? 'background: #EDE9FE; color: #7C3AED;'
-                    : 'background: #DCFCE7; color: #15803D;';
+        const accentByCurrency = {
+            USD: { iconBg: '#EFF6FF', iconColor: '#2563EB' },
+            HKD: { iconBg: '#FEF2F2', iconColor: '#DC2626' },
+            EUR: { iconBg: '#F5F3FF', iconColor: '#7C3AED' },
+            BRL: { iconBg: '#F0FDF4', iconColor: '#15803D' }
+        };
+        const accent = accentByCurrency[currency] || accentByCurrency.USD;
 
-        const newHtml = `
-            <div class="bank-account-item" data-bank-name="${bankName}" data-account-name="${accountName}" data-verification="pending" data-status="enabled" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px; background: #FFF; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;">
-                <div style="display: flex; gap: 14px; flex: 1; min-width: 0;">
-                    <div style="padding: 10px; border-radius: 10px; flex-shrink: 0; ${bankIconStyle}">
-                        <i data-lucide="landmark" style="color: ${bankIconColor}; width: 18px; height: 18px;"></i>
+        // Approval-rule routing: any enabled rule scoped to bank-account binding
+        // sends the new account into Pending Approval; otherwise it goes straight
+        // to the existing Pending Verification state.
+        const bankRule = approvalRules.find(r => /Bank Account/i.test(r.scope || '') && r.status === 'enabled');
+        const requiresApproval = !!bankRule;
+
+        // Persist into the canonical entries array so Manage / Fiat Vault stay in sync.
+        const newEntry = {
+            group: 'client',
+            bank: bankName,
+            alias: accountName,
+            accountHolderName: '',
+            currency,
+            verification: 'pending',
+            status: requiresApproval ? 'disabled' : 'enabled',
+            sameName: false,
+            accountMasked: maskedAccount,
+            accountFull: accountNumber,
+            routing: routingOrIban,
+            swift,
+            country: '',
+            lastUsed: '—',
+            iconColor: accent.iconColor,
+            iconBg: accent.iconBg,
+            pendingApproval: requiresApproval
+        };
+        if (Array.isArray(window._bankAccountEntries)) {
+            window._bankAccountEntries.unshift(newEntry);
+        }
+        window.renderManageBankAccountsList?.();
+
+        // Inbox + push notification.
+        const orderId = 'BA-' + new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0') + String(new Date().getDate()).padStart(2, '0') + '-' + Math.floor(1000 + Math.random() * 9000);
+        const notifTitle = requiresApproval ? 'Bank Account Awaiting Approval' : 'Bank Account Submitted';
+        const notifBody = requiresApproval
+            ? `${bankName} — ${accountName} is awaiting approval per "${bankRule.name}".`
+            : `${bankName} — ${accountName} is now under verification by Obita.`;
+        notifyOrderCreated(notifTitle, notifBody, 'View Bank Accounts', () => window.openManageBankAccountsDrawer());
+
+        // Inline success view (replacing the form). No popup.
+        const now = new Date();
+        const ts = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5) + ' UTC';
+        const eyebrow = requiresApproval ? 'Submitted · Pending Approval' : 'Submitted · Pending Verification';
+        const headline = requiresApproval ? 'Bank Account Awaiting Approval' : 'Bank Account Submitted';
+        const subtitle = requiresApproval
+            ? `Your team approver will review this binding before it goes live. We'll let you know the moment it's approved.`
+            : `Obita's verification team will review the bank statement and confirm the binding. We'll let you know once it's verified.`;
+        const stage2Label = requiresApproval ? 'Get Approval' : 'Verification by Obita';
+        const stage2Note  = requiresApproval
+            ? 'Your team approver must review and approve before the account is activated.'
+            : 'Obita will reconcile the statement against the submitted details.';
+
+        const addView = document.getElementById('add-bank-view');
+        if (addView) {
+            addView.innerHTML = `
+                <div style="display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #FAFAF7 0%, #FFFFFF 35%);">
+                    <div style="padding: 16px 24px 14px; border-bottom: 1px dashed #E5E7EB; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.18em;">01 · DETAILS</span>
+                        <span style="flex: 1; height: 1px; background: #E5E7EB;"></span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #C9A449; color: #92670D; background: #FEF7E0; border-radius: 4px; letter-spacing: 0.18em;">STEP 02</span>
+                        <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 15px; font-weight: 600; color: #0F172A;">Submitted</span>
                     </div>
-                    <div style="flex: 1; min-width: 0;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-                            <span style="font-weight: 600; font-size: 14px; color: #0F172A;">${bankName} — ${accountName}</span>
-                            <span data-role="bank-currency" style="${currencyBadgeStyle} font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${currency}</span>
-                            <span data-role="entity-status" style="background: #FEF3C7; color: #D97706; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px;">Pending Verification</span>
+                    <div style="flex: 1; overflow-y: auto; padding: 28px 24px 22px; display: flex; flex-direction: column; gap: 18px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding-bottom: 18px; border-bottom: 1px dashed #E5E7EB;">
+                            <div style="width: 56px; height: 56px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC; box-shadow: 0 8px 24px -10px rgba(21,128,61,0.35);">
+                                <i data-lucide="check" style="width: 26px; height: 26px; color: #15803D;"></i>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                                <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                                ${eyebrow}
+                                <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                            </div>
+                            <div style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25;">${headline}</div>
+                            <div style="font-size: 12.5px; color: #64748B; line-height: 1.6; max-width: 420px;">${subtitle}</div>
                         </div>
-                        <div style="font-size: 12px; color: #64748B; line-height: 1.6;">Account: ${maskedAccount} | Routing / IBAN: ${routingOrIban} | SWIFT: ${swift}</div>
-                        <div style="font-size: 12px; color: #94A3B8; margin-top: 6px;">Statement uploaded: ${statementFile.name}</div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--clr-border); border-radius: 8px; overflow: hidden; background: white;">
+                            <div style="padding: 12px 14px; border-right: 1px solid var(--clr-border);">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Reference</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${orderId}</div>
+                            </div>
+                            <div style="padding: 12px 14px;">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Submitted</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${ts}</div>
+                            </div>
+                        </div>
+
+                        <div style="padding: 14px 16px; border: 1px solid var(--clr-border); border-radius: 8px; background: white; display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; border-radius: 10px; background: ${accent.iconBg}; border: 1px solid #E2E8F0; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <i data-lucide="landmark" style="width: 18px; height: 18px; color: ${accent.iconColor};"></i>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-family: 'Clash Display','Inter',sans-serif; font-size: 14.5px; font-weight: 600; color: #0F172A; letter-spacing: -0.005em;">${bankName} <span style="font-size: 12.5px; color: #64748B; font-weight: 500;"> · ${accountName}</span></div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; margin-top: 4px;">${currency} · ${maskedAccount}</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; border-radius: 4px; color: #64748B;">01 → 03</span>
+                                <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: #0F172A;">What happens next</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; border-left: 1px dashed #CBD5E1; margin-left: 8px; padding-left: 18px;">
+                                <div style="position: relative; padding: 4px 0 14px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #15803D; border: 2px solid white; box-shadow: 0 0 0 1px #15803D;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Submitted</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">Your bank account binding request has been received.</div>
+                                </div>
+                                <div style="position: relative; padding: 4px 0 14px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #FEF3C7; border: 2px solid white; box-shadow: 0 0 0 1px #C9A449;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">${stage2Label}</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">${stage2Note}</div>
+                                </div>
+                                <div style="position: relative; padding: 4px 0 4px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid white; box-shadow: 0 0 0 1px #CBD5E1;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Account Activated</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">We'll send you a heads-up the moment the account is ready to use.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; letter-spacing: 0.06em;">No further action required.</div>
+                        <button onclick="window.switchToBankAccountsListView()" class="btn btn-primary" style="padding: 9px 22px; font-size: 13px; font-weight: 700;">Done</button>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <button onclick="window.toggleBankAccountStatus(this)" data-role="entity-toggle" data-status="enabled" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid #CBD5E1; background: #FFFFFF; color: #475569; cursor: pointer;">Disable</button>
-                    <button onclick="window.deleteBankAccount(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
-                </div>
-            </div>`;
-
-        document.getElementById('bank-list-container').insertAdjacentHTML('afterbegin', newHtml);
-        applyManagedEntityCardState(document.querySelector('#bank-list-container .bank-account-item'));
-        lucide.createIcons();
-        alert('Bank account added. Verification is pending after statement upload.');
-        window.switchToBankAccountsListView();
+            `;
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
     };
 
     const approvalRules = [
@@ -12114,71 +12486,92 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     const fiatVaultHTML = `
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 32px;">
 
-            <!-- Total Availables header + 4 currency rows -->
-            <div class="card balances-hidden" id="fiat-vault-overview-card" style="padding: 0; overflow: hidden;">
-                <div style="padding: 28px 32px; background: linear-gradient(135deg, #1E293B, #0F172A); color: white; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 10px;">
-                            Total Availables
-                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('fiat-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances">
+            <!-- Editorial Layer-4: brass eyebrow + Clash Display total + currency rows -->
+            <div class="card entity-hero-card balances-hidden" id="fiat-vault-overview-card" style="padding: 0; overflow: hidden; position: relative;">
+                <!-- Hero header -->
+                <div style="padding: 28px 32px 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+                    <div style="min-width: 0;">
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 10px;">
+                            Fiat Vault
+                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('fiat-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances" style="background: none; border: none; padding: 0; color: #94A3B8; cursor: pointer; display: inline-flex; align-items: center;">
                                 <i data-lucide="eye-off" class="eye-when-hidden"></i>
                                 <i data-lucide="eye" class="eye-when-visible"></i>
                             </button>
                         </div>
-                        <div class="balance-figure" style="font-size: 36px; font-weight: 700;">$3,482,150.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD Equiv.</span></div>
+                        <div style="font-size: 12.5px; color: #64748B; margin-top: 6px;">Total Available</div>
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 38px; font-weight: 600; color: #0F172A; letter-spacing: -0.025em; margin-top: 10px; line-height: 1.05; font-variant-numeric: tabular-nums;">$3,482,150.00 <span style="font-family: var(--font-display); font-size: 18px; font-weight: 500; color: #94A3B8; letter-spacing: -0.014em; margin-left: 4px;">USD Equiv.</span></div>
                     </div>
-                    <div class="balance-figure" style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $8,400.00 Today</div>
-                </div>
-                <!-- USD -->
-                <div style="padding: 20px 32px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #2563EB; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">USD</div>
-                        <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">US Dollar</div><div style="font-size: 13px; color: var(--clr-text-muted);">United States Dollar</div></div>
-                    </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">1,500,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">USD</span></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('USD')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('USD')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('USD')">Convert</button>
+                    <div class="balance-figure" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 700; flex-shrink: 0;">
+                        <i data-lucide="trending-up" style="width: 13px; height: 13px;"></i>
+                        + $8,400.00 Today
                     </div>
                 </div>
-                <!-- HKD -->
-                <div style="padding: 20px 32px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #DC2626; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">HKD</div>
-                        <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">HK Dollar</div><div style="font-size: 13px; color: var(--clr-text-muted);">Hong Kong Dollar</div></div>
+
+                <!-- USD Row -->
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #DBEAFE; color: #1D4ED8; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 20px; flex-shrink: 0; border: 1px solid #BFDBFE;">$</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">USD <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">US Dollar</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">SWIFT · FEDWIRE · ACH</div>
+                        </div>
                     </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">8,200,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">HKD</span></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('HKD')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('HKD')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('HKD')">Convert</button>
-                    </div>
-                </div>
-                <!-- EUR -->
-                <div style="padding: 20px 32px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #7C3AED; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">EUR</div>
-                        <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">Euro</div><div style="font-size: 13px; color: var(--clr-text-muted);">European Euro</div></div>
-                    </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">320,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">EUR</span></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('EUR')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('EUR')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('EUR')">Convert</button>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">1,500,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">USD</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('USD')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('USD')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('USD')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
-                <!-- BRL -->
-                <div style="padding: 20px 32px; display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #059669; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 13px; flex-shrink: 0;">BRL</div>
-                        <div><div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">Brazilian Real</div><div style="font-size: 13px; color: var(--clr-text-muted);">Brazil Real</div></div>
+
+                <!-- HKD Row -->
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #FEE2E2; color: #B91C1C; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 17px; flex-shrink: 0; border: 1px solid #FECACA;">HK$</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">HKD <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">Hong Kong Dollar</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">RTGS · CHATS · FPS</div>
+                        </div>
                     </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">980,000.00 <span style="font-size: 13px; color: var(--clr-text-muted); font-weight: 400;">BRL</span></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTopUpDrawer('BRL')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openFiatTransferDrawer('BRL')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('BRL')">Convert</button>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">8,200,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">HKD</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('HKD')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('HKD')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('HKD')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
+                    </div>
+                </div>
+
+                <!-- EUR Row -->
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #EDE9FE; color: #6D28D9; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 22px; flex-shrink: 0; border: 1px solid #DDD6FE;">€</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">EUR <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">Euro</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">SEPA · TARGET2 · SWIFT</div>
+                        </div>
+                    </div>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">320,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">EUR</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('EUR')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('EUR')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('EUR')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
+                    </div>
+                </div>
+
+                <!-- BRL Row -->
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #DCFCE7; color: #15803D; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 17px; flex-shrink: 0; border: 1px solid #BBF7D0;">R$</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">BRL <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">Brazilian Real</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">PIX · TED · SWIFT</div>
+                        </div>
+                    </div>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">980,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">BRL</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('BRL')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('BRL')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('BRL')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
             </div>
@@ -12286,6 +12679,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         const renderCard = (d) => {
                             const currChip = currencyChip[d.currency] || { bg: '#F1F5F9', color: '#475569' };
                             const secondary = d.secondaryCurrency ? (currencyChip[d.secondaryCurrency] || { bg: '#F1F5F9', color: '#475569' }) : null;
+                            // Multi-currency Obita-issued accounts list every supported currency as a chip.
+                            const multiCurrencies = Array.isArray(d.supportedCurrencies) && d.supportedCurrencies.length > 1 ? d.supportedCurrencies : null;
                             const addrLine = d.iban ? d.iban : (d.accountMasked ? `•••• •••• •••• ${d.accountMasked.replace(/[^0-9A-Za-z]/g,'').slice(-4)}` : '');
                             const rowOpacity = (d.status === 'disabled' || d.verification === 'not-supported' || d.unsupported) ? '0.72' : '1';
                             const detailsJson = JSON.stringify(d).replace(/"/g, '&quot;');
@@ -12306,8 +12701,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                                             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                                                 ${d.sameName ? '<span title="Same-name account" style="background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">同名</span>' : ''}
-                                                <span style="background: ${currChip.bg}; color: ${currChip.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.currency}</span>
-                                                ${secondary ? `<span style="background: ${secondary.bg}; color: ${secondary.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.secondaryCurrency}</span>` : ''}
+                                                ${multiCurrencies
+                                                    ? multiCurrencies.map(c => { const ch = currencyChip[c] || { bg: '#F1F5F9', color: '#475569' }; return `<span style="background: ${ch.bg}; color: ${ch.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${c}</span>`; }).join('')
+                                                    : `<span style="background: ${currChip.bg}; color: ${currChip.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.currency}</span>${secondary ? `<span style="background: ${secondary.bg}; color: ${secondary.color}; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px;">${d.secondaryCurrency}</span>` : ''}`
+                                                }
                                             </div>
                                             <span style="font-size: 10px; color: #94A3B8; flex-shrink: 0;">Last used: ${d.lastUsed || '—'}</span>
                                         </div>
@@ -13249,7 +13646,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="openTopUpDrawer('USDT')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openTransferDrawer('USDT')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConvertDrawer('USDT')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('USDT')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
 
@@ -13266,7 +13663,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="openTopUpDrawer('USDC')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openTransferDrawer('USDC')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConvertDrawer('USDC')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConversionPageForCoin('USDC')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
             </div>
@@ -13625,16 +14022,26 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 </div>
             </div>`;
 
-        // Address block helper
-        const addrBlock = (label, addr, addrLabel, iconName, color) => `
-            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;">
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+        // Address block helper — alias is the hero; address is a quiet mono caption below.
+        // Click the address pill to reveal the full string.
+        const addrBlock = (label, addr, addrLabel, iconName, color) => {
+            const _addr = String(addr || '');
+            const _masked = _addr.length > 14 ? (_addr.slice(0, 6) + '····' + _addr.slice(-4)) : _addr;
+            const _safeFull = _addr.replace(/"/g, '&quot;');
+            const _alias = (addrLabel && String(addrLabel).trim()) ? addrLabel : '—';
+            return `
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px;height:100%;">
+                <div style="display:flex;align-items:center;gap:6px;">
                     <i data-lucide="${iconName}" style="width:13px;height:13px;color:${color};flex-shrink:0;"></i>
-                    <span style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:0.22em;">${label}</span>
                 </div>
-                <div style="font-family:monospace;font-size:12px;color:#0F172A;word-break:break-all;line-height:1.7;margin-bottom:6px;">${addr}</div>
-                <div style="font-size:12px;color:#64748B;">${addrLabel}</div>
+                <div style="font-family:'Clash Display','Inter',sans-serif;font-size:15.5px;font-weight:600;color:#0F172A;line-height:1.35;letter-spacing:-0.005em;">${_alias}</div>
+                <button type="button" onclick="window.toggleOrderAddrReveal(this)" data-full="${_safeFull}" data-mask="${_masked}" data-revealed="0" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E2E8F0;border-radius:8px;padding:7px 10px;cursor:pointer;text-align:left;width:100%;margin-top:auto;" onmouseover="this.style.borderColor='#94A3B8'" onmouseout="this.style.borderColor='#E2E8F0'">
+                    <span class="oa-text" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748B;word-break:break-all;line-height:1.5;flex:1;font-weight:500;">${_masked}</span>
+                    <i class="oa-eye" data-lucide="eye" style="width:12px;height:12px;color:#94A3B8;flex-shrink:0;"></i>
+                </button>
             </div>`;
+        };
 
         // Token contract
         const contractHTML = `
@@ -13705,15 +14112,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                 <!-- Header Card -->
                 <div class="card" style="padding:0;overflow:hidden;margin:0;">
-                    <div style="height:4px;background:linear-gradient(90deg,${typeColor},${typeColor}66);"></div>
-                    <div style="padding:22px 26px 20px;">
-                        <!-- Badges + download receipt row -->
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                                <span style="display:inline-flex;align-items:center;gap:5px;background:${typeBg};color:${typeColor};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">
-                                    <i data-lucide="${typeIcon}" style="width:11px;height:11px;"></i>${typeLabel}
+                    <div style="height:3px;background:linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                    <div style="padding:24px 26px 22px;">
+                        <!-- Editorial eyebrow + status + receipt -->
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                <span style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;color:#C9A449;">
+                                    <span style="width:14px;height:1px;background:#C9A449;"></span>
+                                    Stablecoin · ${typeLabel}
                                 </span>
-                                <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;text-transform:uppercase;letter-spacing:0.06em;">${st.label}</span>
+                                <span style="background:${st.bg};color:${st.color};font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:0.1em;">${st.label}</span>
                             </div>
                             ${tx.status === 'completed' ? `
                                 <button onclick="window.downloadStableVaultReceipt('${txId}')" style="padding:6px 12px;background:white;border:1px solid #E2E8F0;border-radius:8px;font-size:12px;font-weight:700;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width:12px;height:12px;"></i>Download Receipt</button>
@@ -13722,19 +14130,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         <!-- Amount + meta -->
                         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;">
                             <div>
-                                <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;">Order ID</div>
-                                <div style="font-family:monospace;font-size:17px;font-weight:800;color:#0F172A;">${txId}</div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.22em;margin-bottom:6px;font-weight:600;">Order ID</div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#0F172A;letter-spacing:0.02em;">${txId}</div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#94A3B8;margin-top:6px;letter-spacing:0.02em;">${tx.createdAt}</div>
                             </div>
                             <div style="text-align:right;">
-                                <div style="font-size:11px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;">Amount</div>
-                                <div style="font-size:34px;font-weight:900;color:${amtColor};letter-spacing:-0.03em;line-height:1;">${amtSign} ${fmt(tx.amount)} <span style="font-size:18px;font-weight:700;">${tx.asset}</span></div>
-                                <div style="font-size:12px;color:#94A3B8;margin-top:5px;">${tx.createdAt}</div>
+                                <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#94A3B8;text-transform:uppercase;letter-spacing:0.22em;margin-bottom:6px;font-weight:600;">Amount</div>
+                                <div style="font-family:'Clash Display','Inter',sans-serif;font-size:34px;font-weight:600;color:${amtColor};letter-spacing:-0.02em;line-height:1;">${amtSign} ${fmt(tx.amount)} <span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;letter-spacing:0.04em;">${tx.asset}</span></div>
                             </div>
                         </div>
                         ${tx.txHash ? `
-                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="font-size:11px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.07em;flex-shrink:0;">TxID</span>
-                            <span style="font-family:monospace;font-size:12px;color:#334155;word-break:break-all;flex:1;">${tx.txHash}</span>
+                        <div style="margin-top:14px;padding-top:14px;border-top:1px solid #F1F5F9;display:flex;align-items:center;justify-content:flex-end;">
                             <a href="${
                                 tx.network === 'Ethereum' ? `https://etherscan.io/tx/${tx.txHash}` :
                                 tx.network === 'TRON'     ? `https://tronscan.org/#/transaction/${tx.txHash}` :
@@ -13742,25 +14148,24 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 tx.network === 'Polygon'  ? `https://polygonscan.com/tx/${tx.txHash}` :
                                 tx.network === 'Solana'   ? `https://solscan.io/tx/${tx.txHash}` :
                                 `#`
-                            }" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#2563EB;background:#EFF6FF;padding:4px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;text-decoration:none;border:1px solid #BFDBFE;">
-                                <i data-lucide="external-link" style="width:11px;height:11px;"></i>View on Explorer
+                            }" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#2563EB;background:#EFF6FF;padding:7px 14px;border-radius:8px;white-space:nowrap;text-decoration:none;border:1px solid #BFDBFE;">
+                                <i data-lucide="external-link" style="width:12px;height:12px;"></i>View on Explorer
                             </a>
                         </div>` : ''}
                     </div>
                 </div>
 
-                <!-- Transfer Addresses -->
+                <!-- Transfer Addresses (From / To side-by-side) -->
                 <div class="card" style="padding:0;overflow:hidden;margin:0;">
                     ${sectionHead('arrow-right-left', isDeposit ? 'Sender → Vault' : 'Vault → Recipient', '#475569')}
-                    <div style="padding:18px 22px;display:flex;flex-direction:column;gap:12px;">
+                    <div style="padding:18px 22px;display:grid;grid-template-columns:1fr 32px 1fr;gap:14px;align-items:stretch;">
                         ${addrBlock('From', tx.fromAddress, tx.fromLabel, isDeposit ? 'circle-arrow-out-up-right' : 'landmark', isDeposit ? '#64748B' : '#7C3AED')}
-                        <div style="display:flex;justify-content:center;">
-                            <div style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;">
-                                <i data-lucide="arrow-down" style="width:13px;height:13px;color:#94A3B8;"></i>
+                        <div style="display:flex;align-items:center;justify-content:center;">
+                            <div style="width:32px;height:32px;border-radius:50%;background:#F1F5F9;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;">
+                                <i data-lucide="arrow-right" style="width:14px;height:14px;color:#94A3B8;"></i>
                             </div>
                         </div>
                         ${addrBlock('To', tx.toAddress, tx.toLabel, isDeposit ? 'landmark' : 'circle-arrow-out-up-right', isDeposit ? '#7C3AED' : '#64748B')}
-                        <div style="padding-top:4px;">${contractHTML}</div>
                     </div>
                 </div>
 
@@ -13772,17 +14177,22 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <span style="font-size:13px;color:#475569;">${isDeposit ? 'Gross Amount Received' : 'Withdrawal Amount'}</span>
                             <span style="font-size:14px;font-weight:700;color:#0F172A;">${fmt(tx.grossAmount)} ${tx.asset}</span>
                         </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #F1F5F9;">
-                            <div>
-                                <span style="font-size:13px;color:#475569;">Network Fee (Gas)</span>
-                                <div style="font-size:11px;color:#94A3B8;margin-top:2px;">${tx.networkFeeNote}</div>
+                        ${(() => {
+                            const serviceFee = isDeposit ? 0 : tx.grossAmount * 0.001;
+                            const netDelivered = isDeposit ? tx.grossAmount : (tx.grossAmount - serviceFee);
+                            return `
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #F1F5F9;">
+                                <div>
+                                    <span style="font-size:13px;color:#475569;">Service Fee</span>
+                                    <div style="font-size:11px;color:#94A3B8;margin-top:2px;">${isDeposit ? 'Deposits are free.' : 'Charged at 0.1% of the transfer amount.'}</div>
+                                </div>
+                                <span style="font-size:13px;color:#64748B;">${isDeposit ? 'Free' : `${fmt(serviceFee)} ${tx.asset}`}</span>
                             </div>
-                            <span style="font-size:13px;color:#64748B;">${tx.networkFee > 0 ? `${tx.networkFee} ${tx.networkFeeAsset} (≈ USD ${fmt(tx.networkFeeUSD)})` : 'Nil'}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 0;">
-                            <span style="font-size:14px;font-weight:700;color:#0F172A;">${isDeposit ? 'Net Amount Credited' : 'Net Amount Delivered'}</span>
-                            <span style="font-size:18px;font-weight:800;color:${amtColor};">${fmt(tx.netAmount)} ${tx.asset}</span>
-                        </div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:15px 0;">
+                                <span style="font-size:14px;font-weight:700;color:#0F172A;">${isDeposit ? 'Net Amount Credited' : 'Net Amount Delivered'}</span>
+                                <span style="font-size:18px;font-weight:800;color:${amtColor};">${fmt(netDelivered)} ${tx.asset}</span>
+                            </div>`;
+                        })()}
                     </div>
                 </div>
 
@@ -13793,23 +14203,51 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 <div class="card" style="padding:0;overflow:hidden;margin:0;">
                     ${sectionHead('activity', 'Status History')}
                     <div style="padding:18px 22px;display:flex;flex-direction:column;gap:0;">
-                        ${tx.timeline.map((ev, i) => {
-                            const s = tlStyle(ev.status);
-                            const isLast = i === tx.timeline.length - 1;
-                            return `<div style="display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;padding-bottom:${isLast ? '0' : '18px'};">
-                                <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
-                                    <div style="width:9px;height:9px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
-                                    ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:4px;min-height:22px;"></div>' : ''}
-                                </div>
-                                <div>
-                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-                                        <span style="font-size:12px;color:#64748B;">${ev.time}</span>
-                                        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${s.bg};color:${s.color};">${ev.status}</span>
+                        ${(() => {
+                            // Deposits show only 2 stages: Confirming → Credited.
+                            // Transfers drop AML Checked + Broadcast and strip the
+                            // "X / Y confirmations reached." prefix from Completed notes.
+                            let timeline = tx.timeline;
+                            if (isDeposit) {
+                                const confirming = tx.timeline.find(ev => ev.status === 'Confirming') || tx.timeline.find(ev => ev.status === 'Broadcast');
+                                const credited   = tx.timeline.find(ev => ev.status === 'Credited');
+                                timeline = [];
+                                if (confirming) timeline.push({
+                                    time: confirming.time,
+                                    status: 'Confirming',
+                                    note: 'Deposit notification received. Order created and under review.'
+                                });
+                                if (credited) timeline.push({
+                                    time: credited.time,
+                                    status: 'Credited',
+                                    note: 'Review complete. Funds added to your available balance.'
+                                });
+                                if (timeline.length === 0) timeline = tx.timeline;
+                            } else {
+                                timeline = tx.timeline
+                                    .filter(ev => ev.status !== 'AML Checked' && ev.status !== 'Broadcast')
+                                    .map(ev => ev.status === 'Completed'
+                                        ? { ...ev, note: ev.note.replace(/^\s*\d+\s*\/\s*\d+\s+confirmations\s+reached\.\s*/i, '') }
+                                        : ev);
+                            }
+                            return timeline.map((ev, i) => {
+                                const s = tlStyle(ev.status);
+                                const isLast = i === timeline.length - 1;
+                                return `<div style="display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;padding-bottom:${isLast ? '0' : '18px'};">
+                                    <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                                        <div style="width:9px;height:9px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
+                                        ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:4px;min-height:22px;"></div>' : ''}
                                     </div>
-                                    <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
-                                </div>
-                            </div>`;
-                        }).join('')}
+                                    <div>
+                                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                            <span style="font-size:12px;color:#64748B;">${ev.time}</span>
+                                            <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${s.bg};color:${s.color};">${ev.status}</span>
+                                        </div>
+                                        <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
+                                    </div>
+                                </div>`;
+                            }).join('');
+                        })()}
                     </div>
                 </div>
 
@@ -13823,6 +14261,28 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         activeStableVaultTxId = txId;
         renderStableVaultTxDetailPage(txId);
         window.scrollContentToTop();
+    };
+
+    // Toggle reveal/mask for any wallet/account address pill on order detail pages.
+    // The trigger element carries data-full / data-mask / data-revealed attributes,
+    // and contains a `.oa-text` label and an optional `.oa-eye` icon.
+    window.toggleOrderAddrReveal = function(btn) {
+        if (!btn) return;
+        const revealed = btn.getAttribute('data-revealed') === '1';
+        const text = btn.querySelector('.oa-text');
+        if (!text) return;
+        if (revealed) {
+            text.textContent = btn.getAttribute('data-mask') || '';
+            btn.setAttribute('data-revealed', '0');
+        } else {
+            text.textContent = btn.getAttribute('data-full') || '';
+            btn.setAttribute('data-revealed', '1');
+        }
+        const eye = btn.querySelector('.oa-eye');
+        if (eye) {
+            eye.setAttribute('data-lucide', revealed ? 'eye' : 'eye-off');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
     };
 
     window.backToStableVault = function() {
@@ -22470,8 +22930,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <!-- Top row: page identity + actions -->
                     <div class="invoice-hero-top">
                         <div class="invoice-hero-ident">
+                            <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 8px;">
+                                <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                                ${window.currentLicenseMode === 'MSO' ? 'MSO · Fiat Payouts' : 'TCSP · Treasury Payouts'}
+                            </div>
                             <h1 class="invoice-page-title">Payout Orders</h1>
-                            <p class="invoice-hero-sub">Manage and track all payout transactions across your ${window.currentLicenseMode === 'MSO' ? 'fiat accounts' : 'asset vaults'}.</p>
+                            <p class="invoice-hero-sub">${window.currentLicenseMode === 'MSO' ? 'Manage and track all fiat-account payouts — bank transfers, batch settlements, and recurring vendor payments.' : 'Manage and track all payout transactions across your asset vaults.'}</p>
                         </div>
                         <div class="invoice-hero-actions">
                             <button class="btn btn-primary" onclick="window.openNewPayoutBatchPage()" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i> New Payout</button>
