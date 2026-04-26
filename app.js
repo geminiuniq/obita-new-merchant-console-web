@@ -881,50 +881,52 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         ` : '';
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
-                <!-- Page header -->
-                <div class="card" style="${headerCardStyle}">
-                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-                            <div style="width: 48px; height: 48px; background: ${headerIconBg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 19px; font-weight: 800; color: ${headerIconColor}; letter-spacing: -0.02em;">${chainVisual.initial}</div>
+            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px;">
+                <!-- Hero -->
+                <div class="card entity-hero-card" style="${headerCardStyle}; padding: 24px 32px 26px;">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to Address Book</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: flex-start; gap: 16px; min-width: 0; flex: 1;">
+                            <div style="width: 52px; height: 52px; background: ${headerIconBg}; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 600; color: ${headerIconColor}; letter-spacing: -0.02em; border: 1px solid ${chainVisual.bg};">${chainVisual.initial}</div>
                             <div style="min-width: 0;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; ${headerNameStyle}">${alias}</h1>
-                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Wallet · ${chain}</div>
+                                <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 600; margin: 6px 0 8px; letter-spacing: -0.02em; ${headerNameStyle}">${alias}</h1>
+                                <div style="font-family: var(--font-mono); font-size: 12px; color: #64748B; letter-spacing: 0.02em; word-break: break-all;">${masked}</div>
+                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
                                     ${verifiedChip}
                                     ${statusChip}
                                 </div>
                             </div>
                         </div>
                         <!-- Action row: Verify Wallet (pending only) + Enable/Disable toggle + Delete -->
-                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
+                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0;">
                             ${verifyButtonHtml}
-                            <button ${canToggle ? '' : 'disabled'} onclick="window.toggleWalletAddressStatus('${address}')" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
+                            <button ${canToggle ? '' : 'disabled'} onclick="window.toggleWalletAddressStatus('${address}')" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
                                 <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
                             </button>
-                            <button onclick="window.deleteWalletAddress('${address}','${alias.replace(/'/g, "\\'")}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                            <button onclick="window.deleteWalletAddress('${address}','${alias.replace(/'/g, "\\'")}')" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 600; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
                                 <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- SECTION 1: Basic Information — mirrors Add New Address Section 1 -->
+                <!-- SECTION 1: Basic Information -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: #EFF6FF; color: #2563EB; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; flex-shrink: 0; border: 1px solid #BFDBFE;">01</div>
+                        <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.012em; align-self: center;">Basic Information</h3>
                     </div>
-                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 28px;">
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Owner Type</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${ownerTypeLabel}</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Owner Type</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="${ownerType === 'individual' ? 'user-round' : 'building-2'}" style="width: 14px; height: 14px; color: #64748B;"></i>${ownerTypeLabel}</div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Alias</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Wallet Alias</div>
                             <!-- Display mode: alias + pencil to edit -->
-                            <div id="wa-alias-display" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;">
-                                <span id="wa-alias-text" style="font-size: 14px; font-weight: 700; color: #0F172A;">${alias}</span>
+                            <div id="wa-alias-display" style="display: inline-flex; align-items: center; gap: 8px; margin-top: 6px;">
+                                <span id="wa-alias-text" style="font-size: 14px; font-weight: 600; color: #0F172A;">${alias}</span>
                                 <button type="button" onclick="window.startEditWalletAlias()" aria-label="Edit wallet alias" title="Edit alias" style="background: none; border: none; padding: 4px; color: #94A3B8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.background='#EFF6FF'" onmouseout="this.style.color='#94A3B8';this.style.background='transparent'">
                                     <i data-lucide="pencil" style="width: 13px; height: 13px;"></i>
                                 </button>
@@ -995,43 +997,43 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                 </div>
                 ` : ''}
 
-                <!-- SECTION 2: Wallet Details — mirrors Add New Address Section 2 -->
+                <!-- SECTION 2: Wallet Details -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Details</h3>
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: #F5F3FF; color: #7C3AED; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; flex-shrink: 0; border: 1px solid #DDD6FE;">02</div>
+                        <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.012em; align-self: center;">Wallet Details</h3>
                     </div>
-                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                    <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 22px 28px;">
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Type</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px;">${walletTypeLabel}</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Wallet Type</div>
+                            <div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="${walletType === 'exchange' ? 'landmark' : 'key'}" style="width: 14px; height: 14px; color: ${walletType === 'exchange' ? '#EA580C' : '#7C3AED'};"></i>${walletTypeLabel}</div>
                         </div>
                         <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Network / Chain</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 5px; display: inline-flex; align-items: center; gap: 6px;">
-                                <span style="background: ${chainVisual.bg}; color: ${chainVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px;">${chain}</span>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Network / Chain</div>
+                            <div style="margin-top: 6px;">
+                                <span style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; background: ${chainVisual.bg}; color: ${chainVisual.color}; border-radius: 999px; font-size: 12px; font-weight: 600;"><span style="width: 20px; height: 20px; border-radius: 999px; background: white; color: ${chainVisual.color}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 11px;">${chainVisual.initial}</span>${chain}</span>
                             </div>
                         </div>
                         <!-- Wallet Address row spans both columns -->
                         <div style="grid-column: 1 / -1;">
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Wallet Address</div>
-                            <!-- Address + Reveal + Copy sit on a single baseline. The '3ch' margin on the
-                                 Reveal button gives the requested 3-character gap after the address. -->
-                            <div style="display: flex; align-items: center; flex-wrap: wrap; margin-top: 6px;">
-                                <span id="wa-detail-address" data-masked="${masked.replace(/"/g, '&quot;')}" data-full="${address.replace(/"/g, '&quot;')}" data-state="masked" style="font-family: monospace; font-size: 14px; color: #0F172A; font-weight: 600; word-break: break-all;">${masked}</span>
-                                <button type="button" onclick="window.toggleWalletAddressMask()" style="margin-left: 3ch; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
-                                    <i data-lucide="eye" id="wa-detail-eye" style="width: 12px; height: 12px;"></i>
-                                    <span id="wa-detail-eye-label">Reveal</span>
-                                </button>
-                                <button type="button" onclick="navigator.clipboard.writeText('${address}')" style="margin-left: 6px; padding: 4px 10px; background: transparent; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 11px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0'">
-                                    <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
-                                </button>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Wallet Address</div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding: 10px 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px;">
+                                <span id="wa-detail-address" data-masked="${masked.replace(/"/g, '&quot;')}" data-full="${address.replace(/"/g, '&quot;')}" data-state="masked" style="font-family: var(--font-mono); font-size: 12.5px; color: #0F172A; font-weight: 500; word-break: break-all; flex: 1; min-width: 0; line-height: 1.55;">${masked}</span>
+                                <div style="display: inline-flex; gap: 6px; flex-shrink: 0;">
+                                    <button type="button" onclick="window.toggleWalletAddressMask()" style="padding: 5px 11px; background: white; border: 1px solid #E2E8F0; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE';this.style.background='#EFF6FF'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0';this.style.background='white'">
+                                        <i data-lucide="eye" id="wa-detail-eye" style="width: 12px; height: 12px;"></i>
+                                        <span id="wa-detail-eye-label">Reveal</span>
+                                    </button>
+                                    <button type="button" onclick="navigator.clipboard.writeText('${address}')" style="padding: 5px 11px; background: white; border: 1px solid #E2E8F0; border-radius: 7px; font-family: inherit; font-size: 11.5px; font-weight: 600; color: #64748B; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" onmouseover="this.style.color='#1D4ED8';this.style.borderColor='#BFDBFE';this.style.background='#EFF6FF'" onmouseout="this.style.color='#64748B';this.style.borderColor='#E2E8F0';this.style.background='white'">
+                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i> Copy
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div style="grid-column: 1 / -1;">
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Ownership Declaration</div>
-                            <div style="font-size: 13px; color: #334155; margin-top: 6px; line-height: 1.55; display: inline-flex; align-items: flex-start; gap: 8px;">
-                                <i data-lucide="check-circle-2" style="width: 15px; height: 15px; color: #16A34A; flex-shrink: 0; margin-top: 2px;"></i>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Ownership Declaration</div>
+                            <div style="font-size: 13px; color: #334155; margin-top: 8px; padding: 10px 14px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 10px; line-height: 1.55; display: flex; align-items: flex-start; gap: 10px;">
+                                <i data-lucide="shield-check" style="width: 16px; height: 16px; color: #16A34A; flex-shrink: 0; margin-top: 1px;"></i>
                                 <span>Owner declared that this wallet belongs to the aforementioned party and acts beneficially on behalf of this merchant profile.</span>
                             </div>
                         </div>
@@ -1053,6 +1055,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                 const zone = document.getElementById('wad-verify-zone');
                 if (zone) zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 120);
+        }
+        // When arriving with meta.autoOpenEdd (e.g. from the Important Notices
+        // "Start Filling" action), open the EDD drawer immediately.
+        if (meta.autoOpenEdd === true && eddRequired) {
+            setTimeout(() => { window.startWalletEddFill?.(); }, 120);
         }
     };
 
@@ -1385,19 +1392,89 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         // Swap the drawer body into an inline success state instead of a browser alert.
         const body = document.getElementById('edd-fill-drawer-body');
         if (body) {
+            const _refId = 'INF-' + Date.now().toString(36).toUpperCase().slice(-6);
+            const _now = new Date();
+            const _ts = _now.toISOString().slice(0,10) + ' ' + _now.toTimeString().slice(0,5) + ' UTC';
+            const _alias = d.name || d.meta?.alias || 'Wallet';
+            const _addr  = d.address || '';
+            const _addrMasked = _addr.length > 14 ? (_addr.slice(0,6) + '····' + _addr.slice(-4)) : _addr;
+            const _chain = d.chain || '—';
+            const _isCo  = (d.meta?.ownerType || entry?.ownerType || 'organization') === 'organization';
+            const _subject = _isCo ? (finalInfo.companyName || _alias) : [finalInfo.firstName, finalInfo.lastName].filter(Boolean).join(' ');
+
             body.innerHTML = `
-                <div style="display: flex; flex-direction: column; height: 100%;">
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 32px; text-align: center; gap: 18px;">
-                        <div style="width: 64px; height: 64px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC;">
-                            <i data-lucide="check" style="width: 30px; height: 30px; color: #15803D;"></i>
+                <div style="display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #FAFAF7 0%, #FFFFFF 60%);">
+                    <div style="flex: 1; overflow-y: auto; padding: 36px 32px 24px;">
+                        <!-- Editorial hero -->
+                        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; padding-bottom: 28px; border-bottom: 1px dashed #E5E7EB;">
+                            <div style="width: 56px; height: 56px; border-radius: 50%; background: #DCFCE7; display: flex; align-items: center; justify-content: center; border: 1px solid #86EFAC; box-shadow: 0 8px 24px -10px rgba(21, 128, 61, 0.35);">
+                                <i data-lucide="check" style="width: 26px; height: 26px; color: #15803D;"></i>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                                <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                                Submission Received · Under Review
+                                <span style="width: 18px; height: 1px; background: #C9A449;"></span>
+                            </div>
+                            <div style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em; line-height: 1.25;">Thanks — we've got it.</div>
+                            <div style="font-size: 13px; color: #64748B; line-height: 1.65; max-width: 380px;">The additional information has been securely submitted. Our compliance team will review and notify you by email — typically within 1–2 business days.</div>
                         </div>
-                        <div>
-                            <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-bottom: 8px;">Information Submitted</div>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.65; max-width: 360px; margin: 0 auto;">Thanks — the additional information has been submitted. You'll be notified by email once the review is complete.</div>
+
+                        <!-- Reference -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-top: 22px; border: 1px solid var(--clr-border); border-radius: 8px; overflow: hidden; background: white;">
+                            <div style="padding: 12px 14px; border-right: 1px solid var(--clr-border);">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Reference</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${_refId}</div>
+                            </div>
+                            <div style="padding: 12px 14px;">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Submitted</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 12.5px; font-weight: 700; color: #0F172A;">${_ts}</div>
+                            </div>
+                        </div>
+
+                        <!-- Wallet recap -->
+                        <div style="margin-top: 14px; padding: 14px 16px; border: 1px solid var(--clr-border); border-radius: 8px; background: white;">
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #94A3B8; margin-bottom: 8px;">Wallet</div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                                    <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${_alias}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B;">${_chain} · ${_addrMasked}</div>
+                                </div>
+                                ${_subject ? `<div style="text-align: right; flex-shrink: 0;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #94A3B8; margin-bottom: 4px;">Owner</div>
+                                    <div style="font-size: 12.5px; font-weight: 600; color: #0F172A;">${_subject}</div>
+                                </div>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- What happens next -->
+                        <div style="margin-top: 22px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; border-radius: 4px; color: #64748B;">01 → 03</span>
+                                <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: #0F172A;">What happens next</span>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0; border-left: 1px dashed #CBD5E1; margin-left: 8px; padding-left: 18px;">
+                                <div style="position: relative; padding: 4px 0 16px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #15803D; border: 2px solid white; box-shadow: 0 0 0 1px #15803D;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Submitted</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">Information securely received and queued for review.</div>
+                                </div>
+                                <div style="position: relative; padding: 4px 0 16px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: #FEF3C7; border: 2px solid white; box-shadow: 0 0 0 1px #C9A449;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Compliance Review</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">Typically completed within 1–2 business days.</div>
+                                </div>
+                                <div style="position: relative; padding: 4px 0 4px;">
+                                    <span style="position: absolute; left: -25px; top: 4px; width: 14px; height: 14px; border-radius: 50%; background: white; border: 2px solid white; box-shadow: 0 0 0 1px #CBD5E1;"></span>
+                                    <div style="font-size: 12.5px; font-weight: 700; color: #0F172A;">Wallet Cleared for Transactions</div>
+                                    <div style="font-size: 11.5px; color: #64748B; line-height: 1.5; margin-top: 2px;">You'll be notified by email — no further action needed.</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: flex-end; gap: 10px;">
-                        <button class="btn btn-primary" onclick="window.closeWalletEddFillDrawer(); window.openWalletAddressDetailPage(window._activeWalletAddressDetail.address, window._activeWalletAddressDetail.name, window._activeWalletAddressDetail.chain, window._activeWalletAddressDetail.verificationKey, window._activeWalletAddressDetail.statusKey, window._activeWalletAddressDetail.meta);" style="padding: 9px 18px; font-size: 13px; font-weight: 700;">Done</button>
+
+                    <div style="padding: 14px 24px; border-top: 1px solid var(--clr-border); background: white; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; letter-spacing: 0.06em;">No further action required.</div>
+                        <button class="btn btn-primary" onclick="window.closeWalletEddFillDrawer(); window.openWalletAddressDetailPage(window._activeWalletAddressDetail.address, window._activeWalletAddressDetail.name, window._activeWalletAddressDetail.chain, window._activeWalletAddressDetail.verificationKey, window._activeWalletAddressDetail.statusKey, window._activeWalletAddressDetail.meta);" style="padding: 9px 22px; font-size: 13px; font-weight: 700;">Done</button>
                     </div>
                 </div>
             `;
@@ -2329,10 +2406,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
     ];
 
     const ADDR_CHAIN_VISUAL = {
-        'Ethereum': { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum' },
-        'TRON':     { bg: '#FEE2E2', color: '#DC2626', label: 'TRON' },
-        'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain' },
-        'Solana':   { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana' }
+        'Ethereum': { bg: '#E0E7FF', color: '#4338CA', label: 'Ethereum', initial: 'E' },
+        'TRON':     { bg: '#FEE2E2', color: '#DC2626', label: 'TRON',     initial: 'T' },
+        'BNB Chain':{ bg: '#FEF3C7', color: '#B45309', label: 'BNB Chain',initial: 'B' },
+        'Solana':   { bg: '#F5F3FF', color: '#7C3AED', label: 'Solana',   initial: 'S' }
     };
 
     function _renderAddressBookRow(entry) {
@@ -2371,20 +2448,26 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             : '';
 
         return `
-            <div onclick="window.navGo(() => window.openWalletAddressDetailPage('${addrEsc}','${aliasEsc}','${entry.chain}','${entry.verification}','${normalizedStatus}',JSON.parse(this.dataset.meta)))" data-addr="${addrEsc}" data-meta="${metaJson}" style="border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 18px; background: #FFFFFF; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s;" onmouseover="this.style.background='#F8FAFC';this.style.borderColor='#CBD5E1'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#E2E8F0'">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
-                        <div style="font-weight: 600; font-size: 14px; color: #0F172A;">${entry.alias}</div>
+            <div onclick="window.navGo(() => window.openWalletAddressDetailPage('${addrEsc}','${aliasEsc}','${entry.chain}','${entry.verification}','${normalizedStatus}',JSON.parse(this.dataset.meta)))" data-addr="${addrEsc}" data-meta="${metaJson}" style="border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px 18px; background: #FFFFFF; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; cursor: pointer; opacity: ${rowOpacity}; transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.background='#F8FBFF';this.style.borderColor='#BFDBFE';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px -4px rgba(37,99,235,0.14)'" onmouseout="this.style.background='#FFFFFF';this.style.borderColor='#E2E8F0';this.style.transform='translateY(0)';this.style.boxShadow='none'">
+                <div style="width: 42px; height: 42px; background: ${chain.bg}; color: ${chain.color}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Clash Display', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; border: 1px solid ${chain.bg};">${chain.initial}</div>
+                <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <div style="font-weight: 600; font-size: 14.5px; color: #0F172A; letter-spacing: -0.005em;">${entry.alias}</div>
                         ${verifiedChip}
                         ${statusChip}
                         ${unsupportedChip}
                         ${eddChip}
                     </div>
-                    <div style="font-family: monospace; font-size: 11px; color: #64748B;">${maskedAddr}</div>
+                    <div style="display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; font-family: var(--font-mono); font-size: 11.5px; color: #64748B; letter-spacing: 0.02em;">
+                        <span style="font-weight: 600; color: ${chain.color};">${chain.label}</span>
+                        <span style="width: 3px; height: 3px; border-radius: 999px; background: #CBD5E1;"></span>
+                        <span>${maskedAddr}</span>
+                    </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                    <button onclick="event.stopPropagation(); window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="${entry.status}" class="addr-toggle ${entry.status}" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 4px; cursor: pointer; ${toggleStyle}">${toggleLabel}</button>
-                    <button onclick="event.stopPropagation(); window.deleteAddress(this)" style="background: none; border: none; cursor: pointer; color: #94A3B8; display: inline-flex; align-items: center;"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i></button>
+                <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    <button onclick="event.stopPropagation(); window.toggleAddressStatus(this)" data-role="entity-toggle" data-status="${entry.status}" class="addr-toggle ${entry.status}" style="padding: 6px 12px; font-size: 11.5px; font-weight: 600; border-radius: 8px; cursor: pointer; font-family: inherit; transition: background 0.15s; ${toggleStyle}">${toggleLabel}</button>
+                    <button onclick="event.stopPropagation(); window.deleteAddress(this)" aria-label="Delete address" title="Delete address" style="width: 32px; height: 32px; background: none; border: 1px solid transparent; border-radius: 8px; cursor: pointer; color: #94A3B8; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s;" onmouseover="this.style.color='#DC2626';this.style.background='#FEF2F2';this.style.borderColor='#FECACA'" onmouseout="this.style.color='#94A3B8';this.style.background='none';this.style.borderColor='transparent'"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                    <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: #CBD5E1; margin-left: 2px;"></i>
                 </div>
             </div>
         `;
@@ -2400,31 +2483,65 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
         const rowsHtml = window._addressBookEntries.map(_renderAddressBookRow).join('');
 
+        const _entries = window._addressBookEntries || [];
+        const _verifiedCount = _entries.filter(e => e.verification === 'verified').length;
+        const _enabledCount = _entries.filter(e => e.status === 'enabled').length;
+        const _pendingCount = _entries.filter(e => e.verification !== 'verified').length;
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
-                <!-- Page header -->
-                <div class="card" style="padding: 22px 28px;">
-                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Address Book</h1>
-                            <div style="font-size: 13px; color: #64748B;">Manage your registered wallet addresses. ${window._addressBookEntries.length} ${window._addressBookEntries.length === 1 ? 'address' : 'addresses'} saved.</div>
+            <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px;">
+                <!-- Hero -->
+                <div class="card entity-hero-card" style="padding: 24px 32px 26px;">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 16px; align-items: flex-start; min-width: 0; flex: 1;">
+                            <div style="width: 48px; height: 48px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #BFDBFE;">
+                                <i data-lucide="book-marked" style="width: 20px; height: 20px;"></i>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Whitelisted Wallets</div>
+                                <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 600; color: #0F172A; margin: 8px 0 6px; letter-spacing: -0.02em;">Address Book</h1>
+                                <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage every wallet that can receive payouts and transfers from your vaults. Only verified, enabled addresses are eligible.</div>
+                            </div>
                         </div>
-                        <button onclick="window.navGo(window.renderAddNewAddressPage)" style="display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18);" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
-                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i> Add New Address
+                        <button onclick="window.navGo(window.renderAddNewAddressPage)" class="btn btn-primary" style="padding: 11px 18px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>Add New Address
                         </button>
                     </div>
                 </div>
 
+                <!-- KPI strip -->
+                ${_entries.length ? `
+                <div class="card" style="padding: 18px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 28px;">
+                    <div>
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Total Addresses</div>
+                        <div style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums;">${_entries.length}</div>
+                    </div>
+                    <div style="border-left: 1px solid #F1F5F9; padding-left: 28px;">
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Verified</div>
+                        <div style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #047857; letter-spacing: -0.018em; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums;">${_verifiedCount}<span style="font-family: var(--font-mono); font-size: 11px; color: #94A3B8; font-weight: 500; margin-left: 4px;">/ ${_entries.length}</span></div>
+                    </div>
+                    <div style="border-left: 1px solid #F1F5F9; padding-left: 28px;">
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; font-weight: 600;">Enabled · Action Needed</div>
+                        <div style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums;">${_enabledCount}<span style="font-family: var(--font-mono); font-size: 11px; color: #B45309; font-weight: 500; margin-left: 8px;">${_pendingCount > 0 ? _pendingCount + ' pending' : ''}</span></div>
+                    </div>
+                </div>` : ''}
+
                 <!-- Address list -->
-                <div class="card" style="padding: 22px 28px;">
-                    ${window._addressBookEntries.length
-                        ? `<div id="addr-page-list" style="display: flex; flex-direction: column; gap: 10px;">${rowsHtml}</div>`
-                        : `<div style="padding: 48px 24px; text-align: center; color: #64748B;">
-                             <div style="width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 12px; background: #F1F5F9; display: inline-flex; align-items: center; justify-content: center; color: #94A3B8;"><i data-lucide="book-open" style="width: 20px; height: 20px;"></i></div>
-                             <div style="font-size: 14px; font-weight: 600; color: #0F172A;">No wallet addresses yet</div>
-                             <div style="font-size: 13px; margin-top: 4px;">Click "Add New Address" to register your first wallet.</div>
-                           </div>`}
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    ${_entries.length ? `
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <h3 style="font-family: var(--font-display); font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.01em;">All Addresses</h3>
+                            <span style="font-family: var(--font-mono); font-size: 11px; color: #94A3B8; letter-spacing: 0.04em;">${_entries.length} ${_entries.length === 1 ? 'entry' : 'entries'}</span>
+                        </div>
+                        <div id="addr-page-list" style="padding: 14px 18px; display: flex; flex-direction: column; gap: 10px;">${rowsHtml}</div>
+                    ` : `
+                        <div style="padding: 64px 24px; text-align: center; color: #64748B;">
+                            <div style="width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px; background: #EFF6FF; display: inline-flex; align-items: center; justify-content: center; color: #2563EB; border: 1px solid #BFDBFE;"><i data-lucide="book-marked" style="width: 22px; height: 22px;"></i></div>
+                            <div style="font-family: var(--font-display); font-size: 18px; font-weight: 600; color: #0F172A; letter-spacing: -0.01em;">No wallet addresses yet</div>
+                            <div style="font-size: 13px; margin-top: 6px; line-height: 1.6; max-width: 360px; margin-left: auto; margin-right: auto;">Register a wallet to start whitelisting destinations for payouts and transfers.</div>
+                            <button onclick="window.navGo(window.renderAddNewAddressPage)" class="btn btn-primary" style="margin-top: 18px; padding: 10px 18px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px;"><i data-lucide="plus" style="width: 13px; height: 13px;"></i>Add New Address</button>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
@@ -2454,53 +2571,71 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         window._currentRender = window.renderAddNewAddressPage;
 
         contentBody.innerHTML = `
-            <div class="fade-in" style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
-                <!-- Page header -->
-                <div class="card" style="padding: 22px 28px;">
-                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
-                    <h1 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.01em;">Add New Address</h1>
-                    <div style="font-size: 13px; color: #64748B;">Register a new wallet address to your Address Book.</div>
+            <div class="fade-in" style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px;">
+                <!-- Hero -->
+                <div class="card entity-hero-card" style="padding: 24px 32px 26px;">
+                    <button onclick="window.navBack()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to Address Book</button>
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div style="display: flex; gap: 16px; align-items: flex-start; min-width: 0; flex: 1;">
+                            <div style="width: 48px; height: 48px; border-radius: 14px; background: #EFF6FF; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #BFDBFE;">
+                                <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
+                            </div>
+                            <div style="min-width: 0;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Address Book</div>
+                                <h1 style="font-family: var(--font-display); font-size: 28px; font-weight: 600; color: #0F172A; margin: 8px 0 6px; letter-spacing: -0.02em;">Add New Address</h1>
+                                <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Register a new wallet to your Address Book. Verification is required before the wallet can be used for payouts and transfers.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- SECTION 1: Basic Information -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: #EFF6FF; color: #2563EB; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; flex-shrink: 0; border: 1px solid #BFDBFE;">01</div>
+                        <div style="min-width: 0;">
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Step One</div>
+                            <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 600; color: #0F172A; margin: 3px 0 0; letter-spacing: -0.012em;">Basic Information</h3>
+                        </div>
                     </div>
-                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 18px;">
+                    <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 20px;">
                         <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Owner Type *</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Owner Type *</div>
                             <div style="display: flex; gap: 10px;">
-                                <div id="na-owner-indv-label" onclick="window.toggleNewAddrOwnerType('individual')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 10px; cursor: pointer; background: #EFF6FF; transition: all 0.2s;">
-                                    <input type="radio" name="newAddrOwnerType" value="individual" checked style="accent-color: #2563EB; pointer-events: none;">
-                                    <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #1D4ED8;">Individual</div>
-                                        <div style="font-size: 11px; color: #64748B;">Natural person</div>
+                                <div id="na-owner-indv-label" onclick="window.toggleNewAddrOwnerType('individual')" style="flex: 1; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid #2563EB; border-radius: 12px; cursor: pointer; background: #EFF6FF; transition: all 0.18s;">
+                                    <span style="width: 36px; height: 36px; border-radius: 10px; background: white; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #BFDBFE;"><i data-lucide="user-round" style="width: 16px; height: 16px;"></i></span>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-size: 14px; font-weight: 700; color: #1D4ED8; line-height: 1.3;">Individual</div>
+                                        <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">Natural person</div>
                                     </div>
+                                    <input type="radio" name="newAddrOwnerType" value="individual" checked style="accent-color: #2563EB; pointer-events: none; flex-shrink: 0;">
                                 </div>
-                                <div id="na-owner-corp-label" onclick="window.toggleNewAddrOwnerType('organization')" style="flex: 1; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
-                                    <input type="radio" name="newAddrOwnerType" value="organization" style="accent-color: #2563EB; pointer-events: none;">
-                                    <div>
-                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A;">Company</div>
-                                        <div style="font-size: 11px; color: #64748B;">Legal entity / organisation</div>
+                                <div id="na-owner-corp-label" onclick="window.toggleNewAddrOwnerType('organization')" style="flex: 1; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 2px solid #E2E8F0; border-radius: 12px; cursor: pointer; background: white; transition: all 0.18s;">
+                                    <span style="width: 36px; height: 36px; border-radius: 10px; background: #F8FAFC; color: #64748B; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #E2E8F0;"><i data-lucide="building-2" style="width: 16px; height: 16px;"></i></span>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-size: 14px; font-weight: 700; color: #0F172A; line-height: 1.3;">Company</div>
+                                        <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">Legal entity / organisation</div>
                                     </div>
+                                    <input type="radio" name="newAddrOwnerType" value="organization" style="accent-color: #2563EB; pointer-events: none; flex-shrink: 0;">
                                 </div>
                             </div>
                         </div>
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <div style="font-size: 11px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.4px;">Wallet Alias *</div>
-                            <input type="text" id="na-wallet-alias" placeholder="e.g. Treasury Hot Wallet" style="width: 100%; padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 14px; background: white; box-sizing: border-box; font-family: inherit;">
-                            <div style="font-size: 11px; color: #94A3B8;">Display name used to identify this wallet in orders and transactions.</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Wallet Alias *</div>
+                            <input type="text" id="na-wallet-alias" placeholder="e.g. Treasury Hot Wallet" style="width: 100%; padding: 11px 14px; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 14px; background: white; box-sizing: border-box; font-family: inherit; transition: border-color 0.15s ease, box-shadow 0.15s ease;" onfocus="this.style.borderColor='#2563EB';this.style.boxShadow='0 0 0 4px rgba(37,99,235,0.12)'" onblur="this.style.borderColor='#E2E8F0';this.style.boxShadow='none'">
+                            <div style="font-size: 11.5px; color: #94A3B8; line-height: 1.55;">Display name used to identify this wallet in orders and transactions.</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- SECTION 2: Wallet Address Details (progressive reveal) -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Wallet Address Details</h3>
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; background: #F5F3FF; color: #7C3AED; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; flex-shrink: 0; border: 1px solid #DDD6FE;">02</div>
+                        <div style="min-width: 0;">
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Step Two</div>
+                            <h3 style="font-family: var(--font-display); font-size: 17px; font-weight: 600; color: #0F172A; margin: 3px 0 0; letter-spacing: -0.012em;">Wallet Address Details</h3>
+                        </div>
                     </div>
                     <div style="padding: 22px 24px; display: flex; flex-direction: column; gap: 16px;">
 
@@ -2512,21 +2647,23 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                         <!-- 2B: Wallet Type (hidden until declaration ✓) -->
                         <div id="na-wallet-type-zone" style="display: none; flex-direction: column; gap: 10px;">
-                            <div style="font-size: 12px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.06em;">Wallet Type</div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Wallet Type *</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <div id="na-type-private-label" onclick="window.onAddrBookWalletTypeSelect('private')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
-                                    <input type="radio" name="na-wallet-type" value="private" style="accent-color: #7C3AED; pointer-events: none;">
-                                    <div>
-                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Private Wallet</div>
-                                        <div style="font-size: 11px; color: #64748B;">MetaMask, TrustWallet, etc.</div>
+                                <div id="na-type-private-label" onclick="window.onAddrBookWalletTypeSelect('private')" style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 12px; cursor: pointer; background: white; transition: all 0.18s;">
+                                    <span style="width: 36px; height: 36px; border-radius: 10px; background: #F5F3FF; color: #7C3AED; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #DDD6FE;"><i data-lucide="key" style="width: 16px; height: 16px;"></i></span>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.3;">Private Wallet</div>
+                                        <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">MetaMask, TrustWallet, etc.</div>
                                     </div>
+                                    <input type="radio" name="na-wallet-type" value="private" style="accent-color: #7C3AED; pointer-events: none; flex-shrink: 0;">
                                 </div>
-                                <div id="na-type-exchange-label" onclick="window.onAddrBookWalletTypeSelect('exchange')" style="display: flex; align-items: center; gap: 10px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 10px; cursor: pointer; background: white; transition: all 0.2s;">
-                                    <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C; pointer-events: none;">
-                                    <div>
-                                        <div style="font-size: 13px; font-weight: 700; color: #0F172A;">Exchange / Custodial</div>
-                                        <div style="font-size: 11px; color: #64748B;">Binance, OKX, Coinbase, etc.</div>
+                                <div id="na-type-exchange-label" onclick="window.onAddrBookWalletTypeSelect('exchange')" style="display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px solid #E2E8F0; border-radius: 12px; cursor: pointer; background: white; transition: all 0.18s;">
+                                    <span style="width: 36px; height: 36px; border-radius: 10px; background: #FFF7ED; color: #EA580C; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #FED7AA;"><i data-lucide="landmark" style="width: 16px; height: 16px;"></i></span>
+                                    <div style="min-width: 0; flex: 1;">
+                                        <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.3;">Exchange / Custodial</div>
+                                        <div style="font-size: 11.5px; color: #64748B; margin-top: 2px;">Binance, OKX, Coinbase, etc.</div>
                                     </div>
+                                    <input type="radio" name="na-wallet-type" value="exchange" style="accent-color: #EA580C; pointer-events: none; flex-shrink: 0;">
                                 </div>
                             </div>
                         </div>
@@ -2658,9 +2795,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
                 <div class="mso-only" style="font-size: 12px; color: #94A3B8; line-height: 1.6; padding: 0 4px;">The information you provide will be used for identity verification and regulatory compliance purposes in accordance with Obita's <a href="#" style="color: #7C3AED; text-decoration: underline;">Privacy Policy</a>.</div>
 
                 <!-- Footer actions -->
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button onclick="window.navBack()" class="btn btn-outline" style="padding: 10px 18px;">Cancel</button>
-                    <button onclick="window.submitNewAddress()" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">Add Address</button>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px;">
+                    <a href="#" onclick="event.preventDefault(); window.navBack();" style="font-size: 13px; color: #64748B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i>Cancel</a>
+                    <button onclick="window.submitNewAddress()" class="btn btn-primary" style="padding: 11px 22px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="plus" style="width: 14px; height: 14px;"></i>Add Address</button>
                 </div>
             </div>
         `;
@@ -6238,6 +6375,759 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         window.scrollContentToTop();
     };
 
+    // ============================================================
+    // Obita Cashier — unified 4-step component (shared by Invoice + Checkout)
+    // ============================================================
+    // Page 1 (Checkout only): Select coin + network
+    // Page 2: Choose payment method (Fast Payment / QR Scan)
+    // Page 3a: Fast Payment — invoke wallet plugin
+    // Page 3b: QR Scan — show QR + address, payer can switch chain
+    // Page 4: Payment success
+    //
+    // Invoice mode starts at step 2 (coin pre-set by invoice). Checkout starts at step 1.
+    // Returns the full cashier HTML string (caller handles window.open / document.write).
+    window.buildObitaCashierHtml = function(cfg) {
+        cfg = cfg || {};
+        const _esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const isInvoice = cfg.mode === 'invoice';
+        const isCheckout = cfg.mode === 'checkout';
+        const startStep = isInvoice ? 2 : 1;
+        const accent = (cfg.merchant && cfg.merchant.accent) || '#2563EB';
+        const accentDark = '#1D4ED8';
+        const merchant = cfg.merchant || {};
+        const orderId = cfg.orderId || '';
+        const payAmount = cfg.payAmountDisplay || '0.00';
+        const paymentCcy = cfg.paymentCurrency || (cfg.checkout && cfg.checkout.defaultCoin) || 'USDT';
+        const settleCcy = cfg.settleCurrency || paymentCcy;
+        const payerName = cfg.payerName || '—';
+        const inv = cfg.invoice || {};
+        const cko = cfg.checkout || {};
+
+        // --- Mock chain registry (addresses + display names + supported coins) ---
+        const CHAINS = [
+            { id: 'ETH',   name: 'Ethereum',   short: 'ERC-20', iconBg: '#627EEA', iconCh: 'Ξ', coins: ['USDT','USDC'], addr: '0x52A1F7E67c1F4f3A4C9D4E8B2F1c5A3b9D8E7F6c' },
+            { id: 'TRON',  name: 'Tron',       short: 'TRC-20', iconBg: '#EF0027', iconCh: 'T',     coins: ['USDT','USDC'], addr: 'TRX9xK4eYpL3M2nB1qW6Vc8sA7r5oZdH4j' },
+            { id: 'POLY',  name: 'Polygon',    short: 'MATIC',  iconBg: '#8247E5', iconCh: 'M',     coins: ['USDT','USDC'], addr: '0x7B3C2D4E5F6a7b8c9D0E1f2A3B4c5D6e7F8a9B0c' },
+            { id: 'BSC',   name: 'BNB Chain',  short: 'BEP-20', iconBg: '#F0B90B', iconCh: 'B',     coins: ['USDT','USDC'], addr: '0xA1b2C3d4E5f6071829304a5B6c7D8e9F0A1B2C3D' },
+            { id: 'ARB',   name: 'Arbitrum',   short: 'L2',     iconBg: '#28A0F0', iconCh: 'A',     coins: ['USDT','USDC'], addr: '0x9F8E7D6C5b4A39281706f5E4d3C2b1a0B9C8D7E6' },
+            { id: 'SOL',   name: 'Solana',     short: 'SPL',    iconBg: '#9945FF', iconCh: 'S',     coins: ['USDC'],        addr: '8K3r5pQ9vN2sT4yX1mL7zHjA6bWfC8eD2gFhU3R' }
+        ];
+        const chainsJson = JSON.stringify(CHAINS);
+        const defaultChain = (cko.defaultChain) || 'TRON';
+        const initialChain = isInvoice ? defaultChain : ((cko.defaultChain) || 'TRON');
+        const initialCoin = isInvoice ? paymentCcy : (cko.defaultCoin || paymentCcy || 'USDT');
+
+        // Review Details payload (passed to JS via JSON to avoid template-string nesting headaches).
+        const reviewPayload = {
+            mode: cfg.mode,
+            orderId,
+            paymentCcy,
+            settleCcy,
+            payerName,
+            merchantName: merchant.name || '',
+            merchantSub: merchant.nameEn || '',
+            licenseLabel: merchant.licenseLabel || '',
+            // Invoice fields
+            issuedDate: inv.issuedDate || '',
+            expiredBy: inv.expiredBy || '',
+            invoiceTotalDisplay: inv.invoiceTotalDisplay || payAmount,
+            isPartial: !!inv.isPartial,
+            collectedDisplay: inv.collectedDisplay || '',
+            payAmountDisplay: payAmount,
+            // Checkout fields
+            externalOrderId: cko.externalOrderId || '',
+            storefront: cko.storefront || '',
+            createdAt: cko.createdAt || '',
+            expiresAt: cko.expiresAt || '',
+            settlementAsset: cko.settlementAsset || ''
+        };
+        // Embed downloadable invoice fragment (rendered hidden; converted to PDF on demand).
+        // For Invoice mode: contains the same payer-facing invoice doc minus the Pay CTA.
+        const invoiceFragmentHtml = isInvoice ? (cfg.invoiceFragmentHtml || '') : '';
+
+        // SVGs reused from existing page-2 cashier.
+        const metamaskSvg = '<svg viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><path fill="#E17726" d="M24.5 3 14.6 10.2 16.4 5.9z"/><path fill="#E27625" d="m1.5 3 9.7 7.3L9.5 5.9zm19.4 15.6-2.6 4 5.6 1.5 1.6-5.5zm-20.3 0L2 23.1l5.6-1.5-2.6-4z"/><path fill="#E27625" d="m7.4 11.2-1.6 2.4 5.5.3-.2-5.9zm11.2 0-4-3.3-.1 6 5.5-.4zM7.6 22.6 11 21l-2.9-2.3zm7.4-1.6 3.4 1.6L17.9 18.7z"/><path fill="#D5BFB2" d="m18.4 22.6-3.4-1.6.3 2.2v1zm-10.8 0 3 1.6V21l-3 1.6z"/><path fill="#233447" d="m10.7 16.9-2.8-.8 2-.9zm4.6 0-.9-1.7 2 .9z"/><path fill="#CC6228" d="M7.6 22.6 8 18.6 5 18.7zm10.4-4 .5 4 2.6-3.9zm1.9-4.9-5.5.3.5 2.9.8-1.7 2 .9 2.3-2.4zm-11.2 2.4 2-.9.8 1.7.5-2.9-5.5-.3z"/><path fill="#E27525" d="m5.8 13.6 2.3 4.5-.1-2.2zm14.5 2.3-.1 2.2 2.3-4.5zm-8.9-2 .5 2.9.6-3.9-1.5-.4zm2.3 0-1.2 1.6 1.2 3.5 1.2-3.5z"/><path fill="#F5841F" d="m15.3 16.9-1.2-3.5-.8 2.3v1.2l.6 1.7zm-4.6 0 1.4 1.7.6-1.7v-1.2l-.8-2.3z"/><path fill="#C0AC9D" d="m13.6 20.9.6-1.7-.4-.3h-2.6l-.4.3.6 1.7-.8-.8-2.8-2.3 1 1 1 .9h3.2l1-.9 1-1-2.8 2.3z"/><path fill="#161616" d="m13.3 19.2-.5-.4h-1.6l-.5.4-.6-1.7 1.4 1.7h.9l1.4-1.7z"/><path fill="#763E1A" d="m24.9 10.6.7-4-1.1-3.3-8.5 6.3 3.3 2.7 4.5 1.3.9-1.2-.4-.3 1-1-.8-.6 1-.7zM.5 6.6l.8 4-.5.4 1 .7-.8.6 1 1-.4.3.9 1.2 4.5-1.3 3.3-2.7L1.8 3.3z"/><path fill="#F5841F" d="m23.7 12.3-4.5-1.3 1.4 2.1-2 3.9 2.6-.1h3.8zm-17.5-1.3-4.5 1.3-1.5 4.6h3.9l2.6.1-2-3.9zm8.4 3.1.3-5.1 1.4-3.7h-6.2l1.3 3.7.3 5.1.1 1.6v4.1h2.7v-4.1z"/></svg>';
+        const wcSvg = '<svg viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><path fill="#3B99FC" d="M7.4 9.8c3.1-3 8.1-3 11.2 0l.4.4c.2.2.2.4 0 .6l-1.3 1.2c-.1.1-.2.1-.3 0l-.5-.5c-2.2-2.1-5.7-2.1-7.9 0l-.5.5c-.1.1-.2.1-.3 0L6.9 10.8c-.2-.2-.2-.4 0-.6zm13.9 2.6 1.2 1.1c.2.1.2.4 0 .6l-5.4 5.2c-.2.2-.4.2-.6 0l-3.8-3.7c0-.1-.1-.1-.2 0l-3.8 3.7c-.2.2-.4.2-.6 0l-5.4-5.2c-.2-.2-.2-.4 0-.6l1.2-1.1c.2-.2.4-.2.6 0l3.8 3.7c0 .1.1.1.2 0l3.8-3.7c.2-.2.4-.2.6 0l3.8 3.7c0 .1.1.1.2 0l3.8-3.7c.2-.2.4-.2.6 0z"/></svg>';
+        const okxSvg = '<svg viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="8" x="1" y="1" fill="#0B1433"/><rect width="8" height="8" x="17" y="1" fill="#0B1433"/><rect width="8" height="8" x="1" y="17" fill="#0B1433"/><rect width="8" height="8" x="17" y="17" fill="#0B1433"/><rect width="8" height="8" x="9" y="9" fill="#0B1433"/></svg>';
+
+        return '<!DOCTYPE html>\n' +
+'<html lang="en">\n' +
+'<head>\n' +
+'<meta charset="UTF-8">\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+'<title>Obita Cashier · ' + _esc(orderId) + '</title>\n' +
+'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">\n' +
+'<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">\n' +
+'<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">\n' +
+'<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>\n' +
+'<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>\n' +
+'<style>\n' +
+'  * { box-sizing: border-box; }\n' +
+'  :root {\n' +
+'    --ink: #0B1433; --ink-2: #1E293B; --ink-3: #475569;\n' +
+'    --muted: #64748B; --muted-2: #94A3B8;\n' +
+'    --line: #E2E8F0; --line-soft: #F1F5F9;\n' +
+'    --bg: #F1F5F9;\n' +
+'    --accent: ' + accent + '; --accent-dark: ' + accentDark + ';\n' +
+'    --accent-bg: #EEF4FF; --accent-bg-2: #EEF2FF;\n' +
+'    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;\n' +
+'    --font-display: "Clash Display", "Inter", sans-serif;\n' +
+'    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;\n' +
+'  }\n' +
+'  body { font-family: var(--font-sans); background: var(--bg); color: var(--ink); margin: 0; padding: 32px 16px; -webkit-font-smoothing: antialiased; line-height: 1.5; }\n' +
+'  .wrap { max-width: 540px; margin: 0 auto; background: white; border-radius: 16px; padding: 24px 24px 28px; box-shadow: 0 12px 36px -10px rgba(15,23,42,0.1), 0 3px 10px -3px rgba(15,23,42,0.05); }\n' +
+'  .brand-lockup { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }\n' +
+'  .brand-obita { color: var(--accent); }\n' +
+'  .brand-cashier { color: var(--ink); }\n' +
+'  .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }\n' +
+'  .step-rail { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); }\n' +
+'  .step-rail .dot { width: 18px; height: 18px; border-radius: 999px; border: 1.5px solid var(--line); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; color: var(--muted); background: white; transition: all 0.2s ease; font-size: 10px; }\n' +
+'  .step-rail .dot.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.12); }\n' +
+'  .step-rail .dot.done { background: #ECFDF5; border-color: #6EE7B7; color: #047857; }\n' +
+'  .step-rail .dot.done::after { content: "\\2713"; font-size: 10px; }\n' +
+'  .step-rail .dot.done span { display: none; }\n' +
+'  .step-rail .bar { width: 18px; height: 1.5px; background: var(--line); }\n' +
+'  .step-rail .bar.done { background: #6EE7B7; }\n' +
+'\n' +
+'  .back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 13px; color: var(--muted); font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }\n' +
+'  .back-link:hover { color: var(--ink); }\n' +
+'\n' +
+'  .screen { display: none; animation: fadeIn 0.2s ease; }\n' +
+'  .screen.active { display: block; }\n' +
+'  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }\n' +
+'\n' +
+'  .screen-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink); margin: 4px 0 4px; letter-spacing: -0.015em; }\n' +
+'  .screen-sub { font-size: 13.5px; color: var(--muted); margin: 0 0 20px; line-height: 1.55; }\n' +
+'  .screen-sub strong { color: var(--ink); font-weight: 600; }\n' +
+'\n' +
+'  /* Summary card (page 2 — keep existing look) */\n' +
+'  .summary-card { position: relative; padding: 20px; border: 2px solid var(--accent); border-radius: 14px; background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 50%, #FAF5FF 100%); overflow: hidden; margin-bottom: 22px; }\n' +
+'  .summary-card::before { content: ""; position: absolute; width: 140px; height: 140px; right: -30px; bottom: -40px; background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }\n' +
+'  .summary-card::after  { content: ""; position: absolute; width: 100px; height: 100px; right: 50px; bottom: -20px; background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }\n' +
+'  .summary-label { font-size: 13.5px; color: var(--muted); font-weight: 500; margin-bottom: 6px; position: relative; z-index: 1; }\n' +
+'  .summary-amount { font-family: var(--font-display); font-size: 36px; font-weight: 500; color: var(--ink); letter-spacing: -0.028em; line-height: 1; font-variant-numeric: tabular-nums; position: relative; z-index: 1; }\n' +
+'  .summary-amount .ccy { font-size: 26px; margin-left: 12px; letter-spacing: -0.018em; }\n' +
+'  .summary-meta { display: flex; align-items: center; gap: 18px; margin-top: 16px; font-size: 13px; color: var(--ink-3); position: relative; z-index: 1; }\n' +
+'  .summary-meta-label { color: var(--muted); }\n' +
+'  .summary-divider { margin: 16px 0 0; border-top: 1px solid rgba(37,99,235,0.12); position: relative; z-index: 1; }\n' +
+'  .summary-review { background: none; border: none; padding: 12px 0 0; margin: 0; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; position: relative; z-index: 1; }\n' +
+'  .summary-review .chev { transition: transform 0.2s ease; }\n' +
+'  .summary-review.open .chev { transform: rotate(180deg); }\n' +
+'  .review-details { display: none; margin-top: 12px; padding-top: 14px; border-top: 1px dashed rgba(37,99,235,0.2); font-size: 12.5px; color: var(--ink-3); line-height: 1.7; position: relative; z-index: 1; }\n' +
+'  .review-details.open { display: block; }\n' +
+'  .review-details .kv { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; gap: 12px; }\n' +
+'  .review-details .kv span:first-child { color: var(--muted); flex-shrink: 0; }\n' +
+'  .review-details .kv span:last-child { color: var(--ink); font-weight: 500; text-align: right; }\n' +
+'  .review-details .download-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 12px; background: white; border: 1px solid #BFDBFE; border-radius: 8px; color: var(--accent-dark); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background-color 0.15s ease; }\n' +
+'  .review-details .download-link:hover { background: #EFF6FF; }\n' +
+'\n' +
+'  /* Section heads (page 2 style) */\n' +
+'  .section-head { display: flex; align-items: center; gap: 10px; margin: 22px 0 12px; }\n' +
+'  .section-head h2, .section-head h3 { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: -0.012em; }\n' +
+'  .section-head .pill { background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%); color: white; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px; letter-spacing: 0.01em; }\n' +
+'\n' +
+'  /* Payment / wallet / coin option cards (page 2 style) */\n' +
+'  .pay-options { display: flex; flex-direction: column; gap: 10px; }\n' +
+'  .pay-option { display: grid; grid-template-columns: 48px 1fr 24px; align-items: center; gap: 14px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; background: white; cursor: pointer; transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease; position: relative; }\n' +
+'  .pay-option:hover { border-color: #BFDBFE; }\n' +
+'  .pay-option.selected { border-color: var(--accent); border-width: 2px; padding: 13.5px 15.5px; box-shadow: 0 4px 12px -4px rgba(37,99,235,0.16); }\n' +
+'  .pay-option input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }\n' +
+'  .opt-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: var(--font-display); font-weight: 600; font-size: 20px; }\n' +
+'  .opt-icon.metamask { background: #FEF3C7; }\n' +
+'  .opt-icon.walletconnect { background: #DBEAFE; }\n' +
+'  .opt-icon.okx { background: #F1F5F9; color: var(--ink); }\n' +
+'  .opt-icon.usdt { background: #E6F8F2; color: #0EA378; }\n' +
+'  .opt-icon.usdc { background: #E0EBFF; color: #2775CA; }\n' +
+'  .opt-icon.fast { background: #DBEAFE; color: var(--accent); }\n' +
+'  .opt-icon.qr { background: #F5F3FF; color: #7C3AED; }\n' +
+'  .opt-icon svg { width: 26px; height: 26px; display: block; }\n' +
+'  .opt-meta { min-width: 0; }\n' +
+'  .opt-name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.008em; display: inline-flex; align-items: center; gap: 8px; }\n' +
+'  .opt-name .recommend-pill { background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%); color: white; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.02em; }\n' +
+'  .opt-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }\n' +
+'  .opt-radio { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid var(--line); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: white; transition: background-color 0.15s ease, border-color 0.15s ease; }\n' +
+'  .pay-option.selected .opt-radio { background: var(--accent); border-color: var(--accent); }\n' +
+'  .pay-option.selected .opt-radio::after { content: ""; width: 8px; height: 4px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg); margin-top: -2px; }\n' +
+'\n' +
+'  /* Network chip grid (page 1 + page 3b chain switcher) */\n' +
+'  .chain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }\n' +
+'  .chain-chip { padding: 11px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: white; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--ink); display: flex; flex-direction: column; align-items: center; gap: 3px; transition: all 0.15s ease; line-height: 1.2; }\n' +
+'  .chain-chip:hover:not(:disabled) { border-color: #BFDBFE; }\n' +
+'  .chain-chip.selected { border-color: var(--accent); border-width: 2px; padding: 10px 9px; background: var(--accent-bg-2); color: var(--accent-dark); }\n' +
+'  .chain-chip:disabled { opacity: 0.45; cursor: not-allowed; }\n' +
+'  .chain-chip .sub { font-family: var(--font-mono); font-size: 9.5px; color: var(--muted-2); font-weight: 500; letter-spacing: 0.04em; }\n' +
+'  .chain-chip.selected .sub { color: var(--accent); }\n' +
+'\n' +
+'  .rate-hint { margin-top: 14px; padding: 10px 14px; background: #F8FAFC; border: 1px solid var(--line-soft); border-radius: 10px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }\n' +
+'  .rate-hint .dot { width: 6px; height: 6px; border-radius: 999px; background: #94A3B8; }\n' +
+'\n' +
+'  /* Submit button (page 2 style) */\n' +
+'  .submit-btn { width: 100%; padding: 16px 20px; margin-top: 24px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: white; font-family: inherit; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; letter-spacing: -0.006em; box-shadow: 0 8px 20px rgba(37,99,235,0.24); transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease; }\n' +
+'  .submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(37,99,235,0.32); }\n' +
+'  .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }\n' +
+'  .link-btn { display: block; width: 100%; margin-top: 12px; padding: 10px; background: none; border: none; color: var(--muted); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }\n' +
+'  .link-btn:hover { color: var(--ink); }\n' +
+'\n' +
+'  /* Wallet active state (page 3a) */\n' +
+'  .wallet-state { padding: 28px 20px; border: 1.5px solid var(--line); border-radius: 14px; text-align: center; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); }\n' +
+'  .wallet-state-icon { width: 72px; height: 72px; border-radius: 18px; background: #FEF3C7; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; }\n' +
+'  .wallet-state-icon svg { width: 44px; height: 44px; }\n' +
+'  .wallet-state-title { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }\n' +
+'  .wallet-state-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.55; }\n' +
+'  .wallet-meta { background: white; border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 14px auto 0; max-width: 360px; text-align: left; font-size: 12.5px; }\n' +
+'  .wallet-meta .kv { display: flex; justify-content: space-between; padding: 5px 0; }\n' +
+'  .wallet-meta .kv + .kv { border-top: 1px dashed var(--line-soft); }\n' +
+'  .wallet-meta .kv span:first-child { color: var(--muted); }\n' +
+'  .wallet-meta .kv span:last-child { color: var(--ink); font-weight: 500; font-family: var(--font-mono); font-size: 11.5px; max-width: 60%; word-break: break-all; text-align: right; }\n' +
+'  .wallet-progress { display: inline-flex; gap: 6px; margin-top: 18px; }\n' +
+'  .wallet-progress .pdot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); animation: pulse 1.4s infinite ease-in-out; opacity: 0.5; }\n' +
+'  .wallet-progress .pdot:nth-child(2) { animation-delay: 0.2s; }\n' +
+'  .wallet-progress .pdot:nth-child(3) { animation-delay: 0.4s; }\n' +
+'  @keyframes pulse { 0%, 80%, 100% { opacity: 0.4; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.1); } }\n' +
+'\n' +
+'  /* QR card (page 3b) */\n' +
+'  .qr-card { margin-top: 14px; padding: 24px 20px; background: white; border: 1.5px solid var(--line); border-radius: 14px; text-align: center; }\n' +
+'  .qr-frame { display: inline-block; padding: 14px; background: white; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 2px 6px rgba(15,23,42,0.04); position: relative; }\n' +
+'  .qr-frame img { display: block; width: 196px; height: 196px; }\n' +
+'  .qr-frame .qr-corner { position: absolute; width: 14px; height: 14px; border: 2px solid var(--accent); }\n' +
+'  .qr-frame .qr-corner.tl { top: 6px; left: 6px; border-right: none; border-bottom: none; }\n' +
+'  .qr-frame .qr-corner.tr { top: 6px; right: 6px; border-left: none; border-bottom: none; }\n' +
+'  .qr-frame .qr-corner.bl { bottom: 6px; left: 6px; border-right: none; border-top: none; }\n' +
+'  .qr-frame .qr-corner.br { bottom: 6px; right: 6px; border-left: none; border-top: none; }\n' +
+'  .qr-meta { margin-top: 18px; text-align: left; }\n' +
+'  .qr-row { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line-soft); }\n' +
+'  .qr-row:first-child { border-top: none; }\n' +
+'  .qr-row-label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }\n' +
+'  .qr-row-value { font-size: 13px; color: var(--ink); font-weight: 500; word-break: break-all; line-height: 1.4; }\n' +
+'  .qr-row-value.mono { font-family: var(--font-mono); font-size: 11.5px; }\n' +
+'  .qr-copy { padding: 6px 11px; background: white; border: 1px solid var(--line); border-radius: 7px; font-family: inherit; font-size: 11px; font-weight: 600; color: var(--accent-dark); cursor: pointer; transition: background-color 0.15s ease; }\n' +
+'  .qr-copy:hover { background: #EFF6FF; border-color: #BFDBFE; }\n' +
+'\n' +
+'  .qr-warnings { margin: 18px 0 0; padding: 14px 16px 14px 32px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; font-size: 12px; color: #78350F; line-height: 1.65; }\n' +
+'  .qr-warnings li { padding: 2px 0; }\n' +
+'  .qr-warnings li strong { font-weight: 700; color: #78350F; }\n' +
+'\n' +
+'  .chain-switch { margin: 14px 0 4px; }\n' +
+'  .chain-switch-label { display: block; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-bottom: 8px; }\n' +
+'\n' +
+'  /* Network dropdown (page 3b) */\n' +
+'  .net-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 999px; color: white; font-family: var(--font-display); font-weight: 600; font-size: 12px; line-height: 1; flex-shrink: 0; box-shadow: 0 1px 2px rgba(15,23,42,0.12); }\n' +
+'  .net-dropdown { position: relative; }\n' +
+'  .net-dropdown-trigger { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 12px; background: white; cursor: pointer; font-family: inherit; font-size: 14px; color: var(--ink); font-weight: 600; text-align: left; transition: border-color 0.15s ease, box-shadow 0.15s ease; }\n' +
+'  .net-dropdown-trigger:hover { border-color: #BFDBFE; }\n' +
+'  .net-dropdown.open .net-dropdown-trigger { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(37,99,235,0.12); }\n' +
+'  .net-dropdown-trigger .net-text { flex: 1; min-width: 0; }\n' +
+'  .net-dropdown-trigger .net-short { color: var(--muted); font-weight: 500; font-family: var(--font-mono); font-size: 11.5px; margin-left: 6px; letter-spacing: 0.04em; }\n' +
+'  .net-dropdown-trigger .net-chev { width: 16px; height: 16px; color: var(--muted); transition: transform 0.2s ease; flex-shrink: 0; }\n' +
+'  .net-dropdown.open .net-dropdown-trigger .net-chev { transform: rotate(180deg); }\n' +
+'  .net-dropdown-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: white; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 16px 40px -12px rgba(15,23,42,0.18), 0 4px 10px -4px rgba(15,23,42,0.08); padding: 6px; z-index: 20; display: none; max-height: 280px; overflow-y: auto; }\n' +
+'  .net-dropdown.open .net-dropdown-menu { display: block; animation: ddIn 0.15s ease; }\n' +
+'  @keyframes ddIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }\n' +
+'  .net-dropdown-item { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: none; background: none; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13.5px; color: var(--ink); font-weight: 600; text-align: left; transition: background-color 0.12s ease; }\n' +
+'  .net-dropdown-item:hover { background: #F8FAFC; }\n' +
+'  .net-dropdown-item.selected { background: var(--accent-bg); color: var(--accent-dark); }\n' +
+'  .net-dropdown-item .net-text { flex: 1; }\n' +
+'  .net-dropdown-item .net-short { color: var(--muted); font-weight: 500; font-family: var(--font-mono); font-size: 11px; margin-left: 6px; letter-spacing: 0.04em; }\n' +
+'  .net-dropdown-item .net-tick { width: 14px; height: 14px; color: var(--accent); opacity: 0; flex-shrink: 0; }\n' +
+'  .net-dropdown-item.selected .net-tick { opacity: 1; }\n' +
+'\n' +
+'  /* Shared header (back + summary card) shown on steps 2/3a/3b */\n' +
+'  .cashier-shared-header { display: none; }\n' +
+'  .wrap[data-cashier-step="2"] .cashier-shared-header,\n' +
+'  .wrap[data-cashier-step="3a"] .cashier-shared-header,\n' +
+'  .wrap[data-cashier-step="3b"] .cashier-shared-header { display: block; }\n' +
+'  .wrap[data-cashier-step="2"] .summary-card { margin-bottom: 22px; }\n' +
+'  .wrap[data-cashier-step="3a"] .summary-card,\n' +
+'  .wrap[data-cashier-step="3b"] .summary-card { margin-bottom: 18px; }\n' +
+'\n' +
+'  /* Success (page 4) */\n' +
+'  .success-icon { width: 80px; height: 80px; margin: 16px auto 16px; border-radius: 999px; background: linear-gradient(135deg, #34D399 0%, #10B981 100%); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 28px -8px rgba(16,185,129,0.45); animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }\n' +
+'  @keyframes popIn { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }\n' +
+'  .success-icon svg { width: 40px; height: 40px; }\n' +
+'  .success-title { text-align: center; font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink); margin: 0 0 8px; letter-spacing: -0.02em; }\n' +
+'  .success-sub { text-align: center; font-size: 13.5px; color: var(--muted); margin: 0 0 22px; }\n' +
+'  .success-card { padding: 18px 20px; background: #F8FAFC; border: 1px solid var(--line); border-radius: 12px; }\n' +
+'  .success-card .kv { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; gap: 12px; }\n' +
+'  .success-card .kv + .kv { border-top: 1px dashed var(--line); }\n' +
+'  .success-card .kv span:first-child { color: var(--muted); flex-shrink: 0; }\n' +
+'  .success-card .kv span:last-child { color: var(--ink); font-weight: 600; text-align: right; word-break: break-all; }\n' +
+'  .success-card .kv .mono { font-family: var(--font-mono); font-size: 11.5px; }\n' +
+'\n' +
+'  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 12px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 500; box-shadow: 0 8px 24px rgba(15,23,42,0.3); display: none; z-index: 99; }\n' +
+'  .toast.show { display: block; animation: slideUp 0.3s ease; }\n' +
+'  @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }\n' +
+'\n' +
+'  .hidden-doc-host { position: fixed; left: -10000px; top: 0; width: 900px; }\n' +
+'\n' +
+'  @media (max-width: 540px) {\n' +
+'    body { padding: 16px 8px; }\n' +
+'    .wrap { padding: 20px 18px 24px; }\n' +
+'    .summary-amount { font-size: 30px; }\n' +
+'    .summary-amount .ccy { font-size: 22px; }\n' +
+'    .chain-grid { grid-template-columns: repeat(2, 1fr); }\n' +
+'  }\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'  <div class="wrap">\n' +
+'    <div class="top-row">\n' +
+'      <div class="brand-lockup"><span class="brand-obita">Obita</span><span class="brand-cashier">Cashier</span></div>\n' +
+'      <div class="step-rail" id="stepRail"></div>\n' +
+'    </div>\n' +
+'\n' +
+'    <!-- ============ SCREEN 1: Coin & Network (Checkout only) ============ -->\n' +
+'    <section class="screen" data-step="1" id="screen1">\n' +
+'      <button class="back-link" onclick="cashierClose()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Cancel</button>\n' +
+'      <h2 class="screen-title">Choose payment asset</h2>\n' +
+'      <p class="screen-sub">Pick a stablecoin and the network you\'d like to send it on. The merchant accepts both USDT and USDC at a 1:1 USD value.</p>\n' +
+'\n' +
+'      <div class="section-head"><h3>Stablecoin</h3></div>\n' +
+'      <div class="pay-options">\n' +
+'        <label class="pay-option" data-coin="USDT" onclick="cashierSelectCoin(\'USDT\')">\n' +
+'          <span class="opt-icon usdt">₮</span>\n' +
+'          <div class="opt-meta"><div class="opt-name">USDT</div><div class="opt-sub">Tether USD · Most liquid stablecoin</div></div>\n' +
+'          <span class="opt-radio"></span>\n' +
+'        </label>\n' +
+'        <label class="pay-option" data-coin="USDC" onclick="cashierSelectCoin(\'USDC\')">\n' +
+'          <span class="opt-icon usdc">$</span>\n' +
+'          <div class="opt-meta"><div class="opt-name">USDC</div><div class="opt-sub">Circle USD · Audited reserves</div></div>\n' +
+'          <span class="opt-radio"></span>\n' +
+'        </label>\n' +
+'      </div>\n' +
+'\n' +
+'      <div class="section-head"><h3>Network</h3></div>\n' +
+'      <div class="chain-grid" id="chainGrid1"></div>\n' +
+'      <div class="rate-hint"><span class="dot"></span>Fees vary by network. The exact amount must arrive on the chosen chain to auto-match.</div>\n' +
+'\n' +
+'      <button class="submit-btn" id="step1Continue" disabled onclick="cashierGoStep(2)">Continue</button>\n' +
+'    </section>\n' +
+'\n' +
+'    <!-- ============ SHARED HEADER (back + summary card) — shown on steps 2/3a/3b ============ -->\n' +
+'    <div class="cashier-shared-header">\n' +
+'      <button class="back-link" onclick="cashierBack()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> <span id="sharedBackLabel">Back</span></button>\n' +
+'      <div class="summary-card">\n' +
+'        <div class="summary-label" id="sumLabel">' + _esc(isInvoice ? ('Invoice ' + orderId) : ('Order ' + orderId)) + '</div>\n' +
+'        <div class="summary-amount"><span id="sumAmount">' + _esc(payAmount) + '</span><span class="ccy" id="sumCcy">' + _esc(paymentCcy) + '</span></div>\n' +
+'        <div class="summary-meta">\n' +
+'          <span class="summary-meta-label" id="sumMetaLabel">' + (isInvoice ? 'Due Date' : 'Expires') + '</span>\n' +
+'          <span id="sumMetaValue">' + _esc(isInvoice ? (inv.expiredBy || '—') : (cko.expiresAt || '—')) + '</span>\n' +
+'        </div>\n' +
+'        <div class="summary-divider"></div>\n' +
+'        <button class="summary-review" id="reviewBtn" onclick="cashierToggleReview()">Review Details <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>\n' +
+'        <div class="review-details" id="reviewDetails"></div>\n' +
+'      </div>\n' +
+'    </div>\n' +
+'\n' +
+'    <!-- ============ SCREEN 2: Method ============ -->\n' +
+'    <section class="screen" data-step="2" id="screen2">\n' +
+'      <div class="section-head"><h3>Fast Payment</h3><span class="pill">Recommend</span></div>\n' +
+'      <div class="pay-options">\n' +
+'        <label class="pay-option selected" data-method="metamask" onclick="cashierSelectMethod(\'metamask\')">\n' +
+'          <span class="opt-icon metamask">' + metamaskSvg + '</span>\n' +
+'          <div class="opt-meta"><div class="opt-name">MetaMask</div><div class="opt-sub">Pay directly with your MetaMask wallet</div></div>\n' +
+'          <span class="opt-radio"></span>\n' +
+'        </label>\n' +
+'        <label class="pay-option" data-method="walletconnect" onclick="cashierSelectMethod(\'walletconnect\')">\n' +
+'          <span class="opt-icon walletconnect">' + wcSvg + '</span>\n' +
+'          <div class="opt-meta"><div class="opt-name">WalletConnect</div><div class="opt-sub">Connect a supported wallet to pay</div></div>\n' +
+'          <span class="opt-radio"></span>\n' +
+'        </label>\n' +
+'      </div>\n' +
+'\n' +
+'      <div class="section-head"><h3>Wallet Scan</h3></div>\n' +
+'      <div class="pay-options">\n' +
+'        <label class="pay-option" data-method="qr" onclick="cashierSelectMethod(\'qr\')">\n' +
+'          <span class="opt-icon qr"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span>\n' +
+'          <div class="opt-meta"><div class="opt-name">Scan QR Code</div><div class="opt-sub">Use your wallet app to scan and pay</div></div>\n' +
+'          <span class="opt-radio"></span>\n' +
+'        </label>\n' +
+'      </div>\n' +
+'\n' +
+'      <button class="submit-btn" id="step2Continue" onclick="cashierStep2Continue()">Continue</button>\n' +
+'    </section>\n' +
+'\n' +
+'    <!-- ============ SCREEN 3a: Fast Payment ============ -->\n' +
+'    <section class="screen" data-step="3a" id="screen3a">\n' +
+'      <h2 class="screen-title">Fast Payment</h2>\n' +
+'      <p class="screen-sub">Pay <strong><span id="fastAmt">' + _esc(payAmount) + ' ' + _esc(paymentCcy) + '</span></strong> directly from your wallet. Your wallet will pick the network — switch chains in the wallet UI if needed.</p>\n' +
+'\n' +
+'      <div class="wallet-state" id="walletState">\n' +
+'        <div class="wallet-state-icon" id="walletStateIcon">' + metamaskSvg + '</div>\n' +
+'        <div class="wallet-state-title" id="walletStateTitle">Open MetaMask to confirm</div>\n' +
+'        <div class="wallet-state-sub" id="walletStateSub">Approve the transaction in your wallet — this won\'t broadcast until you confirm.</div>\n' +
+'        <div class="wallet-meta">\n' +
+'          <div class="kv"><span>Network</span><span id="walletNet">—</span></div>\n' +
+'          <div class="kv"><span>To</span><span id="walletTo">—</span></div>\n' +
+'          <div class="kv"><span>Amount</span><span id="walletAmt">—</span></div>\n' +
+'        </div>\n' +
+'        <div class="wallet-progress"><span class="pdot"></span><span class="pdot"></span><span class="pdot"></span></div>\n' +
+'      </div>\n' +
+'    </section>\n' +
+'\n' +
+'    <!-- ============ SCREEN 3b: QR Scan ============ -->\n' +
+'    <section class="screen" data-step="3b" id="screen3b">\n' +
+'      <h2 class="screen-title">Scan to pay</h2>\n' +
+'      <p class="screen-sub">Open any wallet app, choose the matching network, then scan the code below.</p>\n' +
+'\n' +
+'      <div class="chain-switch">\n' +
+'        <span class="chain-switch-label">Network</span>\n' +
+'        <div class="net-dropdown" id="netDropdown">\n' +
+'          <button type="button" class="net-dropdown-trigger" onclick="cashierToggleNetDropdown(event)">\n' +
+'            <span id="netTriggerIcon"></span>\n' +
+'            <span class="net-text" id="netTriggerText">—</span>\n' +
+'            <svg class="net-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>\n' +
+'          </button>\n' +
+'          <div class="net-dropdown-menu" id="netDropdownMenu"></div>\n' +
+'        </div>\n' +
+'      </div>\n' +
+'\n' +
+'      <div class="qr-card">\n' +
+'        <div class="qr-frame">\n' +
+'          <span class="qr-corner tl"></span><span class="qr-corner tr"></span><span class="qr-corner bl"></span><span class="qr-corner br"></span>\n' +
+'          <img id="qrImg" alt="Payment QR code">\n' +
+'        </div>\n' +
+'        <div class="qr-meta">\n' +
+'          <div class="qr-row"><div class="qr-row-label">Address</div><div class="qr-row-value mono" id="qrAddress">—</div><button class="qr-copy" onclick="cashierCopy(\'qrAddress\', this)">Copy</button></div>\n' +
+'          <div class="qr-row"><div class="qr-row-label">Amount</div><div class="qr-row-value" id="qrAmount">—</div><button class="qr-copy" onclick="cashierCopy(\'qrAmount\', this)">Copy</button></div>\n' +
+'          <div class="qr-row"><div class="qr-row-label">Network</div><div class="qr-row-value" id="qrChain">—</div><span></span></div>\n' +
+'        </div>\n' +
+'      </div>\n' +
+'\n' +
+'      <ul class="qr-warnings">\n' +
+'        <li><strong>Send only</strong> <span id="qrCoinLbl">USDT</span> on <strong id="qrChainStrong">Tron</strong> to this address. Other assets/networks will be lost.</li>\n' +
+'        <li>Send the <strong>exact amount</strong> for automatic matching. Underpayment leaves the order open.</li>\n' +
+'        <li>Network fees are paid by the sender on top of the amount above.</li>\n' +
+'      </ul>\n' +
+'\n' +
+'      <button class="submit-btn" onclick="cashierMarkQrSent()">I\'ve sent the payment</button>\n' +
+'    </section>\n' +
+'\n' +
+'    <!-- ============ SCREEN 4: Success ============ -->\n' +
+'    <section class="screen" data-step="4" id="screen4">\n' +
+'      <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>\n' +
+'      <h2 class="success-title">Payment Confirmed</h2>\n' +
+'      <p class="success-sub">Thank you. The merchant will be notified once the network confirms.</p>\n' +
+'      <div class="success-card">\n' +
+'        <div class="kv"><span id="successOrderLabel">' + (isInvoice ? 'Invoice' : 'Order') + '</span><span id="successOrder">' + _esc(orderId) + '</span></div>\n' +
+'        <div class="kv"><span>Amount Sent</span><span id="successAmount">' + _esc(payAmount + ' ' + paymentCcy) + '</span></div>\n' +
+'        <div class="kv"><span>Network</span><span id="successNet">—</span></div>\n' +
+'        <div class="kv"><span>Method</span><span id="successMethod">—</span></div>\n' +
+'        <div class="kv"><span>Transaction</span><span class="mono" id="successTx">—</span></div>\n' +
+'        <div class="kv"><span>Confirmed at</span><span id="successAt">—</span></div>\n' +
+'      </div>\n' +
+'      <button class="submit-btn" onclick="cashierClose()">Done</button>\n' +
+'    </section>\n' +
+'  </div>\n' +
+'\n' +
+'  <div class="toast" id="toast"></div>\n' +
+'  <div class="hidden-doc-host" id="hiddenDocHost">' + invoiceFragmentHtml + '</div>\n' +
+'\n' +
+'  <script>\n' +
+'    var CASHIER_CFG = ' + JSON.stringify(reviewPayload) + ';\n' +
+'    var CHAINS = ' + chainsJson + ';\n' +
+'    var STATE = {\n' +
+'      mode: ' + JSON.stringify(cfg.mode) + ',\n' +
+'      step: ' + startStep + ',\n' +
+'      coin: ' + JSON.stringify(initialCoin) + ',\n' +
+'      chain: ' + JSON.stringify(initialChain) + ',\n' +
+'      method: "metamask",\n' +
+'      wallet: "metamask",\n' +
+'      payAmount: ' + JSON.stringify(payAmount) + ',\n' +
+'      orderId: ' + JSON.stringify(orderId) + '\n' +
+'    };\n' +
+'    var WALLET_LABELS = { metamask: "MetaMask", walletconnect: "WalletConnect", okx: "OKX Wallet" };\n' +
+'    var STEP_DEFS_INVOICE = [{n:2,label:"Method"},{n:3,label:"Pay"},{n:4,label:"Done"}];\n' +
+'    var STEP_DEFS_CHECKOUT = [{n:1,label:"Asset"},{n:2,label:"Method"},{n:3,label:"Pay"},{n:4,label:"Done"}];\n' +
+'\n' +
+'    function $(id) { return document.getElementById(id); }\n' +
+'    function chainIconHtml(c) { return \'<span class="net-icon" style="background:\' + c.iconBg + \';">\' + c.iconCh + \'</span>\'; }\n' +
+'    function showScreen(step) {\n' +
+'      var screens = document.querySelectorAll(".screen");\n' +
+'      for (var i=0;i<screens.length;i++) screens[i].classList.remove("active");\n' +
+'      var pickId = (step === 3) ? (STATE.method === "qr" ? "screen3b" : "screen3a") : ("screen" + step);\n' +
+'      var el = $(pickId); if (el) el.classList.add("active");\n' +
+'      STATE.step = step;\n' +
+'      var wrap = document.querySelector(".wrap");\n' +
+'      if (wrap) wrap.setAttribute("data-cashier-step", (step === 3) ? (STATE.method === "qr" ? "3b" : "3a") : String(step));\n' +
+'      var lbl = $("sharedBackLabel");\n' +
+'      if (lbl) lbl.textContent = (step === 2) ? (STATE.mode === "checkout" ? "Back" : "Cancel") : "Back";\n' +
+'      renderRail();\n' +
+'      window.scrollTo(0, 0);\n' +
+'    }\n' +
+'    function renderRail() {\n' +
+'      var rail = $("stepRail"); if (!rail) return;\n' +
+'      var defs = (STATE.mode === "invoice") ? STEP_DEFS_INVOICE : STEP_DEFS_CHECKOUT;\n' +
+'      var html = "";\n' +
+'      for (var i=0;i<defs.length;i++) {\n' +
+'        var d = defs[i];\n' +
+'        var cls = (STATE.step > d.n) ? "dot done" : (STATE.step === d.n ? "dot active" : "dot");\n' +
+'        html += \'<span class="\' + cls + \'">\' + (cls.indexOf("done") >= 0 ? "" : d.n) + "</span>";\n' +
+'        if (i < defs.length - 1) {\n' +
+'          var bar = (STATE.step > d.n) ? "bar done" : "bar";\n' +
+'          html += \'<span class="\' + bar + \'"></span>\';\n' +
+'        }\n' +
+'      }\n' +
+'      rail.innerHTML = html;\n' +
+'    }\n' +
+'    function cashierGoStep(n) { showScreen(n); if (n === 3 && STATE.method === "qr") renderQr(); if (n === 3 && STATE.method !== "qr") { STATE.wallet = STATE.method; resetFastScreen(); cashierConnectWallet(); } }\n' +
+'    function cashierBack() {\n' +
+'      if (STATE.step === 2) { if (STATE.mode === "checkout") showScreen(1); else cashierClose(); return; }\n' +
+'      if (STATE.step === 3) { showScreen(2); return; }\n' +
+'      if (STATE.step === 4) { showScreen(2); return; }\n' +
+'      cashierClose();\n' +
+'    }\n' +
+'    function cashierClose() {\n' +
+'      try { if (window.history && window.history.length > 1) { window.history.back(); return; } } catch(e){}\n' +
+'      try { window.close(); } catch(e){}\n' +
+'    }\n' +
+'\n' +
+'    /* ----- Step 1: coin + chain ----- */\n' +
+'    function cashierSelectCoin(coin) {\n' +
+'      STATE.coin = coin;\n' +
+'      var opts = document.querySelectorAll("[data-coin]");\n' +
+'      for (var i=0;i<opts.length;i++) opts[i].classList.toggle("selected", opts[i].getAttribute("data-coin") === coin);\n' +
+'      renderChainGrid("chainGrid1", true);\n' +
+'      validateStep1();\n' +
+'    }\n' +
+'    function renderChainGrid(hostId, gateByCoin) {\n' +
+'      var host = $(hostId); if (!host) return;\n' +
+'      var html = "";\n' +
+'      for (var i=0;i<CHAINS.length;i++) {\n' +
+'        var c = CHAINS[i];\n' +
+'        var supported = !gateByCoin || c.coins.indexOf(STATE.coin) >= 0;\n' +
+'        var sel = (STATE.chain === c.id) ? " selected" : "";\n' +
+'        var dis = supported ? "" : " disabled";\n' +
+'        html += \'<button class="chain-chip\' + sel + \'"\' + dis + \' data-chain="\' + c.id + \'" onclick="cashierSelectChain(\\\'\' + c.id + \'\\\', \\\'\' + hostId + \'\\\')">\' + c.name + \'<span class="sub">\' + c.short + \'</span></button>\';\n' +
+'      }\n' +
+'      host.innerHTML = html;\n' +
+'    }\n' +
+'    function cashierSelectChain(id, hostId) {\n' +
+'      STATE.chain = id;\n' +
+'      var host = $(hostId); if (!host) return;\n' +
+'      var chips = host.querySelectorAll(".chain-chip");\n' +
+'      for (var i=0;i<chips.length;i++) chips[i].classList.toggle("selected", chips[i].getAttribute("data-chain") === id);\n' +
+'      if (hostId === "chainGrid1") validateStep1();\n' +
+'      if (hostId === "chainGridQr") renderQr();\n' +
+'    }\n' +
+'    function validateStep1() {\n' +
+'      var btn = $("step1Continue"); if (!btn) return;\n' +
+'      var c = currentChain();\n' +
+'      var ok = STATE.coin && c && c.coins.indexOf(STATE.coin) >= 0;\n' +
+'      btn.disabled = !ok;\n' +
+'    }\n' +
+'    function currentChain() { for (var i=0;i<CHAINS.length;i++) if (CHAINS[i].id === STATE.chain) return CHAINS[i]; return CHAINS[0]; }\n' +
+'\n' +
+'    /* ----- Step 2: review details + method ----- */\n' +
+'    function cashierSelectMethod(m) {\n' +
+'      STATE.method = m;\n' +
+'      if (m !== "qr") STATE.wallet = m;\n' +
+'      var opts = document.querySelectorAll("[data-method]");\n' +
+'      for (var i=0;i<opts.length;i++) opts[i].classList.toggle("selected", opts[i].getAttribute("data-method") === m);\n' +
+'    }\n' +
+'    function cashierStep2Continue() { cashierGoStep(3); }\n' +
+'    function cashierToggleReview() {\n' +
+'      var btn = $("reviewBtn"); var p = $("reviewDetails");\n' +
+'      var open = p.classList.toggle("open"); btn.classList.toggle("open", open);\n' +
+'    }\n' +
+'    function buildReviewHtml() {\n' +
+'      var c = CASHIER_CFG; var rows = [];\n' +
+'      if (c.mode === "invoice") {\n' +
+'        rows.push(["Invoice ID", c.orderId]);\n' +
+'        rows.push(["Issuing Entity", c.merchantName + (c.licenseLabel ? " (" + c.licenseLabel + ")" : "")]);\n' +
+'        if (c.issuedDate) rows.push(["Issued Date", c.issuedDate]);\n' +
+'        if (c.expiredBy) rows.push(["Expired By", c.expiredBy]);\n' +
+'        rows.push(["Payer", c.payerName]);\n' +
+'        rows.push(["Invoice Total", c.invoiceTotalDisplay + " " + c.paymentCcy]);\n' +
+'        if (c.isPartial) {\n' +
+'          rows.push(["Already Paid", c.collectedDisplay]);\n' +
+'          rows.push(["Outstanding", c.payAmountDisplay + " " + c.paymentCcy]);\n' +
+'        }\n' +
+'      } else {\n' +
+'        rows.push(["Checkout ID", c.orderId]);\n' +
+'        if (c.externalOrderId) rows.push(["External Order", c.externalOrderId]);\n' +
+'        if (c.storefront) rows.push(["Storefront", c.storefront]);\n' +
+'        rows.push(["Merchant", c.merchantName]);\n' +
+'        if (c.createdAt) rows.push(["Created At", c.createdAt]);\n' +
+'        if (c.expiresAt) rows.push(["Expires At", c.expiresAt]);\n' +
+'        rows.push(["Order Amount", c.payAmountDisplay + " " + c.paymentCcy]);\n' +
+'        if (c.settlementAsset && c.settlementAsset !== c.paymentCcy) rows.push(["Merchant Settles In", c.settlementAsset]);\n' +
+'      }\n' +
+'      var h = "";\n' +
+'      for (var i=0;i<rows.length;i++) h += \'<div class="kv"><span>\' + escHtml(rows[i][0]) + \'</span><span>\' + escHtml(rows[i][1]) + \'</span></div>\';\n' +
+'      if (c.mode === "invoice") {\n' +
+'        h += \'<button class="download-link" onclick="cashierDownloadInvoice()" id="dlInvBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span id="dlInvLabel">Download Invoice (PDF)</span></button>\';\n' +
+'      }\n' +
+'      return h;\n' +
+'    }\n' +
+'    function escHtml(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }\n' +
+'\n' +
+'    /* ----- Step 3a: fast payment ----- */\n' +
+'    function resetFastScreen() {\n' +
+'      var st = $("walletState"); if (st) st.style.display = "";\n' +
+'    }\n' +
+'    function cashierConnectWallet() {\n' +
+'      var st = $("walletState");\n' +
+'      var c = currentChain();\n' +
+'      $("walletNet").textContent = c.name + " (" + c.short + ")";\n' +
+'      $("walletTo").textContent = c.addr;\n' +
+'      $("walletAmt").textContent = STATE.payAmount + " " + STATE.coin;\n' +
+'      $("walletStateTitle").textContent = "Open " + WALLET_LABELS[STATE.wallet] + " to confirm";\n' +
+'      $("walletStateSub").textContent = "Approve the transaction in " + WALLET_LABELS[STATE.wallet] + " \\u2014 this won\\u2019t broadcast until you confirm.";\n' +
+'      if (st) st.style.display = "";\n' +
+'      if (STATE.wallet === "metamask" && window.ethereum && window.ethereum.request) {\n' +
+'        try {\n' +
+'          window.ethereum.request({ method: "eth_requestAccounts" }).then(function(accs) {\n' +
+'            try {\n' +
+'              var chainHex = window.ethereum.chainId || "";\n' +
+'              var chainNameMap = { "0x1": "Ethereum", "0x89": "Polygon", "0x38": "BNB Chain", "0xa4b1": "Arbitrum" };\n' +
+'              var nm = chainNameMap[chainHex] || c.name;\n' +
+'              STATE.chain = ({ "0x1": "ETH", "0x89": "POLY", "0x38": "BSC", "0xa4b1": "ARB" })[chainHex] || STATE.chain;\n' +
+'              $("walletNet").textContent = nm;\n' +
+'              $("walletStateSub").textContent = "Wallet connected (" + (accs && accs[0] ? (accs[0].slice(0,6) + "\\u2026" + accs[0].slice(-4)) : "no account") + "). Confirming on " + nm + "\\u2026";\n' +
+'            } catch(e){}\n' +
+'            setTimeout(finishFastPayment, 1800);\n' +
+'          }).catch(function() {\n' +
+'            $("walletStateSub").textContent = "Connection cancelled — falling back to demo confirmation\\u2026";\n' +
+'            setTimeout(finishFastPayment, 1400);\n' +
+'          });\n' +
+'          return;\n' +
+'        } catch(e){}\n' +
+'      }\n' +
+'      setTimeout(finishFastPayment, 1800);\n' +
+'    }\n' +
+'    function finishFastPayment() {\n' +
+'      var c = currentChain();\n' +
+'      $("successNet").textContent = c.name + " (" + c.short + ")";\n' +
+'      $("successMethod").textContent = "Fast Payment \\u00B7 " + WALLET_LABELS[STATE.wallet];\n' +
+'      $("successAmount").textContent = STATE.payAmount + " " + STATE.coin;\n' +
+'      $("successTx").textContent = mockTxId(c.id);\n' +
+'      $("successAt").textContent = formatNow();\n' +
+'      notifyMerchantPaid("Fast Payment \\u00B7 " + WALLET_LABELS[STATE.wallet]);\n' +
+'      showScreen(4);\n' +
+'    }\n' +
+'    function notifyMerchantPaid(methodLabel) {\n' +
+'      if (STATE.mode !== "invoice") return;\n' +
+'      try {\n' +
+'        var op = window.opener;\n' +
+'        if (!op || !op.notifyOrderCreated) return;\n' +
+'        var c = currentChain();\n' +
+'        var amt = STATE.payAmount + " " + STATE.coin;\n' +
+'        var preview = "Invoice " + STATE.orderId + " has been paid in full (" + amt + " on " + c.name + " via " + methodLabel + ").";\n' +
+'        op.notifyOrderCreated("Invoice Fully Paid", preview, "View Invoice", function() {\n' +
+'          try { if (op.openInvoiceOrderDetail) op.openInvoiceOrderDetail(STATE.orderId); } catch(e){}\n' +
+'        });\n' +
+'      } catch(e){}\n' +
+'    }\n' +
+'\n' +
+'    /* ----- Step 3b: QR ----- */\n' +
+'    function renderNetDropdown() {\n' +
+'      var menu = $("netDropdownMenu"); if (!menu) return;\n' +
+'      var html = "";\n' +
+'      for (var i=0;i<CHAINS.length;i++) {\n' +
+'        var c = CHAINS[i]; var sel = (STATE.chain === c.id) ? " selected" : "";\n' +
+'        html += \'<button type="button" class="net-dropdown-item\' + sel + \'" data-chain="\' + c.id + \'" onclick="cashierPickNet(\\\'\' + c.id + \'\\\')">\' + chainIconHtml(c) + \'<span class="net-text">\' + c.name + \'<span class="net-short">(\' + c.short + \')</span></span><svg class="net-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>\';\n' +
+'      }\n' +
+'      menu.innerHTML = html;\n' +
+'    }\n' +
+'    function updateNetTrigger() {\n' +
+'      var c = currentChain();\n' +
+'      var ic = $("netTriggerIcon"); var tx = $("netTriggerText");\n' +
+'      if (ic) ic.outerHTML = \'<span id="netTriggerIcon">\' + chainIconHtml(c) + \'</span>\';\n' +
+'      if (tx) tx.innerHTML = c.name + \' <span class="net-short">(\' + c.short + \')</span>\';\n' +
+'    }\n' +
+'    function cashierToggleNetDropdown(e) {\n' +
+'      if (e) e.stopPropagation();\n' +
+'      var dd = $("netDropdown"); if (!dd) return;\n' +
+'      dd.classList.toggle("open");\n' +
+'    }\n' +
+'    function cashierPickNet(id) {\n' +
+'      STATE.chain = id;\n' +
+'      var dd = $("netDropdown"); if (dd) dd.classList.remove("open");\n' +
+'      renderNetDropdown(); updateNetTrigger(); renderQr();\n' +
+'    }\n' +
+'    document.addEventListener("click", function(e) {\n' +
+'      var dd = $("netDropdown"); if (!dd || !dd.classList.contains("open")) return;\n' +
+'      if (!dd.contains(e.target)) dd.classList.remove("open");\n' +
+'    });\n' +
+'    function renderQr() {\n' +
+'      renderNetDropdown(); updateNetTrigger();\n' +
+'      var c = currentChain();\n' +
+'      $("qrAddress").textContent = c.addr;\n' +
+'      $("qrAmount").textContent = STATE.payAmount + " " + STATE.coin;\n' +
+'      $("qrChain").textContent = c.name + " (" + c.short + ")";\n' +
+'      $("qrChainStrong").textContent = c.name;\n' +
+'      $("qrCoinLbl").textContent = STATE.coin;\n' +
+'      var payload = STATE.coin + ":" + c.addr + "?amount=" + (STATE.payAmount || "").replace(/,/g, "") + "&network=" + c.id + "&memo=" + encodeURIComponent(STATE.orderId);\n' +
+'      $("qrImg").src = "https://api.qrserver.com/v1/create-qr-code/?size=240x240&format=svg&color=0B1433&bgcolor=FFFFFF&qzone=1&data=" + encodeURIComponent(payload);\n' +
+'    }\n' +
+'    function cashierMarkQrSent() {\n' +
+'      var c = currentChain();\n' +
+'      $("successNet").textContent = c.name + " (" + c.short + ")";\n' +
+'      $("successMethod").textContent = "QR Scan";\n' +
+'      $("successAmount").textContent = STATE.payAmount + " " + STATE.coin;\n' +
+'      $("successTx").textContent = mockTxId(c.id);\n' +
+'      $("successAt").textContent = formatNow();\n' +
+'      notifyMerchantPaid("QR Scan");\n' +
+'      showScreen(4);\n' +
+'    }\n' +
+'\n' +
+'    /* ----- Helpers ----- */\n' +
+'    function mockTxId(chainId) {\n' +
+'      var hex = "0123456789abcdef"; var s = "";\n' +
+'      var len = (chainId === "TRON") ? 64 : 64;\n' +
+'      for (var i=0;i<len;i++) s += hex.charAt(Math.floor(Math.random()*16));\n' +
+'      return (chainId === "TRON" ? "" : "0x") + s.slice(0, 40) + "\\u2026" + s.slice(-6);\n' +
+'    }\n' +
+'    function formatNow() {\n' +
+'      var d = new Date();\n' +
+'      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];\n' +
+'      function pad(n){ return n < 10 ? "0" + n : n; }\n' +
+'      return months[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear() + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());\n' +
+'    }\n' +
+'    function cashierCopy(id, btn) {\n' +
+'      var v = $(id) ? $(id).textContent : "";\n' +
+'      try { navigator.clipboard && navigator.clipboard.writeText(v); } catch(e){}\n' +
+'      var orig = btn.textContent; btn.textContent = "Copied"; setTimeout(function(){ btn.textContent = orig; }, 1400);\n' +
+'    }\n' +
+'\n' +
+'    /* ----- Invoice download ----- */\n' +
+'    function cashierDownloadInvoice() {\n' +
+'      var label = $("dlInvLabel"); var btn = $("dlInvBtn");\n' +
+'      var host = $("hiddenDocHost"); if (!host || !host.firstElementChild || typeof window.html2canvas !== "function" || !(window.jspdf && window.jspdf.jsPDF)) { showToast("Download unavailable"); return; }\n' +
+'      var target = host.firstElementChild;\n' +
+'      if (label) label.textContent = "Preparing\\u2026"; if (btn) btn.disabled = true;\n' +
+'      window.html2canvas(target, { scale: 2, backgroundColor: "#FFFFFF", useCORS: true, logging: false }).then(function(canvas) {\n' +
+'        try {\n' +
+'          var img = canvas.toDataURL("image/png");\n' +
+'          var pdf = new window.jspdf.jsPDF({ orientation: "p", unit: "mm", format: "a4" });\n' +
+'          var pdfW = pdf.internal.pageSize.getWidth(); var pdfH = pdf.internal.pageSize.getHeight();\n' +
+'          var imgW = pdfW - 12; var imgH = canvas.height * imgW / canvas.width; var y = 6;\n' +
+'          if (imgH <= pdfH - 12) { pdf.addImage(img, "PNG", 6, y, imgW, imgH, undefined, "FAST"); }\n' +
+'          else { var rem = imgH; var off = y; while (rem > 0) { pdf.addImage(img, "PNG", 6, off, imgW, imgH, undefined, "FAST"); rem -= (pdfH - 12); if (rem > 0) { pdf.addPage(); off = 6 - (imgH - rem); } } }\n' +
+'          pdf.save("Invoice-" + (CASHIER_CFG.orderId || "obita") + ".pdf");\n' +
+'          if (label) label.textContent = "Downloaded";\n' +
+'        } catch(e) { if (label) label.textContent = "Failed"; }\n' +
+'        setTimeout(function(){ if (label) label.textContent = "Download Invoice (PDF)"; if (btn) btn.disabled = false; }, 1800);\n' +
+'      }).catch(function(){ if (label) label.textContent = "Failed"; setTimeout(function(){ if (label) label.textContent = "Download Invoice (PDF)"; if (btn) btn.disabled = false; }, 1800); });\n' +
+'    }\n' +
+'    function showToast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); }, 1800); }\n' +
+'\n' +
+'    /* ----- Init ----- */\n' +
+'    function cashierInit() {\n' +
+'      $("reviewDetails").innerHTML = buildReviewHtml();\n' +
+'      if (STATE.mode === "checkout") {\n' +
+'        cashierSelectCoin(STATE.coin);\n' +
+'        cashierSelectChain(STATE.chain, "chainGrid1");\n' +
+'        validateStep1();\n' +
+'      }\n' +
+'      showScreen(STATE.step);\n' +
+'    }\n' +
+'    cashierInit();\n' +
+'  <\/script>\n' +
+'</body>\n' +
+'</html>';
+    };
+
     // Payer-facing invoice view — opens a rendered invoice PDF-style document in a
     // new tab. This is the same view the payer receives via the invoice link.
     window.openPayerInvoiceView = function(invoiceOrderId) {
@@ -6359,215 +7249,117 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         const payAmountNumeric = isPartial ? outstandingNumeric : (totalNumeric > 0 ? totalNumeric : parseAmt(order.amount));
         const payAmountDisplay = payAmountNumeric.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        // --- Obita Cashier HTML (rendered into the same window when Pay is clicked) ---
-        const cashierHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Obita Cashier · ${escapeHtml(order.invoiceNo)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
-<style>
-  * { box-sizing: border-box; }
-  :root {
-    --ink: #0B1433;
-    --ink-2: #1E293B;
-    --ink-3: #475569;
-    --muted: #64748B;
-    --muted-2: #94A3B8;
-    --line: #E2E8F0;
-    --line-soft: #F1F5F9;
-    --bg: #F1F5F9;
-    --accent: #2563EB;
-    --accent-dark: #1D4ED8;
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-display: 'Clash Display', 'Inter', sans-serif;
-  }
-  body { font-family: var(--font-sans); background: var(--bg); color: var(--ink); margin: 0; padding: 32px 16px; -webkit-font-smoothing: antialiased; line-height: 1.5; }
-
-  /* --- Cashier container --- */
-  .wrap { max-width: 520px; margin: 0 auto; background: white; border-radius: 16px; padding: 24px 24px 28px; box-shadow: 0 12px 36px -10px rgba(15,23,42,0.1), 0 3px 10px -3px rgba(15,23,42,0.05); }
-
-  /* --- Brand --- */
-  .brand-lockup { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 20px; }
-  .brand-obita { color: var(--accent); }
-  .brand-cashier { color: var(--ink); }
-
-  /* --- Summary card (blue-outlined gradient) --- */
-  .summary-card { position: relative; padding: 20px; border: 2px solid var(--accent); border-radius: 14px; background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 50%, #FAF5FF 100%); overflow: hidden; margin-bottom: 24px; }
-  .summary-card::before, .summary-card::after { content: ''; position: absolute; border-radius: 50%; pointer-events: none; }
-  .summary-card::before { width: 140px; height: 140px; right: -30px; bottom: -40px; background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%); }
-  .summary-card::after { width: 100px; height: 100px; right: 50px; bottom: -20px; background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%); }
-  .summary-label { font-size: 13.5px; color: var(--muted); font-weight: 500; margin-bottom: 6px; position: relative; z-index: 1; }
-  .summary-amount { font-family: var(--font-display); font-size: 36px; font-weight: 500; color: var(--ink); letter-spacing: -0.028em; line-height: 1; font-variant-numeric: tabular-nums; position: relative; z-index: 1; }
-  .summary-amount .ccy { font-size: 26px; margin-left: 12px; letter-spacing: -0.018em; }
-  .summary-meta { display: flex; align-items: center; gap: 18px; margin-top: 16px; font-size: 13px; color: var(--ink-3); position: relative; z-index: 1; }
-  .summary-meta-label { color: var(--muted); }
-  .summary-divider { margin: 16px 0 0; border-top: 1px solid rgba(37,99,235,0.12); position: relative; z-index: 1; }
-  .summary-review { background: none; border: none; padding: 12px 0 0; margin: 0; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--accent); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; position: relative; z-index: 1; }
-  .summary-review .chev { transition: transform 0.2s ease; }
-  .summary-review.open .chev { transform: rotate(180deg); }
-  #review-details { display: none; margin-top: 12px; padding-top: 14px; border-top: 1px dashed rgba(37,99,235,0.2); font-size: 12.5px; color: var(--ink-3); line-height: 1.7; position: relative; z-index: 1; }
-  #review-details.open { display: block; }
-  #review-details .kv { display: flex; justify-content: space-between; padding: 3px 0; }
-  #review-details .kv span:first-child { color: var(--muted); }
-  #review-details .kv span:last-child { color: var(--ink); font-weight: 500; }
-
-  /* --- Section heading --- */
-  .section-head { display: flex; align-items: center; gap: 10px; margin: 20px 0 12px; }
-  .section-head h2 { font-family: var(--font-display); font-size: 19px; font-weight: 600; color: var(--ink); margin: 0; letter-spacing: -0.012em; }
-  .recommend-pill { background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%); color: white; font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 6px; letter-spacing: 0.01em; }
-
-  /* --- Payment option cards --- */
-  .pay-options { display: flex; flex-direction: column; gap: 10px; }
-  .pay-option { display: grid; grid-template-columns: 48px 1fr 24px; align-items: center; gap: 14px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; background: white; cursor: pointer; transition: border-color 0.15s ease, background-color 0.15s ease; }
-  .pay-option:hover { border-color: #BFDBFE; }
-  .pay-option.selected { border-color: var(--accent); border-width: 2px; padding: 13.5px 15.5px; }
-  .pay-option input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
-  .opt-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .opt-icon.metamask { background: #FEF3C7; }
-  .opt-icon.walletconnect { background: #DBEAFE; }
-  .opt-icon.qr { background: #DBEAFE; }
-  .opt-icon svg { width: 26px; height: 26px; display: block; }
-  .opt-meta { min-width: 0; }
-  .opt-name { font-size: 15px; font-weight: 600; color: var(--ink); letter-spacing: -0.008em; }
-  .opt-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
-  .opt-radio { width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid var(--line); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: white; transition: background-color 0.15s ease, border-color 0.15s ease; }
-  .pay-option.selected .opt-radio { background: var(--accent); border-color: var(--accent); }
-  .pay-option.selected .opt-radio::after { content: ''; width: 8px; height: 4px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg); margin-top: -2px; }
-
-  /* --- Submit button --- */
-  .submit-btn { width: 100%; padding: 16px 20px; margin-top: 24px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); color: white; font-family: inherit; font-size: 16px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; letter-spacing: -0.006em; box-shadow: 0 8px 20px rgba(37,99,235,0.24); transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(37,99,235,0.32); }
-
-  .back-link { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; font-size: 13px; color: var(--muted); font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; font-family: inherit; }
-  .back-link:hover { color: var(--ink); }
-
-  /* Toast for payment confirmation */
-  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: white; padding: 12px 20px; border-radius: 10px; font-size: 13.5px; font-weight: 500; box-shadow: 0 8px 24px rgba(15,23,42,0.3); display: none; z-index: 99; }
-  .toast.show { display: block; animation: slideUp 0.3s ease; }
-  @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
-
-  @media (max-width: 540px) {
-    body { padding: 16px 8px; }
-    .wrap { padding: 20px 18px 24px; }
-    .summary-amount { font-size: 30px; }
-    .summary-amount .ccy { font-size: 22px; }
-  }
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <button class="back-link" onclick="history.back()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-      Back to invoice
-    </button>
-
-    <div class="brand-lockup">
-      <span class="brand-obita">Obita</span>
-      <span class="brand-cashier">Cashier</span>
+        // --- Invoice fragment for in-cashier "Download Invoice (PDF)" ---
+        // Slim version of the payer-facing invoice (no Pay CTA, no payment/settlement details).
+        const invoiceFragmentHtml = `
+<div style="font-family: 'Inter', sans-serif; max-width: 900px; margin: 0 auto; background: #FFFFFF; color: #0B1433; line-height: 1.5; padding: 36px 40px;">
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px;">
+    <div>
+      <div style="font-family: 'Clash Display', sans-serif; font-size: 22px; font-weight: 600; color: #0B1433; letter-spacing: -0.018em;">${escapeHtml(merchantFull.name)}</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 6px;">${escapeHtml(licenseLabel)}</div>
     </div>
-
-    <!-- Summary -->
-    <div class="summary-card">
-      <div class="summary-label">Invoice ${escapeHtml(order.invoiceNo)}</div>
-      <div class="summary-amount">${escapeHtml(payAmountDisplay)}<span class="ccy">${escapeHtml(paymentCurrency)}</span></div>
-      <div class="summary-meta">
-        <span class="summary-meta-label">Due Date</span>
-        <span>${escapeHtml(order.dueOn)}</span>
-      </div>
-      <div class="summary-divider"></div>
-      <button class="summary-review" id="reviewBtn" onclick="toggleReview()">
-        Review Details
-        <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-      <div id="review-details">
-        <div class="kv"><span>Invoice Amount</span><span>${escapeHtml(order.amount)}</span></div>
-        ${isPartial ? `<div class="kv"><span>Already Paid</span><span>${escapeHtml(order.collected)}</span></div><div class="kv"><span>Outstanding Balance</span><span>${escapeHtml(payAmountDisplay)} ${escapeHtml(paymentCurrency)}</span></div>` : ''}
-        <div class="kv"><span>Payer</span><span>${escapeHtml(payerName)}</span></div>
-        <div class="kv"><span>Merchant</span><span>${escapeHtml(issuerName)}</span></div>
-        <div class="kv"><span>Settlement Currency</span><span>${escapeHtml(settleCurrency || paymentCurrency)}</span></div>
-      </div>
+    <div style="text-align: right;">
+      <div style="font-family: 'Clash Display', sans-serif; font-size: 30px; font-weight: 500; letter-spacing: -0.025em;">Invoice</div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #2563EB; margin-top: 8px;">${escapeHtml(order.invoiceNo)}</div>
+      ${externalRef ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94A3B8; margin-top: 2px;">Ref · ${escapeHtml(externalRef)}</div>` : ''}
     </div>
-
-    <!-- Fast Payment -->
-    <div class="section-head">
-      <h2>Fast Payment</h2>
-      <span class="recommend-pill">Recommend</span>
-    </div>
-    <div class="pay-options">
-      <label class="pay-option selected" onclick="selectOption(this)" data-method="metamask">
-        <input type="radio" name="method" value="metamask" checked>
-        <span class="opt-icon metamask">
-          <svg viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><path fill="#E17726" d="M24.5 3 14.6 10.2 16.4 5.9z"/><path fill="#E27625" d="m1.5 3 9.7 7.3L9.5 5.9zm19.4 15.6-2.6 4 5.6 1.5 1.6-5.5zm-20.3 0L2 23.1l5.6-1.5-2.6-4z"/><path fill="#E27625" d="m7.4 11.2-1.6 2.4 5.5.3-.2-5.9zm11.2 0-4-3.3-.1 6 5.5-.4zM7.6 22.6 11 21l-2.9-2.3zm7.4-1.6 3.4 1.6L17.9 18.7z"/><path fill="#D5BFB2" d="m18.4 22.6-3.4-1.6.3 2.2v1zm-10.8 0 3 1.6V21l-3 1.6z"/><path fill="#233447" d="m10.7 16.9-2.8-.8 2-.9zm4.6 0-.9-1.7 2 .9z"/><path fill="#CC6228" d="M7.6 22.6 8 18.6 5 18.7zm10.4-4 .5 4 2.6-3.9zm1.9-4.9-5.5.3.5 2.9.8-1.7 2 .9 2.3-2.4zm-11.2 2.4 2-.9.8 1.7.5-2.9-5.5-.3z"/><path fill="#E27525" d="m5.8 13.6 2.3 4.5-.1-2.2zm14.5 2.3-.1 2.2 2.3-4.5zm-8.9-2 .5 2.9.6-3.9-1.5-.4zm2.3 0-1.2 1.6 1.2 3.5 1.2-3.5z"/><path fill="#F5841F" d="m15.3 16.9-1.2-3.5-.8 2.3v1.2l.6 1.7zm-4.6 0 1.4 1.7.6-1.7v-1.2l-.8-2.3z"/><path fill="#C0AC9D" d="m13.6 20.9.6-1.7-.4-.3h-2.6l-.4.3.6 1.7-.8-.8-2.8-2.3 1 1 1 .9h3.2l1-.9 1-1-2.8 2.3z"/><path fill="#161616" d="m13.3 19.2-.5-.4h-1.6l-.5.4-.6-1.7 1.4 1.7h.9l1.4-1.7z"/><path fill="#763E1A" d="m24.9 10.6.7-4-1.1-3.3-8.5 6.3 3.3 2.7 4.5 1.3.9-1.2-.4-.3 1-1-.8-.6 1-.7zM.5 6.6l.8 4-.5.4 1 .7-.8.6 1 1-.4.3.9 1.2 4.5-1.3 3.3-2.7L1.8 3.3z"/><path fill="#F5841F" d="m23.7 12.3-4.5-1.3 1.4 2.1-2 3.9 2.6-.1h3.8zm-17.5-1.3-4.5 1.3-1.5 4.6h3.9l2.6.1-2-3.9zm8.4 3.1.3-5.1 1.4-3.7h-6.2l1.3 3.7.3 5.1.1 1.6v4.1h2.7v-4.1z"/></svg>
-        </span>
-        <div class="opt-meta">
-          <div class="opt-name">MetaMask</div>
-          <div class="opt-sub">Pay directly with your MetaMask wallet</div>
-        </div>
-        <span class="opt-radio"></span>
-      </label>
-      <label class="pay-option" onclick="selectOption(this)" data-method="walletconnect">
-        <input type="radio" name="method" value="walletconnect">
-        <span class="opt-icon walletconnect">
-          <svg viewBox="0 0 26 26" xmlns="http://www.w3.org/2000/svg"><path fill="#3B99FC" d="M7.4 9.8c3.1-3 8.1-3 11.2 0l.4.4c.2.2.2.4 0 .6l-1.3 1.2c-.1.1-.2.1-.3 0l-.5-.5c-2.2-2.1-5.7-2.1-7.9 0l-.5.5c-.1.1-.2.1-.3 0L6.9 10.8c-.2-.2-.2-.4 0-.6zm13.9 2.6 1.2 1.1c.2.1.2.4 0 .6l-5.4 5.2c-.2.2-.4.2-.6 0l-3.8-3.7c0-.1-.1-.1-.2 0l-3.8 3.7c-.2.2-.4.2-.6 0l-5.4-5.2c-.2-.2-.2-.4 0-.6l1.2-1.1c.2-.2.4-.2.6 0l3.8 3.7c0 .1.1.1.2 0l3.8-3.7c.2-.2.4-.2.6 0l3.8 3.7c0 .1.1.1.2 0l3.8-3.7c.2-.2.4-.2.6 0z"/></svg>
-        </span>
-        <div class="opt-meta">
-          <div class="opt-name">WalletConnect</div>
-          <div class="opt-sub">Connect a supported wallet to pay</div>
-        </div>
-        <span class="opt-radio"></span>
-      </label>
-    </div>
-
-    <!-- Wallet Scan -->
-    <div class="section-head">
-      <h2>Wallet Scan</h2>
-    </div>
-    <div class="pay-options">
-      <label class="pay-option" onclick="selectOption(this)" data-method="qr">
-        <input type="radio" name="method" value="qr">
-        <span class="opt-icon qr">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-        </span>
-        <div class="opt-meta">
-          <div class="opt-name">Scan QR Code</div>
-          <div class="opt-sub">Use your wallet app to scan and pay</div>
-        </div>
-        <span class="opt-radio"></span>
-      </label>
-    </div>
-
-    <button class="submit-btn" onclick="submitPayment()">Payment ${escapeHtml(payAmountDisplay)} ${escapeHtml(paymentCurrency)}</button>
   </div>
+  <div style="border-top: 1px solid #F1F5F9; margin-bottom: 22px;"></div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 28px 48px; margin-bottom: 22px;">
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px;">From</div>
+      <div style="font-size: 16px; font-weight: 600;">${escapeHtml(merchantFull.name)}</div>
+      <div style="font-size: 12.5px; color: #64748B; font-style: italic; margin-top: 3px;">${escapeHtml(merchantFull.nameEn)}</div>
+      <div style="font-size: 12.5px; color: #475569; line-height: 1.65; margin-top: 8px;">${escapeHtml(merchantFull.address)}</div>
+      <div style="font-size: 12.5px; color: #475569; line-height: 1.65;">${escapeHtml(merchantFull.regId)}</div>
+      <div style="font-size: 12.5px; color: #475569; line-height: 1.65;">${escapeHtml(merchantFull.email)} · ${escapeHtml(merchantFull.phone)}</div>
+    </div>
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px;">Billed To</div>
+      <div style="font-size: 16px; font-weight: 600;">${escapeHtml(payerFull.legalName || payerName)}</div>
+      ${payerFull.address ? `<div style="font-size: 12.5px; color: #475569; line-height: 1.65; margin-top: 8px;">${escapeHtml(payerFull.address)}</div>` : ''}
+      ${payerFull.taxId ? `<div style="font-size: 12.5px; color: #475569; line-height: 1.65;">${escapeHtml(payerFull.taxId)}</div>` : ''}
+      ${(payerFull.email || payerFull.phone) ? `<div style="font-size: 12.5px; color: #475569; line-height: 1.65;">${[payerFull.email, payerFull.phone].filter(Boolean).map(escapeHtml).join(' · ')}</div>` : ''}
+    </div>
+  </div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 18px 48px; padding: 14px 0; border-top: 1px solid #F1F5F9; border-bottom: 1px solid #E2E8F0; margin-bottom: 0;">
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 4px;">Invoice Date</div>
+      <div style="font-size: 13.5px; font-weight: 600;">${escapeHtml(order.issuedOn)}</div>
+    </div>
+    <div>
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 4px;">Payment Due</div>
+      <div style="font-size: 13.5px; font-weight: 600;">${escapeHtml(order.dueOn)}</div>
+    </div>
+  </div>
+  <table style="width: 100%; border-collapse: collapse; margin-top: 4px;">
+    <thead>
+      <tr>
+        <th style="padding: 14px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.2em; text-align: left; border-bottom: 1px solid #E2E8F0;">Description</th>
+        <th style="padding: 14px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.2em; text-align: right; border-bottom: 1px solid #E2E8F0;">Qty</th>
+        <th style="padding: 14px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.2em; text-align: right; border-bottom: 1px solid #E2E8F0;">Unit Price</th>
+        <th style="padding: 14px 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.2em; text-align: right; border-bottom: 1px solid #E2E8F0;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>${(lineItems || []).length ? lineItems.map(li => `
+      <tr>
+        <td style="padding: 14px 0; font-size: 13.5px; font-weight: 600; border-bottom: 1px solid #F1F5F9;">${escapeHtml(li.item)}</td>
+        <td style="padding: 14px 0; font-size: 13.5px; color: #475569; text-align: right; border-bottom: 1px solid #F1F5F9; font-variant-numeric: tabular-nums;">${escapeHtml(li.quantity)}</td>
+        <td style="padding: 14px 0; font-size: 13.5px; color: #475569; text-align: right; border-bottom: 1px solid #F1F5F9; font-variant-numeric: tabular-nums;">${escapeHtml(li.unitPrice)}</td>
+        <td style="padding: 14px 0; font-size: 13.5px; font-weight: 600; text-align: right; border-bottom: 1px solid #F1F5F9; font-variant-numeric: tabular-nums;">${escapeHtml(li.amount)}</td>
+      </tr>`).join('') : `<tr><td colspan="4" style="padding: 24px 0; text-align: center; color: #64748B; font-size: 13px;">No line items recorded.</td></tr>`}
+    </tbody>
+  </table>
+  <div style="margin-top: 22px; display: flex; justify-content: flex-end;">
+    <div style="min-width: 360px;">
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; font-size: 13px; color: #475569; font-variant-numeric: tabular-nums;">
+        <span style="color: #64748B;">Subtotal</span><span>${escapeHtml(totalDisplay)} ${escapeHtml(paymentCurrency)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 9px 0; font-size: 13px; color: #475569; border-top: 1px solid #F1F5F9; font-variant-numeric: tabular-nums;">
+        <span style="color: #64748B;">Tax (0%)</span><span>0.00 ${escapeHtml(paymentCurrency)}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; padding: 16px 0 9px; margin-top: 10px; border-top: 2px solid #0B1433; align-items: baseline;">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em;">Invoice Amount</span>
+        <span><span style="font-family: 'Clash Display', sans-serif; font-size: 30px; letter-spacing: -0.025em; font-variant-numeric: tabular-nums;">${escapeHtml(totalDisplay)}</span><span style="font-family: 'Clash Display', sans-serif; font-size: 20px; margin-left: 6px;">${escapeHtml(paymentCurrency)}</span></span>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 28px;">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 10px;">Notes &amp; Payment Terms</div>
+    <ul style="margin: 0; padding-left: 18px; font-size: 12.5px; color: #475569; line-height: 1.7;">
+      <li>Payment is due on or before <strong>${escapeHtml(order.dueOn)}</strong>.</li>
+      <li>Please quote invoice number <strong>${escapeHtml(order.invoiceNo)}</strong> on your payment so remittance can be reconciled automatically.</li>
+      <li>This invoice is payable in <strong>${escapeHtml(paymentCurrency)}</strong>.</li>
+      <li>Issued and processed by Obita on behalf of <strong>${escapeHtml(merchantFull.name)}</strong> (${escapeHtml(merchantFull.regId)}) under its ${escapeHtml(licenseLabel)} license.</li>
+    </ul>
+  </div>
+  <div style="margin-top: 28px; padding-top: 22px; border-top: 1px solid #F1F5F9; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em;">Issued via Obita</div>
+</div>
+`;
 
-  <div class="toast" id="toast"></div>
+        const cashierHtml = window.buildObitaCashierHtml({
+            mode: 'invoice',
+            orderId: order.invoiceNo,
+            payAmountDisplay,
+            paymentCurrency,
+            settleCurrency,
+            payerName,
+            merchant: {
+                name: merchantFull.name,
+                nameEn: merchantFull.nameEn,
+                accent,
+                licenseLabel
+            },
+            invoice: {
+                issuedDate: order.issuedOn,
+                expiredBy: order.dueOn,
+                invoiceTotalDisplay: totalDisplay,
+                isPartial,
+                collectedDisplay: order.collected
+            },
+            invoiceFragmentHtml
+        });
 
-  <script>
-    function toggleReview() {
-      var btn = document.getElementById('reviewBtn');
-      var panel = document.getElementById('review-details');
-      var open = panel.classList.toggle('open');
-      btn.classList.toggle('open', open);
-    }
-    function selectOption(el) {
-      document.querySelectorAll('.pay-option').forEach(function(o) { o.classList.remove('selected'); });
-      el.classList.add('selected');
-      var input = el.querySelector('input[type="radio"]');
-      if (input) input.checked = true;
-    }
-    function submitPayment() {
-      var selected = document.querySelector('.pay-option.selected');
-      var name = selected ? (selected.querySelector('.opt-name') || {}).textContent : 'your wallet';
-      var toast = document.getElementById('toast');
-      toast.textContent = 'Opening ' + (name || 'your wallet') + '…';
-      toast.classList.add('show');
-      setTimeout(function() { toast.classList.remove('show'); }, 2200);
-    }
-  </script>
-</body>
-</html>`;
 
         const html = `<!DOCTYPE html>
 <html lang="en">
@@ -6969,6 +7761,43 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         win.document.close();
     };
 
+    // Open the Obita Cashier in checkout mode — starts at step 1 (coin + chain).
+    // Entry point used by the checkout link on the merchant Checkout Order Detail page.
+    window.openObitaCashierForCheckout = function(checkoutId) {
+        const order = (typeof getCheckoutOrderById === 'function') ? getCheckoutOrderById(checkoutId) : null;
+        if (!order) { alert('Checkout order not found.'); return; }
+        const merchant = (window.ENTITY_CONFIG && window.ENTITY_CONFIG[window.currentLicenseMode]) || { name: 'Obita Merchant' };
+        const licenseLabel = (window.currentLicenseMode === 'MSO') ? 'Licensed MSO Merchant' : 'Licensed TCSP Merchant';
+        const parseAmt = (s) => parseFloat(String(s || '').replace(/[^0-9.]/g, '')) || 0;
+        const amt = parseAmt(order.amount);
+        const ccyMatch = String(order.amount || '').match(/[A-Z]{3,5}\s*$/);
+        const paymentCurrency = (ccyMatch ? ccyMatch[0].trim() : 'USDT');
+        const payAmountDisplay = amt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const cashierHtml = window.buildObitaCashierHtml({
+            mode: 'checkout',
+            orderId: order.checkoutId,
+            payAmountDisplay,
+            paymentCurrency,
+            settleCurrency: order.settlementAsset || paymentCurrency,
+            payerName: order.storefront || 'Customer',
+            merchant: { name: merchant.name, accent: merchant.accent || '#2563EB', licenseLabel },
+            checkout: {
+                externalOrderId: order.externalOrderId,
+                storefront: order.storefront,
+                createdAt: order.createdAt,
+                expiresAt: order.expiresAt,
+                settlementAsset: order.settlementAsset,
+                defaultCoin: paymentCurrency,
+                defaultChain: 'TRON'
+            }
+        });
+        const win = window.open('', '_blank');
+        if (!win) { alert('Please allow pop-ups to open the Obita Cashier.'); return; }
+        win.document.open();
+        win.document.write(cashierHtml);
+        win.document.close();
+    };
+
     window.openCheckoutOrderDetail = function(checkoutId) {
         checkoutOrdersView = 'detail';
         activeCheckoutOrderId = checkoutId;
@@ -7057,7 +7886,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         const recipient = getInvoiceDraftRecipient(recipientId);
         activeInvoiceDraft.payerEmail = recipient?.email || '';
         activeInvoiceDraft.buyerName = recipient?.name || '';
-        activeInvoiceDraft.settlementCurrency = activeInvoiceDraft.settlementCurrency || (window.currentLicenseMode === 'MSO' ? 'USD' : 'USDT');
+        // Billing currency on the invoice (what the payer sends) is always a stablecoin.
+        if (!['USDT','USDC'].includes(activeInvoiceDraft.settlementCurrency)) activeInvoiceDraft.settlementCurrency = 'USDT';
         renderInvoiceOrdersPage();
     };
 
@@ -7095,7 +7925,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         const link = lastCreatedInvoiceSuccess?.invoiceLink;
         if (!link) return;
         navigator.clipboard.writeText(link).then(() => {
-            alert('Payment link copied.');
+            alert('Invoice link copied.');
         });
     };
 
@@ -7121,9 +7951,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             issuedOn: issuedDate,
             dueOn: dueDate,
             buyer: activeInvoiceDraft.buyerName || recipient?.name || '-',
-            recipient: invoiceReceivingEntityName,
+            recipient: getInvoiceReceivingEntityName(),
             method: 'Wallet Pay',
-            settlementCurrency: activeInvoiceDraft.settlementCurrency,
+            // Settlement currency comes from the merchant's global Collection setting
+            // (Merchant Profile → Collection Settings), not from this draft.
+            settlementCurrency: getMerchantSettlementCurrency(),
             amount: formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency),
             collected: formatInvoiceDraftMoney(0, activeInvoiceDraft.settlementCurrency),
             status: 'In Progress'
@@ -7133,7 +7965,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             externalInvoiceId: activeInvoiceDraft.externalInvoiceId,
             invoiceLink,
             collectionChannel: window.currentLicenseMode === 'MSO' ? 'Fiat Invoice' : 'Stablecoin Invoice',
-            recipientEntity: invoiceReceivingEntityName,
+            recipientEntity: getInvoiceReceivingEntityName(),
             settlementDestination: window.currentLicenseMode === 'MSO' ? 'Merchant Fiat Settlement Account' : 'Merchant Stablecoin Settlement Wallet',
             settlementTerms: 'Service fee deducted from collected amount',
             lineItems: activeInvoiceDraft.lineItems.map(item => ({
@@ -7152,16 +7984,24 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
             ]
         };
 
+        const _settleCcy = getMerchantSettlementCurrency();
+        const _settleEst = estimateSettlementAmount(financials.net, activeInvoiceDraft.settlementCurrency, _settleCcy);
         lastCreatedInvoiceSuccess = {
             invoiceNo,
             invoiceLink,
+            issuedOn: issuedDate,
             payerEmail: activeInvoiceDraft.payerEmail,
             buyerName: activeInvoiceDraft.buyerName || recipient?.name || '-',
-            recipientName: invoiceReceivingEntityName,
+            recipientName: getInvoiceReceivingEntityName(),
+            billingCurrency: activeInvoiceDraft.settlementCurrency,
+            settlementCurrency: _settleCcy,
             amount: formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency),
             fee: formatInvoiceDraftMoney(financials.fee, activeInvoiceDraft.settlementCurrency),
             net: formatInvoiceDraftMoney(financials.net, activeInvoiceDraft.settlementCurrency),
-            dueOn: dueDate
+            settlementEstimate: formatInvoiceDraftMoney(_settleEst, _settleCcy),
+            settlementRate: indicativeFxRateString(activeInvoiceDraft.settlementCurrency, _settleCcy),
+            dueOn: dueDate,
+            externalInvoiceId: activeInvoiceDraft.externalInvoiceId
         };
 
         invoiceOrdersView = 'success';
@@ -12375,54 +13215,58 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     const stablecoinVaultHTML = `
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 32px;">
             
-            <!-- Top Section: Unified Asset Card -->
-            <div class="card balances-hidden" id="stablecoin-vault-overview-card" style="padding: 0; overflow: hidden;">
+            <!-- Top Section: Unified Asset Card (editorial Layer-4) -->
+            <div class="card entity-hero-card balances-hidden" id="stablecoin-vault-overview-card" style="padding: 0; overflow: hidden; position: relative;">
                 <!-- Total Availables Header -->
-                <div style="padding: 28px 32px; background: linear-gradient(135deg, #1E293B, #0F172A); color: white; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="color: #94A3B8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 10px;">
-                            Total Availables
-                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('stablecoin-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances">
+                <div style="padding: 28px 32px 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap;">
+                    <div style="min-width: 0;">
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 10px;">
+                            Stablecoin Vault
+                            <button type="button" class="balance-eye-btn" onclick="window.toggleBalanceVisibility('stablecoin-vault-overview-card')" aria-label="Toggle balance visibility" title="Show/hide balances" style="background: none; border: none; padding: 0; color: #94A3B8; cursor: pointer; display: inline-flex; align-items: center;">
                                 <i data-lucide="eye-off" class="eye-when-hidden"></i>
                                 <i data-lucide="eye" class="eye-when-visible"></i>
                             </button>
                         </div>
-                        <div class="balance-figure" style="font-size: 36px; font-weight: 700;">$24,050,000.00 <span style="font-size: 16px; font-weight: 400; color: #94A3B8;">USD</span></div>
+                        <div style="font-size: 12.5px; color: #64748B; margin-top: 6px;">Total Available across USDT and USDC balances.</div>
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 38px; font-weight: 600; color: #0F172A; letter-spacing: -0.025em; margin-top: 10px; line-height: 1.05; font-variant-numeric: tabular-nums;">$24,050,000.00 <span style="font-family: var(--font-display); font-size: 18px; font-weight: 500; color: #94A3B8; letter-spacing: -0.014em; margin-left: 4px;">USD</span></div>
                     </div>
-                    <div class="balance-figure" style="color: #10B981; font-size: 14px; font-weight: 500; background: rgba(16,185,129,0.1); padding: 6px 14px; border-radius: 20px;">+ $2,300.00 Today</div>
+                    <div class="balance-figure" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 700; flex-shrink: 0;">
+                        <i data-lucide="trending-up" style="width: 13px; height: 13px;"></i>
+                        + $2,300.00 Today
+                    </div>
                 </div>
 
                 <!-- USDT Row -->
-                <div style="padding: 24px 32px; border-bottom: 1px solid var(--clr-border); display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #26A17B; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; flex-shrink: 0;">T</div>
-                        <div>
-                            <div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">USDT</div>
-                            <div style="font-size: 13px; color: var(--clr-text-muted);">Tether USD</div>
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #E6F8F2; color: #0EA378; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 20px; flex-shrink: 0; border: 1px solid #B7E8D8;">₮</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">USDT <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">Tether USD</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">ERC-20 · TRC-20 · BEP-20</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">14,000,000.00</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="openTopUpDrawer('USDT')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openTransferDrawer('USDT')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('USDT')">Convert</button>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">14,000,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">USDT</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="openTopUpDrawer('USDT')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openTransferDrawer('USDT')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConvertDrawer('USDT')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
 
                 <!-- USDC Row -->
-                <div style="padding: 24px 32px; display: flex; align-items: center; gap: 24px;">
-                    <div style="display: flex; align-items: center; gap: 14px; flex: 1;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: #2775CA; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; flex-shrink: 0;">C</div>
-                        <div>
-                            <div style="font-size: 15px; font-weight: 600; color: var(--clr-text-main);">USDC</div>
-                            <div style="font-size: 13px; color: var(--clr-text-muted);">USD Coin</div>
+                <div style="padding: 22px 32px; border-top: 1px solid #F1F5F9; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                        <div style="width: 46px; height: 46px; border-radius: 14px; background-color: #E0EBFF; color: #2775CA; display: flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 20px; flex-shrink: 0; border: 1px solid #BFDBFE;">$</div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 15px; font-weight: 600; color: #0F172A;">USDC <span style="font-size: 12px; color: #64748B; font-weight: 500; margin-left: 6px;">USD Coin</span></div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">ERC-20 · POLYGON · ARBITRUM</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-size: 22px; font-weight: 600; color: var(--clr-text-main); flex: 1;">10,050,000.00</div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 20px;" onclick="openTopUpDrawer('USDC')">Top Up</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openTransferDrawer('USDC')">Transfer</button>
-                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 20px;" onclick="window.openConvertDrawer('USDC')">Convert</button>
+                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">10,050,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">USDC</span></div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="openTopUpDrawer('USDC')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openTransferDrawer('USDC')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
+                        <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openConvertDrawer('USDC')"><i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>Convert</button>
                     </div>
                 </div>
             </div>
@@ -12430,11 +13274,14 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             <!-- Important Notices Section -->
             <div class="card" style="border: 1px solid #E2E8F0;" id="sc-notices-card">
                 <div class="card-header-flex" style="margin-bottom: 16px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 32px; height: 32px; border-radius: 8px; background-color: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background-color: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #FECACA;">
                             <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #DC2626;"></i>
                         </div>
-                        <h2 class="card-title" style="margin-bottom: 0;">重要通知</h2>
+                        <div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Action Required</div>
+                            <h2 class="card-title" style="margin-bottom: 0; margin-top: 3px; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: -0.012em;">Important Notices</h2>
+                        </div>
                     </div>
                 </div>
 
@@ -12494,14 +13341,43 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                     </div>
 
+                    <!-- Notice Item 3: More Information Required (EDD) — Binance Institutional -->
+                    <div data-notice style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <!-- Header row (chip + dismiss) -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <span style="background-color: #FEF3C7; color: #B45309; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 5px;">
+                                <i data-lucide="file-warning" style="width: 12px; height: 12px;"></i> INFO REQUIRED
+                            </span>
+                            <button onclick="this.closest('[data-notice]').remove(); const list=document.getElementById('sc-notices-list'); if(!list.children.length) document.getElementById('sc-notices-card').style.display='none';" aria-label="Dismiss" style="flex-shrink:0; background:none; border:none; padding:4px; color:#94A3B8; cursor:pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px;" onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94A3B8'">
+                                <i data-lucide="x" style="width: 16px; height: 16px;"></i>
+                            </button>
+                        </div>
+                        <!-- Body -->
+                        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                            <div style="font-weight: 700; font-size: 14px; color: #0F172A; line-height: 1.35;">More Information Required — Binance Institutional</div>
+                            <p style="font-size: 13px; color: #64748B; margin: 0; line-height: 1.55;">To ensure transactions with this wallet can be processed smoothly, additional information is required. Please provide truthful and accurate details on behalf of the wallet owner.</p>
+                            <div style="margin-top: auto; padding-top: 6px; border-top: 1px dashed #FDE68A; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px;">
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Wallet Address</div><div style="color: #334155; font-family: monospace; font-size: 12px; margin-top: 2px;">0xA0b8····eB48</div></div>
+                                <div><div style="color: #64748B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px;">Network</div><div style="color: #334155; font-size: 12px; margin-top: 2px;">Ethereum</div></div>
+                            </div>
+                        </div>
+                        <!-- Action row — opens the wallet detail and auto-launches the EDD drawer -->
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px;" onclick="if(!window._currentRender)window._currentRender=window.renderStablecoinVaultPage;window.navGo(()=>window.openWalletAddressDetailPage('0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48','Binance Institutional','Ethereum','verified','enabled',{ownerType:'organization',walletType:'exchange',alias:'Binance Institutional',eddRequired:true,autoOpenEdd:true}))"><i data-lucide="pencil" style="width: 13px; height: 13px;"></i> Start Filling</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             <!-- Address Book -->
             <div class="card">
                 <div class="card-header-flex" style="margin-bottom: 20px;">
-                    <h2 class="card-title" style="margin-bottom: 0;">Address Book</h2>
-                    <button onclick="window.openManageAddressesDrawer()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18); transition: background 0.15s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
+                    <div>
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Whitelisted Wallets</div>
+                        <h2 class="card-title" style="margin-bottom: 0; margin-top: 4px; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: -0.012em;">Address Book</h2>
+                    </div>
+                    <button onclick="window.openManageAddressesDrawer()" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(37,99,235,0.18); transition: background 0.15s;" onmouseover="this.style.background='#1D4ED8'" onmouseout="this.style.background='#2563EB'">
                         <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
                         Manage Addresses
                     </button>
@@ -12515,9 +13391,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             <!-- Transaction History Data Table -->
             <div class="card recent-orders-card">
                 <div class="card-header-flex">
-                    <h2 class="card-title" style="margin-bottom: 0;">Vault Transactions</h2>
+                    <div>
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass, #C9A449); letter-spacing: 0.22em; text-transform: uppercase;">Activity Ledger</div>
+                        <h2 class="card-title" style="margin-bottom: 0; margin-top: 4px; font-family: var(--font-display); font-size: 18px; font-weight: 600; letter-spacing: -0.012em;">Vault Transactions</h2>
+                    </div>
                     <div style="display: flex; gap: 12px;">
-                        <button class="btn btn-outline" style="padding: 6px 12px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                        <button class="btn btn-outline" style="padding: 7px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px; font-weight: 600;">
                             <i data-lucide="download" style="width: 14px; height: 14px;"></i> Export
                         </button>
                     </div>
@@ -13038,6 +13917,73 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Website</div>
                         <div style="font-size: 15px; font-weight: 600; color: #2563EB;">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collection Settings -->
+            <div class="card" style="padding: 0; overflow: visible; position: relative; z-index: 5;">
+                <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; border-top-left-radius: inherit; border-top-right-radius: inherit; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #ECFDF5; display: flex; align-items: center; justify-content: center; border: 1px solid #A7F3D0;">
+                            <i data-lucide="coins" style="width: 16px; height: 16px; color: #047857;"></i>
+                        </div>
+                        <div>
+                            <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Collection Settings</h3>
+                            <div style="font-size: 12.5px; color: #64748B; margin-top: 4px;">Global preferences applied to every Invoice and Checkout collection.</div>
+                        </div>
+                    </div>
+                    <div id="collection-settings-actions" style="display: flex; align-items: center; gap: 8px;">
+                        ${currentUserIsAdmin ? `
+                            ${window._collectionSettingsEditing
+                                ? `<button class="btn btn-outline" onclick="window.cancelCollectionSettingsEdit()" style="padding: 8px 14px; font-size: 12.5px;">Cancel</button>`
+                                : `<button class="btn btn-outline" onclick="window.beginCollectionSettingsEdit()" style="padding: 8px 14px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="pencil" style="width: 13px; height: 13px;"></i>Edit</button>`}
+                        ` : `<span style="font-size: 11.5px; color: #94A3B8; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="lock" style="width: 12px; height: 12px;"></i>Admin only</span>`}
+                    </div>
+                </div>
+                <div style="padding: 24px 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 24px 32px; align-items: start;">
+                    <div>
+                        <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">Settlement Currency</div>
+                        <div style="font-size: 13px; color: #475569; margin-top: 8px; line-height: 1.6;">Currency credited to your vault when an Invoice or Checkout payment settles. Stablecoin payments are converted to this currency at the time of settlement; the FX rate and any spread are disclosed on each settlement record.</div>
+                        <div style="margin-top: 12px; padding: 12px 14px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; font-size: 12.5px; color: #475569; line-height: 1.55;">
+                            <strong style="color: #0F172A;">Effective from next settlement window:</strong> changing the currency takes effect at the start of the next monthly settlement window. In-flight invoices continue to settle under the previously active currency. Edits require admin privileges and 2FA.
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label class="bank-form-label" style="margin-bottom: 0;">Settlement Currency</label>
+                        ${(() => {
+                            const groups = getMerchantActivatedCurrencyGroups();
+                            const sel = getMerchantSettlementCurrency();
+                            const editing = !!window._collectionSettingsEditing;
+                            const meta = CURRENCY_META[sel] || CURRENCY_META.USD;
+                            const items = groups.map(g => {
+                                const rows = g.items.map(c => {
+                                    const m = CURRENCY_META[c]; const isSel = (sel === c);
+                                    return `<button type="button" role="option" onclick="window.requestSettlementCurrencyChange('${c}')"
+                                        style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 14px; background: ${isSel ? '#F1F5F9' : '#FFFFFF'}; border: none; cursor: pointer; font-family: inherit; text-align: left; transition: background 0.1s ease;"
+                                        onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='${isSel ? '#F1F5F9' : '#FFFFFF'}'">
+                                        <span style="width: 26px; height: 26px; border-radius: 999px; background: ${m.bg}; color: ${m.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 12px; flex-shrink: 0;">${m.sym}</span>
+                                        <span style="flex: 1; min-width: 0; display: inline-flex; align-items: baseline; gap: 8px;"><span style="font-size: 13px; font-weight: ${isSel ? '700' : '600'}; color: #0F172A;">${c}</span><span style="font-size: 11px; color: #94A3B8;">${m.sub}</span></span>
+                                        ${isSel ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563EB; flex-shrink: 0;"></i>' : ''}
+                                    </button>`;
+                                }).join('');
+                                return `<div style="padding: 6px 0;"><div style="padding: 4px 14px 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; line-height: 1.6;">${g.label}</div>${rows}</div>`;
+                            }).join('<div style="border-top: 1px solid #F1F5F9;"></div>');
+                            const triggerCursor = editing ? 'cursor: pointer;' : 'cursor: not-allowed; background: #F8FAFC;';
+                            const triggerOnclick = editing ? 'window.toggleMerchantSettleDropdown(event)' : 'void(0)';
+                            return `
+                            <div class="merchant-settle-dropdown" style="position: relative; ${editing ? '' : 'opacity: 0.86;'}">
+                                <button type="button" id="merchant-settle-trigger" class="bank-form-control" ${editing ? '' : 'aria-disabled="true"'} onclick="${triggerOnclick}" aria-haspopup="listbox" aria-label="Select settlement currency" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; padding: 8px 12px; ${triggerCursor}">
+                                    <span style="display: inline-flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                                        <span style="width: 22px; height: 22px; border-radius: 999px; background: ${meta.bg}; color: ${meta.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 11px; flex-shrink: 0;">${meta.sym}</span>
+                                        <span style="font-size: 13px; font-weight: 600; color: #0F172A;">${sel}</span>
+                                    </span>
+                                    <i data-lucide="${editing ? 'chevron-down' : 'lock'}" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>
+                                </button>
+                                <div class="merchant-settle-menu" role="listbox" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 16px 40px -14px rgba(15, 23, 42, 0.28), 0 6px 14px rgba(15, 23, 42, 0.08); z-index: 200; padding: 8px 0; max-height: 480px; overflow-y: auto;">${items}</div>
+                            </div>
+                            ${!editing ? '<div style="font-size: 11.5px; color: #94A3B8; line-height: 1.55;">Default view is read-only. Click <strong style="color: #475569;">Edit</strong> above to request a change (admin + 2FA required).</div>' : '<div style="font-size: 11.5px; color: #B45309; line-height: 1.55; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i>Choose a new currency to start the change request.</div>'}`;
+                        })()}
                     </div>
                 </div>
             </div>
@@ -13958,7 +14904,84 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         return payeeList.filter(payee => Boolean(payee.usageScope?.collectionInvoice) && payee.status !== 'disabled');
     }
 
-    const invoiceReceivingEntityName = 'Nancy_Test Company';
+    // Receiving entity name follows the active license mode:
+    //   TCSP → 华信科技有限公司
+    //   MSO  → 华信电子商务有限公司
+    function getInvoiceReceivingEntityName() {
+        const mode = window.currentLicenseMode;
+        const cfg = window.ENTITY_CONFIG && window.ENTITY_CONFIG[mode];
+        return (cfg && cfg.name) || '华信科技有限公司';
+    }
+    function getInvoiceReceivingLicenseLabel() {
+        return (window.currentLicenseMode === 'MSO') ? 'Licensed MSO Merchant' : 'Licensed TCSP Merchant';
+    }
+
+    // Currencies the merchant has activated for invoice settlement.
+    //   TCSP → both stablecoins (USDT/USDC) and fiats (USD/HKD/EUR/BRL)
+    //   MSO  → fiats only
+    // The grouped form is used by the Settlement Currency dropdown to render
+    // section headers; the flat form is used for default-selection logic.
+    function getMerchantActivatedCurrencyGroups() {
+        const stable = ['USDT', 'USDC'];
+        const fiat = ['USD', 'HKD', 'EUR', 'BRL'];
+        if (window.currentLicenseMode === 'MSO') return [{ label: 'Fiat', kind: 'fiat', items: fiat }];
+        return [
+            { label: 'Stablecoin', kind: 'stable', items: stable },
+            { label: 'Fiat',       kind: 'fiat',   items: fiat }
+        ];
+    }
+    function getMerchantActivatedCurrencies() {
+        const out = []; getMerchantActivatedCurrencyGroups().forEach(g => g.items.forEach(c => out.push(c))); return out;
+    }
+    // Global merchant Settlement Currency (per-mode). The merchant configures this
+    // in Merchant Profile → Collection Settings; it determines what currency is
+    // credited to the vault when invoices/checkouts settle. Distinct from the
+    // per-invoice Billing Currency (USDT/USDC), which is what the payer sends.
+    window.MERCHANT_SETTLEMENT_PREF = window.MERCHANT_SETTLEMENT_PREF || { TCSP: 'USD', MSO: 'USD' };
+    function getMerchantSettlementCurrency() {
+        const mode = window.currentLicenseMode || 'TCSP';
+        return (window.MERCHANT_SETTLEMENT_PREF[mode]) || (mode === 'MSO' ? 'USD' : 'USDT');
+    }
+    window.setMerchantSettlementCurrency = function(ccy) {
+        const mode = window.currentLicenseMode || 'TCSP';
+        if (!ccy) return;
+        window.MERCHANT_SETTLEMENT_PREF[mode] = ccy;
+        if (typeof window._renderMerchantProfileInline === 'function') window._renderMerchantProfileInline();
+    };
+
+    // Indicative FX rates for Settlement Amount estimates shown on the New Invoice
+    // page and on the Invoice Detail page before a real settlement record exists.
+    // 1 unit of [billing] → N units of [settlement]. These are demo rates only;
+    // the actual rate is locked at settlement time.
+    const INDICATIVE_FX = {
+        USDT: { USDT: 1, USDC: 1.0000, USD: 0.9990, HKD: 7.7800, EUR: 0.9100, BRL: 5.0500 },
+        USDC: { USDT: 1.0000, USDC: 1, USD: 0.9995, HKD: 7.7820, EUR: 0.9110, BRL: 5.0550 }
+    };
+    function estimateSettlementAmount(billingNumeric, billingCcy, settleCcy) {
+        if (!billingNumeric || billingNumeric <= 0) return 0;
+        if (billingCcy === settleCcy) return billingNumeric;
+        const row = INDICATIVE_FX[billingCcy] || {};
+        const rate = (typeof row[settleCcy] === 'number') ? row[settleCcy] : 1;
+        return billingNumeric * rate;
+    }
+    function indicativeFxRateString(billingCcy, settleCcy) {
+        if (billingCcy === settleCcy) return '1:1';
+        const row = INDICATIVE_FX[billingCcy] || {};
+        const r = (typeof row[settleCcy] === 'number') ? row[settleCcy] : 1;
+        return `1 ${billingCcy} ≈ ${r.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${settleCcy}`;
+    }
+    window.estimateSettlementAmount = estimateSettlementAmount;
+    window.indicativeFxRateString = indicativeFxRateString;
+
+    // Display metadata per currency for the dropdown rendering (icon char + colour).
+    const CURRENCY_META = {
+        USDT: { sym: '₮', bg: '#E6F8F2', fg: '#0EA378', sub: 'Tether USD · Stablecoin' },
+        USDC: { sym: '$', bg: '#E0EBFF', fg: '#2775CA', sub: 'USD Coin · Stablecoin' },
+        USD:  { sym: '$', bg: '#EFF6FF', fg: '#1D4ED8', sub: 'US Dollar · Fiat' },
+        HKD:  { sym: '$', bg: '#FEF3C7', fg: '#B45309', sub: 'Hong Kong Dollar · Fiat' },
+        EUR:  { sym: '€', bg: '#F0FDF4', fg: '#15803D', sub: 'Euro · Fiat' },
+        BRL:  { sym: 'R$', bg: '#FEF2F2', fg: '#B91C1C', sub: 'Brazilian Real · Fiat' }
+    };
 
     function getInvoiceServiceFeeRate() {
         return 0.004;
@@ -14061,7 +15084,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                         <div>
                             <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 8px;">${invoiceReceivingEntityName}</div>
+                            <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 8px;">${getInvoiceReceivingEntityName()}</div>
                             <div style="font-size: 13px; color: #64748B; margin-top: 6px;">Stablecoin Invoice · ${draft.settlementCurrency}</div>
                         </div>
                     </div>
@@ -14087,6 +15110,10 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     function renderInvoiceCreateTotals(draft) {
         const financials = computeInvoiceDraftFinancials(draft);
+        const settleCcy = getMerchantSettlementCurrency();
+        const sameCcy = settleCcy === draft.settlementCurrency;
+        const settleNet = estimateSettlementAmount(financials.net, draft.settlementCurrency, settleCcy);
+        const fxLabel = indicativeFxRateString(draft.settlementCurrency, settleCcy);
         return `
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
@@ -14101,6 +15128,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     <div>
                         <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Merchant Net</div>
                         <div style="font-size: 18px; font-weight: 800; color: #0F172A; margin-top: 6px;">${formatInvoiceDraftMoney(financials.net, draft.settlementCurrency)}</div>
+                    </div>
+                    <div style="padding-left: 24px; border-left: 1px dashed #E2E8F0; opacity: 0.78;">
+                        <div style="font-size: 10.5px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;">You'll receive <span style="font-family: var(--font-mono); font-weight: 400; color: #CBD5E1; text-transform: none; letter-spacing: 0.02em;">· est.</span></div>
+                        <div style="font-size: 14px; font-weight: 600; color: #475569; margin-top: 6px; font-variant-numeric: tabular-nums;">≈ ${formatInvoiceDraftMoney(settleNet, settleCcy)}</div>
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 3px; letter-spacing: 0.02em;">${sameCcy ? 'Settles 1:1 in ' + settleCcy : fxLabel + ' · indicative'}</div>
                     </div>
                 </div>
                 <button class="btn btn-primary" onclick="window.confirmInvoiceDraft()" style="padding: 12px 22px; font-weight: 800;">Confirm</button>
@@ -14126,14 +15158,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                    <div class="card" style="padding: 24px 28px;">
-                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to Invoice Orders</button>
+                    <div class="card" style="padding: 26px 28px 24px; border-top: 3px solid #C8A55B;">
+                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 12.5px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 5px;"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i> Back to Invoice Orders</button>
                         <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                             <div>
-                                <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0 0 8px;">New Invoice</h2>
-                                <div style="font-size: 13px; color: #64748B;">Build the invoice on the right and review the live invoice layout on the left.</div>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 500; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 8px;">Invoice Builder</div>
+                                <h2 style="font-family: 'Clash Display', sans-serif; font-size: 30px; font-weight: 500; color: #0F172A; margin: 0 0 8px; letter-spacing: -0.022em;">New Invoice</h2>
+                                <div style="font-size: 13px; color: #64748B; max-width: 560px; line-height: 1.55;">Build the invoice on the right; the live preview on the left mirrors what your payer will see. Issued by <strong style="color: #0F172A;">${getInvoiceReceivingEntityName()}</strong>.</div>
                             </div>
-                            <div style="padding: 10px 14px; border-radius: 999px; background: #F8FAFC; border: 1px solid #E2E8F0; font-size: 11px; font-weight: 800; color: #475569;">Draft</div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: #FEF3C7; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700; color: #B45309; text-transform: uppercase; letter-spacing: 0.08em;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #B45309;"></span> Draft</div>
                         </div>
                     </div>
 
@@ -14209,13 +15242,51 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px;">
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
                                         <label class="bank-form-label">Receiving Entity</label>
-                                        <input class="bank-form-control" type="text" value="${invoiceReceivingEntityName}" readonly style="background: #F8FAFC; color: #475569;">
+                                        ${(() => {
+                                            const entityName = getInvoiceReceivingEntityName();
+                                            const initial = (entityName || 'M').trim().slice(0, 1);
+                                            const accent = (window.currentLicenseMode === 'MSO') ? '#7C3AED' : '#2563EB';
+                                            const tint = (window.currentLicenseMode === 'MSO') ? '#F5F3FF' : '#EFF6FF';
+                                            return `
+                                            <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%); border: 1px solid #E2E8F0; border-radius: 10px; min-height: 44px;">
+                                                <span style="width: 34px; height: 34px; border-radius: 10px; background: ${tint}; color: ${accent}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 15px; flex-shrink: 0;">${initial}</span>
+                                                <div style="min-width: 0; flex: 1;">
+                                                    <div style="font-size: 14px; font-weight: 600; color: #0F172A; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${entityName}</div>
+                                                </div>
+                                            </div>`;
+                                        })()}
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <label class="bank-form-label">Settlement Currency *</label>
-                                        <select id="invoice-currency" class="bank-form-control" onchange="window.updateInvoiceDraftField('settlementCurrency', this.value, 'invoice-currency')">
-                                            ${(window.currentLicenseMode === 'MSO' ? ['USD', 'HKD', 'EUR', 'BRL'] : ['USDT', 'USDC']).map(currency => `<option value="${currency}" ${activeInvoiceDraft.settlementCurrency === currency ? 'selected' : ''}>${currency}</option>`).join('')}
-                                        </select>
+                                        <label class="bank-form-label">Billing Currency *</label>
+                                        ${(() => {
+                                            const groups = [{ label: 'Stablecoin', kind: 'stable', items: ['USDT','USDC'] }];
+                                            const sel = activeInvoiceDraft.settlementCurrency;
+                                            const meta = CURRENCY_META[sel] || CURRENCY_META.USD;
+                                            const items = groups.map(g => {
+                                                const rows = g.items.map(c => {
+                                                    const m = CURRENCY_META[c]; const isSel = (sel === c);
+                                                    return `<button type="button" role="option" onclick="window.selectInvoiceCurrency('${c}')"
+                                                        style="display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 14px; background: ${isSel ? '#F1F5F9' : '#FFFFFF'}; border: none; cursor: pointer; font-family: inherit; text-align: left; transition: background 0.1s ease;"
+                                                        onmouseover="this.style.background='#F1F5F9'" onmouseout="this.style.background='${isSel ? '#F1F5F9' : '#FFFFFF'}'">
+                                                        <span style="width: 26px; height: 26px; border-radius: 999px; background: ${m.bg}; color: ${m.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 12px; flex-shrink: 0;">${m.sym}</span>
+                                                        <span style="flex: 1; min-width: 0;"><span style="font-size: 13px; font-weight: ${isSel ? '700' : '600'}; color: #0F172A;">${c}</span><span style="font-size: 11px; color: #94A3B8; margin-left: 6px;">${m.sub}</span></span>
+                                                        ${isSel ? '<i data-lucide="check" style="width: 14px; height: 14px; color: #2563EB; flex-shrink: 0;"></i>' : ''}
+                                                    </button>`;
+                                                }).join('');
+                                                return `<div style="padding: 6px 0;"><div style="padding: 6px 14px 4px; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">${g.label}</div>${rows}</div>`;
+                                            }).join('<div style="border-top: 1px solid #F1F5F9;"></div>');
+                                            return `
+                                            <div class="invoice-ccy-dropdown" style="position: relative;">
+                                                <button type="button" id="invoice-currency-trigger" class="bank-form-control" onclick="window.toggleInvoiceCurrencyDropdown(event)" aria-haspopup="listbox" aria-label="Select settlement currency" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; cursor: pointer; padding: 8px 12px;">
+                                                    <span style="display: inline-flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
+                                                        <span style="width: 22px; height: 22px; border-radius: 999px; background: ${meta.bg}; color: ${meta.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 11px; flex-shrink: 0;">${meta.sym}</span>
+                                                        <span style="font-size: 13px; font-weight: 600; color: #0F172A;">${sel}</span>
+                                                    </span>
+                                                    <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #94A3B8; flex-shrink: 0;"></i>
+                                                </button>
+                                                <div class="invoice-ccy-menu" role="listbox" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; box-shadow: 0 12px 32px -12px rgba(15, 23, 42, 0.22), 0 4px 10px rgba(15, 23, 42, 0.06); z-index: 120; overflow: hidden; max-height: 320px; overflow-y: auto;">${items}</div>
+                                            </div>`;
+                                        })()}
                                     </div>
                                 </div>
 
@@ -14271,64 +15342,136 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             const recipient = getInvoiceDraftRecipient(activeInvoiceDraft.recipientId);
             const financials = computeInvoiceDraftFinancials(activeInvoiceDraft);
             const lineItems = Array.isArray(activeInvoiceDraft.lineItems) ? activeInvoiceDraft.lineItems : [];
+            const _payerName = activeInvoiceDraft.buyerName || recipient?.name || recipient?.alias || '—';
+            const _payerEmail = activeInvoiceDraft.payerEmail || recipient?.email || '—';
+            const _payerInitial = String(_payerName || 'P').trim().slice(0, 1).toUpperCase();
+            const _settleCcy = getMerchantSettlementCurrency();
+            const _settleEst = estimateSettlementAmount(financials.net, activeInvoiceDraft.settlementCurrency, _settleCcy);
+            const _sameCcy = _settleCcy === activeInvoiceDraft.settlementCurrency;
+            const _fxStr = indicativeFxRateString(activeInvoiceDraft.settlementCurrency, _settleCcy);
             contentBody.innerHTML = `
-                <div class="fade-in" style="max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                    <div class="card" style="padding: 24px 28px;">
-                        <button onclick="window.backToInvoiceCreate()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 12px;">← Back to New Invoice</button>
-                        <h2 style="font-size: 24px; font-weight: 800; color: #0F172A; margin: 0;">Confirm Invoice</h2>
-                    </div>
-
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Summary</h3>
-                        </div>
-                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.buyerName}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer Email</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.payerEmail}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">External Invoice ID</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.externalInvoiceId}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due Date</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${formatInvoiceDisplayDate(activeInvoiceDraft.dueDate)}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${invoiceReceivingEntityName}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Type</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">Stablecoin Invoice</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Settlement Currency</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${activeInvoiceDraft.settlementCurrency}</div></div>
-                            <div style="grid-column: 1 / -1;"><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Notes</div><div style="font-size: 14px; font-weight: 600; color: #475569; margin-top: 6px;">${activeInvoiceDraft.notes || '-'}</div></div>
+                <div class="fade-in" style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px;">
+                    <!-- Hero -->
+                    <div class="card entity-hero-card" style="padding: 24px 32px 26px; position: relative;">
+                        <button onclick="window.backToInvoiceCreate()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to New Invoice</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass); text-transform: uppercase; letter-spacing: 0.22em;">Final Review</div>
+                                <h1 class="invoice-page-title" style="margin: 8px 0 6px; font-size: 28px;">Confirm and send invoice</h1>
+                                <div style="font-size: 13.5px; color: #475569; line-height: 1.65;">Review the details below. After sending, a hosted payment link is generated and emailed to the payer; this action requires 2-Factor Authentication.</div>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; font-size: 12px; font-weight: 700; flex-shrink: 0;"><i data-lucide="file-pen-line" style="width: 13px; height: 13px;"></i>Draft</div>
                         </div>
                     </div>
 
-                    <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Lines</h3>
+                    <!-- Parties row: Payer + Receiving Entity -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 16px 22px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="user-round" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Payer</h3>
+                            </div>
+                            <div style="padding: 18px 22px; display: flex; gap: 14px; align-items: flex-start;">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: #EFF6FF; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 18px; border: 1px solid #BFDBFE;">${escapeHtml ? escapeHtml(_payerInitial) : _payerInitial}</div>
+                                <div style="min-width: 0; flex: 1;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #0F172A; letter-spacing: -0.01em; line-height: 1.3; word-break: break-word;">${_payerName}</div>
+                                    <div style="font-size: 12.5px; color: #64748B; margin-top: 4px; word-break: break-all;">${_payerEmail}</div>
+                                    ${recipient ? `<div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.16em;">${recipient.type || 'Contact'}${recipient.country ? ' · ' + recipient.country : ''}</div>` : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div style="padding: 0 24px 18px 24px;">
-                            <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; padding: 14px 0 12px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 16px 22px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="building-2" style="width: 14px; height: 14px; color: #047857;"></i>
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Receiving Entity</h3>
+                            </div>
+                            <div style="padding: 18px 22px; display: flex; gap: 14px; align-items: flex-start;">
+                                <div style="width: 44px; height: 44px; border-radius: 12px; background: #ECFDF5; color: #047857; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 18px; border: 1px solid #A7F3D0;">${getInvoiceReceivingEntityName().trim().slice(0,1)}</div>
+                                <div style="min-width: 0; flex: 1;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #0F172A; letter-spacing: -0.01em; line-height: 1.3;">${getInvoiceReceivingEntityName()}</div>
+                                    <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.16em;">Stablecoin Invoice</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Meta strip -->
+                    <div class="card" style="padding: 18px 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 24px;">
+                        <div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">External Invoice ID</div>
+                            <div style="font-size: 13.5px; font-weight: 600; color: #0F172A; margin-top: 6px; word-break: break-word;">${activeInvoiceDraft.externalInvoiceId || '—'}</div>
+                        </div>
+                        <div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Due Date</div>
+                            <div style="font-size: 13.5px; font-weight: 600; color: #0F172A; margin-top: 6px;">${formatInvoiceDisplayDate(activeInvoiceDraft.dueDate)}</div>
+                        </div>
+                        <div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Billing Currency</div>
+                            <div style="font-size: 13.5px; font-weight: 600; color: #0F172A; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;">${(() => { const m = CURRENCY_META[activeInvoiceDraft.settlementCurrency] || { sym: '$', bg: '#F1F5F9', fg: '#475569' }; return `<span style="width: 22px; height: 22px; border-radius: 999px; background: ${m.bg}; color: ${m.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 11px;">${m.sym}</span>${activeInvoiceDraft.settlementCurrency}`; })()}</div>
+                        </div>
+                        <div>
+                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Settlement Currency</div>
+                            <div style="font-size: 13.5px; font-weight: 600; color: #0F172A; margin-top: 6px; display: inline-flex; align-items: center; gap: 8px;">${(() => { const m = CURRENCY_META[_settleCcy] || { sym: '$', bg: '#F1F5F9', fg: '#475569' }; return `<span style="width: 22px; height: 22px; border-radius: 999px; background: ${m.bg}; color: ${m.fg}; display: inline-flex; align-items: center; justify-content: center; font-family: 'Clash Display', sans-serif; font-weight: 600; font-size: 11px;">${m.sym}</span>${_settleCcy} <span style="font-family: var(--font-mono); font-size: 10px; color: #94A3B8; font-weight: 500; margin-left: 4px;">merchant default</span>`; })()}</div>
+                        </div>
+                    </div>
+
+                    <!-- Line items -->
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="list" style="width: 14px; height: 14px; color: #475569;"></i>
+                            <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Invoice Lines</h3>
+                            <span style="font-size: 11px; color: #94A3B8; margin-left: auto;">${lineItems.length} line${lineItems.length === 1 ? '' : 's'}</span>
+                        </div>
+                        <div style="padding: 0 24px 18px;">
+                            <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; padding: 14px 0 10px; border-bottom: 1px solid #E2E8F0; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">
                                 <div>Description</div>
                                 <div>Qty</div>
                                 <div class="text-right">Amount</div>
                             </div>
                             ${lineItems.map(item => `
-                                <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
-                                    <div style="font-size: 13px; color: #0F172A; font-weight: 700;">${item.description}</div>
-                                    <div style="font-size: 13px; color: #475569;">${item.quantity}</div>
-                                    <div class="text-right" style="font-size: 13px; color: #0F172A; font-weight: 800;">${formatInvoiceDraftMoney(parseInvoiceDraftAmount(item.amount), activeInvoiceDraft.settlementCurrency)}</div>
+                                <div style="display: grid; grid-template-columns: 1.6fr 0.45fr 0.8fr; gap: 16px; align-items: start; padding: 14px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div style="font-size: 13.5px; color: #0F172A; font-weight: 600;">${item.description || '—'}</div>
+                                    <div style="font-size: 13px; color: #475569; font-variant-numeric: tabular-nums;">${item.quantity || '—'}</div>
+                                    <div class="text-right" style="font-size: 13px; color: #0F172A; font-weight: 600; font-variant-numeric: tabular-nums;">${formatInvoiceDraftMoney(parseInvoiceDraftAmount(item.amount), activeInvoiceDraft.settlementCurrency)}</div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
 
-                    <div class="card" style="padding: 22px 24px;">
-                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;">
+                    ${activeInvoiceDraft.notes ? `
+                    <div class="card" style="padding: 16px 22px;">
+                        <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Notes</div>
+                        <div style="font-size: 13.5px; color: #475569; margin-top: 8px; line-height: 1.65; white-space: pre-wrap;">${activeInvoiceDraft.notes}</div>
+                    </div>` : ''}
+
+                    <!-- Totals + Send -->
+                    <div class="card" style="padding: 22px 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 24px; align-items: flex-start;">
+                        <div style="display: flex; gap: 12px; align-items: flex-start;">
+                            <i data-lucide="info" style="width: 14px; height: 14px; color: #2563EB; margin-top: 4px; flex-shrink: 0;"></i>
                             <div>
-                                <div style="font-size: 13px; color: #64748B;">Invoice will be emailed to <strong style="color: #0F172A;">${activeInvoiceDraft.payerEmail}</strong> and a hosted payment link will be generated after sending.</div>
+                                <div style="font-size: 13px; color: #475569; line-height: 1.65;">Invoice will be emailed to <strong style="color: #0F172A;">${_payerEmail}</strong>. A hosted Obita Cashier link is generated after sending — share via email, copy link, or QR code.</div>
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 6px; letter-spacing: 0.02em;">Sending requires 2FA. The merchant settlement currency (${_settleCcy}) is locked from the next monthly settlement window.</div>
                             </div>
-                            <div style="display: flex; flex-direction: column; gap: 8px; min-width: 240px;">
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569;"><span>Invoice Total</span><span style="font-weight: 800; color: #0F172A;">${formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency)}</span></div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; color: #475569;"><span>Service Fee</span><span style="font-weight: 800; color: #C2410C;">${formatInvoiceDraftMoney(financials.fee, activeInvoiceDraft.settlementCurrency)}</span></div>
-                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px dashed #CBD5E1; font-size: 14px; color: #0F172A;"><span style="font-weight: 700;">Merchant Net</span><span style="font-weight: 900;">${formatInvoiceDraftMoney(financials.net, activeInvoiceDraft.settlementCurrency)}</span></div>
-                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; color: #475569;"><span>Invoice Total</span><span style="font-weight: 600; color: #0F172A; font-variant-numeric: tabular-nums;">${formatInvoiceDraftMoney(financials.amount, activeInvoiceDraft.settlementCurrency)}</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; color: #475569; border-top: 1px solid #F1F5F9;"><span>Service Fee (deducted)</span><span style="font-weight: 600; color: #C2410C; font-variant-numeric: tabular-nums;">−${formatInvoiceDraftMoney(financials.fee, activeInvoiceDraft.settlementCurrency)}</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 6px; margin-top: 8px; border-top: 2px solid #0B1433;"><span style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.18em;">Merchant Net</span><span style="font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">${formatInvoiceDraftMoney(financials.net, activeInvoiceDraft.settlementCurrency)}</span></div>
+                            ${_sameCcy ? `<div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 8px; letter-spacing: 0.02em; text-align: right;">Settles 1:1 in ${_settleCcy}</div>` : `
+                            <div style="margin-top: 12px; padding: 10px 12px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px;">
+                                <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                                    <span style="font-size: 11px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;">You'll receive <span style="font-family: var(--font-mono); color: #CBD5E1; text-transform: none; letter-spacing: 0.02em;">· est.</span></span>
+                                    <span style="font-size: 14px; font-weight: 600; color: #475569; font-variant-numeric: tabular-nums;">≈ ${formatInvoiceDraftMoney(_settleEst, _settleCcy)}</span>
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 4px; letter-spacing: 0.02em;">${_fxStr} · indicative</div>
+                            </div>`}
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button class="btn btn-primary" onclick="window.sendInvoiceDraft()" style="padding: 12px 22px; font-weight: 800;">Send Invoice</button>
+                    <!-- Footer actions -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px;">
+                        <a href="#" onclick="event.preventDefault(); window.backToInvoiceCreate();" style="font-size: 13px; color: #64748B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i>Edit invoice</a>
+                        <button class="btn btn-primary" onclick="window.sendInvoiceDraft()" style="padding: 12px 22px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="send" style="width: 14px; height: 14px;"></i>Send Invoice</button>
                     </div>
                 </div>
             `;
@@ -14337,41 +15480,128 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         }
 
         if (invoiceOrdersView === 'success' && lastCreatedInvoiceSuccess) {
+            const _s = lastCreatedInvoiceSuccess;
+            const _sameCcy = !_s.settlementCurrency || _s.settlementCurrency === _s.billingCurrency;
+            const _qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&format=svg&color=0B1433&bgcolor=FFFFFF&qzone=1&data=${encodeURIComponent(_s.invoiceLink)}`;
             contentBody.innerHTML = `
-                <div class="fade-in" style="max-width: 940px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px;">
-                    <div class="card" style="padding: 32px 36px; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%); border: 1px solid #DBEAFE;">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 12px; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Sent</div>
-                                <h2 style="font-size: 28px; font-weight: 900; color: #0F172A; margin: 12px 0 8px; letter-spacing: -0.03em;">${lastCreatedInvoiceSuccess.invoiceNo}</h2>
-                                <div style="font-size: 14px; color: #475569; line-height: 1.7;">The invoice has been sent to <strong style="color: #0F172A;">${lastCreatedInvoiceSuccess.payerEmail}</strong> and is now waiting for payment.</div>
+                <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 48px;">
+                    <!-- Hero -->
+                    <div class="card entity-hero-card" style="padding: 26px 32px 28px; position: relative;">
+                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to Invoice Orders</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 18px; align-items: flex-start; min-width: 0; flex: 1;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid #A7F3D0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px -8px rgba(16,185,129,0.45);">
+                                    <i data-lucide="send" style="width: 22px; height: 22px; color: #047857;"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass); text-transform: uppercase; letter-spacing: 0.22em;">Invoice Sent</div>
+                                    <h1 class="invoice-page-title" style="margin: 8px 0 6px; font-size: 30px;">Invoice issued and on its way</h1>
+                                    <div style="font-size: 13.5px; color: #475569; line-height: 1.65;">A copy was emailed to <strong style="color: #0F172A;">${_s.payerEmail}</strong>. Share the invoice link below if your payer needs it again.</div>
+                                </div>
                             </div>
-                            ${renderUnifiedStatusBadge('In Progress')}
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; font-size: 12px; font-weight: 700;"><span style="width:7px; height:7px; border-radius:999px; background:#2563EB; box-shadow:0 0 0 4px rgba(37,99,235,0.18);"></span>Awaiting Payment</div>
+                                <div style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">${_s.invoiceNo}</div>
+                                ${_s.externalInvoiceId ? `<div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; letter-spacing: 0.04em;">Ref · ${_s.externalInvoiceId}</div>` : ''}
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Invoice Link card with QR + actions -->
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 800; color: #0F172A; margin: 0;">Invoice Information</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="link-2" style="width: 14px; height: 14px; color: #2563EB;"></i>
+                            <h3 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Invoice Link</h3>
+                            <span style="font-size: 11.5px; color: #94A3B8; margin-left: auto;">Anyone with this link can pay the invoice</span>
                         </div>
-                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payer</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.buyerName}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.recipientName}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Total</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.amount}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Service Fee</div><div style="font-size: 14px; font-weight: 700; color: #C2410C; margin-top: 6px;">${lastCreatedInvoiceSuccess.fee}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Net Collection</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.net}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Due On</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${lastCreatedInvoiceSuccess.dueOn}</div></div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center;">
+                            <div style="min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 12px 14px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px; font-family: var(--font-mono); font-size: 12.5px; color: #2563EB; word-break: break-all; line-height: 1.55;">
+                                    <i data-lucide="globe" style="width: 13px; height: 13px; color: #64748B; flex-shrink: 0;"></i>
+                                    <span style="flex: 1; min-width: 0;">${_s.invoiceLink}</span>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px;">
+                                    <button class="btn btn-outline" onclick="window.copyInvoiceSuccessLink()" style="padding: 9px 14px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="copy" style="width: 13px; height: 13px;"></i>Copy Invoice Link</button>
+                                    <a class="btn btn-outline" href="${_s.invoiceLink}" target="_blank" rel="noopener" style="padding: 9px 14px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;"><i data-lucide="external-link" style="width: 13px; height: 13px;"></i>Open Cashier</a>
+                                    <a class="btn btn-outline" href="mailto:${encodeURIComponent(_s.payerEmail)}?subject=${encodeURIComponent('Invoice ' + _s.invoiceNo + ' from ' + _s.recipientName)}&body=${encodeURIComponent('Hi,\n\nPlease use the link below to settle invoice ' + _s.invoiceNo + ' (' + _s.amount + ', due ' + _s.dueOn + ').\n\n' + _s.invoiceLink + '\n\nThank you.')}" style="padding: 9px 14px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;"><i data-lucide="mail" style="width: 13px; height: 13px;"></i>Resend Email</a>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="display: inline-block; padding: 10px; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; box-shadow: 0 4px 14px -8px rgba(15,23,42,0.12);">
+                                    <img src="${_qrSrc}" alt="QR code for invoice link" width="120" height="120" style="display: block; width: 120px; height: 120px;">
+                                </div>
+                                <div style="font-family: var(--font-mono); font-size: 10px; color: #94A3B8; margin-top: 8px; text-transform: uppercase; letter-spacing: 0.18em;">Scan to open</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card" style="padding: 22px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payment Link</div>
-                            <div style="font-size: 14px; font-weight: 700; color: #2563EB; margin-top: 8px; word-break: break-all;">${lastCreatedInvoiceSuccess.invoiceLink}</div>
+                    <!-- Two-column: details + receipt totals -->
+                    <div style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 16px;">
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                                <h3 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0;">Invoice Details</h3>
+                            </div>
+                            <div style="padding: 18px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Payer</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.buyerName}</div><div style="font-size: 12px; color: #64748B; margin-top: 2px;">${_s.payerEmail}</div></div>
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Receiving Entity</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.recipientName}</div></div>
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Issued On</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.issuedOn || '—'}</div></div>
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Due On</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.dueOn}</div></div>
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Billing Currency</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.billingCurrency || '—'}</div></div>
+                                <div><div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">Settlement Currency</div><div style="font-size: 14px; font-weight: 600; color: #0F172A; margin-top: 6px;">${_s.settlementCurrency || '—'}<span style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; font-weight: 500; margin-left: 6px;">(merchant default)</span></div></div>
+                            </div>
                         </div>
+
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                                <h3 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0;">Receipt Summary</h3>
+                            </div>
+                            <div style="padding: 18px 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; color: #475569;"><span>Invoice Total</span><span style="color: #0F172A; font-weight: 600; font-variant-numeric: tabular-nums;">${_s.amount}</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; color: #475569; border-top: 1px solid #F1F5F9;"><span>Service Fee (deducted)</span><span style="color: #C2410C; font-weight: 600; font-variant-numeric: tabular-nums;">−${_s.fee}</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 6px; border-top: 2px solid #0B1433; margin-top: 10px;"><span style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.18em;">Merchant Net</span><span style="font-family: var(--font-display); font-size: 20px; font-weight: 600; color: #0F172A; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;">${_s.net}</span></div>
+                                ${_sameCcy ? `<div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 8px; letter-spacing: 0.02em;">Settles 1:1 in ${_s.settlementCurrency || _s.billingCurrency || ''}</div>` : `
+                                <div style="margin-top: 12px; padding: 11px 13px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 8px;">
+                                    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px;">
+                                        <span style="font-size: 11px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;">You'll receive <span style="font-family: var(--font-mono); color: #CBD5E1; text-transform: none; letter-spacing: 0.02em;">· est.</span></span>
+                                        <span style="font-size: 14px; font-weight: 600; color: #475569; font-variant-numeric: tabular-nums;">≈ ${_s.settlementEstimate}</span>
+                                    </div>
+                                    <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 4px; letter-spacing: 0.02em;">${_s.settlementRate} · indicative</div>
+                                </div>`}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What's next timeline -->
+                    <div class="card" style="padding: 0; overflow: hidden;">
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                            <h3 style="font-size: 14px; font-weight: 700; color: #0F172A; margin: 0;">What happens next</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; position: relative;">
+                            <div style="position: absolute; left: 56px; right: 56px; top: 38px; height: 2px; background: linear-gradient(90deg, #10B981 0%, #10B981 33%, #CBD5E1 33%, #CBD5E1 100%);"></div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #10B981; color: white; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px -4px rgba(16,185,129,0.5); position: relative; z-index: 1;"><i data-lucide="check" style="width: 16px; height: 16px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 10px;">Sent</div>
+                                <div style="font-size: 11.5px; color: #64748B; margin-top: 3px; line-height: 1.5;">Email delivered to payer with the invoice link.</div>
+                            </div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #FFFFFF; color: #2563EB; border: 2px solid #2563EB; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px rgba(37,99,235,0.10); position: relative; z-index: 1;"><i data-lucide="hourglass" style="width: 14px; height: 14px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 10px;">Awaiting Payment</div>
+                                <div style="font-size: 11.5px; color: #64748B; margin-top: 3px; line-height: 1.5;">Payer opens the link in Obita Cashier and pays in ${_s.billingCurrency || 'stablecoin'}.</div>
+                            </div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #F1F5F9; color: #94A3B8; display: inline-flex; align-items: center; justify-content: center; position: relative; z-index: 1;"><i data-lucide="landmark" style="width: 14px; height: 14px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #475569; margin-top: 10px;">Settled to Vault</div>
+                                <div style="font-size: 11.5px; color: #64748B; margin-top: 3px; line-height: 1.5;">Net amount credited in ${_s.settlementCurrency || _s.billingCurrency || 'settlement currency'} on the next settlement window.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer actions -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 4px;">
+                        <a href="#" onclick="event.preventDefault(); window.backToInvoiceOrdersList();" style="font-size: 13px; color: #64748B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i>Back to Invoice Orders</a>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn btn-outline" onclick="window.copyInvoiceSuccessLink()" style="padding: 11px 16px; font-weight: 700;">Copy Payment Link</button>
-                            <button class="btn btn-primary" onclick="window.openInvoiceOrderDetail('${lastCreatedInvoiceSuccess.invoiceNo}')" style="padding: 11px 16px; font-weight: 800;">View Invoice Detail</button>
+                            <button class="btn btn-outline" onclick="window.openNewInvoicePage()" style="padding: 11px 18px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 13px; height: 13px;"></i>Send Another Invoice</button>
+                            <button class="btn btn-primary" onclick="window.openInvoiceOrderDetail('${_s.invoiceNo}')" style="padding: 11px 20px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">View Invoice Detail<i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i></button>
                         </div>
                     </div>
                 </div>
@@ -14631,7 +15861,38 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                     <div>${renderUnifiedStatusBadge(record.status, true)}</div>
                                 </div>
                             `).join('')}
-                            ` : '<div style="padding: 20px 0 8px; font-size: 13px; color: #64748B;">No settlement has been executed for this invoice order yet.</div>'}
+                            ` : (() => {
+                                const _pa = (s) => parseFloat(String(s || '').replace(/[^0-9.]/g, '')) || 0;
+                                const billingCcy = String(order.amount || '').replace(/[\d,.\s]/g, '').trim() || 'USDT';
+                                const settleCcy = order.settlementCurrency || (typeof getMerchantSettlementCurrency === 'function' ? getMerchantSettlementCurrency() : billingCcy);
+                                const billingNum = _pa(order.amount);
+                                const collectedNum = _pa(order.collected);
+                                const expectedNum = collectedNum > 0 ? collectedNum : billingNum;
+                                const feeRate = (typeof getInvoiceServiceFeeRate === 'function') ? getInvoiceServiceFeeRate() : 0.004;
+                                const netBilling = Math.max(expectedNum * (1 - feeRate), 0);
+                                const settleEst = (typeof estimateSettlementAmount === 'function') ? estimateSettlementAmount(netBilling, billingCcy, settleCcy) : netBilling;
+                                const fxStr = (typeof indicativeFxRateString === 'function') ? indicativeFxRateString(billingCcy, settleCcy) : '1:1';
+                                const sameCcy = billingCcy === settleCcy;
+                                const fmt = (n) => `${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${settleCcy}`;
+                                const basisLabel = collectedNum > 0 && collectedNum < billingNum ? 'partial collection so far' : 'full invoice amount';
+                                return `
+                                <div style="padding: 18px 0 8px;">
+                                    <div style="display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; background: #F8FAFC; border: 1px dashed #CBD5E1; border-radius: 10px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: #64748B;">
+                                            <i data-lucide="hourglass" style="width: 15px; height: 15px;"></i>
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em;">Awaiting Settlement</div>
+                                            <div style="margin-top: 8px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">
+                                                <span style="font-size: 11px; color: #94A3B8; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;">Estimated payout</span>
+                                                <span style="font-size: 18px; font-weight: 700; color: #334155; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;">≈ ${fmt(settleEst)}</span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #64748B; margin-top: 6px; line-height: 1.6;">Based on ${basisLabel} (${(feeRate * 100).toFixed(2)}% Obita service fee deducted at settlement)${sameCcy ? '' : `, converted at <span style="font-family: var(--font-mono); color: #475569;">${fxStr}</span>`}.</div>
+                                            <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; margin-top: 6px; letter-spacing: 0.02em;">Indicative only — the locked rate, fee, and credited amount will appear here once Obita executes settlement.</div>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            })()}
                         </div>
                         ` : ''}
                     </div>
@@ -14973,7 +16234,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             ${detail?.checkoutLink ? `
                             <div style="grid-column: 1 / -1;">
                                 <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Checkout Link</div>
-                                <div style="margin-top: 6px; font-family: var(--font-mono); font-size: 12px; color: #94A3B8; word-break: break-all; line-height: 1.5;">${detail.checkoutLink}</div>
+                                <a href="#" onclick="event.preventDefault(); window.openObitaCashierForCheckout('${order.checkoutId}')" style="margin-top: 6px; font-family: var(--font-mono); font-size: 12.5px; color: #2563EB; word-break: break-all; line-height: 1.5; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'"><i data-lucide="external-link" style="width: 12px; height: 12px;"></i>${detail.checkoutLink}</a>
                             </div>
                             ` : ''}
                         </div>
@@ -20354,12 +21615,139 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         window.selectInvoiceRecipient(recipientId);
     };
 
+    window.toggleInvoiceCurrencyDropdown = function(event) {
+        if (event) event.stopPropagation();
+        const menu = document.querySelector('.invoice-ccy-menu');
+        if (!menu) return;
+        const isOpen = menu.style.display === 'block';
+        document.querySelectorAll('.invoice-ccy-menu').forEach(m => { m.style.display = 'none'; });
+        if (!isOpen) { menu.style.display = 'block'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+    };
+    window.selectInvoiceCurrency = function(currency) {
+        document.querySelectorAll('.invoice-ccy-menu').forEach(m => { m.style.display = 'none'; });
+        window.updateInvoiceDraftField('settlementCurrency', currency, null);
+    };
+
+    window.toggleMerchantSettleDropdown = function(event) {
+        if (event) event.stopPropagation();
+        const menu = document.querySelector('.merchant-settle-menu');
+        if (!menu) return;
+        const isOpen = menu.style.display === 'block';
+        document.querySelectorAll('.merchant-settle-menu').forEach(m => { m.style.display = 'none'; });
+        if (!isOpen) { menu.style.display = 'block'; if (typeof lucide !== 'undefined') lucide.createIcons(); }
+    };
+
+    window._collectionSettingsEditing = false;
+    window.beginCollectionSettingsEdit = function() {
+        if (!currentUserIsAdmin) return;
+        window._collectionSettingsEditing = true;
+        if (typeof window._renderMerchantProfileInline === 'function') window._renderMerchantProfileInline();
+    };
+    window.cancelCollectionSettingsEdit = function() {
+        window._collectionSettingsEditing = false;
+        if (typeof window._renderMerchantProfileInline === 'function') window._renderMerchantProfileInline();
+    };
+
+    function _nextSettlementWindow() {
+        const now = new Date();
+        const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return next.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Step 1 — user picks a new currency from the (now interactive) dropdown.
+    // We don't apply it yet: we open a double-confirm modal explaining the next-month
+    // effective date. Confirm there triggers the 2FA flow; only after 2FA do we mutate
+    // the global setting.
+    window.requestSettlementCurrencyChange = function(newCcy) {
+        if (!currentUserIsAdmin) { alert('Admin privileges are required to edit Collection Settings.'); return; }
+        document.querySelectorAll('.merchant-settle-menu').forEach(m => { m.style.display = 'none'; });
+        const current = getMerchantSettlementCurrency();
+        if (newCcy === current) { window._collectionSettingsEditing = false; renderMyMerchantPage(); return; }
+        const meta = CURRENCY_META[newCcy] || CURRENCY_META.USD;
+        const fromMeta = CURRENCY_META[current] || CURRENCY_META.USD;
+        const nextWindow = _nextSettlementWindow();
+        const modalHtml = `
+            <div id="collection-settings-confirm" class="modal-overlay" style="display:flex; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:9999; padding:24px;">
+                <div style="max-width:520px; width:100%; background:#FFFFFF; border-radius:14px; box-shadow:0 30px 60px -20px rgba(15,23,42,0.35); overflow:hidden;">
+                    <div style="padding:22px 24px 18px; border-bottom:1px solid #F1F5F9; display:flex; align-items:center; gap:12px;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:#FFFBEB; border:1px solid #FDE68A; display:inline-flex; align-items:center; justify-content:center;"><i data-lucide="alert-triangle" style="width:16px; height:16px; color:#B45309;"></i></div>
+                        <div>
+                            <div style="font-size:16px; font-weight:700; color:#0F172A;">Change Settlement Currency</div>
+                            <div style="font-size:12.5px; color:#64748B; margin-top:2px;">Confirm the new vault settlement currency for upcoming collections.</div>
+                        </div>
+                    </div>
+                    <div style="padding:22px 24px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 16px; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px;">
+                            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                                <span style="width:28px; height:28px; border-radius:999px; background:${fromMeta.bg}; color:${fromMeta.fg}; display:inline-flex; align-items:center; justify-content:center; font-family:'Clash Display',sans-serif; font-weight:600; font-size:13px; flex-shrink:0;">${fromMeta.sym}</span>
+                                <div style="min-width:0;"><div style="font-size:11px; color:#94A3B8; text-transform:uppercase; letter-spacing:0.08em;">From</div><div style="font-size:14px; font-weight:700; color:#0F172A;">${current}</div></div>
+                            </div>
+                            <i data-lucide="arrow-right" style="width:16px; height:16px; color:#94A3B8;"></i>
+                            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                                <span style="width:28px; height:28px; border-radius:999px; background:${meta.bg}; color:${meta.fg}; display:inline-flex; align-items:center; justify-content:center; font-family:'Clash Display',sans-serif; font-weight:600; font-size:13px; flex-shrink:0;">${meta.sym}</span>
+                                <div style="min-width:0;"><div style="font-size:11px; color:#94A3B8; text-transform:uppercase; letter-spacing:0.08em;">To</div><div style="font-size:14px; font-weight:700; color:#0F172A;">${newCcy}</div></div>
+                            </div>
+                        </div>
+                        <ul style="margin:18px 0 0; padding-left:18px; font-size:13px; color:#475569; line-height:1.7;">
+                            <li>Effective from the <strong style="color:#0F172A;">next monthly settlement window — ${nextWindow}</strong>.</li>
+                            <li>In-flight invoices/checkouts already issued will continue to settle in <strong style="color:#0F172A;">${current}</strong>.</li>
+                            <li>This change will require <strong style="color:#0F172A;">2-Factor Authentication</strong> on the next step.</li>
+                            <li>Only Merchant Admins can perform this action; an audit entry will be recorded.</li>
+                        </ul>
+                    </div>
+                    <div style="padding:14px 24px; border-top:1px solid #F1F5F9; display:flex; align-items:center; justify-content:flex-end; gap:8px; background:#FCFDFE;">
+                        <button class="btn btn-outline" onclick="window.dismissCollectionSettingsConfirm()" style="padding:9px 16px; font-size:13px;">Cancel</button>
+                        <button class="btn btn-primary" onclick="window.confirmCollectionSettingsChange('${newCcy}')" style="padding:9px 18px; font-size:13px; font-weight:700;">Continue with 2FA</button>
+                    </div>
+                </div>
+            </div>`;
+        const host = document.createElement('div');
+        host.innerHTML = modalHtml;
+        document.body.appendChild(host.firstElementChild);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    };
+    window.dismissCollectionSettingsConfirm = function() {
+        const m = document.getElementById('collection-settings-confirm'); if (m) m.remove();
+    };
+    window.confirmCollectionSettingsChange = function(newCcy, token) {
+        if (token !== TWO_FA_TOKEN) {
+            window.dismissCollectionSettingsConfirm();
+            window.openTwoFactorModal({
+                actionLabel: 'Change Settlement Currency',
+                actionSubject: `settlement currency to ${newCcy}`,
+                onSuccess: () => window.confirmCollectionSettingsChange(newCcy, TWO_FA_TOKEN)
+            });
+            return;
+        }
+        const mode = window.currentLicenseMode || 'TCSP';
+        const previous = getMerchantSettlementCurrency();
+        window.MERCHANT_SETTLEMENT_PREF[mode] = newCcy;
+        window._collectionSettingsEditing = false;
+        if (typeof window._renderMerchantProfileInline === 'function') window._renderMerchantProfileInline();
+        if (typeof notifyOrderCreated === 'function') {
+            try {
+                notifyOrderCreated(
+                    'Settlement Currency Updated',
+                    `Settlement currency will switch from ${previous} to ${newCcy} starting ${_nextSettlementWindow()}. In-flight orders continue to settle in ${previous}.`,
+                    'Open Merchant Profile',
+                    () => { const link = Array.from(document.querySelectorAll('a, .nav-item, [data-target]')).find(el => el.textContent && el.textContent.trim() === 'Merchant Profile'); if (link) link.click(); }
+                );
+            } catch (e) {}
+        }
+    };
+
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.payout-payee-dropdown')) {
             document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
         }
         if (!e.target.closest('.invoice-payer-dropdown')) {
             document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
+        }
+        if (!e.target.closest('.invoice-ccy-dropdown')) {
+            document.querySelectorAll('.invoice-ccy-menu').forEach(m => { m.style.display = 'none'; });
+        }
+        if (!e.target.closest('.merchant-settle-dropdown')) {
+            document.querySelectorAll('.merchant-settle-menu').forEach(m => { m.style.display = 'none'; });
         }
         if (!e.target.closest('.custom-dropdown')) {
             document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
@@ -20369,6 +21757,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         if (e.key === 'Escape') {
             document.querySelectorAll('.payout-payee-menu').forEach(m => { m.style.display = 'none'; });
             document.querySelectorAll('.invoice-payer-menu').forEach(m => { m.style.display = 'none'; });
+            document.querySelectorAll('.invoice-ccy-menu').forEach(m => { m.style.display = 'none'; });
+            document.querySelectorAll('.merchant-settle-menu').forEach(m => { m.style.display = 'none'; });
             document.querySelectorAll('.custom-dropdown-menu.open').forEach(m => m.classList.remove('open'));
         }
     });
@@ -22484,6 +23874,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         } else if (title === 'Merchant Profile') {
             contentBody.innerHTML = getMerchantProfileHTML();
             lucide.createIcons();
+            window._renderMerchantProfileInline = function() { contentBody.innerHTML = getMerchantProfileHTML(); lucide.createIcons(); };
         } else if (title === 'Security Center') {
             if (!currentUserIsAdmin) {
                 contentBody.innerHTML = `<div class="fade-in" style="max-width: 560px; margin: 60px auto; text-align: center; color: #64748B;">
@@ -22561,7 +23952,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 return;
             }
             contentBody.innerHTML = `
-            <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 520px) minmax(220px, 280px)' : 'minmax(0, 560px) 260px'}; gap: 24px; align-items: start; padding-bottom: 40px; max-width: 900px; margin: 0 auto; justify-content: center;">
+            <div class="fade-in" style="display: grid; grid-template-columns: ${window.currentLicenseMode === 'MSO' ? 'minmax(0, 624px) minmax(264px, 336px)' : 'minmax(0, 672px) 312px'}; gap: 28px; align-items: start; padding-bottom: 40px; max-width: 1080px; margin: 0 auto; justify-content: center;">
 
                 <!-- Left: Conversion Form -->
                 <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -22569,15 +23960,15 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 <!-- Step 1: Input -->
                 <div id="pg-cv-step-1">
                     <!-- Workspace wrapper — frames the user action zone and lifts it off the reference panel -->
-                    <div style="position: relative; background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 14px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -18px rgba(37, 99, 235, 0.22); overflow: hidden;">
-                        <div style="height: 3px; background: linear-gradient(90deg, #2563EB 0%, #60A5FA 100%);"></div>
-                        <div style="padding: 20px 22px 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <div>
-                                <div style="font-size: 10.5px; font-weight: 800; color: #2563EB; letter-spacing: 0.12em; text-transform: uppercase;">New Conversion</div>
-                                <div style="font-size: 13px; color: #64748B; margin-top: 3px;">Convert balances between vaults at the quoted mid-market rate.</div>
+                    <div style="position: relative; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px -18px rgba(37, 99, 235, 0.18); overflow: hidden;">
+                        <div style="height: 2px; background: var(--clr-brand-brass, #C9A449); opacity: 0.85;"></div>
+                        <div style="padding: 22px 24px 6px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="min-width: 0;">
+                                <h2 style="font-family: var(--font-display); font-size: 22px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; margin: 0 0 4px;">New Conversion</h2>
+                                <div style="font-size: 12.5px; color: #64748B; line-height: 1.55;">Locked at the quoted mid-market rate. Zero conversion fee.</div>
                             </div>
-                            <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; flex-shrink: 0;">
-                                <span style="width: 5px; height: 5px; border-radius: 999px; background: #22C55E; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);"></span>Live rates
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; border-radius: 999px; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; flex-shrink: 0;">
+                                <span style="width: 5px; height: 5px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22); animation: pulse 2s infinite ease-in-out;"></span>Live rates
                             </span>
                         </div>
 
@@ -22659,79 +24050,140 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     </div>
                 </div>
 
-                <!-- Step 2: Confirm -->
+                <!-- Step 2: Confirm — editorial review of the locked quote -->
                 <div id="pg-cv-step-2" style="display: none;">
-                    
-                    <div style="text-align: center; padding: 32px 0 24px;">
-                        <div style="font-size: 13px; color: #64748B; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">You are converting</div>
-                        <div style="font-size: 32px; font-weight: 700; color: #1E293B;"><span id="pg-cs2-src-amt">0.00</span> <span id="pg-cs2-src-coin" style="font-size: 18px; color: #64748B;">USDT</span></div>
-                        <div style="margin: 16px 0;"><i data-lucide="arrow-down" style="width: 24px; height: 24px; color: #CBD5E1;"></i></div>
-                        <div style="font-size: 36px; font-weight: 700; color: #059669;"><span id="pg-cs2-tgt-amt">0.00</span> <span id="pg-cs2-tgt-coin" style="font-size: 20px; color: #10B981;">USD</span></div>
-                    </div>
-
-                    <div style="background: white; border: 1px solid var(--clr-border); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
-                        <div style="font-size: 11px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px;">Transaction Details</div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: #64748B;">Source Vault</span>
-                            <span id="pg-cs2-src-vault" style="font-weight: 600; color: #1E293B;">Stablecoin Vault</span>
-                        </div>
-                        <div style="height: 1px; background: var(--clr-border);"></div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: #64748B;">Expected Rate</span>
-                            <span id="pg-cs2-rate" style="font-weight: 600; color: #1E293B; font-family: monospace;">-</span>
-                        </div>
-                        <div style="height: 1px; background: var(--clr-border);"></div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px;">
-                            <span style="color: #64748B;">Quote Window</span>
-                            <span id="pg-cs2-quote-window" style="font-weight: 700; color: #D97706; display: inline-flex; align-items: center; gap: 8px;">15s</span>
-                        </div>
-                        <div style="height: 1px; background: var(--clr-border);"></div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: #64748B;">Fee</span>
-                            <span style="font-weight: 600; color: #10B981;">No Fee</span>
-                        </div>
-                        <div style="height: 1px; background: var(--clr-border);"></div>
-                        <div style="display: flex; justify-content: space-between; font-size: 14px;">
-                            <span style="color: #64748B;">Destination Vault</span>
-                            <span id="pg-cs2-dest-vault" style="font-weight: 600; color: #2563EB;">Funds will be credited to your <strong style="color:#0F172A;">USD Vault</strong></span>
+                    <!-- Hero -->
+                    <div class="card entity-hero-card" style="padding: 22px 28px 24px; position: relative; margin-bottom: 16px;">
+                        <button onclick="window.pgCvBackToStep1()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to edit</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass); text-transform: uppercase; letter-spacing: 0.22em;">Quote Locked</div>
+                                <h1 class="invoice-page-title" style="margin: 8px 0 0; font-size: 26px;">Confirm conversion</h1>
+                            </div>
+                            <div style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; font-size: 12px; font-weight: 700; flex-shrink: 0;"><i data-lucide="timer" style="width: 13px; height: 13px;"></i><span id="pg-cs2-quote-window">15s</span> remaining</div>
                         </div>
                     </div>
 
-                    <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
-                        <button id="pg-cv-confirm-btn" onclick="window.pgCvExecute()" style="width: 100%; padding: 14px; background: #2563EB; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Confirm Convert</button>
-                        <button onclick="window.pgCvBackToStep1()" style="width: 100%; padding: 12px; background: transparent; color: #64748B; border: none; font-size: 14px; font-weight: 500; cursor: pointer;">← Back to Edit</button>
+                    <!-- From → To visual -->
+                    <div class="card" style="padding: 24px 28px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center;">
+                            <div style="text-align: left;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">You convert</div>
+                                <div style="font-family: 'Clash Display', sans-serif; font-size: 30px; font-weight: 600; color: #0F172A; letter-spacing: -0.02em; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1.05;"><span id="pg-cs2-src-amt">0.00</span></div>
+                                <div style="font-family: var(--font-mono); font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; letter-spacing: 0.04em;"><span id="pg-cs2-src-coin">USDT</span> · <span id="pg-cs2-src-vault">Stablecoin Vault</span></div>
+                            </div>
+                            <div style="width: 38px; height: 38px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(15,23,42,0.08); margin: 0 auto;"><i data-lucide="arrow-right" style="width: 16px; height: 16px; color: #2563EB;"></i></div>
+                            <div style="text-align: right;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">You receive</div>
+                                <div style="font-family: 'Clash Display', sans-serif; font-size: 30px; font-weight: 600; color: #047857; letter-spacing: -0.02em; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1.05;"><span id="pg-cs2-tgt-amt">0.00</span></div>
+                                <div style="font-family: var(--font-mono); font-size: 12px; color: #475569; font-weight: 600; margin-top: 6px; letter-spacing: 0.04em;"><span id="pg-cs2-tgt-coin">USD</span> · <span id="pg-cs2-dest-vault">USD Vault</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quote details -->
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="receipt-text" style="width: 14px; height: 14px; color: #475569;"></i>
+                            <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Transaction Details</h3>
+                        </div>
+                        <div style="padding: 4px 24px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px;"><span style="color: #64748B;">Exchange Rate</span><span id="pg-cs2-rate" style="font-family: var(--font-mono); font-weight: 600; color: #0F172A;">—</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px;"><span style="color: #64748B;">Conversion Fee</span><span style="font-weight: 600; color: #047857; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="badge-check" style="width: 13px; height: 13px;"></i>Zero Fee</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px;"><span style="color: #64748B;">Source Vault</span><span style="font-weight: 600; color: #0F172A;"><span id="pg-cs2-src-vault-row">Stablecoin Vault</span></span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; font-size: 13px;"><span style="color: #64748B;">Destination Vault</span><span style="font-weight: 600; color: #0F172A;"><span id="pg-cs2-dest-vault-row">USD Vault</span></span></div>
+                        </div>
+                    </div>
+
+                    <!-- Footer actions -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px;">
+                        <a href="#" onclick="event.preventDefault(); window.pgCvBackToStep1();" style="font-size: 13px; color: #64748B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i>Back to edit</a>
+                        <button id="pg-cv-confirm-btn" class="btn btn-primary" onclick="window.pgCvExecute()" style="padding: 12px 22px; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;"><i data-lucide="zap" style="width: 14px; height: 14px;"></i>Confirm Convert</button>
                     </div>
                 </div>
 
+                <!-- Step 3: Success — editorial confirmation of the order created -->
                 <div id="pg-cv-step-3" style="display: none;">
-                    <div class="card" style="padding: 28px; border: 1px solid #DBEAFE; background: linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%);">
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <div style="font-size: 12px; font-weight: 800; color: #2563EB; text-transform: uppercase; letter-spacing: 0.08em;">Conversion Order Created</div>
-                                <h2 id="pg-cv-success-order-id" style="font-size: 26px; font-weight: 900; color: #0F172A; margin: 12px 0 8px;">CV-ORDER</h2>
-                                <div style="font-size: 14px; color: #475569; line-height: 1.7;">Your conversion order is waiting for approval and will be executed after the required review is completed.</div>
+                    <!-- Hero -->
+                    <div class="card entity-hero-card" style="padding: 26px 32px 28px; position: relative; margin-bottom: 16px;">
+                        <button onclick="window.pgCvBackToStep1()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 16px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i>Back to Conversion</button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                            <div style="display: flex; gap: 18px; align-items: flex-start; min-width: 0; flex: 1;">
+                                <div style="width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 1px solid #A7F3D0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 6px 16px -8px rgba(16,185,129,0.45);">
+                                    <i data-lucide="refresh-cw" style="width: 22px; height: 22px; color: #047857;"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <div style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: var(--clr-brand-brass); text-transform: uppercase; letter-spacing: 0.22em;">Order Submitted</div>
+                                    <h1 class="invoice-page-title" style="margin: 8px 0 6px; font-size: 28px;">Conversion order created</h1>
+                                    <div style="font-size: 13.5px; color: #475569; line-height: 1.65;">Your order is queued for approval. Once approved, Obita executes the conversion at the secured rate and credits the destination vault.</div>
+                                </div>
                             </div>
-                            <span style="background: #FEF3C7; color: #B45309; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 800;">Awaiting Approval</span>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px; flex-shrink: 0;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 12px; font-weight: 700;"><i data-lucide="hourglass" style="width: 13px; height: 13px;"></i>Awaiting Approval</div>
+                                <div id="pg-cv-success-order-id" style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">CV-ORDER</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="card" style="margin-top: 20px; padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Details</h3>
-                        </div>
-                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Source Vault</div><div id="pg-cv-success-src-vault" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Destination Vault</div><div id="pg-cv-success-dest-vault" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">From</div><div id="pg-cv-success-from" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">To</div><div id="pg-cv-success-to" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">-</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Secured Rate</div><div id="pg-cv-success-rate" style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px; font-family: monospace;">-</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Status</div><div style="margin-top: 6px;"><span style="background: #FEF3C7; color: #B45309; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800;">Awaiting Approval</span></div></div>
+                    <!-- From → To summary -->
+                    <div class="card" style="padding: 24px 28px; margin-bottom: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center;">
+                            <div style="text-align: left;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">From</div>
+                                <div id="pg-cv-success-from" style="font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 600; color: #0F172A; letter-spacing: -0.02em; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1.1;">—</div>
+                                <div id="pg-cv-success-src-vault" style="font-family: var(--font-mono); font-size: 11.5px; color: #64748B; margin-top: 6px; letter-spacing: 0.04em;">—</div>
+                            </div>
+                            <div style="width: 38px; height: 38px; border-radius: 999px; background: #FFFFFF; border: 1px solid #E2E8F0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(15,23,42,0.08); margin: 0 auto;"><i data-lucide="arrow-right" style="width: 16px; height: 16px; color: #2563EB;"></i></div>
+                            <div style="text-align: right;">
+                                <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em;">To</div>
+                                <div id="pg-cv-success-to" style="font-family: 'Clash Display', sans-serif; font-size: 26px; font-weight: 600; color: #047857; letter-spacing: -0.02em; margin-top: 8px; font-variant-numeric: tabular-nums; line-height: 1.1;">—</div>
+                                <div id="pg-cv-success-dest-vault" style="font-family: var(--font-mono); font-size: 11.5px; color: #64748B; margin-top: 6px; letter-spacing: 0.04em;">—</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="margin-top: 24px; display: flex; gap: 10px;">
-                        <button onclick="window.pgCvBackToStep1()" style="flex: 1; padding: 14px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer;">Create Another Conversion</button>
-                        <button onclick="window.pgCvBackToStep1()" style="min-width: 140px; padding: 14px; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;">OK</button>
+                    <!-- Order meta -->
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="receipt-text" style="width: 14px; height: 14px; color: #475569;"></i>
+                            <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: 0.01em;">Order Details</h3>
+                        </div>
+                        <div style="padding: 4px 24px 18px;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px;"><span style="color: #64748B;">Secured Rate</span><span id="pg-cv-success-rate" style="font-family: var(--font-mono); font-weight: 600; color: #0F172A;">—</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px;"><span style="color: #64748B;">Conversion Fee</span><span style="font-weight: 600; color: #047857; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="badge-check" style="width: 13px; height: 13px;"></i>Zero Fee</span></div>
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 0; font-size: 13px;"><span style="color: #64748B;">Status</span><span style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 11px; font-weight: 700;"><i data-lucide="hourglass" style="width: 11px; height: 11px;"></i>Awaiting Approval</span></div>
+                        </div>
+                    </div>
+
+                    <!-- What happens next timeline -->
+                    <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
+                        <div style="padding: 16px 24px; border-bottom: 1px solid #F1F5F9; background: #FCFDFE;">
+                            <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0;">What happens next</h3>
+                        </div>
+                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; position: relative;">
+                            <div style="position: absolute; left: 56px; right: 56px; top: 38px; height: 2px; background: linear-gradient(90deg, #10B981 0%, #10B981 50%, #E2E8F0 50%, #E2E8F0 100%);"></div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #10B981; color: white; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px -4px rgba(16,185,129,0.5); position: relative; z-index: 1;"><i data-lucide="check" style="width: 16px; height: 16px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 10px;">Submitted</div>
+                            </div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #FFFFFF; color: #B45309; border: 2px solid #F59E0B; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 0 6px rgba(245,158,11,0.10); position: relative; z-index: 1;"><i data-lucide="hourglass" style="width: 14px; height: 14px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 10px;">Awaiting Approval</div>
+                            </div>
+                            <div style="text-align: center; position: relative;">
+                                <div style="width: 32px; height: 32px; border-radius: 999px; background: #F1F5F9; color: #94A3B8; display: inline-flex; align-items: center; justify-content: center; position: relative; z-index: 1;"><i data-lucide="landmark" style="width: 14px; height: 14px;"></i></div>
+                                <div style="font-size: 13px; font-weight: 700; color: #475569; margin-top: 10px;">Settled to Vault</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer actions -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px;">
+                        <a href="#" onclick="event.preventDefault(); window.pgCvBackToStep1();" style="font-size: 13px; color: #64748B; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 13px; height: 13px;"></i>Back to Conversion</a>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn btn-outline" onclick="window.pgCvBackToStep1()" style="padding: 11px 18px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="plus" style="width: 13px; height: 13px;"></i>Create Another Conversion</button>
+                            <button class="btn btn-primary" onclick="window.pgCvBackToStep1()" style="padding: 11px 20px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">Done<i data-lucide="check" style="width: 13px; height: 13px;"></i></button>
+                        </div>
                     </div>
                 </div>
                 </div><!-- /form left column -->
@@ -23067,7 +24519,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     return;
                 }
                 const seconds = Math.ceil(remainingMs / 1000);
-                quoteEl.textContent = `${seconds}s`;
+                quoteEl.innerHTML = `<span style="font-family: var(--font-mono); font-weight: 700; font-variant-numeric: tabular-nums;">${String(seconds).padStart(2, '0')}s</span>`;
                 pgCvSetConfirmEnabled(true);
             }
 
@@ -23084,7 +24536,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 const toCoin = document.getElementById('pg-cv-to-coin').value;
                 const amt = parseFloat(document.getElementById('pg-cv-amount').value) || 0;
                 const vaultLabel = document.getElementById('pg-cv-vault').options[document.getElementById('pg-cv-vault').selectedIndex].text;
-                const destVault = `${toCoin} Vault`;
+                const destVault = (['USDT','USDC'].includes(toCoin)) ? 'Stablecoin Vault' : 'Fiat Vault';
                 const rate = pgCvGetLiveRate(fromCoin, toCoin);
                 const tgtAmt = amt * rate;
 
@@ -23095,7 +24547,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 document.getElementById('pg-cs2-tgt-coin').textContent = toCoin;
                 document.getElementById('pg-cs2-rate').textContent = `1 ${fromCoin} = ${rate} ${toCoin}`;
                 document.getElementById('pg-cs2-src-vault').textContent = vaultLabel;
-                document.getElementById('pg-cs2-dest-vault').innerHTML = `Funds will be credited to your <strong style="color:#0F172A;">${destVault}</strong>`;
+                document.getElementById('pg-cs2-dest-vault').textContent = destVault;
+                const srcRow = document.getElementById('pg-cs2-src-vault-row'); if (srcRow) srcRow.textContent = vaultLabel;
+                const destRow = document.getElementById('pg-cs2-dest-vault-row'); if (destRow) destRow.textContent = destVault;
             }
 
             window.pgCvOnVaultChange = function() {
