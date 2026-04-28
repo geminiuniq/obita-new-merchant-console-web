@@ -4384,41 +4384,51 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
         // Muted header chrome for disabled accounts (same treatment as wallets).
         const isDisabled = statusKey === 'disabled';
         const headerCardStyle = isDisabled
-            ? 'padding: 22px 28px; background: #F8FAFC; filter: saturate(0.6); opacity: 0.82;'
-            : 'padding: 22px 28px;';
+            ? 'padding: 0; overflow: hidden; background: #F8FAFC; filter: saturate(0.6); opacity: 0.82;'
+            : 'padding: 0; overflow: hidden;';
         const headerNameStyle = isDisabled ? 'color: #475569;' : 'color: #0F172A;';
         const headerIconBg    = isDisabled ? '#F1F5F9' : iconBg;
         const headerIconColor = isDisabled ? '#94A3B8' : iconColor;
+        const groupLabel = (details.group === 'client') ? 'Client-Bound' : 'Obita-Issued';
 
         contentBody.innerHTML = `
             <div class="fade-in" style="max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 40px;">
-                <!-- Page header -->
-                <div class="card" style="${headerCardStyle}">
-                    <button onclick="window.backFromBankAccountDetail()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 7px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back</button>
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-                            <div style="width: 48px; height: 48px; background: ${headerIconBg}; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i data-lucide="landmark" style="width: 22px; height: 22px; color: ${headerIconColor};"></i>
-                            </div>
-                            <div style="min-width: 0;">
-                                <h1 style="font-size: 22px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.01em; ${headerNameStyle}">${alias || bank}</h1>
-                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                    <span style="font-size: 13px; color: #64748B; font-weight: 600;">${bank}</span>
-                                    ${currency ? `<span style="background: ${currencyVisual.bg}; color: ${currencyVisual.color}; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${currency}</span>` : ''}
-                                    ${secondaryCurrency ? `<span style="background: #DBEAFE; color: #1D4ED8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">${secondaryCurrency}</span>` : ''}
-                                    ${sameNameChip}
-                                    ${verifiedChip}
-                                    ${statusChip}
+                <!-- Editorial header card -->
+                <div class="card entity-hero-card" style="${headerCardStyle}">
+                    <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                    <div style="padding: 22px 28px 24px;">
+                        <button onclick="window.backFromBankAccountDetail()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back</button>
+
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 12px;">
+                            <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                            Bank Account · ${groupLabel}${currency ? ' · ' + currency : ''}
+                        </div>
+
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+                                <div style="width: 52px; height: 52px; background: ${headerIconBg}; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid #E2E8F0;">
+                                    <i data-lucide="landmark" style="width: 22px; height: 22px; color: ${headerIconColor};"></i>
+                                </div>
+                                <div style="min-width: 0;">
+                                    <h1 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 26px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.015em; ${headerNameStyle}">${alias || bank}</h1>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; letter-spacing: 0.04em; font-weight: 500;">${bank}${country ? ' · ' + country : ''}</div>
+                                    <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                                        ${currency ? `<span style="background: ${currencyVisual.bg}; color: ${currencyVisual.color}; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.06em;">${currency}</span>` : ''}
+                                        ${secondaryCurrency ? `<span style="background: #DBEAFE; color: #1D4ED8; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.06em;">${secondaryCurrency}</span>` : ''}
+                                        ${sameNameChip}
+                                        ${verifiedChip}
+                                        ${statusChip}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
-                            <button ${canToggle ? '' : 'disabled'} onclick="window.bankDetailToggleStatus()" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
-                                <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
-                            </button>
-                            <button onclick="window.bankDetailDelete()" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
-                                <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
-                            </button>
+                            <div style="display: inline-flex; gap: 8px; flex-wrap: wrap;">
+                                <button ${canToggle ? '' : 'disabled'} onclick="window.bankDetailToggleStatus()" style="padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: ${canToggle ? 'pointer' : 'not-allowed'}; display: inline-flex; align-items: center; gap: 7px; height: fit-content; ${toggleStyle}">
+                                    <i data-lucide="${toggleIcon}" style="width: 14px; height: 14px;"></i> ${toggleLabel}
+                                </button>
+                                <button onclick="window.bankDetailDelete()" style="padding: 8px 14px; background: white; border: 1px solid #FECACA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #DC2626; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; height: fit-content;" onmouseover="this.style.background='#FEF2F2'" onmouseout="this.style.background='white'">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i> Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4510,9 +4520,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                 <!-- Section 1: Basic Information -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">1</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Basic Information</h3>
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                        <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Basic Information</h3>
                     </div>
                     <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                         <div>
@@ -4549,9 +4559,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
                 <!-- Section 2: Bank Details -->
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 16px 28px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg,#FCFDFE 0%,#F8FAFC 100%); display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 26px; height: 26px; border-radius: 999px; background: #2563EB; color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0;">2</div>
-                        <h3 style="font-size: 15px; font-weight: 700; color: #0F172A; margin: 0;">Bank Details</h3>
+                    <div style="padding: 18px 28px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
+                        <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Bank Details</h3>
                     </div>
                     <div style="padding: 22px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
                         <div>
@@ -6212,16 +6222,23 @@ Only 0.0123 USDT will be recognised — do not send any other amount.</pre>
 
         contentBody.innerHTML = `
             <div class="fade-in" style="display: flex; flex-direction: column; gap: 16px;">
-                <div class="card" style="padding: 24px;">
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                        <div>
-                            <h2 style="font-size: 24px; font-weight: 700; color: #0F172A; margin: 0 0 8px;">Members</h2>
-                            <div style="font-size: 13px; color: #64748B; line-height: 1.6;">Manage all merchant members, their access roles, and invitation status.</div>
+                <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                    <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                    <div style="padding: 24px 28px;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 12px;">
+                            <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                            Team · Members & Roles
                         </div>
-                        <button class="bank-add-btn" onclick="window.openAddMemberPage()">
-                            <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
-                            Add Member
-                        </button>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                            <div>
+                                <h2 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 26px; font-weight: 600; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.018em;">Members</h2>
+                                <div style="font-size: 12.5px; color: #64748B; line-height: 1.55;">Manage all merchant members, their access roles, and invitation status.</div>
+                            </div>
+                            <button class="bank-add-btn" onclick="window.openAddMemberPage()">
+                                <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                                Add Member
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -12484,6 +12501,13 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     // Constant HTML for Fiat Vault
     const fiatVaultHTML = `
+        <style>
+            .sof-details summary::-webkit-details-marker { display: none; }
+            .sof-details summary:hover { color: #475569 !important; }
+            .sof-details[open] .sof-chev { transform: rotate(180deg); }
+            .sof-summary { transition: color 0.15s; }
+            .sof-chev { transition: transform 0.15s; }
+        </style>
         <div class="fade-in" style="display: flex; flex-direction: column; gap: 32px;">
 
             <!-- Editorial Layer-4: brass eyebrow + Clash Display total + currency rows -->
@@ -12500,6 +12524,19 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                         <div style="font-size: 12.5px; color: #64748B; margin-top: 6px;">Total Available</div>
                         <div class="balance-figure" style="font-family: var(--font-display); font-size: 38px; font-weight: 600; color: #0F172A; letter-spacing: -0.025em; margin-top: 10px; line-height: 1.05; font-variant-numeric: tabular-nums;">$3,482,150.00 <span style="font-family: var(--font-display); font-size: 18px; font-weight: 500; color: #94A3B8; letter-spacing: -0.014em; margin-left: 4px;">USD Equiv.</span></div>
+                        <details class="tcsp-only sof-details" style="margin-top: 10px; max-width: 360px;">
+                            <summary class="sof-summary" style="font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; list-style: none;">Source of Fund <i data-lucide="chevron-down" style="width: 11px; height: 11px; transition: transform 0.15s;" class="sof-chev"></i></summary>
+                            <div class="balance-figure" style="margin-top: 8px; padding: 10px 14px; background: #FAFAF7; border: 1px dashed #E5E7EB; border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+                                    <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Fiat Trust Account</span>
+                                    <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">$2,610,000.00</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;">
+                                    <span style="font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Funds in Processing</span>
+                                    <span style="font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">$872,150.00</span>
+                                </div>
+                            </div>
+                        </details>
                     </div>
                     <div class="balance-figure" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 12px; font-weight: 700; flex-shrink: 0;">
                         <i data-lucide="trending-up" style="width: 13px; height: 13px;"></i>
@@ -12516,7 +12553,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">SWIFT · FEDWIRE · ACH</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">1,500,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">USD</span></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">1,500,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">USD</span></div>
+                        <details class="tcsp-only sof-details">
+                            <summary class="sof-summary" style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; list-style: none;">Source of Fund <i data-lucide="chevron-down" style="width: 10px; height: 10px;" class="sof-chev"></i></summary>
+                            <div class="balance-figure" style="margin-top: 6px; padding: 8px 12px; background: #FAFAF7; border: 1px dashed #E5E7EB; border-radius: 8px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Fiat Trust Account</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">1,200,000.00 USD</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Funds in Processing</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">300,000.00 USD</span></div>
+                            </div>
+                        </details>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('USD')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('USD')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
@@ -12533,7 +12579,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">RTGS · CHATS · FPS</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">8,200,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">HKD</span></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">8,200,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">HKD</span></div>
+                        <details class="tcsp-only sof-details">
+                            <summary class="sof-summary" style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; list-style: none;">Source of Fund <i data-lucide="chevron-down" style="width: 10px; height: 10px;" class="sof-chev"></i></summary>
+                            <div class="balance-figure" style="margin-top: 6px; padding: 8px 12px; background: #FAFAF7; border: 1px dashed #E5E7EB; border-radius: 8px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Fiat Trust Account</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">6,600,000.00 HKD</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Funds in Processing</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">1,600,000.00 HKD</span></div>
+                            </div>
+                        </details>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('HKD')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('HKD')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
@@ -12550,7 +12605,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">SEPA · TARGET2 · SWIFT</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">320,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">EUR</span></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">320,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">EUR</span></div>
+                        <details class="tcsp-only sof-details">
+                            <summary class="sof-summary" style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; list-style: none;">Source of Fund <i data-lucide="chevron-down" style="width: 10px; height: 10px;" class="sof-chev"></i></summary>
+                            <div class="balance-figure" style="margin-top: 6px; padding: 8px 12px; background: #FAFAF7; border: 1px dashed #E5E7EB; border-radius: 8px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Fiat Trust Account</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">250,000.00 EUR</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Funds in Processing</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">70,000.00 EUR</span></div>
+                            </div>
+                        </details>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('EUR')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('EUR')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
@@ -12567,7 +12631,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="font-family: var(--font-mono); font-size: 10.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.16em; margin-top: 5px;">PIX · TED · SWIFT</div>
                         </div>
                     </div>
-                    <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">980,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">BRL</span></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                        <div class="balance-figure" style="font-family: var(--font-display); font-size: 24px; font-weight: 600; color: #0F172A; letter-spacing: -0.018em; font-variant-numeric: tabular-nums; line-height: 1.1;">980,000.00 <span style="font-family: var(--font-mono); font-size: 11.5px; color: #94A3B8; font-weight: 500; letter-spacing: 0.04em; margin-left: 4px;">BRL</span></div>
+                        <details class="tcsp-only sof-details">
+                            <summary class="sof-summary" style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 2px 0; list-style: none;">Source of Fund <i data-lucide="chevron-down" style="width: 10px; height: 10px;" class="sof-chev"></i></summary>
+                            <div class="balance-figure" style="margin-top: 6px; padding: 8px 12px; background: #FAFAF7; border: 1px dashed #E5E7EB; border-radius: 8px; display: flex; flex-direction: column; gap: 4px;">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Fiat Trust Account</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">750,000.00 BRL</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px;"><span style="font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; color: #94A3B8; letter-spacing: 0.14em; text-transform: uppercase;">Funds in Processing</span><span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">230,000.00 BRL</span></div>
+                            </div>
+                        </details>
+                    </div>
                     <div style="display: flex; gap: 8px; flex-shrink: 0;">
                         <button class="btn btn-primary" style="font-size: 13px; padding: 8px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTopUpDrawer('BRL')"><i data-lucide="arrow-down-to-line" style="width: 13px; height: 13px;"></i>Top Up</button>
                         <button class="btn btn-outline" style="font-size: 13px; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openFiatTransferDrawer('BRL')"><i data-lucide="arrow-up-right" style="width: 13px; height: 13px;"></i>Transfer</button>
@@ -12799,13 +12872,13 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td class="text-right font-medium text-success">+ 500,000.00 <span class="currency">USD</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="fv-20261024-0019 transfer fiat vault hsbc hk 9230 1,200,000 hkd completed" onclick="window.openFiatVaultTxDetail('FV-20261024-0019')" style="cursor:pointer;">
+                            <tr data-date="2026-04-05" data-type="transfer" data-status="completed" data-search="fv-20261024-0019 transfer fiat vault gldb 4520 banco bradesco brl payments 7712 1,200,000 brl completed" onclick="window.openFiatVaultTxDetail('FV-20261024-0019')" style="cursor:pointer;">
                                 <td class="text-muted">Yesterday, 15:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">FV-20261024-0019</td>
                                 <td class="font-medium">Transfer</td>
-                                <td style="font-size: 13px; color: var(--clr-text-muted);">Fiat Vault</td>
-                                <td style="font-size: 13px; color: var(--clr-text-muted);">HSBC HK ••9230</td>
-                                <td class="text-right font-medium">- 1,200,000.00 <span class="currency">HKD</span></td>
+                                <td style="font-size: 13px; color: var(--clr-text-muted);">GLDB ••4520</td>
+                                <td style="font-size: 13px; color: var(--clr-text-muted);">Banco Bradesco ••7712</td>
+                                <td class="text-right font-medium">- 1,200,000.00 <span class="currency">BRL</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
                             <tr data-date="2026-04-04" data-type="top-up" data-status="confirming" data-search="fv-20261023-0007 top up deutsche bank 0130 fiat vault 100,000 eur confirming" onclick="window.openFiatVaultTxDetail('FV-20261023-0007')" style="cursor:pointer;">
@@ -13038,7 +13111,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             reference: 'REF-CHASE-20260406-0031', externalRef: 'CHASUS33-20260406-084421',
             narrative: 'Wire Transfer — Operating Funds Q2',
             remitter: { name: 'Nancy Technology Ltd.', bank: 'JPMorgan Chase Bank, N.A.', accountNo: '••••4821', swift: 'CHASUS33', aba: '021000021', bankAddress: '383 Madison Ave, New York, NY 10179, United States' },
-            beneficiary: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-USD-00192837', iban: 'HK62 0192 8374 6501 0000 01' },
+            beneficiary: { name: 'SGB USD Operating Account', bank: 'SGB · Singapore Branch (Connected · Obita-Issued)', accountNo: '•••• 7188', swift: 'SGBKSGSG', country: 'Singapore' },
             processingBank: 'Obita Financial Services Ltd.', grossAmount: 500000.00, fee: 0.00, netAmount: 500000.00,
             amlStatus: 'Cleared', complianceNote: 'AML screening passed. Remitter KYC verified.',
             approvalRequired: false,
@@ -13050,12 +13123,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             ]
         },
         'FV-20261024-0019': {
-            type: 'transfer', status: 'completed', currency: 'HKD', amount: 1200000.00, direction: 'debit',
+            type: 'transfer', status: 'completed', currency: 'BRL', amount: 1200000.00, direction: 'debit',
             createdAt: 'Apr 5, 2026  15:20:44 (UTC+8)', valueDate: 'Apr 5, 2026', settlementDate: 'Apr 5, 2026',
-            reference: 'REF-OB-20260405-0019', externalRef: 'HSBCHKHH-20260405-071544',
+            reference: 'REF-OB-20260405-0019', externalRef: 'BBDEBRSP-20260405-071544',
             narrative: 'Vendor Payment — Q1 Settlement',
-            debitAccount: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-HKD-00192838' },
-            beneficiary: { name: 'HSBC Holdings PLC — Treasury Desk', bank: 'HSBC Hong Kong', accountNo: '••••9230', swift: 'HSBCHKHHHKH', bankAddress: '1 Queen\'s Road Central, Hong Kong SAR' },
+            debitAccount: { name: 'GLDB Multi-Currency Account', bank: 'GLDB · Hong Kong (Connected · Obita-Issued)', accountNo: '•••• 4520', swift: 'GLDBHKHH', country: 'Hong Kong' },
+            beneficiary: { name: 'BRL Payments', bank: 'Banco Bradesco (Connected · Same-Name)', accountNo: '•••• 7712', swift: 'BBDEBRSPSPO', branch: '0127', country: 'Brazil' },
             purpose: 'Vendor / Supplier Payment',
             processingBank: 'Obita Financial Services Ltd.', grossAmount: 1200000.00, fee: 250.00, netDebit: 1200250.00,
             approvalRequired: true,
@@ -13068,7 +13141,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 { time: 'Apr 5, 2026  14:52 UTC', status: 'Partially Approved', note: 'L1 approval granted by Alice Wong (Finance Manager).' },
                 { time: 'Apr 5, 2026  15:08 UTC', status: 'Approved',           note: 'All approval tiers satisfied. Order submitted to processing queue.' },
                 { time: 'Apr 5, 2026  15:15 UTC', status: 'Processing',         note: 'Outbound wire submitted to HSBC Hong Kong via SWIFT MT103.' },
-                { time: 'Apr 5, 2026  15:20 UTC', status: 'Completed',          note: 'HKD 1,200,000.00 debited. SWIFT debit confirmation (MT910) received.' }
+                { time: 'Apr 5, 2026  15:20 UTC', status: 'Completed',          note: 'BRL 1,200,000.00 debited. SWIFT debit confirmation (MT910) received.' }
             ]
         },
         'FV-20261023-0007': {
@@ -13077,7 +13150,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             reference: 'REF-DB-20260404-0007', externalRef: 'DEUTDEDB-20260404-005511',
             narrative: 'Capital Injection — EUR Operations Fund',
             remitter: { name: 'Nancy Technology GmbH', bank: 'Deutsche Bank AG', accountNo: '••••0130', swift: 'DEUTDEDB', iban: 'DE89 3704 0044 0532 0130 00', bankAddress: 'Taunusanlage 12, 60325 Frankfurt am Main, Germany' },
-            beneficiary: { name: 'Obita Merchant Account — Nancy_Test', bank: 'Obita Financial Services Ltd.', accountNo: 'OB-EUR-00192839', iban: 'HK62 0192 8374 6501 0000 03' },
+            beneficiary: { name: 'GLDB Multi-Currency Account', bank: 'GLDB · Luxembourg Branch (Connected · Obita-Issued)', accountNo: 'LU28 4466 4520 0044 6645', swift: 'GLDBLULL', country: 'Luxembourg' },
             processingBank: 'Obita Financial Services Ltd.', grossAmount: 100000.00, fee: 0.00, netAmount: 100000.00,
             amlStatus: 'In Progress', complianceNote: 'AML screening in progress. Estimated completion within 2 business hours.',
             approvalRequired: false,
@@ -13308,24 +13381,96 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             <div class="card" style="padding:0;overflow:hidden;margin:0;">
                 ${sectionTitle('activity', 'Status History')}
                 <div style="padding:20px 24px;display:flex;flex-direction:column;gap:0;">
-                    ${tx.timeline.map((ev, i) => {
-                        const st = timelineStatusStyle(ev.status);
-                        const isLast = i === tx.timeline.length - 1;
-                        return `
-                        <div style="display:grid;grid-template-columns:20px 1fr;gap:14px;align-items:start;padding-bottom:${isLast ? '0' : '20px'};">
-                            <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
-                                <div style="width:10px;height:10px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
-                                ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:5px;min-height:24px;"></div>' : ''}
-                            </div>
-                            <div>
-                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
-                                    <span style="font-size:12px;color:#64748B;">${ev.time}</span>
-                                    <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${st.bg};color:${st.color};">${ev.status}</span>
+                    ${(() => {
+                        // Fiat deposits show only 2 stages — Confirming → Credited —
+                        // mirroring the Stablecoin Vault deposit pattern, but worded
+                        // for a fiat reconciliation flow (no on-chain confirmations).
+                        // Fiat transfers drop the SWIFT-mechanic noise (Received,
+                        // Processing) and strip MT-confirmation tech tails from the
+                        // Completed note, keeping the customer-facing milestones.
+                        const isDeposit  = tx.type === 'top-up' && tx.direction === 'credit';
+                        const isTransfer = tx.type === 'transfer';
+                        let timeline = tx.timeline;
+                        if (isDeposit) {
+                            const confirming = tx.timeline.find(ev => ev.status === 'Confirming')
+                                || tx.timeline.find(ev => ev.status === 'Verifying')
+                                || tx.timeline.find(ev => ev.status === 'Processing')
+                                || tx.timeline[0];
+                            const credited   = tx.timeline.find(ev => ev.status === 'Completed')
+                                || tx.timeline.find(ev => ev.status === 'Credited');
+                            timeline = [];
+                            if (confirming) timeline.push({
+                                time: confirming.time,
+                                status: 'Confirming',
+                                note: 'Inbound funds detected at the receiving bank. Order created and under reconciliation.'
+                            });
+                            if (credited) timeline.push({
+                                time: credited.time,
+                                status: 'Credited',
+                                note: 'Reconciliation complete. Funds added to your available balance.'
+                            });
+                            if (timeline.length === 0) timeline = tx.timeline;
+                        } else if (isTransfer) {
+                            // Mirror the Stablecoin transfer pattern but in fiat
+                            // language: Initiated → Pending Approval → Approved →
+                            // Completed. We synthesise each stage from the existing
+                            // timeline so seed data variations still produce the
+                            // same customer-facing four-step story.
+                            const findEv = (...statuses) => tx.timeline.find(ev => statuses.includes(ev.status));
+                            const initiated = findEv('Initiated', 'Created');
+                            const partial   = findEv('Partially Approved', 'Pending Approval');
+                            const approved  = findEv('Approved');
+                            const completed = findEv('Completed', 'Settled');
+
+                            const amountStr = (typeof tx.grossAmount === 'number')
+                                ? tx.grossAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + (tx.currency || '')
+                                : '';
+                            const benefName = tx.beneficiary?.name || tx.beneficiary?.bank || 'destination account';
+
+                            timeline = [];
+                            if (initiated) timeline.push({
+                                time: initiated.time,
+                                status: 'Initiated',
+                                note: 'Transfer order created. Receiving bank account verified as a same-name destination.'
+                            });
+                            if (partial || approved) timeline.push({
+                                time: (partial || approved).time,
+                                status: 'Pending Approval',
+                                note: 'Approval request sent to your team approvers per transfer policy.'
+                            });
+                            if (approved) timeline.push({
+                                time: approved.time,
+                                status: 'Approved',
+                                note: 'All approval tiers satisfied. Transfer queued for settlement.'
+                            });
+                            if (completed) timeline.push({
+                                time: completed.time,
+                                status: 'Completed',
+                                note: amountStr
+                                    ? `${amountStr} successfully delivered to ${benefName}.`
+                                    : `Funds successfully delivered to ${benefName}.`
+                            });
+                            if (timeline.length === 0) timeline = tx.timeline;
+                        }
+                        return timeline.map((ev, i) => {
+                            const st = timelineStatusStyle(ev.status);
+                            const isLast = i === timeline.length - 1;
+                            return `
+                            <div style="display:grid;grid-template-columns:20px 1fr;gap:14px;align-items:start;padding-bottom:${isLast ? '0' : '20px'};">
+                                <div style="display:flex;flex-direction:column;align-items:center;padding-top:3px;">
+                                    <div style="width:10px;height:10px;border-radius:50%;background:${isLast ? '#2563EB' : '#CBD5E1'};flex-shrink:0;${isLast ? 'box-shadow:0 0 0 3px rgba(37,99,235,0.15);' : ''}"></div>
+                                    ${!isLast ? '<div style="width:2px;flex:1;background:#E2E8F0;margin-top:5px;min-height:24px;"></div>' : ''}
                                 </div>
-                                <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
-                            </div>
-                        </div>`;
-                    }).join('')}
+                                <div>
+                                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+                                        <span style="font-size:12px;color:#64748B;">${ev.time}</span>
+                                        <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${st.bg};color:${st.color};">${ev.status}</span>
+                                    </div>
+                                    <div style="font-size:13px;color:#334155;line-height:1.6;">${ev.note}</div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    })()}
                 </div>
             </div>`;
 
@@ -13852,11 +13997,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                 <td class="text-right font-medium">- 12,500.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-success">Completed</span></td>
                             </tr>
-                            <tr data-date="2026-04-04" data-type="top-up" data-status="confirming" data-search="vt-20261023-0004 top up stablecoin vault tr7nhqjekqxgtci8q8zy4pl8otszgjlj6t 100,000 usdt confirming" onclick="window.openStableVaultTxDetail('VT-20261023-0004')" style="cursor:pointer;">
+                            <tr data-date="2026-04-04" data-type="top-up" data-status="confirming" data-search="vt-20261023-0004 top up stablecoin vault abc trading pte ltd tvkxyz7lnwqxgtci8q8zy4pl8otszgjlj6t 100,000 usdt confirming" onclick="window.openStableVaultTxDetail('VT-20261023-0004')" style="cursor:pointer;">
                                 <td class="text-muted">Apr 4, 11:20</td>
                                 <td style="font-family: monospace; font-size: 12px; color: #2563EB;">VT-20261023-0004</td>
                                 <td class="font-medium">Top Up</td>
-                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</td>
+                                <td style="font-size: 12px; color: var(--clr-text-muted); font-family: monospace;">${formatWalletListAddress('TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t', 'TRON')}</td>
                                 <td style="font-size: 12px; color: var(--clr-text-muted);">Stablecoin Vault</td>
                                 <td class="text-right font-medium text-success">+ 100,000.00 <span class="currency">USDT</span></td>
                                 <td><span class="status-badge status-warning" style="background-color: #FEF3C7; color: #D97706;">Confirming</span></td>
@@ -13944,8 +14089,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             blockHeight: 64812930, confirmations: 18, requiredConfirmations: 20,
             blockTimestamp: 'Apr 4, 2026  03:20:51 UTC',
             tokenContract: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
-            fromAddress: 'TXjjQZBmLUYKs8RdMkbqsmEsPedxPXRqkD',
-            fromLabel: 'OKX Trading (Address Book)',
+            fromAddress: 'TVkxyz7lNwQxGTCi8q8ZY4pL8otSzgjLj6t',
+            fromLabel: 'ABC Trading Pte Ltd (Address Book)',
             toAddress: 'TGzpNtNMdNqLFKxnRvLBmPh3cMBWbYJX1Z',
             toLabel: 'Obita Stablecoin Vault — Nancy_Test',
             grossAmount: 100000.00, networkFee: 0.00, netAmount: 100000.00,
@@ -14325,25 +14470,33 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                     </div>`;
         return `
-        <div class="fade-in" style="display: flex; flex-direction: column; gap: 24px;">
-            <div class="card" style="padding: 28px 32px; background: linear-gradient(180deg, #FCFDFE 0%, #F8FAFC 100%); border: 1px solid #E2E8F0;">
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                        <div style="width: 88px; height: 88px; border-radius: 24px; background: linear-gradient(180deg, #DCFCE7 0%, #BBF7D0 100%); border: 1px solid #86EFAC; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: #166534; font-size: 34px; font-weight: 700;">
-                            N
-                        </div>
-                        <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-                                <h2 style="font-size: 30px; font-weight: 700; color: #0F172A; margin: 0;">ABC Trading Pte Ltd</h2>
-                                <span style="display: inline-flex; align-items: center; gap: 8px; background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;">
-                                    <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
-                                    Business Verified
-                                </span>
+        <div class="fade-in" style="display: flex; flex-direction: column; gap: 18px;">
+            <!-- Editorial hero -->
+            <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                <div style="padding: 26px 32px 28px;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 14px;">
+                        <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                        Merchant · ${isMso ? 'MSO License' : 'TCSP License'}
+                    </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                            <div style="width: 80px; height: 80px; border-radius: 22px; background: linear-gradient(180deg, #DCFCE7 0%, #BBF7D0 100%); border: 1px solid #86EFAC; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.65); color: #166534; font-family: 'Clash Display','Inter',sans-serif; font-size: 32px; font-weight: 600;">
+                                N
                             </div>
-                            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px; color: #64748B;">
-                                <span>Created on: Nov 21, 2025, 10:49</span>
-                                <span style="color: #CBD5E1;">·</span>
-                                <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="badge-check" style="width: 13px; height: 13px; color: #059669;"></i>KYB passed on Nov 28, 2025</span>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                    <h2 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 30px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.018em;">ABC Trading Pte Ltd</h2>
+                                    <span style="display: inline-flex; align-items: center; gap: 6px; background: #DCFCE7; color: #166534; border: 1px solid #86EFAC; padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;">
+                                        <i data-lucide="shield-check" style="width: 13px; height: 13px;"></i>
+                                        Business Verified
+                                    </span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; letter-spacing: 0.04em;">
+                                    <span>Created Nov 21, 2025 · 10:49</span>
+                                    <span style="color: #CBD5E1;">·</span>
+                                    <span style="display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="badge-check" style="width: 12px; height: 12px; color: #059669;"></i>KYB passed Nov 28, 2025</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -14351,11 +14504,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             </div>
 
             <div class="card" style="padding: 0; overflow: hidden;">
-                <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; display: flex; align-items: center; justify-content: center; color: #2563EB;">
-                        <i data-lucide="badge-info" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Merchant Profile</h3>
+                <div style="padding: 18px 28px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                    <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Merchant Profile</h3>
                 </div>
                 <div style="padding: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px;">
                     <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -14383,14 +14534,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
             <!-- Collection Settings -->
             <div class="card" style="padding: 0; overflow: visible; position: relative; z-index: 5;">
-                <div style="padding: 24px 28px; border-bottom: 1px solid #E2E8F0; border-top-left-radius: inherit; border-top-right-radius: inherit; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <div style="padding: 18px 28px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; border-top-left-radius: inherit; border-top-right-radius: inherit; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 34px; height: 34px; border-radius: 10px; background: #ECFDF5; display: flex; align-items: center; justify-content: center; border: 1px solid #A7F3D0;">
-                            <i data-lucide="coins" style="width: 16px; height: 16px; color: #047857;"></i>
-                        </div>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
                         <div>
-                            <h3 style="font-size: 20px; font-weight: 700; color: #0F172A; margin: 0;">Collection Settings</h3>
-                            <div style="font-size: 12.5px; color: #64748B; margin-top: 4px;">Global preferences applied to every Invoice and Checkout collection.</div>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Collection Settings</h3>
+                            <div style="font-size: 11.5px; color: #64748B; margin-top: 3px;">Global preferences applied to every Invoice and Checkout collection.</div>
                         </div>
                     </div>
                     <div id="collection-settings-actions" style="display: flex; align-items: center; gap: 8px;">
@@ -14592,20 +14741,22 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         return `
         <div class="fade-in" style="max-width: 1020px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; padding-bottom: 40px;">
 
-            <!-- Page header -->
-            <div class="card" style="padding: 22px 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div style="width: 40px; height: 40px; border-radius: 12px; background: #EFF6FF; border: 1px solid #BFDBFE; display: inline-flex; align-items: center; justify-content: center;">
-                        <i data-lucide="shield-check" style="width: 18px; height: 18px; color: #1D4ED8;"></i>
-                    </div>
+            <!-- Editorial header -->
+            <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                <div style="padding: 22px 28px 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                     <div>
-                        <h1 style="font-size: 20px; font-weight: 800; color: #0F172A; margin: 0;">Security Center</h1>
-                        <div style="font-size: 13px; color: #64748B; margin-top: 3px;">Control how your team accesses the portal and review login activity across the organization.</div>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 12px;">
+                            <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                            Security · Access & Audit
+                        </div>
+                        <h1 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 26px; font-weight: 600; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.018em;">Security Center</h1>
+                        <div style="font-size: 12.5px; color: #64748B; line-height: 1.55; max-width: 560px;">Control how your team accesses the portal and review login activity across the organization.</div>
                     </div>
+                    <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em;">
+                        <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>Admin · Nancy User
+                    </span>
                 </div>
-                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">
-                    <i data-lucide="user-check" style="width: 12px; height: 12px;"></i>Admin · Nancy User
-                </span>
             </div>
 
             <!-- IP Allowlist -->
@@ -14762,20 +14913,20 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 { level: 'Level 1', name: 'Nancy Test', status: 'Pending', actedAt: '-' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong ••••XXXX', currency: 'USD', amount: '14,200.00 USD', fee: '18.00 USD', net: '14,182.00 USD', status: 'Pending Approval', note: 'Supplier Payment' }
+                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong', destinationKind: 'bank', destinationFull: '0011225588', currency: 'USD', amount: '14,200.00 USD', fee: '28.40 USD', net: '14,228.40 USD', status: 'Pending Approval', note: 'Supplier Payment' }
             ]
         },
         'PO-20260405-0102': {
             timeline: [
                 { time: 'Apr 5, 2026 17:02', status: 'Created', note: 'Payout order created by Nancy User.' },
                 { time: 'Apr 5, 2026 17:08', status: 'Approved', note: 'Approved by Nancy Test.' },
-                { time: 'Apr 5, 2026 17:16', status: 'Completed', note: 'Wallet transfer completed successfully.' }
+                { time: 'Apr 5, 2026 17:16', status: 'Completed', note: 'Payout executed successfully — 8,500.00 USDT debited from vault and delivered to beneficiary wallet.' }
             ],
             approvers: [
                 { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 5, 2026 17:08' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', currency: 'USDT', amount: '8,500.00 USDT', fee: '6.00 USDT', net: '8,494.00 USDT', status: 'Completed', note: 'Logistics Settlement' }
+                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', destinationKind: 'wallet', destinationChain: 'Polygon', destinationFull: '0x71F08a3C4Ed91D2b95cF0bC1c3a9e5F4dA8C82E1', currency: 'USDT', amount: '8,500.00 USDT', fee: '17.00 USDT', net: '8,517.00 USDT', status: 'Completed', note: 'Logistics Settlement' }
             ]
         },
         'PB-20260406-0008': {
@@ -14788,69 +14939,65 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 { level: 'Level 1', name: 'Nancy Test', status: 'Pending', actedAt: '-' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong ••••4488', currency: 'USD', amount: '14,200.00 USD', fee: '18.00 USD', net: '14,182.00 USD', status: 'Pending Approval', note: 'Supplier Payment - April cycle' },
-                { sequence: '02', payee: 'Michael Chen', destination: 'DBS Bank Singapore ••••7890', currency: 'USD', amount: '9,420.00 USD', fee: '15.00 USD', net: '9,405.00 USD', status: 'Pending Approval', note: 'Consulting fee settlement' },
-                { sequence: '03', payee: 'Global Supply Co.', destination: 'JPMorgan Chase ••••4321', currency: 'USD', amount: '25,000.00 USD', fee: '20.00 USD', net: '24,980.00 USD', status: 'Pending Approval', note: 'Inventory replenishment' }
+                { sequence: '01', payee: 'Shenzhen Apex Electronics', destination: 'HSBC Hong Kong', destinationKind: 'bank', destinationFull: '0011224488', currency: 'USD', amount: '14,200.00 USD', fee: '28.40 USD', net: '14,228.40 USD', status: 'Pending Approval', note: 'Supplier Payment - April cycle' },
+                { sequence: '02', payee: 'Michael Chen', destination: 'DBS Bank Singapore', destinationKind: 'bank', destinationFull: '0099887890', currency: 'USD', amount: '9,420.00 USD', fee: '18.84 USD', net: '9,438.84 USD', status: 'Pending Approval', note: 'Consulting fee settlement' },
+                { sequence: '03', payee: 'Global Supply Co.', destination: 'JPMorgan Chase', destinationKind: 'bank', destinationFull: '0098774321', currency: 'USD', amount: '25,000.00 USD', fee: '50.00 USD', net: '25,050.00 USD', status: 'Pending Approval', note: 'Inventory replenishment' }
             ]
         },
         'PB-20260404-0005': {
             timeline: [
                 { time: 'Apr 4, 2026 14:18', status: 'Created', note: 'Weekly treasury payout batch created with 5 payout requests.' },
                 { time: 'Apr 4, 2026 14:26', status: 'Approved', note: 'Approved by Nancy Test.' },
-                { time: 'Apr 4, 2026 14:40', status: 'Released', note: 'Batch released to payout engine.' },
-                { time: 'Apr 4, 2026 15:12', status: 'Completed', note: 'All payout requests settled successfully.' }
+                { time: 'Apr 4, 2026 15:12', status: 'Completed', note: 'Payout batch executed successfully — all 5 payout requests debited from vault and delivered to beneficiaries.' }
             ],
             approvers: [
                 { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 4, 2026 14:26' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', currency: 'USDC', amount: '18,600.00 USDC', fee: '5.00 USDC', net: '18,595.00 USDC', status: 'Completed', note: 'Regional logistics settlement' },
-                { sequence: '02', payee: 'Harbor Medical Labs', destination: 'Citibank NA ••••8102', currency: 'USDC', amount: '24,000.00 USDC', fee: '8.00 USDC', net: '23,992.00 USDC', status: 'Completed', note: 'Clinical supply rebate' },
-                { sequence: '03', payee: 'Kairo Commerce', destination: 'Ethereum wallet', currency: 'USDC', amount: '31,500.00 USDC', fee: '7.00 USDC', net: '31,493.00 USDC', status: 'Completed', note: 'Marketplace settlement' },
-                { sequence: '04', payee: 'Nordic Freight Systems', destination: 'HSBC UK ••••2210', currency: 'USDC', amount: '22,100.00 USDC', fee: '9.00 USDC', net: '22,091.00 USDC', status: 'Completed', note: 'Freight service fee' },
-                { sequence: '05', payee: 'Bluepeak Services', destination: 'TRON wallet', currency: 'USDC', amount: '30,200.00 USDC', fee: '11.00 USDC', net: '30,189.00 USDC', status: 'Completed', note: 'Technology service retainer' }
+                { sequence: '01', payee: 'Nova Logistics', destination: 'Polygon wallet', destinationKind: 'wallet', destinationChain: 'Polygon', destinationFull: '0x71F08a3C4Ed91D2b95cF0bC1c3a9e5F4dA8C82E1', currency: 'USDC', amount: '18,600.00 USDC', fee: '37.20 USDC', net: '18,637.20 USDC', status: 'Completed', note: 'Regional logistics settlement' },
+                { sequence: '02', payee: 'Harbor Medical Labs', destination: 'Citibank NA', destinationKind: 'bank', destinationFull: '0044778102', currency: 'USDC', amount: '24,000.00 USDC', fee: '48.00 USDC', net: '24,048.00 USDC', status: 'Completed', note: 'Clinical supply rebate' },
+                { sequence: '03', payee: 'Kairo Commerce', destination: 'Ethereum wallet', destinationKind: 'wallet', destinationChain: 'Ethereum', destinationFull: '0x9d4f2C8e1A0bF3e7d2A5cB9D8fE3a1B2C5D7e0f4', currency: 'USDC', amount: '31,500.00 USDC', fee: '63.00 USDC', net: '31,563.00 USDC', status: 'Completed', note: 'Marketplace settlement' },
+                { sequence: '04', payee: 'Nordic Freight Systems', destination: 'HSBC UK', destinationKind: 'bank', destinationFull: 'GB29NWBK6016 1331 9262 2210', currency: 'USDC', amount: '22,100.00 USDC', fee: '44.20 USDC', net: '22,144.20 USDC', status: 'Completed', note: 'Freight service fee' },
+                { sequence: '05', payee: 'Bluepeak Services', destination: 'TRON wallet', destinationKind: 'wallet', destinationChain: 'TRON', destinationFull: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', currency: 'USDC', amount: '30,200.00 USDC', fee: '60.40 USDC', net: '30,260.40 USDC', status: 'Completed', note: 'Technology service retainer' }
             ]
         },
         'PO-20260405-0088': {
             timeline: [
                 { time: 'Apr 5, 2026 11:24', status: 'Created',   note: 'Payout order created by Nancy User.' },
                 { time: 'Apr 5, 2026 11:28', status: 'Approved',  note: 'Approved by Nancy Test.' },
-                { time: 'Apr 5, 2026 11:35', status: 'Processing', note: 'Outbound wire submitted to JPMorgan Chase via SWIFT MT103.' },
-                { time: 'Apr 5, 2026 12:47', status: 'Completed', note: 'USD 32,500.00 delivered to beneficiary. SWIFT confirmation (MT910) received.' }
+                { time: 'Apr 5, 2026 12:47', status: 'Completed', note: 'Payout executed successfully — 32,500.00 USD debited from vault and delivered to beneficiary (SWIFT MT910 confirmed).' }
             ],
             approvers: [
                 { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 5, 2026 11:28' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Pacific Rim Trading Co.', destination: 'JPMorgan Chase ••••9410', currency: 'USD', amount: '32,500.00 USD', fee: '38.00 USD', net: '32,462.00 USD', status: 'Completed', note: 'April supplier invoice PRT-20260401-018' }
+                { sequence: '01', payee: 'Pacific Rim Trading Co.', destination: 'JPMorgan Chase', destinationKind: 'bank', destinationFull: '0099889410', currency: 'USD', amount: '32,500.00 USD', fee: '65.00 USD', net: '32,565.00 USD', status: 'Completed', note: 'April supplier invoice PRT-20260401-018' }
             ]
         },
         'PO-20260403-0062': {
             timeline: [
                 { time: 'Apr 3, 2026 16:08', status: 'Created',   note: 'Payout order created by Nancy User.' },
                 { time: 'Apr 3, 2026 16:14', status: 'Approved',  note: 'Approved by Nancy Test.' },
-                { time: 'Apr 3, 2026 16:22', status: 'Processing', note: 'HKD outbound transfer released to HSBC Hong Kong.' },
-                { time: 'Apr 3, 2026 17:04', status: 'Completed', note: 'HKD 186,400.00 credited to beneficiary bank account. Transfer confirmation received.' }
+                { time: 'Apr 3, 2026 17:04', status: 'Completed', note: 'Payout executed successfully — 186,400.00 HKD debited from vault and delivered to beneficiary bank account.' }
             ],
             approvers: [
                 { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 3, 2026 16:14' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Sterling Freight Ltd.', destination: 'HSBC Hong Kong ••••3278', currency: 'HKD', amount: '186,400.00 HKD', fee: '120.00 HKD', net: '186,280.00 HKD', status: 'Completed', note: 'Q1 freight logistics settlement' }
+                { sequence: '01', payee: 'Sterling Freight Ltd.', destination: 'HSBC Hong Kong', destinationKind: 'bank', destinationFull: '0033003278', currency: 'HKD', amount: '186,400.00 HKD', fee: '372.80 HKD', net: '186,772.80 HKD', status: 'Completed', note: 'Q1 freight logistics settlement' }
             ]
         },
         'PO-20260402-0041': {
             timeline: [
                 { time: 'Apr 2, 2026 10:52', status: 'Created',   note: 'Payout order created by Nancy User.' },
                 { time: 'Apr 2, 2026 11:02', status: 'Approved',  note: 'Approved by Nancy Test.' },
-                { time: 'Apr 2, 2026 11:18', status: 'Processing', note: 'EUR outbound wire submitted via SEPA.' },
-                { time: 'Apr 2, 2026 14:46', status: 'Failed',    note: 'Beneficiary bank rejected the transfer — account number does not match registered holder. No funds were debited.' }
+                { time: 'Apr 2, 2026 14:46', status: 'Failed',    note: 'Payout execution failed — beneficiary bank rejected the transfer (account holder mismatch). No funds were debited from vault.' }
             ],
             approvers: [
                 { level: 'Level 1', name: 'Nancy Test', status: 'Approved', actedAt: 'Apr 2, 2026 11:02' }
             ],
             payouts: [
-                { sequence: '01', payee: 'Orion Marketing GmbH', destination: 'Deutsche Bank ••••5521', currency: 'EUR', amount: '18,250.00 EUR', fee: '24.00 EUR', net: '18,226.00 EUR', status: 'Failed', note: 'Account holder mismatch — coordinate corrected beneficiary details before resubmission.' }
+                { sequence: '01', payee: 'Orion Marketing GmbH', destination: 'Deutsche Bank', destinationKind: 'bank', destinationFull: 'DE89370400440532015521', currency: 'EUR', amount: '18,250.00 EUR', fee: '36.50 EUR', net: '18,286.50 EUR', status: 'Failed', note: 'Account holder mismatch — coordinate corrected beneficiary details before resubmission.' }
             ]
         }
     };
@@ -16099,50 +16246,69 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             const pmTint = pmIsQr ? { bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE' } : { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' };
             const pmPill = `<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: ${pmTint.bg}; color: ${pmTint.color}; border: 1px solid ${pmTint.border}; font-size: 12px; font-weight: 600;"><i data-lucide="${pmIcon}" style="width: 12px; height: 12px;"></i>${pmLabel}</span>`;
 
-            // Hero status badge (matches checkout styling)
             const statusPill = getOrderReportStatusPill(order.status);
-            const statusIcon = _isPaidLike ? 'check-circle-2' : (/expired|fail/i.test(order.status || '') ? 'x-circle' : 'clock');
-            const heroStatus = `<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: ${statusPill.bg}; color: ${statusPill.color}; font-size: 13px; font-weight: 700; letter-spacing: 0.01em;"><i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>${statusPill.label}</span>`;
 
             // Underpaid detection — partial inbound payment against invoice amount.
             const _parseAmt = (s) => parseFloat(String(s || '').replace(/[^0-9.]/g, '')) || 0;
             const _amt = _parseAmt(order.amount);
             const _col = _parseAmt(order.collected);
             const _underpaid = _amt > 0 && _col > 0 && _col < _amt;
-            // Prominent badge for hero (next to status)
-            const underpaidHeroBadge = _underpaid
-                ? `<span style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 13px; font-weight: 700; letter-spacing: 0.01em;"><i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>Underpaid</span>`
-                : '';
-            // Inline badge for beside Invoice Amount label
             const underpaidInlineBadge = _underpaid
                 ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px; background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-left: 8px; vertical-align: middle;"><i data-lucide="alert-triangle" style="width: 10px; height: 10px;"></i>Underpaid</span>`
                 : '';
 
-            // Sub-section style — strong dividers (matches checkout)
-            const subHeadStyle = 'padding: 14px 24px 10px; border-top: 2px solid #E2E8F0; background: #F8FAFC;';
-            const subLabelStyle = 'font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;';
+            const _isMso = window.currentLicenseMode === 'MSO';
+            const _modeLabel = _isMso ? 'MSO · Invoice Order' : 'TCSP · Invoice Order';
+            const _amountColor = /fail|expired/i.test(order.status || '') ? '#DC2626' : '#0F172A';
+
+            // Sub-section style — brass eyebrow strip matching payout/checkout detail.
+            const subHeadStyle = 'padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 12px;';
+            const subLabelStyle = "font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase; margin: 0;";
 
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
-                    <div class="card entity-hero-card" style="padding: 22px 28px 24px; position: relative;">
-                        <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'">← Back to Invoice Orders</button>
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <h1 class="invoice-page-title" style="margin: 0 0 6px;">Invoice Order Detail</h1>
-                                <div style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">${order.invoiceNo}</div>
+                    <!-- Editorial header card (parity with Payout Order detail) -->
+                    <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                        <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                        <div style="padding: 22px 28px 24px;">
+                            <button onclick="window.backToInvoiceOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Invoice Orders</button>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                                        <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                                        ${_modeLabel}
+                                    </span>
+                                    <span style="background: ${statusPill.bg}; color: ${statusPill.color}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">${statusPill.label}</span>
+                                    ${_underpaid ? `<span style="background: #FEF3C7; color: #B45309; border: 1px solid #FDE68A; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em; display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="alert-triangle" style="width: 10px; height: 10px;"></i>Underpaid</span>` : ''}
+                                </div>
+                                ${_isPaidLike ? `
+                                    <button onclick="window.downloadInvoiceReceipt()" style="padding: 6px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                ` : `
+                                    <button title="Receipt is available once the invoice is paid" disabled style="padding: 6px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                `}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-                                ${heroStatus}
-                                ${underpaidHeroBadge}
-                                ${_isPaidLike ? `<button onclick="window.downloadInvoiceReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                <div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Invoice No.</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #0F172A; letter-spacing: 0.02em;">${order.invoiceNo}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94A3B8; margin-top: 6px; letter-spacing: 0.02em;">${order.issuedOn}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Invoice Amount</div>
+                                    <div style="font-family: 'Clash Display','Inter',sans-serif; font-size: 34px; font-weight: 600; color: ${_amountColor}; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
+                                    ${order.collected && order.collected !== order.amount ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${_underpaid ? '#B45309' : (_isPaidLike ? '#15803D' : '#94A3B8')}; margin-top: 6px; letter-spacing: 0.02em;">Collected · ${order.collected}</div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Order Information (merged): main + Payment + Line Items + Payment Records + Settlement Records as sub-sections -->
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Order Information</h3>
                         </div>
 
                         <!-- Expandable Payer card — shows alias by default, click to reveal
@@ -16212,21 +16378,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             ` : ''}
                         </div>
 
-                        <!-- Sub-section: Payment -->
-                        <div style="${subHeadStyle}">
-                            <h4 style="${subLabelStyle}">Payment</h4>
-                        </div>
-                        <div style="padding: 18px 24px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div style="grid-column: 1 / -1;">
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Invoice Amount</div>
-                                <div style="display: inline-flex; align-items: baseline; gap: 4px; flex-wrap: wrap; margin-top: 6px;">
-                                    <div style="font-family: var(--font-display); font-size: 30px; font-weight: 500; color: #0B1433; letter-spacing: -0.025em; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
-                                    ${underpaidInlineBadge}
-                                </div>
-                                ${_underpaid ? `<div style="font-size: 12px; color: #B45309; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;"><i data-lucide="info" style="width: 12px; height: 12px;"></i>Outstanding <strong style="font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.01em;">${(_amt - _col).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${String(order.amount).replace(/[\d,.\s]/g, '').trim()}</strong> expected before settlement.</div>` : ''}
-                            </div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Collected Amount</div><div style="font-size: 14px; font-weight: 700; color: ${_underpaid ? '#B45309' : (_isPaidLike ? '#15803D' : '#0F172A')}; margin-top: 6px; font-variant-numeric: tabular-nums;">${order.collected}</div></div>
-                        </div>
+                        ${_underpaid ? `<div style="padding: 0 24px 16px;"><div style="font-size: 12px; color: #B45309; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 8px;"><i data-lucide="info" style="width: 12px; height: 12px;"></i>Outstanding <strong style="font-family: var(--font-mono); font-weight: 700; letter-spacing: 0.01em;">${(_amt - _col).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${String(order.amount).replace(/[\d,.\s]/g, '').trim()}</strong> expected before settlement.</div></div>` : ''}
 
                         ${detail ? `
                         <!-- Sub-section: Line Items -->
@@ -16251,7 +16403,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
 
                         <!-- Sub-section: Inbound Payment Records -->
-                        <div style="${subHeadStyle} display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="${subHeadStyle}">
                             <h4 style="${subLabelStyle}">Inbound Payment Records</h4>
                             ${detail.paymentRecords.length ? `<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 999px;">${detail.paymentRecords.length}</span>` : ''}
                         </div>
@@ -16293,7 +16445,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
 
                         <!-- Sub-section: Settlement Records — Obita fee is booked here. -->
-                        <div style="${subHeadStyle} display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="${subHeadStyle}">
                             <h4 style="${subLabelStyle}">Settlement Records</h4>
                             ${(detail.settlementRecords || []).length ? `<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 999px;">${detail.settlementRecords.length}</span>` : ''}
                         </div>
@@ -16359,16 +16511,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                     ${detail ? `
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Status History</h3>
                         </div>
                         <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
                             ${detail.timeline.map((event, index) => `
-                                <div style="display: grid; grid-template-columns: 18px 180px 140px 1fr; gap: 16px; align-items: start;">
+                                <div style="display: grid; grid-template-columns: 18px 180px 150px 1fr; gap: 16px; align-items: start;">
                                     <div style="display: flex; justify-content: center; padding-top: 2px;">
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
-                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; letter-spacing: 0.02em;">${event.time}</div>
                                     <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
@@ -16635,38 +16788,58 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             const pmTint = pmIsQr ? { bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE' } : { bg: '#EFF6FF', color: '#1D4ED8', border: '#BFDBFE' };
             const pmPill = `<span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: ${pmTint.bg}; color: ${pmTint.color}; border: 1px solid ${pmTint.border}; font-size: 12px; font-weight: 600;"><i data-lucide="${pmIcon}" style="width: 12px; height: 12px;"></i>${pmLabel}</span>`;
 
-            // Prominent status badge for the hero — bigger than the default pill,
-            // uses the same tone (from getOrderReportStatusPill) but with an icon
-            // and stronger typography.
             const statusPill = getOrderReportStatusPill(order.status);
-            const statusIcon = _isPaidLike ? 'check-circle-2' : (/expired|fail/i.test(order.status || '') ? 'x-circle' : 'clock');
-            const heroStatus = `<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: ${statusPill.bg}; color: ${statusPill.color}; font-size: 13px; font-weight: 700; letter-spacing: 0.01em;"><i data-lucide="${statusIcon}" style="width: 14px; height: 14px;"></i>${statusPill.label}</span>`;
+            const _isMso = window.currentLicenseMode === 'MSO';
+            const _modeLabel = _isMso ? 'MSO · Checkout Order' : 'TCSP · Checkout Order';
+            const _amountColor = /fail|expired/i.test(order.status || '') ? '#DC2626' : '#0F172A';
 
-            // Sub-section style — strong dividers the user asked for (2px thick top
-            // border in slate-200 + muted slate bg on the header strip).
-            const subHeadStyle = 'padding: 14px 24px 10px; border-top: 2px solid #E2E8F0; background: #F8FAFC;';
-            const subLabelStyle = 'font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;';
+            // Sub-section style — brass eyebrow strip matching payout/stablecoin detail.
+            const subHeadStyle = 'padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 12px;';
+            const subLabelStyle = "font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase; margin: 0;";
 
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
-                    <div class="card entity-hero-card" style="padding: 22px 28px 24px; position: relative;">
-                        <button onclick="window.backToCheckoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'">← Back to Checkout Orders</button>
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <h1 class="invoice-page-title" style="margin: 0 0 6px;">Checkout Order Detail</h1>
-                                <div style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">${order.checkoutId}</div>
+                    <!-- Editorial header card (parity with Payout Order detail) -->
+                    <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                        <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                        <div style="padding: 22px 28px 24px;">
+                            <button onclick="window.backToCheckoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Checkout Orders</button>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                                        <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                                        ${_modeLabel}
+                                    </span>
+                                    <span style="background: ${statusPill.bg}; color: ${statusPill.color}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">${statusPill.label}</span>
+                                </div>
+                                ${_isPaidLike ? `
+                                    <button onclick="window.downloadCheckoutReceipt()" style="padding: 6px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                ` : `
+                                    <button title="Receipt is available once the order is paid" disabled style="padding: 6px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                `}
                             </div>
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-                                ${heroStatus}
-                                ${_isPaidLike ? `<button onclick="window.downloadCheckoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>` : ''}
+
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                <div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Checkout ID</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #0F172A; letter-spacing: 0.02em;">${order.checkoutId}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94A3B8; margin-top: 6px; letter-spacing: 0.02em;">${order.createdAt}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Order Amount</div>
+                                    <div style="font-family: 'Clash Display','Inter',sans-serif; font-size: 34px; font-weight: 600; color: ${_amountColor}; letter-spacing: -0.02em; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
+                                    ${order.paidAmount && order.paidAmount !== order.amount ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: ${_isPaidLike ? '#15803D' : '#94A3B8'}; margin-top: 6px; letter-spacing: 0.02em;">Paid · ${order.paidAmount}</div>` : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Order Information (merged): main + Payment + Settlement + Payment Records as sub-sections -->
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Order Information</h3>
                         </div>
 
                         <!-- Main fields -->
@@ -16699,21 +16872,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             ` : ''}
                         </div>
 
-                        <!-- Sub-section: Payment -->
-                        <div style="${subHeadStyle}">
-                            <h4 style="${subLabelStyle}">Payment</h4>
-                        </div>
-                        <div style="padding: 18px 24px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div style="grid-column: 1 / -1;">
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div>
-                                <div style="font-family: var(--font-display); font-size: 30px; font-weight: 500; color: #0B1433; letter-spacing: -0.025em; margin-top: 6px; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
-                            </div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Paid Amount</div><div style="font-size: 14px; font-weight: 700; color: ${_isPaidLike ? '#15803D' : '#0F172A'}; margin-top: 6px; font-variant-numeric: tabular-nums;">${order.paidAmount}</div></div>
-                        </div>
-
                         ${detail ? `
                         <!-- Sub-section: Inbound Payment Records -->
-                        <div style="${subHeadStyle} display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="${subHeadStyle}">
                             <h4 style="${subLabelStyle}">Inbound Payment Records</h4>
                             ${detail.paymentRecords.length ? `<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 999px;">${detail.paymentRecords.length}</span>` : ''}
                         </div>
@@ -16740,7 +16901,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                         <!-- Sub-section: Settlement Records — when a matched inbound payment
                              has been forwarded to the destination vault. -->
-                        <div style="${subHeadStyle} display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="${subHeadStyle}">
                             <h4 style="${subLabelStyle}">Settlement Records</h4>
                             ${(detail.settlementRecords || []).length ? `<span style="font-size: 11px; font-weight: 700; color: #475569; background: #FFFFFF; border: 1px solid #CBD5E1; padding: 2px 8px; border-radius: 999px;">${detail.settlementRecords.length}</span>` : ''}
                         </div>
@@ -16775,16 +16936,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
                     ${detail ? `
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Status History</h3>
                         </div>
                         <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
                             ${detail.timeline.map((event, index) => `
-                                <div style="display: grid; grid-template-columns: 18px 180px 140px 1fr; gap: 16px; align-items: start;">
+                                <div style="display: grid; grid-template-columns: 18px 180px 150px 1fr; gap: 16px; align-items: start;">
                                     <div style="display: flex; justify-content: center; padding-top: 2px;">
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
-                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; letter-spacing: 0.02em;">${event.time}</div>
                                     <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
@@ -17065,7 +17227,8 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
     function normalizeOrderStatus(status) {
         const value = String(status || '').trim().toLowerCase();
-        if (['completed', 'confirmed', 'paid', 'settled', 'approved'].includes(value)) return 'Completed';
+        if (value === 'approved') return 'Approved';
+        if (['completed', 'confirmed', 'paid', 'settled'].includes(value)) return 'Completed';
         if (['pending approval', 'awaiting approval', 'pending'].includes(value)) return 'Awaiting Approval';
         if (['proceeding', 'in progress', 'pending payment', 'quote locked', 'confirming', 'scheduled', 'pending fx lock', 'pending collection', 'in reserve', 'underpaid', 'partially paid', 'under review', 'accrued'].includes(value)) return 'In Progress';
         if (['failed', 'rejected'].includes(value)) return 'Failed';
@@ -17138,6 +17301,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const map = {
             'In Progress': { bg: '#EFF6FF', color: '#1D4ED8' },
             'Awaiting Approval': { bg: '#FEF3C7', color: '#B45309' },
+            'Approved': { bg: '#EFF6FF', color: '#1D4ED8' },
             'Completed': { bg: '#ECFDF5', color: '#15803D' },
             'Failed': { bg: '#FEF2F2', color: '#B91C1C' },
             'Expired': { bg: '#FFF1F2', color: '#BE123C' },
@@ -21724,13 +21888,14 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         );
     };
 
+    // Flat 0.2% payout fee across every currency, no minimum.
     const PAYOUT_FEE_CONFIG = {
-        USDT: { rate: 0.0012, min: 6 },
-        USDC: { rate: 0.0012, min: 6 },
-        USD: { rate: 0.0015, min: 12 },
-        HKD: { rate: 0.0015, min: 90 },
-        EUR: { rate: 0.0015, min: 10 },
-        BRL: { rate: 0.0018, min: 40 }
+        USDT: { rate: 0.002, min: 0 },
+        USDC: { rate: 0.002, min: 0 },
+        USD:  { rate: 0.002, min: 0 },
+        HKD:  { rate: 0.002, min: 0 },
+        EUR:  { rate: 0.002, min: 0 },
+        BRL:  { rate: 0.002, min: 0 }
     };
 
     function getPayoutSourceOptions() {
@@ -21789,11 +21954,36 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
     function getPayeeDestinationOptions(payee, payoutCurrency) {
         if (!payee || !payoutCurrency) return [];
 
+        // Format the dropdown label as: first 6 + last 4 + (chain short) for wallets,
+        // and bankName · ••••XXXX for banks. Keeps every row's option visually
+        // identical-length so the multi-row payout grid stays clean.
+        const shortChain = (network) => {
+            if (!network) return '';
+            const n = String(network);
+            if (/TRC-?20|TRON/i.test(n))         return 'TRC-20';
+            if (/ERC-?20|Ethereum/i.test(n))     return 'ERC-20';
+            if (/BEP-?20|BNB|Binance Smart/i.test(n)) return 'BEP-20';
+            if (/Polygon/i.test(n))              return 'POLYGON';
+            if (/Solana/i.test(n))               return 'SOL';
+            if (/Arbitrum/i.test(n))             return 'ARBITRUM';
+            return n.length > 12 ? n.slice(0, 12) : n;
+        };
+        const maskAddr = (addr) => {
+            const s = String(addr || '');
+            return s.length > 14 ? `${s.slice(0, 6)}····${s.slice(-4)}` : s;
+        };
+        const maskAccount = (acct) => {
+            const s = String(acct || '').replace(/\s+/g, '');
+            // Already-masked strings (containing • or *) pass through; otherwise show last 4.
+            if (/[•·\*]/.test(s)) return s;
+            return s.length > 4 ? `••••${s.slice(-4)}` : s;
+        };
+
         // In MSO mode, only bank destinations are available
         if (window.currentLicenseMode !== 'MSO' && isStablecoinCurrency(payoutCurrency)) {
             return (payee.wallets || []).map((wallet, index) => ({
                 key: `wallet-${index}`,
-                label: `${wallet.network} - ${wallet.address}`,
+                label: `${maskAddr(wallet.address)} (${shortChain(wallet.network)})`,
                 value: wallet.address,
                 meta: wallet.network,
                 kind: 'wallet'
@@ -21802,7 +21992,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         return (payee.banks || []).map((bank, index) => ({
             key: `bank-${index}`,
-            label: `${bank.bankName} - ${bank.account}`,
+            label: `${bank.bankName} · ${maskAccount(bank.account)}`,
             value: bank.account,
             meta: bank.bankName,
             kind: 'bank'
@@ -21814,7 +22004,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
         const amount = parseFloat(row.amount) || 0;
         const rate = getAssetConversionRate(sourceCurrency, payoutCurrency);
         const sourceAmount = rate ? amount / rate : amount;
-        const feeConfig = PAYOUT_FEE_CONFIG[payoutCurrency] || { rate: 0.0015, min: 10 };
+        const feeConfig = PAYOUT_FEE_CONFIG[payoutCurrency] || { rate: 0.002, min: 0 };
         const feeInPayoutCurrency = amount > 0 ? Math.max(amount * feeConfig.rate, feeConfig.min) : 0;
         const feeInSourceCurrency = rate ? feeInPayoutCurrency / rate : feeInPayoutCurrency;
 
@@ -22253,7 +22443,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         const rowIndex = batch.requests.indexOf(row);
         return `
-            <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 14px 18px; border-bottom: 1px solid #F1F5F9; align-items: center;">
+            <div data-payout-row-id="${row.id}" style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 14px 18px 28px; border-bottom: 1px solid #F1F5F9; align-items: center;">
                 <div style="font-size: 13px; font-weight: 700; color: #CBD5E1; text-align: center;">${String(rowIndex + 1).padStart(2, '0')}</div>
                 <div class="payout-payee-dropdown" style="position: relative;">
                     <button type="button" data-focus-key="payout-payee-${row.id}" class="bank-form-control payout-payee-trigger" onclick="window.togglePayoutPayeeDropdown('${row.id}', event)" aria-haspopup="listbox" aria-label="Select payee" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; ${!payee ? 'color: #94A3B8;' : ''}">
@@ -22283,11 +22473,11 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                 <div>
                     <input data-focus-key="payout-amount-${row.id}" class="bank-form-control" type="number" min="0" step="0.01" value="${row.amount}" placeholder="0.00" oninput="window.updatePayoutRequestField('${row.id}', 'amount', this.value)" aria-label="Amount">
                 </div>
-                <div>
+                <div style="position: relative;">
                     <div class="bank-form-control" data-role="source-amount" style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; color: #0F172A; background: #F8FAFC;">
                         <span>${batch.sourceCurrency ? formatTransferMoney(calculation.sourceAmount, batch.sourceCurrency) : '0.00'}</span>
                     </div>
-                    <div data-role="fx-rate" style="font-size: 10px; color: #94A3B8; margin-top: 4px;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : ''}</div>
+                    <div data-role="fx-rate" style="position: absolute; left: 0; top: 100%; margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #94A3B8; white-space: nowrap; pointer-events: none;">${batch.sourceCurrency ? `1 ${batch.sourceCurrency} = ${calculation.rate.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ${calculation.payoutCurrency}` : ''}</div>
                 </div>
                 <div>
                     <select id="payout-row-destination-${row.id}" data-focus-key="payout-destination-${row.id}" class="bank-form-control" onchange="window.updatePayoutRequestField('${row.id}', 'destinationKey', this.value)" aria-label="${destinationTypeLabel}">
@@ -22299,7 +22489,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     </select>
                 </div>
                 <div>
-                    <input data-focus-key="payout-note-${row.id}" class="bank-form-control" type="text" value="${row.note || ''}" placeholder="Note" oninput="window.updatePayoutRequestField('${row.id}', 'note', this.value)" aria-label="Note" style="font-size: 12px;">
+                    <input data-focus-key="payout-note-${row.id}" class="bank-form-control" type="text" value="${row.note || ''}" placeholder="Note" oninput="window.updatePayoutRequestField('${row.id}', 'note', this.value)" aria-label="Note">
                 </div>
                 <div style="display: flex; align-items: center; justify-content: center;">
                     ${batch.requests.length > 1 ? `
@@ -22465,26 +22655,33 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
 
         contentBody.innerHTML = `
             <div class="fade-in" style="max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 36px;">
-                <div class="card" style="padding: 20px 24px;">
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
-                        <div>
-                            <h2 style="font-size: 22px; font-weight: 800; color: #0F172A; margin: 0 0 6px;">New Payout Batch</h2>
+                <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                    <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                    <div style="padding: 22px 28px;">
+                        <button onclick="window.cancelPayoutBatch()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Payout Orders</button>
+                        <div style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449; margin-bottom: 10px;">
+                            <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                            ${window.currentLicenseMode === 'MSO' ? 'MSO · Fiat Payout' : 'TCSP · Treasury Payout'}
                         </div>
-                        <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: #F8FAFC; border: 1px solid #E2E8F0;">
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap;">
                             <div>
-                                <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Batch Status</div>
-                                <div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 4px;">Draft</div>
+                                <h2 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 26px; font-weight: 600; color: #0F172A; margin: 0 0 6px; letter-spacing: -0.018em;">New Payout Batch</h2>
+                                <div style="font-size: 12.5px; color: #64748B; line-height: 1.55; max-width: 560px;">Add one or more payouts in a single batch — the fee is added on top of each payout amount and the total is debited from your selected source vault.</div>
                             </div>
+                            <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #FEF7E0; color: #92670D; border: 1px solid #ECD49A; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em;">
+                                <i data-lucide="pencil" style="width: 12px; height: 12px;"></i>Draft
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 22px 24px; border-bottom: 1px solid #E2E8F0; background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
-                        <div>
-                            <div style="font-size: 12px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</div>
-                            <div style="font-size: 15px; font-weight: 700; color: #0F172A;">${window.currentLicenseMode === 'MSO' && batch.sourceCurrency ? 'Fiat Vault - ' + batch.sourceCurrency : 'Asset Vault'}</div>
-                        </div>
+                    <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                        <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund'}</h3>
+                        ${window.currentLicenseMode === 'MSO' && batch.sourceCurrency ? `<span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: #475569; background: #F8FAFC; border: 1px solid #E2E8F0; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.06em;">Fiat Vault · ${batch.sourceCurrency}</span>` : ''}
+                    </div>
+                    <div style="padding: 22px 24px; background: white;">
                         <div style="display: grid; grid-template-columns: minmax(260px, 340px) minmax(300px, 1fr); gap: 16px; margin-top: 16px; align-items: stretch;">
                             <div style="display: flex; flex-direction: column; gap: 6px;">
                                 <label class="bank-form-label" style="margin: 0;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Asset'} *</label>
@@ -22506,7 +22703,12 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 10px 18px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC; font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                    <div style="padding: 16px 24px 12px; border-top: 1px solid #E5E7EB; background: white; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
+                        <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Payout Requests</h3>
+                        <span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: #94A3B8; letter-spacing: 0.06em;">Fee added on top of each payout amount</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 32px 1.3fr 0.7fr 0.65fr 1.1fr 1.2fr 0.8fr 44px; gap: 10px; padding: 10px 24px; border-bottom: 1px solid #E2E8F0; border-top: 1px solid #E5E7EB; background: #FCFDFE; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.18em;">
                         <div>#</div>
                         <div>Payee</div>
                         <div>Currency</div>
@@ -22771,91 +22973,146 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
             }
 
             const pill = getOrderReportStatusPill(order.status);
+            const _isMso = window.currentLicenseMode === 'MSO';
+            const _modeLabel = _isMso ? 'MSO · Fiat Payout' : 'TCSP · Treasury Payout';
+            const _amountColor = pill.label === 'Failed' ? '#DC2626' : '#0F172A';
             contentBody.innerHTML = `
                 <div class="fade-in" style="max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 40px;">
-                    <div class="card entity-hero-card" style="padding: 22px 28px 24px; position: relative;">
-                        <button onclick="window.backToPayoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 500; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.color='#0F172A'" onmouseout="this.style.color='#64748B'">← Back to Payout Orders</button>
-                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-                            <div>
-                                <h1 class="invoice-page-title" style="margin: 0 0 6px;">Payout Order Detail</h1>
-                                <div style="font-family: var(--font-mono); font-size: 12px; color: #2563EB; letter-spacing: 0.04em;">${order.orderId}</div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
-                                <span style="background: ${pill.bg}; color: ${pill.color}; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em;">${pill.label}</span>
+                    <!-- Editorial header card (parity with Stablecoin Vault detail) -->
+                    <div class="card entity-hero-card" style="padding: 0; overflow: hidden;">
+                        <div style="height: 3px; background: linear-gradient(90deg,#C9A449,#C9A44966);"></div>
+                        <div style="padding: 22px 28px 24px;">
+                            <button onclick="window.backToPayoutOrdersList()" style="background: none; border: none; color: #64748B; cursor: pointer; padding: 0; font-size: 13px; font-weight: 600; margin-bottom: 14px; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#334155'" onmouseout="this.style.color='#64748B'"><i data-lucide="arrow-left" style="width: 14px; height: 14px;"></i> Back to Payout Orders</button>
+
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <span style="display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #C9A449;">
+                                        <span style="width: 14px; height: 1px; background: #C9A449;"></span>
+                                        ${_modeLabel}
+                                    </span>
+                                    <span style="background: ${pill.bg}; color: ${pill.color}; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">${pill.label}</span>
+                                </div>
                                 ${pill.label === 'Completed' ? `
-                                    <button onclick="window.downloadPayoutReceipt()" style="padding: 7px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                    <button onclick="window.downloadPayoutReceipt()" style="padding: 6px 12px; background: white; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='white'"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
                                 ` : `
-                                    <button title="Receipt is available once the payout is completed" disabled style="padding: 7px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 600; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
+                                    <button title="Receipt is available once the payout is completed" disabled style="padding: 6px 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #94A3B8; cursor: not-allowed; display: inline-flex; align-items: center; gap: 6px; opacity: 0.75;"><i data-lucide="download" style="width: 12px; height: 12px;"></i>Download Receipt</button>
                                 `}
+                            </div>
+
+                            <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                                <div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Order ID</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; color: #0F172A; letter-spacing: 0.02em;">${order.orderId}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #94A3B8; margin-top: 6px; letter-spacing: 0.02em;">${order.time}</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600; margin-bottom: 6px;">Order Amount</div>
+                                    <div style="font-family: 'Clash Display','Inter',sans-serif; font-size: 34px; font-weight: 600; color: ${_amountColor}; letter-spacing: -0.02em; line-height: 1;">− ${order.amount}</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Order Information (merged): main fields + Amount + Payout Requests as sub-sections -->
+                    <!-- Order Information -->
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Order Information</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">01</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Order Information</h3>
                         </div>
 
-                        <!-- Main fields -->
-                        <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Created Time</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.time}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Beneficiary</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.beneficiary}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Payout Method</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.method}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Purpose</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.purpose}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">${window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source Account'}</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.source}</div></div>
-                            <div><div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Approval Progress</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${order.approval}</div></div>
-                        </div>
-
-                        <!-- Sub-section: Amount Information -->
-                        <div style="padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE;">
-                            <h4 style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Amount Information</h4>
-                        </div>
-                        <div style="padding: 14px 24px 22px;">
-                            <div style="font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">Order Amount</div>
-                            <div style="font-family: var(--font-display); font-size: 30px; font-weight: 500; color: #0B1433; letter-spacing: -0.025em; margin-top: 6px; line-height: 1; font-variant-numeric: tabular-nums;">${order.amount}</div>
-                        </div>
+                        <!-- Main fields — mirror the New Payout Batch field set -->
+                        ${(() => {
+                            // Derive the same vault label that the New Payout Batch page renders.
+                            // Currency comes off the order amount string (e.g. "14,200.00 USD" → USD).
+                            const _ccy = (order.amount || '').split(' ').pop() || '';
+                            const _isStablecoin = /^USDT$|^USDC$/.test(_ccy);
+                            const _vaultLabel = _isStablecoin
+                                ? `Stablecoin Vault · ${_ccy}`
+                                : (_ccy ? `Fiat Vault · ${_ccy}` : (window.currentLicenseMode === 'MSO' ? 'Fiat Vault' : 'Stablecoin Vault'));
+                            const _sourceLabel = window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund';
+                            // Created time — order.time is the canonical creation timestamp.
+                            const _createdTime = order.time || '—';
+                            // Paid time — pull the Completed event from the timeline.
+                            let _paidTime = '—';
+                            if (detail?.timeline?.length) {
+                                const completed = detail.timeline.find(e => /completed|paid|settled/i.test(e.status || ''));
+                                if (completed) _paidTime = completed.time;
+                            }
+                            const _payeeLabel = (detail?.payouts?.length || 0) > 1 ? `${detail.payouts.length} Payees` : (detail?.payouts?.[0]?.payee || order.beneficiary);
+                            return `
+                            <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Payee</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${_payeeLabel}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">${_sourceLabel}</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${_vaultLabel}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Order Created Time</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 6px; letter-spacing: 0.02em;">${_createdTime}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Order Paid Time</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: ${_paidTime !== '—' ? '#15803D' : '#94A3B8'}; margin-top: 6px; letter-spacing: 0.02em;">${_paidTime}</div></div>
+                            </div>`;
+                        })()}
 
                         ${detail ? `
                         <!-- Sub-section: Payout Requests -->
                         <div style="padding: 16px 24px 6px; border-top: 1px solid #F1F5F9; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                            <h4 style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.1em; margin: 0;">Payout Requests</h4>
-                            ${order.payoutCount ? `<span style="font-size: 11px; font-weight: 600; color: #64748B; background: #F1F5F9; padding: 2px 8px; border-radius: 999px;">${order.payoutCount}</span>` : ''}
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; letter-spacing: 0.22em; text-transform: uppercase;">Payout Requests</span>
+                            ${order.payoutCount ? `<span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: #475569; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 3px 10px; border-radius: 999px; letter-spacing: 0.06em;">${order.payoutCount}</span>` : ''}
                         </div>
                         <div style="padding: 0 24px 18px 24px;">
-                            <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E8F0; font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em;">
+                            <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E8F0; font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.18em;">
                                 <div>No.</div>
                                 <div>Payee</div>
                                 <div>Destination</div>
                                 <div>Currency</div>
-                                <div class="text-right">Amount</div>
+                                <div class="text-right">Payout Amount</div>
                                 <div class="text-right">Fee</div>
-                                <div class="text-right">Net</div>
+                                <div class="text-right">Total Debit</div>
                                 <div>Status</div>
                             </div>
-                            ${detail.payouts.map(item => `
+                            ${detail.payouts.map(item => {
+                                const _parseM = (s) => parseFloat(String(s || '').replace(/[^0-9.\-]/g, '')) || 0;
+                                const _amt = _parseM(item.amount);
+                                const _fee = _parseM(item.fee);
+                                // Fee is external — total debited from the vault is amount + fee.
+                                const _totalDebit = _amt + _fee;
+                                const _fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                // Destination second line — first6····last4 mask of the full
+                                // wallet address or bank account, with chain in parens for wallets.
+                                const _destLine1 = item.destinationKind === 'wallet' && item.destinationChain
+                                    ? `${item.destinationChain} wallet`
+                                    : (item.destination || '');
+                                let _destLine2 = '';
+                                if (item.destinationFull) {
+                                    const _flat = String(item.destinationFull).replace(/\s+/g, '');
+                                    if (_flat.length > 10) {
+                                        _destLine2 = `${_flat.slice(0, 6)}····${_flat.slice(-4)}`;
+                                    } else {
+                                        _destLine2 = _flat;
+                                    }
+                                }
+                                return `
                                 <div style="display: grid; grid-template-columns: 64px 1.2fr 1.3fr 0.7fr 0.9fr 0.9fr 0.9fr 1fr; gap: 16px; align-items: start; padding: 16px 0; border-bottom: 1px solid #F1F5F9;">
                                     <div style="font-size: 13px; font-weight: 700; color: #64748B;">${item.sequence}</div>
                                     <div>
                                         <div style="font-size: 14px; font-weight: 700; color: #0F172A;">${item.payee}</div>
                                         <div style="font-size: 11px; color: #94A3B8; margin-top: 5px;">${item.note}</div>
                                     </div>
-                                    <div style="font-size: 13px; color: #334155; line-height: 1.6;">${item.destination}</div>
+                                    <div style="line-height: 1.5;">
+                                        <div style="font-size: 13px; color: #334155; font-weight: 600;">${_destLine1}</div>
+                                        ${_destLine2 ? `<div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; margin-top: 4px; letter-spacing: 0.02em;">${_destLine2}</div>` : ''}
+                                    </div>
                                     <div style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.currency}</div>
-                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.amount}</div>
-                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C;">${item.fee}</div>
-                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A;">${item.net}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${item.amount}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #C2410C; font-variant-numeric: tabular-nums;">${item.fee}</div>
+                                    <div class="text-right" style="font-size: 13px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${_fmt(_totalDebit)} ${item.currency}</div>
                                     <div>${renderUnifiedStatusBadge(item.status, true)}</div>
-                                </div>
-                            `).join('')}
+                                </div>`;
+                            }).join('')}
                         </div>
                         ` : ''}
                     </div>
 
                     ${detail ? `
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Approval Information</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">02</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Approval Information</h3>
                         </div>
                         <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 12px;">
                             ${detail.approvers.map(approver => `
@@ -22877,9 +23134,80 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                     </div>
 
+                    <!-- Settlement -->
+                    ${(() => {
+                        const isCompleted = pill.label === 'Completed';
+                        const _settleDate = isCompleted ? (order.time || '—').replace(/^Today,\s*/, 'Today · ').replace(/^Yesterday,\s*/, 'Yesterday · ') : 'Pending — settles after final approval & broadcast';
+                        const _settleCcy = (order.amount || '').split(' ').pop() || '';
+                        const _settleBatch = isCompleted ? ('STL-' + order.orderId.replace(/^PO-/, '')) : '—';
+                        const _settleStatusPill = isCompleted
+                            ? `<span style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">Settled</span>`
+                            : (pill.label === 'Failed'
+                                ? `<span style="background: #FEE2E2; color: #B91C1C; border: 1px solid #FECACA; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">Settlement Reversed</span>`
+                                : `<span style="background: #FEF7E0; color: #92670D; border: 1px solid #ECD49A; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.1em;">Awaiting Settlement</span>`);
+                        // Pull totals from the line items if available; fall back to order-level numbers.
+                        // Fee model is EXTERNAL (matches New Payout): the beneficiary receives the
+                        // full payout amount, the fee is added on top, and the vault is debited
+                        // by amount + fee.
+                        const _hasLines = detail && Array.isArray(detail.payouts) && detail.payouts.length;
+                        const parseMoney = (str) => parseFloat(String(str || '').replace(/[^0-9.\-]/g, '')) || 0;
+                        const _payoutNum = _hasLines ? detail.payouts.reduce((s, p) => s + parseMoney(p.amount), 0) : parseMoney(order.amount);
+                        const _feeNum    = _hasLines ? detail.payouts.reduce((s, p) => s + parseMoney(p.fee), 0)    : 0;
+                        const _totalDebitNum = _payoutNum + _feeNum;
+                        const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        // Mirror Order Information's Source-of-Fund / Asset-Vault field.
+                        const _isStablecoin = /^USDT$|^USDC$/.test(_settleCcy);
+                        const _vaultLabel = _isStablecoin
+                            ? `Stablecoin Vault · ${_settleCcy}`
+                            : (_settleCcy ? `Fiat Vault · ${_settleCcy}` : (window.currentLicenseMode === 'MSO' ? 'Fiat Vault' : 'Stablecoin Vault'));
+                        const _sourceLabel = window.currentLicenseMode === 'MSO' ? 'Asset Vault' : 'Source of Fund';
+                        return `
+                        <div class="card" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">03</span>
+                                    <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Settlement</h3>
+                                </div>
+                                ${_settleStatusPill}
+                            </div>
+
+                            <!-- Top: settlement core -->
+                            <div style="padding: 22px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px 28px;">
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Settlement Date</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${_settleDate}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Settlement Currency</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${_settleCcy || '—'}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">${_sourceLabel}</div><div style="font-size: 14px; font-weight: 700; color: #0F172A; margin-top: 6px;">${_vaultLabel}</div></div>
+                                <div><div style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.22em; font-weight: 600;">Settlement Batch</div><div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 700; color: ${isCompleted ? '#2563EB' : '#94A3B8'}; margin-top: 6px; letter-spacing: 0.04em;">${_settleBatch}</div></div>
+                            </div>
+
+                            <!-- Bottom: amount breakdown (external-fee model) -->
+                            <div style="padding: 16px 24px 22px; border-top: 1px dashed #E5E7EB;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div>
+                                        <span style="font-size: 13px; color: #475569;">Payout Amount</span>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Amount delivered to the beneficiary.</div>
+                                    </div>
+                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 700; color: #0F172A; font-variant-numeric: tabular-nums;">${fmt(_payoutNum)} ${_settleCcy}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #F1F5F9;">
+                                    <div>
+                                        <span style="font-size: 13px; color: #475569;">Service Fee</span>
+                                        <div style="font-size: 11px; color: #94A3B8; margin-top: 2px;">Charged on top — 0.2% of the payout amount.</div>
+                                    </div>
+                                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 700; color: #C2410C; font-variant-numeric: tabular-nums;">${_feeNum > 0 ? '+ ' + fmt(_feeNum) + ' ' + _settleCcy : 'Free'}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 0 4px;">
+                                    <span style="font-family: 'Clash Display','Inter',sans-serif; font-size: 14px; font-weight: 700; color: #0F172A;">Total Debited from Vault</span>
+                                    <span style="font-family: 'Clash Display','Inter',sans-serif; font-size: 20px; font-weight: 700; color: ${pill.label === 'Failed' ? '#DC2626' : '#0F172A'}; letter-spacing: -0.01em; font-variant-numeric: tabular-nums;">${fmt(_totalDebitNum)} ${_settleCcy}</span>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    })()}
+
                     <div class="card" style="padding: 0; overflow: hidden;">
-                        <div style="padding: 20px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE;">
-                            <h3 style="font-size: 18px; font-weight: 700; color: #0F172A; margin: 0;">Status History</h3>
+                        <div style="padding: 18px 24px; border-bottom: 1px solid #E2E8F0; background: #FCFDFE; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 8px; border: 1px solid #E5E7EB; background: white; color: #64748B; border-radius: 4px; letter-spacing: 0.18em;">04</span>
+                            <h3 style="font-family: 'Clash Display','Inter',sans-serif; font-size: 15px; font-weight: 600; color: #0F172A; margin: 0; letter-spacing: -0.005em;">Status History</h3>
                         </div>
                         <div style="padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;">
                             ${detail.timeline.map((event, index) => `
@@ -22887,7 +23215,7 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                                     <div style="display: flex; justify-content: center; padding-top: 2px;">
                                         <span style="width: 10px; height: 10px; border-radius: 999px; background: ${index === detail.timeline.length - 1 ? '#2563EB' : '#CBD5E1'}; display: inline-block;"></span>
                                     </div>
-                                    <div style="font-size: 12px; color: #64748B;">${event.time}</div>
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #64748B; letter-spacing: 0.02em;">${event.time}</div>
                                     <div>${renderUnifiedStatusBadge(event.status, true)}</div>
                                     <div style="font-size: 13px; color: #475569; line-height: 1.6;">${event.note}</div>
                                 </div>
