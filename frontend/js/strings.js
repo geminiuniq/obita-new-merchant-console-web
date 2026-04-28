@@ -84,6 +84,16 @@ export const STRINGS = {
         'vault.address.copy':    'Copy address',
         'vault.address.copied':  'Address copied to clipboard',
         'vault.address.provisioned':'Address provisioned',
+        'vault.address.history': 'History',
+
+        'wallet.history.title':       'Wallet History',
+        'wallet.history.empty':       'No on-chain activity yet for this address.',
+        'wallet.history.deposit.confirmed': 'Deposit credited to AVAILABLE',
+        'wallet.history.row.topup':   'Top-up · on-chain',
+        'wallet.history.row.settle':  'Order settle · debit',
+        'wallet.history.tag.live':    'LIVE',
+        'wallet.history.tag.deposit': 'DEPOSIT',
+        'wallet.history.tag.settle':  'SETTLE',
 
         'page.orders.eyebrow': 'MSO · INVOICE ORDER',
         'page.orders.title':   'Invoice Orders',
@@ -382,6 +392,16 @@ export const STRINGS = {
         'vault.address.copy':    '复制地址',
         'vault.address.copied':  '已复制到剪贴板',
         'vault.address.provisioned':'地址已申请',
+        'vault.address.history': '历史',
+
+        'wallet.history.title':       '钱包流水',
+        'wallet.history.empty':       '该地址暂无链上活动。',
+        'wallet.history.deposit.confirmed': '入金到账 · 计入 AVAILABLE',
+        'wallet.history.row.topup':   '链上充值',
+        'wallet.history.row.settle':  '订单结算 · 出账',
+        'wallet.history.tag.live':    '实时',
+        'wallet.history.tag.deposit': '入金',
+        'wallet.history.tag.settle':  '结算',
 
         'page.orders.eyebrow': 'MSO · 商户订单',
         'page.orders.title':   '商户订单',

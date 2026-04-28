@@ -10,6 +10,7 @@ import { fmt } from '../format.js';
 import { pageHero, sectionCard, toast, showError } from '../ui.js';
 import { navigate, pollCurrentRoute } from '../router.js';
 import { balanceCard } from './overview.js';
+import { openWalletHistory } from './wallet-history.js';
 
 const STABLE_ASSETS = ['USDC-POLYGON', 'USDC-ETH', 'USDT-BSC', 'USDT-TRC20'];
 
@@ -62,7 +63,10 @@ function addressBook(addresses) {
 
 function addressCard(a) {
     const chain = a.chainId || 'OTHER';
-    return el('div', { class: 'addr-card' }, [
+    const card = el('div', {
+        class: 'addr-card',
+        style: 'cursor:pointer;',
+    }, [
         el('div', { class: 'addr-card-head' }, [
             el('div', { class: `chain-badge chain-badge--${chain}`, text: (chain[0] || '?') }),
             el('div', { style: 'min-width:0; flex:1;' }, [
@@ -78,12 +82,25 @@ function addressCard(a) {
             el('button', {
                 class: 'btn btn--small btn--ghost',
                 text: t('vault.address.copy'),
-                onclick: () => navigator.clipboard.writeText(a.address)
-                    .then(() => toast(t('vault.address.copied'), 'ok', 1200)),
+                onclick: (ev) => {
+                    ev.stopPropagation();
+                    navigator.clipboard.writeText(a.address)
+                        .then(() => toast(t('vault.address.copied'), 'ok', 1200));
+                },
+            }),
+            el('button', {
+                class: 'btn btn--small btn--ghost',
+                text: t('vault.address.history'),
+                onclick: (ev) => {
+                    ev.stopPropagation();
+                    openWalletHistory(a);
+                },
             }),
             el('span', { class: 'muted', style: 'font-size:11px; margin-left:auto; font-family:var(--font-mono);', text: fmt.short(a.address, 6, 6) }),
         ]),
     ]);
+    card.addEventListener('click', () => openWalletHistory(a));
+    return card;
 }
 
 function provisionForm() {
