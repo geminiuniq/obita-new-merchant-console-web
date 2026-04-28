@@ -38,6 +38,74 @@
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.03);
     --shadow-hero: 0 40px 80px -40px rgba(6, 11, 36, 0.55), 0 12px 32px -20px rgba(6, 11, 36, 0.35);
+
+    /* ──────────────────────────────────────────────────────────────────
+       Semantic tokens — added 2026-04. Existing components keep working;
+       new code should consume these instead of hard-coding hex values.
+       ────────────────────────────────────────────────────────────────── */
+
+    /* Surface ladder */
+    --surface-base:    #FFFFFF; /* card body */
+    --surface-soft:    #FCFDFE; /* sub-header strip */
+    --surface-quiet:   #F8FAFC; /* page bg, group head */
+    --surface-overlay: #F1F5F9; /* hover, faint divider */
+
+    /* Ink ladder */
+    --ink-strong: #0F172A; /* titles */
+    --ink-base:   #1E293B; /* body */
+    --ink-mid:    #475569; /* secondary text */
+    --ink-mute:   #64748B; /* tertiary text */
+    --ink-quiet:  #94A3B8; /* labels, hairlines */
+
+    /* Lines */
+    --line-soft: #F1F5F9;  /* hairline within section */
+    --line-base: #E2E8F0;  /* card border */
+
+    /* Status — paired (fg / strong / bg / soft-bg / border)
+       fg     = readable text colour on light surface
+       strong = saturated swatch for icons / bars
+       bg     = filled chip / pill background
+       soft   = whisper background for whole rows
+       border = chip / pill outline */
+    --status-success-fg:      #15803D;
+    --status-success-strong:  #16A34A;
+    --status-success-bg:      #DCFCE7;
+    --status-success-soft-bg: #ECFDF5;
+    --status-success-border:  #86EFAC;
+
+    --status-info-fg:      #1D4ED8;
+    --status-info-strong:  #2563EB;
+    --status-info-bg:      #DBEAFE;
+    --status-info-soft-bg: #EFF6FF;
+    --status-info-border:  #BFDBFE;
+
+    --status-warn-fg:      #B45309;
+    --status-warn-strong:  #D97706;
+    --status-warn-bg:      #FEF3C7;
+    --status-warn-soft-bg: #FFFBEB;
+    --status-warn-border:  #FDE68A;
+
+    --status-danger-fg:      #B91C1C;
+    --status-danger-strong:  #DC2626;
+    --status-danger-bg:      #FEE2E2;
+    --status-danger-soft-bg: #FEF2F2;
+    --status-danger-border:  #FECACA;
+
+    /* Spacing scale (4px base) */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-7: 28px;
+    --space-8: 32px;
+
+    /* Radius scale */
+    --radius-sm:   6px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+    --radius-pill: 999px;
 }
 
 * {
@@ -4348,4 +4416,17 @@ body:not(.is-logged-out) .login-screen { display: none; }
     font-family: var(--font-mono);
     font-weight: 700;
     letter-spacing: 0.02em;
+}
+
+/* Overview · summary sub-cards (Invoice / Checkout / Payout) */
+.overview-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+}
+.overview-summary-cell { border-left: 1px solid var(--line-soft); }
+@media (max-width: 720px) {
+    .overview-summary-grid { grid-template-columns: 1fr 1fr; }
+    .overview-summary-cell:nth-child(odd) { border-left: 0; }
+    .overview-summary-cell:nth-child(n+3) { border-top: 1px solid var(--line-soft); }
 }
