@@ -2,7 +2,89 @@
 
 > 中文版：[docs/zh/PROGRESS.md](zh/PROGRESS.md)
 >
-> Updated: 2026-04-29  ·  Status: **MVP end-to-end verified locally**
+> Updated: 2026-04-29 (round 2 — Plan B)  ·  Status: **Demo SPA wired to backend, browser-verified**
+
+## Round 2 — Plan B (frontend wired to backend)
+
+After Round 1 verified the backend in isolation, this round wired up a
+minimal demo SPA and proved the four core flows in a real browser. The
+legacy 25k-line frontend was preserved as `frontend-legacy/` (still the
+visual reference; see `frontend-legacy/design.md`); the new `frontend/`
+is intentionally small so the focus stays on backend correctness.
+
+### What changed
+
+**Backend — three hard blockers fixed:**
+
+| # | Fix | Files |
+|---|---|---|
+| 1 | Real CORS bean (`CorsConfigurationSource`) with `@Qualifier` to disambiguate against Spring's `mvcHandlerMappingIntrospector`. Origins configurable via `obita.cors.allowed-origins`; defaults cover localhost:5173 / 5500 / 8000 / 3000. | `SecurityConfig.java` |
+| 2 | `{id}:verb` routes refactored to sub-resource style (`/cancel` `/settle` `/mark-paid` `/approve` `/reject`). Spring 6 PathPatternParser treats `:` as a matrix-variable separator; the colon style required `%3A` encoding from the browser, breaking ergonomic `fetch` use. | `OrderController.java`, `WithdrawalController.java` |
+| 3 | New `GET /v1/accounts` endpoint listing merchant-owned accounts joined with the latest `balance_after` from `ledger_entry`. Drives the balances panel in the frontend. | `AccountController.java`, `AccountWithBalanceRow.java`, `AccountMapper.java`/`.xml`, `AccountRepository.java`, `AccountRepositoryImpl.java` |
+
+**Frontend — new `frontend/` directory:**
+
+| File | Role |
+|---|---|
+| `index.html` | Login screen + 4-tab app shell (Balances / Orders / Vault / Ledger) + Create-order modal |
+| `api.js` | Fetch wrapper. JWT in `localStorage`, `Idempotency-Key` auto-generated for every state-changing request, `ApiError` carries the backend's stable code + `requestId`, 401 dispatches `auth:expired` to drop back to login |
+| `app.js` | DOM-based rendering using `createElement` + `textContent` — no `innerHTML` against user-controlled fields. Wires the four flows + a 60s post-credit polling cycle so the user can watch PENDING → AVAILABLE move |
+| `styles.css` | Tokens borrowed from `frontend-legacy/design.md`: editorial palette, brass eyebrow accent, mono for IDs, status pills, balance/order/vault cards |
+| `README.md` | Run instructions + handoff notes |
+
+### Browser-verified end-to-end (Chrome DevTools MCP)
+
+Recorded against a fresh schema:
+
+```
+✓  POST /v1/auth/login           → JWT issued, principal echoed in topbar
+✓  GET  /v1/accounts             → 4 stablecoin assets × 4 account types
+                                    rendered as balance cards (all zero on
+                                    fresh schema, as expected)
+✓  POST /v1/wallet-addresses     → 0x5949...e6c4 issued for POLYGON
+✓  POST /mock-bank/credit        → injection accepted; CSS toast confirmed
+                                    "credit injected — 等待 scanner 处理"
+```
+
+End-to-end ledger posting (the 8 entries in §4.1 of round 1) was
+re-verified earlier in the session against the same backend build.
+
+### Bug fixed during Plan B
+
+| # | Symptom | Root cause | Fix |
+|---|---|---|---|
+| 9 | Boot fail: `No qualifying bean of type 'CorsConfigurationSource' available: expected single matching bean but found 2: corsConfigurationSource, mvcHandlerMappingIntrospector` | Spring MVC's `mvcHandlerMappingIntrospector` also implements `CorsConfigurationSource`; Spring couldn't disambiguate by type alone | Added `@Qualifier("corsConfigurationSource")` on the constructor parameter |
+
+This brings the cumulative bug count to **9** — see PROGRESS.md §5 of
+the original round and this section combined. Each is documented with
+root cause + fix so the backend team inherits the lessons.
+
+### Repo layout after Plan B
+
+```
+obita-web/
+├── README.md             ← project entry + run instructions (top-level)
+├── README.zh.md          ← 中文版
+├── .gitignore            ← .DS_Store, .env, .claude/settings.local.json
+├── .claude/
+│   └── launch.json       ← preview-server config (local dev only)
+├── backend/              ← Spring Boot MVP (round 1)
+├── frontend/             ← demo SPA (this round)
+│   ├── index.html        login + 4-tab shell
+│   ├── api.js            JWT + idempotency fetch wrapper
+│   ├── app.js            DOM-based renderers
+│   ├── styles.css        editorial design tokens
+│   └── README.md
+└── frontend-legacy/      ← original 25k-line SPA (preserved as reference)
+    ├── README.md         note explaining why it's kept
+    ├── index.html / app.js / styles.css / banner_bg.png
+    └── design.md         design language spec — still authoritative
+```
+
+### Demo run
+
+See the top-level `README.md` (or `README.zh.md`) for the canonical
+3-command flow that gets the entire stack up.
 
 This is a single-source progress log for the Obita backend MVP. It captures
 **what is done**, **what is verified to actually work**, and **what is

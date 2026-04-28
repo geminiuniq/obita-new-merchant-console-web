@@ -2,7 +2,84 @@
 
 > English: [docs/PROGRESS.md](../PROGRESS.md)
 >
-> 更新时间：2026-04-29  ·  状态：**MVP 端到端本地验证通过**
+> 更新时间：2026-04-29 (第 2 轮 — Plan B)  ·  状态：**Demo SPA 已与后端联通，浏览器实跑验证**
+
+## 第 2 轮 — Plan B（前后端联通）
+
+第 1 轮独立验证后端正确，本轮在此基础上接通了一个极简 demo SPA，
+在真实浏览器里跑通 4 个核心流程。原 25K 行前端保留为
+`frontend-legacy/`（设计语言基准，详见 `frontend-legacy/design.md`）；
+新建的 `frontend/` 刻意保持极简，焦点放在后端正确性上。
+
+### 本轮改动
+
+**后端 — 修掉三个硬障碍：**
+
+| # | 修复 | 文件 |
+|---|---|---|
+| 1 | 真正的 `CorsConfigurationSource` Bean，用 `@Qualifier` 与 Spring 自带的 `mvcHandlerMappingIntrospector` 消歧。允许域名通过 `obita.cors.allowed-origins` 配置，默认覆盖 localhost:5173 / 5500 / 8000 / 3000。 | `SecurityConfig.java` |
+| 2 | 把 `{id}:verb` 路由重构为 sub-resource 风格（`/cancel` `/settle` `/mark-paid` `/approve` `/reject`）。Spring 6 的 PathPatternParser 把 `:` 当 matrix 变量分隔符，原冒号风格要求浏览器侧 `%3A` 编码，前端 `fetch` 体验糟糕。 | `OrderController.java`、`WithdrawalController.java` |
+| 3 | 新增 `GET /v1/accounts` 端点：列出商户账户并联入 `ledger_entry` 中最末一条 `balance_after`。驱动前端余额面板。 | `AccountController.java`、`AccountWithBalanceRow.java`、`AccountMapper.java`/`.xml`、`AccountRepository.java`、`AccountRepositoryImpl.java` |
+
+**前端 — 全新 `frontend/` 目录：**
+
+| 文件 | 职责 |
+|---|---|
+| `index.html` | 登录页 + 4 标签 app 外壳（资金 · 余额 / 订单 / 保险柜 / 分录流水）+ 新建订单 modal |
+| `api.js` | fetch 封装。JWT 存 `localStorage`，所有写请求自动生成 `Idempotency-Key`，`ApiError` 携带后端稳定 `code` + `requestId`，401 触发 `auth:expired` 事件回到登录页 |
+| `app.js` | DOM 构造（`createElement` + `textContent` —— 用户可控字段不进 `innerHTML`）。串起 4 个流程，注入入金后启动 60 秒轮询，让用户实时看到 PENDING → AVAILABLE 流动 |
+| `styles.css` | 沿用 `frontend-legacy/design.md` 的 token：编辑式调色板、brass eyebrow 装饰、mono 显示 ID、状态标签、各类卡片 |
+| `README.md` | 启动说明 + 交接备注 |
+
+### 浏览器实跑验证（Chrome DevTools MCP）
+
+新 schema 上记录：
+
+```
+✓  POST /v1/auth/login           → JWT 签发成功，topbar 显示登录主体
+✓  GET  /v1/accounts             → 4 种稳定币 × 4 类账户余额卡片
+                                    （新建 schema 余额都是 0，符合预期）
+✓  POST /v1/wallet-addresses     → 0x5949...e6c4 申请成功（POLYGON）
+✓  POST /mock-bank/credit        → 注入成功，CSS toast 显示
+                                    "credit injected — 等待 scanner 处理"
+```
+
+完整 8 条分录的端到端入账（第 1 轮 §4.1）已在本会话早期对同一后端构建复测通过。
+
+### Plan B 中又修的一个 bug
+
+| # | 现象 | 根因 | 修复 |
+|---|---|---|---|
+| 9 | 启动失败：`No qualifying bean of type 'CorsConfigurationSource' available: expected single matching bean but found 2: corsConfigurationSource, mvcHandlerMappingIntrospector` | Spring MVC 的 `mvcHandlerMappingIntrospector` 也实现了 `CorsConfigurationSource` 接口，Spring 仅按类型无法消歧 | 在构造函数参数上加 `@Qualifier("corsConfigurationSource")` |
+
+累计 bug 数现在是 **9 个** —— 第 1 轮 PROGRESS.md §5 加本节合在一起。
+每个都附了根因 + 修法，让后端团队继承经验。
+
+### Plan B 之后的仓库布局
+
+```
+obita-web/
+├── README.md             ← 项目入口 + 启动说明（顶层）
+├── README.zh.md          ← 中文版
+├── .gitignore            ← .DS_Store、.env、.claude/settings.local.json
+├── .claude/
+│   └── launch.json       ← 预览服务器配置（仅本地开发）
+├── backend/              ← Spring Boot MVP（第 1 轮）
+├── frontend/             ← demo SPA（本轮新建）
+│   ├── index.html        登录 + 4 标签外壳
+│   ├── api.js            JWT + 幂等 fetch 封装
+│   ├── app.js            DOM 渲染器
+│   ├── styles.css        编辑式 design token
+│   └── README.md
+└── frontend-legacy/      ← 原 25K 行 SPA（保留作参考）
+    ├── README.md         保留原因说明
+    ├── index.html / app.js / styles.css / banner_bg.png
+    └── design.md         设计语言规范 —— 仍然是基准
+```
+
+### Demo 跑法
+
+参见顶层 `README.md`（或 `README.zh.md`），3 行命令把全栈拉起来。
 
 本文是 Obita 后端 MVP 的**唯一进度真相源**。记录**已完成的内容**、**已被
 实际验证可用的内容**、以及**明确留给后端团队的内容**。代码变更必须在同一
