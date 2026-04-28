@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.obita.infrastructure.persistence.vault.VaultMapper">
+
+  <!-- We use resultType + camelCase aliases instead of resultMap to sidestep
+       mybatis-plus 3.5.7's javaType inference issue with public-field beans. -->
+
+  <sql id="walletAddrCols">
+    id, merchant_id AS "merchantId", chain_id AS "chainId", address,
+    custody_ref AS "custodyRef", label, purpose, status,
+    created_at AS "createdAt"
+  </sql>
+
+  <insert id="insertAddress">
+    INSERT INTO wallet_address (id, merchant_id, chain_id, address, custody_ref, label, purpose, status, created_at)
+    VALUES (#{id}, #{merchantId}, #{chainId}, #{address}, #{custodyRef}, #{label}, #{purpose}, #{status}, #{createdAt})
+  </insert>
+
+  <select id="selectAddress" resultType="com.obita.infrastructure.persistence.vault.WalletAddressRow">
+    SELECT <include refid="walletAddrCols"/>
+      FROM wallet_address WHERE merchant_id = #{merchantId} AND id = #{id}
+  </select>
+
+  <select id="selectActiveAddress" resultType="com.obita.infrastructure.persistence.vault.WalletAddressRow">
+    SELECT <include refid="walletAddrCols"/>
+      FROM wallet_address
+     WHERE merchant_id = #{merchantId} AND chain_id = #{chainId}
+       AND purpose = #{purpose} AND status = 'ACTIVE'
+     LIMIT 1
+  </select>
+
+  <select id="listAddresses" resultType="com.obita.infrastructure.persistence.vault.WalletAddressRow">
+    SELECT <include refid="walletAddrCols"/>
+      FROM wallet_address WHERE merchant_id = #{merchantId}
+     ORDER BY created_at DESC
+  </select>
+
+  <select id="listActiveByChain" resultType="com.obita.infrastructure.persistence.vault.WalletAddressRow">
+    SELECT <include refid="walletAddrCols"/>
+      FROM wallet_address WHERE chain_id = #{chainId} AND status = 'ACTIVE'
+  </select>
+
+  <!-- chain_cursor -->
+
+  <select id="readCursor" resultType="java.lang.Long">
+    SELECT last_block FROM chain_cursor WHERE chain_id = #{chainId}
+  </select>
+
+  <update id="upsertCursor">
+    INSERT INTO chain_cursor (chain_id, last_block, updated_at)
+    VALUES (#{chainId}, #{block}, now())
+    ON CONFLICT (chain_id) DO UPDATE
+      SET last_block = EXCLUDED.last_block, updated_at = now()
+  </update>
+
+  <!-- deposit -->
+
+  <sql id="depositCols">
+    id, merchant_id AS "merchantId", chain_id AS "chainId", asset_code AS "assetCode",
+    wallet_address_id AS "walletAddressId",
+    from_address AS "fromAddress", to_address AS "toAddress",
+    tx_hash AS "txHash", log_index AS "logIndex", block_number AS "blockNumber",
+    amount, confirmations, status, ledger_tx_id AS "ledgerTxId",
+    detected_at AS "detectedAt", credited_at AS "creditedAt",
+    raw_payload::text AS "rawPayload"
+  </sql>
+
+  <insert id="insertDepositIfAbsent">
+    INSERT INTO deposit (
+      id, merchant_id, chain_id, asset_code, wallet_address_id,
+      from_address, to_address, tx_hash, log_index, block_number,
+      amount, confirmations, status, ledger_tx_id, detected_at, credited_at, raw_payload
+    ) VALUES (
+      #{id}, #{merchantId}, #{chainId}, #{assetCode}, #{walletAddressId},
+      #{fromAddress}, #{toAddress}, #{txHash}, #{logIndex}, #{blockNumber},
+      #{amount}, #{confirmations}, #{status}, #{ledgerTxId}, #{detectedAt}, #{creditedAt},
+      COALESCE(#{rawPayload}::jsonb, NULL)
+    )
+    ON CONFLICT (chain_id, tx_hash, log_index) DO NOTHING
+  </insert>
+
+  <update id="updateDeposit">
+    UPDATE deposit
+       SET status        = #{status},
+           confirmations = #{confirmations},
+           ledger_tx_id  = #{ledgerTxId},
+           credited_at   = #{creditedAt}
+     WHERE id = #{id}
+  </update>
+
+  <select id="selectDeposit" resultType="com.obita.infrastructure.persistence.vault.DepositRow">
+    SELECT <include refid="depositCols"/>
+      FROM deposit WHERE merchant_id = #{merchantId} AND id = #{id}
+  </select>
+
+  <select id="findConfirming" resultType="com.obita.infrastructure.persistence.vault.DepositRow">
+    SELECT <include refid="depositCols"/>
+      FROM deposit WHERE status IN ('DETECTED', 'CONFIRMING')
+     ORDER BY detected_at ASC LIMIT #{limit}
+  </select>
+
+  <!-- withdrawal -->
+
+  <sql id="withdrawalCols">
+    id, merchant_id AS "merchantId", chain_id AS "chainId", asset_code AS "assetCode",
+    to_address AS "toAddress", amount, fee_amount AS "feeAmount", status,
+    custody_ref AS "custodyRef", tx_hash AS "txHash", block_number AS "blockNumber",
+    confirmations, risk_score AS "riskScore", risk_note AS "riskNote",
+    requested_by AS "requestedBy", approved_by AS "approvedBy",
+    requested_at AS "requestedAt", submitted_at AS "submittedAt",
+    completed_at AS "completedAt",
+    ledger_tx_reserve_id AS "ledgerTxReserveId", ledger_tx_settle_id AS "ledgerTxSettleId",
+    failure_code AS "failureCode", failure_message AS "failureMessage", version
+  </sql>
+
+  <insert id="insertWithdrawal">
+    INSERT INTO withdrawal (
+      id, merchant_id, chain_id, asset_code, to_address, amount, fee_amount, status,
+      custody_ref, tx_hash, block_number, confirmations,
+      risk_score, risk_note, requested_by, approved_by,
+      requested_at, submitted_at, completed_at,
+      ledger_tx_reserve_id, ledger_tx_settle_id,
+      failure_code, failure_message, version
+    ) VALUES (
+      #{id}, #{merchantId}, #{chainId}, #{assetCode}, #{toAddress}, #{amount},
+      COALESCE(#{feeAmount}, 0), #{status},
+      #{custodyRef}, #{txHash}, #{blockNumber}, COALESCE(#{confirmations}, 0),
+      #{riskScore}, #{riskNote}, #{requestedBy}, #{approvedBy},
+      #{requestedAt}, #{submittedAt}, #{completedAt},
+      #{ledgerTxReserveId}, #{ledgerTxSettleId},
+      #{failureCode}, #{failureMessage}, COALESCE(#{version}, 0)
+    )
+  </insert>
+
+  <update id="updateWithdrawal">
+    UPDATE withdrawal
+       SET status               = #{row.status},
+           custody_ref          = #{row.custodyRef},
+           tx_hash              = #{row.txHash},
+           block_number         = #{row.blockNumber},
+           confirmations        = #{row.confirmations},
+           risk_score           = #{row.riskScore},
+           risk_note            = #{row.riskNote},
+           approved_by          = #{row.approvedBy},
+           submitted_at         = #{row.submittedAt},
+           completed_at         = #{row.completedAt},
+           ledger_tx_reserve_id = #{row.ledgerTxReserveId},
+           ledger_tx_settle_id  = #{row.ledgerTxSettleId},
+           failure_code         = #{row.failureCode},
+           failure_message      = #{row.failureMessage},
+           version              = version + 1
+     WHERE id = #{row.id} AND version = #{expectedVersion}
+  </update>
+
+  <select id="selectWithdrawal" resultType="com.obita.infrastructure.persistence.vault.WithdrawalRow">
+    SELECT <include refid="withdrawalCols"/>
+      FROM withdrawal WHERE merchant_id = #{merchantId} AND id = #{id}
+  </select>
+
+  <select id="lockWithdrawal" resultType="com.obita.infrastructure.persistence.vault.WithdrawalRow">
+    SELECT <include refid="withdrawalCols"/>
+      FROM withdrawal WHERE merchant_id = #{merchantId} AND id = #{id}
+       FOR UPDATE
+  </select>
+
+  <select id="listWithdrawals" resultType="com.obita.infrastructure.persistence.vault.WithdrawalRow">
+    SELECT <include refid="withdrawalCols"/>
+      FROM withdrawal WHERE merchant_id = #{merchantId}
+    <if test="status != null"> AND status = #{status} </if>
+     ORDER BY requested_at DESC LIMIT #{limit}
+  </select>
+
+  <select id="findInFlight" resultType="com.obita.infrastructure.persistence.vault.WithdrawalRow">
+    SELECT <include refid="withdrawalCols"/>
+      FROM withdrawal WHERE status IN ('SUBMITTED', 'CONFIRMING')
+     ORDER BY submitted_at ASC NULLS LAST LIMIT #{limit}
+  </select>
+
+</mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.obita.infrastructure.persistence.merchant.MerchantUserMapper">
+
+  <!-- The roles column is TEXT[] which needs a custom type handler — that
+       forces a resultMap. Every <id>/<result> here declares javaType
+       explicitly because mybatis-plus 3.5.7 does not infer it from the
+       result class's bean reflection in this code path. -->
+
+  <resultMap id="row" type="com.obita.infrastructure.persistence.merchant.MerchantUserRow">
+    <id     column="id"            property="id"            javaType="java.util.UUID"/>
+    <result column="merchant_id"   property="merchantId"    javaType="java.util.UUID"/>
+    <result column="username"      property="username"      javaType="java.lang.String"/>
+    <result column="password_hash" property="passwordHash"  javaType="java.lang.String"/>
+    <result column="roles"         property="roles"
+            javaType="[Ljava.lang.String;"
+            typeHandler="com.obita.infrastructure.persistence.merchant.StringArrayTypeHandler"/>
+    <result column="mfa_enabled"   property="mfaEnabled"    javaType="java.lang.Boolean"/>
+    <result column="status"        property="status"        javaType="java.lang.String"/>
+    <result column="last_login_at" property="lastLoginAt"   javaType="java.time.Instant"/>
+  </resultMap>
+
+  <select id="selectByMerchantCodeAndUsername" resultMap="row">
+    SELECT u.id, u.merchant_id, u.username, u.password_hash, u.roles,
+           u.mfa_enabled, u.status, u.last_login_at
+      FROM app_user u
+      JOIN merchant m ON m.id = u.merchant_id
+     WHERE m.code = #{code} AND u.username = #{username}
+  </select>
+
+  <select id="selectById" resultMap="row">
+    SELECT id, merchant_id, username, password_hash, roles,
+           mfa_enabled, status, last_login_at
+      FROM app_user WHERE merchant_id = #{merchantId} AND id = #{id}
+  </select>
+
+</mapper>

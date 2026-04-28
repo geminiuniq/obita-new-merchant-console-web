@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.obita.infrastructure.persistence.orders.OrderMapper">
+
+  <!-- We use resultType + column-AS-property aliases instead of <resultMap>
+       because mybatis-plus 3.5.7 does not auto-resolve javaType from the
+       result class's bean metadata when building <resultMap> entries. -->
+
+  <sql id="orderColumns">
+    id, merchant_id AS "merchantId", merchant_order_no AS "merchantOrderNo", status,
+    quote_asset AS "quoteAsset", quote_amount AS "quoteAmount",
+    settle_asset AS "settleAsset", settle_amount AS "settleAmount",
+    fee_asset AS "feeAsset", fee_amount AS "feeAmount",
+    payment_channel AS "paymentChannel", payer_reference AS "payerReference",
+    expires_at AS "expiresAt", paid_at AS "paidAt", settled_at AS "settledAt",
+    cancelled_at AS "cancelledAt",
+    description, metadata::text AS metadata,
+    settlement_tx_id AS "settlementTxId", refund_tx_id AS "refundTxId",
+    created_at AS "createdAt", updated_at AS "updatedAt", version
+  </sql>
+
+  <insert id="insert" parameterType="com.obita.infrastructure.persistence.orders.OrderRow">
+    INSERT INTO merchant_order (
+      id, merchant_id, merchant_order_no, status,
+      quote_asset, quote_amount, settle_asset, settle_amount,
+      fee_asset, fee_amount, payment_channel, payer_reference,
+      expires_at, paid_at, settled_at, cancelled_at,
+      description, metadata,
+      settlement_tx_id, refund_tx_id,
+      created_at, updated_at, version
+    ) VALUES (
+      #{id}, #{merchantId}, #{merchantOrderNo}, #{status},
+      #{quoteAsset}, #{quoteAmount}, #{settleAsset}, #{settleAmount},
+      #{feeAsset}, #{feeAmount}, #{paymentChannel}, #{payerReference},
+      #{expiresAt}, #{paidAt}, #{settledAt}, #{cancelledAt},
+      #{description}, COALESCE(#{metadata}::jsonb, '{}'::jsonb),
+      #{settlementTxId}, #{refundTxId},
+      #{createdAt}, #{updatedAt}, #{version}
+    )
+  </insert>
+
+  <update id="updateWithVersion">
+    UPDATE merchant_order
+       SET status              = #{row.status},
+           settle_asset        = #{row.settleAsset},
+           settle_amount       = #{row.settleAmount},
+           fee_asset           = #{row.feeAsset},
+           fee_amount          = #{row.feeAmount},
+           paid_at             = #{row.paidAt},
+           settled_at          = #{row.settledAt},
+           cancelled_at        = #{row.cancelledAt},
+           settlement_tx_id    = #{row.settlementTxId},
+           refund_tx_id        = #{row.refundTxId},
+           metadata            = COALESCE(#{row.metadata}::jsonb, metadata),
+           updated_at          = #{row.updatedAt},
+           version             = version + 1
+     WHERE id      = #{row.id}
+       AND version = #{expectedVersion}
+  </update>
+
+  <select id="selectByIdForUpdate" resultType="com.obita.infrastructure.persistence.orders.OrderRow">
+    SELECT <include refid="orderColumns"/>
+      FROM merchant_order
+     WHERE merchant_id = #{merchantId} AND id = #{id}
+       FOR UPDATE
+  </select>
+
+  <select id="selectById" resultType="com.obita.infrastructure.persistence.orders.OrderRow">
+    SELECT <include refid="orderColumns"/>
+      FROM merchant_order
+     WHERE merchant_id = #{merchantId} AND id = #{id}
+  </select>
+
+  <select id="selectByMerchantOrderNo" resultType="com.obita.infrastructure.persistence.orders.OrderRow">
+    SELECT <include refid="orderColumns"/>
+      FROM merchant_order
+     WHERE merchant_id = #{merchantId} AND merchant_order_no = #{no}
+  </select>
+
+  <select id="list" resultType="com.obita.infrastructure.persistence.orders.OrderRow">
+    SELECT <include refid="orderColumns"/>
+      FROM merchant_order
+     WHERE merchant_id = #{merchantId}
+    <if test="status  != null">  AND status          = #{status}  </if>
+    <if test="channel != null">  AND payment_channel = #{channel} </if>
+    <if test="from    != null">  AND created_at &gt;= #{from}     </if>
+    <if test="to      != null">  AND created_at &lt;  #{to}       </if>
+    <if test="beforeCreatedAt != null">
+      AND (created_at, id) &lt; (#{beforeCreatedAt}, #{beforeId})
+    </if>
+     ORDER BY created_at DESC, id DESC
+     LIMIT #{limit}
+  </select>
+
+  <select id="selectExpiredCandidates" resultType="com.obita.infrastructure.persistence.orders.OrderRow">
+    SELECT <include refid="orderColumns"/>
+      FROM merchant_order
+     WHERE status IN ('CREATED', 'PENDING_PAYMENT')
+       AND payment_channel = 'CRYPTO'
+       AND expires_at IS NOT NULL
+       AND expires_at &lt; #{now}
+     ORDER BY expires_at ASC
+     LIMIT #{limit}
+  </select>
+
+  <insert id="insertEvent">
+    INSERT INTO order_event (order_id, from_status, to_status, actor_type, actor_id, reason, payload)
+    VALUES (#{orderId}, #{fromStatus}, #{toStatus}, #{actorType}, #{actorId}, #{reason},
+            COALESCE(#{payload}::jsonb, NULL))
+  </insert>
+
+  <select id="selectEvents" resultType="com.obita.infrastructure.persistence.orders.OrderEventRow">
+    SELECT id, order_id AS "orderId", from_status AS "fromStatus", to_status AS "toStatus",
+           actor_type AS "actorType", actor_id AS "actorId", reason,
+           payload::text AS payload, created_at AS "createdAt"
+      FROM order_event
+     WHERE order_id = #{orderId}
+     ORDER BY id ASC
+  </select>
+
+  <insert id="insertRefund" parameterType="com.obita.infrastructure.persistence.orders.RefundRow">
+    INSERT INTO order_refund (id, order_id, amount, asset_code, reason, status,
+                              ledger_tx_id, requested_by, requested_at, completed_at)
+    VALUES (#{id}, #{orderId}, #{amount}, #{assetCode}, #{reason}, #{status},
+            #{ledgerTxId}, #{requestedBy}, #{requestedAt}, #{completedAt})
+  </insert>
+
+  <update id="updateRefund" parameterType="com.obita.infrastructure.persistence.orders.RefundRow">
+    UPDATE order_refund
+       SET status       = #{status},
+           ledger_tx_id = #{ledgerTxId},
+           completed_at = #{completedAt}
+     WHERE id = #{id}
+  </update>
+
+  <select id="selectRefund" resultType="com.obita.infrastructure.persistence.orders.RefundRow">
+    SELECT id, order_id AS "orderId", amount, asset_code AS "assetCode", reason, status,
+           ledger_tx_id AS "ledgerTxId", requested_by AS "requestedBy",
+           requested_at AS "requestedAt", completed_at AS "completedAt"
+      FROM order_refund WHERE id = #{id}
+  </select>
+
+  <select id="listRefunds" resultType="com.obita.infrastructure.persistence.orders.RefundRow">
+    SELECT id, order_id AS "orderId", amount, asset_code AS "assetCode", reason, status,
+           ledger_tx_id AS "ledgerTxId", requested_by AS "requestedBy",
+           requested_at AS "requestedAt", completed_at AS "completedAt"
+      FROM order_refund WHERE order_id = #{orderId}
+     ORDER BY requested_at ASC
+  </select>
+
+</mapper>

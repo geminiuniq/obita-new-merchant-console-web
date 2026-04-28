@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.obita.infrastructure.persistence.account.LedgerMapper">
+
+  <insert id="insertTx">
+    INSERT INTO ledger_tx (id, merchant_id, tx_type, reference_type, reference_id, memo, created_at)
+    VALUES (#{id}, #{merchantId}, #{txType}, #{referenceType}, #{referenceId}, #{memo}, #{createdAt})
+  </insert>
+
+  <insert id="insertEntry">
+    INSERT INTO ledger_entry (tx_id, account_id, asset_code, direction, amount, balance_after, created_at)
+    VALUES (#{txId}, #{accountId}, #{assetCode}, #{direction}, #{amount}, #{balanceAfter}, #{createdAt})
+  </insert>
+
+  <select id="selectTx" resultType="com.obita.infrastructure.persistence.account.LedgerTxRow">
+    SELECT id, merchant_id AS "merchantId", tx_type AS "txType",
+           reference_type AS "referenceType", reference_id AS "referenceId",
+           memo, created_at AS "createdAt"
+      FROM ledger_tx WHERE id = #{id}
+  </select>
+
+  <select id="selectEntries" resultType="com.obita.infrastructure.persistence.account.LedgerEntryRow">
+    SELECT id, tx_id AS "txId", account_id AS "accountId", asset_code AS "assetCode",
+           direction, amount, balance_after AS "balanceAfter", created_at AS "createdAt"
+      FROM ledger_entry WHERE tx_id = #{txId} ORDER BY id ASC
+  </select>
+
+  <select id="selectAccountEntries" resultType="com.obita.infrastructure.persistence.account.LedgerEntryRow">
+    SELECT id, tx_id AS "txId", account_id AS "accountId", asset_code AS "assetCode",
+           direction, amount, balance_after AS "balanceAfter", created_at AS "createdAt"
+      FROM ledger_entry
+     WHERE account_id = #{accountId}
+    <if test="beforeId != null"> AND id &lt; #{beforeId} </if>
+     ORDER BY id DESC
+     LIMIT #{limit}
+  </select>
+
+  <select id="findByReference" resultType="java.util.UUID">
+    SELECT id FROM ledger_tx
+     WHERE reference_type = #{referenceType}
+       AND reference_id   = #{referenceId}
+       AND tx_type        = #{txType}
+     LIMIT 1
+  </select>
+
+</mapper>

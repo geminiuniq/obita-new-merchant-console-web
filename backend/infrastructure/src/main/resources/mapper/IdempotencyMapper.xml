@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.obita.infrastructure.idempotency.IdempotencyMapper">
+
+  <insert id="tryInsert">
+    INSERT INTO idempotency_key (merchant_id, key, request_hash)
+    VALUES (#{merchantId}, #{key}, #{requestHash})
+    ON CONFLICT (merchant_id, key) DO NOTHING
+  </insert>
+
+  <select id="select" resultType="com.obita.infrastructure.idempotency.IdempotencyRow">
+    SELECT merchant_id     AS "merchantId",
+           key,
+           request_hash    AS "requestHash",
+           response_status AS "responseStatus",
+           response_body::text AS "responseBody",
+           created_at      AS "createdAt",
+           completed_at    AS "completedAt"
+      FROM idempotency_key
+     WHERE merchant_id = #{merchantId} AND key = #{key}
+  </select>
+
+  <update id="complete">
+    UPDATE idempotency_key
+       SET response_status = #{status},
+           response_body   = #{body}::jsonb,
+           completed_at    = now()
+     WHERE merchant_id = #{merchantId} AND key = #{key}
+  </update>
+
+  <delete id="deleteOlderThan">
+    DELETE FROM idempotency_key
+     WHERE created_at &lt; now() - make_interval(secs := #{seconds})
+  </delete>
+
+</mapper>

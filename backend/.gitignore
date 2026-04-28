@@ -1,0 +1,28 @@
+# Maven build output
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+
+# Environment & local secrets
+.env
+.env.local
+*.local
+
+# Logs
+*.log
+logs/
+
+# Maven wrapper artifacts (if added later)
+.mvn/wrapper/maven-wrapper.jar
