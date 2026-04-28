@@ -166,8 +166,35 @@
                 <button class="header-icon-btn" id="btn-refresh" title="Refresh">↻</button>
                 <button class="header-icon-btn" id="btn-theme" title="Toggle theme" aria-label="Toggle theme">☾</button>
                 <button class="header-icon-btn header-lang-btn" id="btn-lang" title="Language">EN</button>
-                <button class="header-icon-btn" id="btn-notif" title="Notifications">⚐</button>
-                <button class="header-avatar" id="btn-logout" title="Sign out">D</button>
+                <button class="header-icon-btn" id="btn-notif" title="Notifications">
+                    ⚐<span class="notif-dot" id="notif-dot"></span>
+                </button>
+                <div class="dropdown-anchor">
+                    <button class="header-avatar" id="btn-profile" title="Profile">D</button>
+                    <div class="dropdown-menu" id="profile-menu">
+                        <div class="dropdown-header">
+                            <div class="user-name" id="profile-user-name">demo</div>
+                            <div class="user-email" id="profile-user-email">demo@obita.local</div>
+                        </div>
+                        <div class="dropdown-item" data-action="my-profile">
+                            <span class="dropdown-icon">◉</span>
+                            <span data-i18n="profile.my">My Profile</span>
+                        </div>
+                        <div class="dropdown-item" data-action="security">
+                            <span class="dropdown-icon">⚿</span>
+                            <span data-i18n="profile.security">Security</span>
+                        </div>
+                        <div class="dropdown-item" data-action="docs">
+                            <span class="dropdown-icon">⌘</span>
+                            <span data-i18n="profile.docs">API Docs</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item danger" data-action="logout">
+                            <span class="dropdown-icon">⏻</span>
+                            <span data-i18n="header.logout">Sign out</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -255,6 +282,18 @@
         </div>
     </div>
 </div>
+
+<!-- =========================================================================
+     INBOX DRAWER (slide from right)
+     ========================================================================= -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="drawer" id="inbox-drawer" aria-hidden="true">
+    <div class="drawer-header">
+        <h3 id="inbox-title">Inbox</h3>
+        <button class="drawer-close" data-drawer-close aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body" id="inbox-body"></div>
+</aside>
 
 <!-- toast -->
 <div id="toast" class="toast hidden"></div>

@@ -66,11 +66,11 @@ export function applyStaticI18n() {
         langBtn.title = t('header.lang');
         langBtn.textContent = currentLang === 'zh' ? '中' : 'EN';
     }
-    const avatar     = $('#btn-logout');
+    const avatar     = $('#btn-profile');
     if (avatar) {
         const session = Api.loadSession() || {};
         const user = session.username || 'D';
-        avatar.title = `${user} · ${t('header.logout')}`;
+        avatar.title = `${user}`;
     }
 
     // Sidebar
@@ -99,4 +99,12 @@ export function applyStaticI18n() {
     if (descInput) descInput.placeholder = t('orders.modal.desc.placeholder');
     setText('#m-order-cancel', 'orders.modal.cancel');
     setText('#m-order-create', 'orders.modal.create');
+
+    // Inbox drawer
+    setText('#inbox-title', 'inbox.title');
+
+    // Profile dropdown items
+    $$('#profile-menu [data-i18n]').forEach(span => {
+        span.textContent = t(span.dataset.i18n);
+    });
 }

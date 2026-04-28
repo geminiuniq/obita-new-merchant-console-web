@@ -7,7 +7,7 @@
 
 import { Api, ApiError } from './api.js';
 import { $, $$ } from './js/dom.js';
-import { applyStaticI18n, setLang, getLang, onLangChanged } from './js/i18n.js';
+import { applyStaticI18n, setLang, getLang, onLangChanged, t } from './js/i18n.js';
 import { applyTheme, getTheme, toggleTheme } from './js/theme.js';
 import { toast } from './js/ui.js';
 import { registerRoute, navigate, startRouter, getCurrentRoute } from './js/router.js';
@@ -16,6 +16,9 @@ import { renderVault } from './js/pages/vault.js';
 import { renderOrders, bindCreateOrderForm } from './js/pages/orders.js';
 import { renderLedger } from './js/pages/ledger.js';
 import { renderComingSoon } from './js/pages/coming-soon.js';
+import { bindDrawerControls, closeAllDrawers } from './js/drawer.js';
+import { bindHeader, refreshProfileMenu } from './js/header.js';
+import { refreshNotifDot } from './js/inbox.js';
 
 // ---------------------------------------------------------------------------
 // Routes
@@ -54,14 +57,14 @@ $('#login-form').addEventListener('submit', async (ev) => {
 });
 
 document.addEventListener('auth:expired', () => {
-    toast(/* keep simple — i18n already applied to login screen */ 'Session expired', 'error');
+    toast(t('common.session.expired'), 'error');
     showLogin();
 });
 
-$('#btn-logout').addEventListener('click', () => {
+function logout() {
     Api.clearSession();
     showLogin();
-});
+}
 
 $('#btn-refresh').addEventListener('click', () => {
     const cur = getCurrentRoute();
@@ -80,6 +83,8 @@ $$('[data-close]').forEach(elt => elt.addEventListener('click', () => {
 }));
 
 bindCreateOrderForm();
+bindDrawerControls();
+bindHeader({ onLogout: logout });
 
 function showLogin() {
     document.body.classList.add('is-logged-out');
@@ -93,13 +98,15 @@ function enterApp() {
     const user = session.username || '—';
     $('#header-merchant-name').textContent = code;
     $('#header-logo').textContent = (code[0] || '·').toUpperCase();
-    const avatarBtn = $('#btn-logout');
+    const avatarBtn = $('#btn-profile');
     avatarBtn.textContent = (user[0] || 'D').toUpperCase();
 
     document.body.classList.remove('is-logged-out');
     $('#view-login').classList.add('hidden');
     $('#view-app').classList.remove('hidden');
     applyStaticI18n();
+    refreshProfileMenu();
+    refreshNotifDot();
 
     const initial = (location.hash || '').replace(/^#/, '') || 'overview';
     navigate(initial, { replace: true });
