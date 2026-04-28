@@ -11978,127 +11978,67 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     </div>
                 </div>
                 
-                <!-- Collections Summary -->
-                <div class="card collections-summary-card">
-                    <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Collections Summary</h2>
-                    <div class="collection-cards-wrapper" style="gap: 32px; display: flex; flex-direction: column;">
-                        <!-- Invoice Orders -->
-                        <div class="collection-card-inner">
-                            <div class="collection-header">
-                                <h3 class="card-title" style="margin-bottom: 0; font-size: 15px;">Invoice Orders</h3>
-                                <div class="time-selector">
-                                    <span class="time-option">1d</span>
-                                    <span class="time-option">1w</span>
-                                    <span class="time-option active">1m</span>
-                                    <span class="time-option">6m</span>
-                                    <span class="time-option">1y</span>
-                                </div>
-                            </div>
-                            <div class="collection-stats-grid">
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Created Orders</span>
-                                    <span class="c-stat-count">1,240</span>
-                                    <span class="c-stat-amount">$450,200.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Paid Successfully</span>
-                                    <span class="c-stat-count text-success">1,100</span>
-                                    <span class="c-stat-amount text-success">$405,000.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">In-Transit (incl. Underpaid)</span>
-                                    <span class="c-stat-count text-warning">85</span>
-                                    <span class="c-stat-amount text-warning">$25,200.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Failed (Expired/Cancelled)</span>
-                                    <span class="c-stat-count text-muted">55</span>
-                                    <span class="c-stat-amount text-muted">$20,000.00</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div style="height: 1px; background-color: var(--clr-border);"></div>
-
-                        <!-- Checkout Orders -->
-                        <div class="collection-card-inner">
-                            <div class="collection-header">
-                                <h3 class="card-title" style="margin-bottom: 0; font-size: 15px;">Checkout Orders</h3>
-                                <div class="time-selector">
-                                    <span class="time-option">1d</span>
-                                    <span class="time-option">1w</span>
-                                    <span class="time-option active">1m</span>
-                                    <span class="time-option">6m</span>
-                                    <span class="time-option">1y</span>
-                                </div>
-                            </div>
-                            <div class="collection-stats-grid">
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Created Orders</span>
-                                    <span class="c-stat-count">8,520</span>
-                                    <span class="c-stat-amount">$1,205,500.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Paid Successfully</span>
-                                    <span class="c-stat-count text-success">7,800</span>
-                                    <span class="c-stat-amount text-success">$1,080,000.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">In-Transit (incl. Underpaid)</span>
-                                    <span class="c-stat-count text-warning">420</span>
-                                    <span class="c-stat-amount text-warning">$80,500.00</span>
-                                </div>
-                                <div class="c-stat-box">
-                                    <span class="c-stat-label">Failed (Expired/Cancelled)</span>
-                                    <span class="c-stat-count text-muted">300</span>
-                                    <span class="c-stat-amount text-muted">$45,000.00</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payouts Summary -->
+                <!-- Summary cards — unified KPI strip pattern matching the page-level
+                     hero KPIs. Each sub-card has 4 tiles: Total Orders / Successful /
+                     In-Transit / Failed. -->
                 ${(() => {
-                    const s = computePayoutSummary();
+                    const tile = (label, count, amount, dotBg, dotFg, iconSvg, amtColor) => `
+                        <div style="padding: 14px 18px;">
+                            <div style="display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #64748B; font-weight: 500; line-height: 1.2;">
+                                ${dotBg ? `<span style="width: 14px; height: 14px; border-radius: 999px; background:${dotBg}; color:${dotFg}; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">${iconSvg}</span>` : ''}
+                                ${label}
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: #0F172A; margin-top: 6px; line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;">${count}</div>
+                            <div style="font-size: 12px; color: ${amtColor || '#64748B'}; margin-top: 3px; font-variant-numeric: tabular-nums;">${amount}</div>
+                        </div>
+                    `;
+                    const renderSummarySubCard = (title, kpi) => `
+                        <div class="card overview-summary-sub" style="padding: 0; overflow: hidden;">
+                            <div style="padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid #F1F5F9; flex-wrap: wrap;">
+                                <h3 style="font-size: 13px; font-weight: 700; color: #0F172A; margin: 0; letter-spacing: -0.005em;">${title}</h3>
+                                <div class="time-selector" style="font-size: 11px;">
+                                    <span class="time-option">1d</span>
+                                    <span class="time-option">1w</span>
+                                    <span class="time-option active">1m</span>
+                                    <span class="time-option">6m</span>
+                                    <span class="time-option">1y</span>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;">
+                                ${tile('Total Orders',   kpi.totalCount,   kpi.totalAmount,   '', '', '', '#475569')}
+                                <div style="border-left: 1px solid #F1F5F9;">${tile('Successful', kpi.successCount, kpi.successAmount, '#DCFCE7','#16A34A','<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>','#15803D')}</div>
+                                <div style="border-left: 1px solid #F1F5F9;">${tile('In-Transit', kpi.transitCount, kpi.transitAmount, '#DBEAFE','#2563EB','<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>','#1D4ED8')}</div>
+                                <div style="border-left: 1px solid #F1F5F9;">${tile('Failed',     kpi.failedCount,  kpi.failedAmount,  '#FEE2E2','#DC2626','<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>','#B91C1C')}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    const invoiceKpi = {
+                        totalCount: '1,240', totalAmount: '$450,200.00',
+                        successCount: '1,100', successAmount: '$405,000.00',
+                        transitCount: '85', transitAmount: '$25,200.00',
+                        failedCount: '55', failedAmount: '$20,000.00'
+                    };
+                    const checkoutKpi = {
+                        totalCount: '8,520', totalAmount: '$1,205,500.00',
+                        successCount: '7,800', successAmount: '$1,080,000.00',
+                        transitCount: '420', transitAmount: '$80,500.00',
+                        failedCount: '300', failedAmount: '$45,000.00'
+                    };
+                    const _ps = computePayoutSummary();
+                    const payoutKpi = {
+                        totalCount: _ps.totalCount, totalAmount: formatUsdFull(_ps.totalVolume),
+                        successCount: _ps.completedCount, successAmount: formatUsdFull(_ps.completedVolume),
+                        transitCount: _ps.inTransitCount, transitAmount: formatUsdFull(_ps.inTransitVolume),
+                        failedCount: _ps.failedCount, failedAmount: formatUsdFull(_ps.failedVolume)
+                    };
+
                     return `
-                <div class="card payouts-summary-card">
-                    <h2 class="card-title" style="font-size: 18px; margin-bottom: 24px;">Payouts Summary</h2>
-                    <div class="collection-card-inner">
-                        <div class="collection-header">
-                            <h3 class="card-title" style="margin-bottom: 0; font-size: 15px;">Payout Orders</h3>
-                            <div class="time-selector">
-                                <span class="time-option">1d</span>
-                                <span class="time-option">1w</span>
-                                <span class="time-option active">1m</span>
-                                <span class="time-option">6m</span>
-                                <span class="time-option">1y</span>
-                            </div>
-                        </div>
-                        <div class="collection-stats-grid">
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Created Orders</span>
-                                <span class="c-stat-count">${s.totalCount}</span>
-                                <span class="c-stat-amount">${formatUsdFull(s.totalVolume)}</span>
-                            </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Successful</span>
-                                <span class="c-stat-count text-success">${s.completedCount}</span>
-                                <span class="c-stat-amount text-success">${formatUsdFull(s.completedVolume)}</span>
-                            </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">In-Transit</span>
-                                <span class="c-stat-count" style="color: #1D4ED8;">${s.inTransitCount}</span>
-                                <span class="c-stat-amount" style="color: #1D4ED8;">${formatUsdFull(s.inTransitVolume)}</span>
-                            </div>
-                            <div class="c-stat-box">
-                                <span class="c-stat-label">Failed</span>
-                                <span class="c-stat-count text-muted">${s.failedCount}</span>
-                                <span class="c-stat-amount text-muted">${formatUsdFull(s.failedVolume)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        ${renderSummarySubCard('Invoice Orders',  invoiceKpi)}
+                        ${renderSummarySubCard('Checkout Orders', checkoutKpi)}
+                        ${renderSummarySubCard('Payout Orders',   payoutKpi)}
+                    </div>`;
                 })()}
 
 
@@ -12181,14 +12121,17 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         { severity: 'watch',    title: 'Invoice approaching expiry',     meta: 'INV-240405-8802 · expires in 2 days',                action: 'Review invoice', handler: "window.openInvoiceOrderDetail('INV-240405-8802')" }
                     ];
 
-                    // Category tone — icon in a tinted circle carries the severity signal
+                    // Severity → tone + track. Compliance is the only severity that uses
+                    // red — restrained to a thin left bar + a single tag. Other action
+                    // items use amber (critical) or brand blue (approval) so the card
+                    // reads as a workbench, not an alarm.
                     const tone = {
-                        critical:   { color: '#B91C1C', bg: '#FEE2E2', label: 'Critical',   icon: 'alert-octagon' },
-                        watch:      { color: '#B45309', bg: '#FEF3C7', label: 'Watch',      icon: 'alert-triangle' },
-                        compliance: { color: '#B45309', bg: '#FEF3C7', label: 'Compliance', icon: 'shield-alert' },
-                        approval:   { color: '#1D4ED8', bg: '#DBEAFE', label: 'Approval',   icon: 'clock' }
+                        compliance: { track: 'action',      color: '#B91C1C', barColor: '#DC2626', bg: '#FFFBEB', tagBg: '#FEE2E2', tagFg: '#991B1B', label: 'Info Required', icon: 'shield-alert' },
+                        critical:   { track: 'action',      color: '#B45309', barColor: '#D97706', bg: '#FFFBEB', tagBg: '#FEF3C7', tagFg: '#B45309', label: 'Critical',          icon: 'alert-octagon' },
+                        approval:   { track: 'action',      color: '#1D4ED8', barColor: '#2563EB', bg: '#F8FAFC', tagBg: '#DBEAFE', tagFg: '#1D4ED8', label: 'Approval',          icon: 'clock' },
+                        watch:      { track: 'acknowledge', color: '#475569', barColor: '#CBD5E1', bg: '#FFFFFF', tagBg: '#F1F5F9', tagFg: '#475569', label: 'Watch',             icon: 'alert-triangle' }
                     };
-                    const priority = { critical: 1, watch: 2, compliance: 3, approval: 4 };
+                    const priority = { compliance: 1, critical: 2, approval: 3, watch: 4 };
 
                     // Merge into a single prioritised queue
                     const items = [];
@@ -12202,9 +12145,9 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         const roleLabel = directoryType === 'invoicePayer' ? 'Payer' : 'Payee';
                         items.push({
                             kind: 'edd', severity: 'compliance',
-                            title: `EDD required · ${c.alias || c.name}`,
+                            title: `Info required · ${c.alias || c.name}`,
                             meta: `${roleLabel} · ${c.eddReason || 'Additional information required before further transactions.'}`,
-                            actionLabel: 'Complete EDD',
+                            actionLabel: 'Provide Info',
                             handler: `window.editPayee('${c.id}', '${directoryType}')`
                         });
                     });
@@ -12217,21 +12160,56 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                     }));
                     items.sort((a, b) => priority[a.severity] - priority[b.severity]);
 
-                    // Summary breakdown — rendered on the soft-tinted header, subtle colour per severity
+                    const actionItems     = items.filter(i => tone[i.severity].track === 'action');
+                    const acknowledgeItems = items.filter(i => tone[i.severity].track === 'acknowledge');
                     const counts = items.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
-                    const parts = [];
-                    if (counts.critical)   parts.push(`<span style="color:#B91C1C;font-weight:700;">${counts.critical} critical</span>`);
-                    if (counts.watch)      parts.push(`<span style="color:#B45309;font-weight:700;">${counts.watch} watch</span>`);
-                    if (counts.compliance) parts.push(`<span style="color:#B45309;font-weight:700;">${counts.compliance} EDD</span>`);
-                    if (counts.approval)   parts.push(`<span style="color:#1D4ED8;font-weight:700;">${counts.approval} approval${counts.approval > 1 ? 's' : ''}</span>`);
-                    const summaryLine = parts.join(' <span style="color:#CBD5E1;">·</span> ');
-
                     const total = items.length;
-                    const hasCritical = !!counts.critical;
+                    const hasCompliance = !!counts.compliance;
+                    const hasCritical   = !!counts.critical;
+
+                    const renderRow = (item, idx, isLast) => {
+                        const t = tone[item.severity];
+                        const isCompliance = item.severity === 'compliance';
+                        return `
+                        <div onclick="${item.handler}"
+                             style="position: relative; padding: 14px 20px 14px ${isCompliance ? '24px' : '20px'}; ${isLast ? '' : 'border-bottom: 1px solid #F1F5F9;'} cursor: pointer; background: ${t.bg}; transition: background 0.12s ease;"
+                             onmouseover="this.style.background='${isCompliance ? '#FEF3C7' : (t.track === 'action' ? '#F8FAFC' : '#FAFAFA')}'"
+                             onmouseout="this.style.background='${t.bg}'">
+                            <!-- Left severity bar — thicker for compliance -->
+                            <span style="position: absolute; left: 0; top: 0; bottom: 0; width: ${isCompliance ? '4px' : (t.track === 'action' ? '3px' : '2px')}; background: ${t.barColor};"></span>
+
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; background: ${t.tagBg}; color: ${t.tagFg}; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; ${isCompliance ? `box-shadow: 0 0 0 1px ${t.barColor}33;` : ''}">
+                                    <i data-lucide="${t.icon}" style="width: 11px; height: 11px;"></i>${t.label}
+                                </span>
+                            </div>
+                            <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.4; margin-top: 8px;">${item.title}</div>
+                            <div style="font-size: 11.5px; color: #64748B; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;">${item.meta}</div>
+                            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                                <a href="#" onclick="event.preventDefault(); event.stopPropagation(); ${item.handler}"
+                                   style="display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 800; color: var(--clr-accent); text-decoration: none; white-space: nowrap; padding: 2px 0; transition: gap 0.12s ease;"
+                                   onmouseover="this.style.textDecoration='underline';this.style.gap='6px'"
+                                   onmouseout="this.style.textDecoration='none';this.style.gap='3px'">
+                                    ${item.actionLabel}
+                                    <span aria-hidden="true" style="font-size: 12px; line-height: 1;">→</span>
+                                </a>
+                            </div>
+                        </div>`;
+                    };
+
+                    const groupHead = (label, count, color, icon, sublabel) => `
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 20px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                            <span style="display: inline-flex; align-items: center; gap: 7px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; color: ${color}; letter-spacing: 0.18em; text-transform: uppercase;">
+                                <i data-lucide="${icon}" style="width: 11px; height: 11px;"></i>${label}
+                                <span style="margin-left: 4px; padding: 1px 7px; background: ${color}; color: white; border-radius: 999px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em;">${count}</span>
+                            </span>
+                            ${sublabel ? `<span style="font-size: 10px; font-weight: 600; color: #94A3B8; letter-spacing: 0.06em; text-transform: uppercase;">${sublabel}</span>` : ''}
+                        </div>`;
 
                     return `
                 <div class="card" style="margin-top: 24px; padding: 0; overflow: hidden;">
-                    <!-- Header — solid brand tint with a filled brand icon tile for weight -->
+                    <!-- Header — keeps brand-blue identity; compliance signal is reserved
+                         for the row itself, not the whole card. -->
                     <div style="padding: 18px 20px; background: #EFF6FF; border-bottom: 1px solid #BFDBFE;">
                         <div style="display: flex; align-items: center; gap: 14px;">
                             <div style="width: 44px; height: 44px; border-radius: 12px; background: var(--clr-accent); color: white; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
@@ -12240,12 +12218,16 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                             <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
                                     <h2 style="margin: 0; font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: -0.005em;">Exceptions &amp; Tasks</h2>
-                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: ${hasCritical ? '#DC2626' : 'var(--clr-accent)'}; color: white; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);">
-                                        ${hasCritical ? `<span style="width: 5px; height: 5px; border-radius: 999px; background: white; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);"></span>` : ''}
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; background: var(--clr-accent); color: white; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);">
                                         ${total} open
                                     </span>
                                 </div>
-                                ${summaryLine ? `<div style="font-size: 12px; color: #334155; margin-top: 5px; line-height: 1.55;">${summaryLine}</div>` : ''}
+                                <div style="font-size: 12px; color: #334155; margin-top: 5px; line-height: 1.55;">
+                                    ${actionItems.length ? `<span style="color:#B45309;font-weight:800;">${actionItems.length} action required</span>` : ''}
+                                    ${actionItems.length && acknowledgeItems.length ? '<span style="color:#CBD5E1;"> · </span>' : ''}
+                                    ${acknowledgeItems.length ? `<span style="color:#475569;font-weight:600;">${acknowledgeItems.length} for awareness</span>` : ''}
+                                    ${!actionItems.length && !acknowledgeItems.length ? '<span style="color:#16A34A;font-weight:700;">All clear.</span>' : ''}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -12259,136 +12241,52 @@ Only 0.0123 USDT will be recognised — do not send any other amount.`;
                         </div>
                     </div>
                     ` : `
-                    <!-- Console-style column labels, workbench feel -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 20px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
-                        <span style="font-size: 10px; font-weight: 800; color: #94A3B8; letter-spacing: 0.12em; text-transform: uppercase;">Queue &middot; ${total} item${total === 1 ? '' : 's'}</span>
-                        <span style="font-size: 10px; font-weight: 700; color: #94A3B8; letter-spacing: 0.06em; text-transform: uppercase;">Sorted by severity</span>
-                    </div>
-                    <div>
-                        ${items.map((item, idx) => {
-                            const t = tone[item.severity];
-                            const zebra = idx % 2 === 1 ? '#FCFDFE' : '#FFFFFF';
-                            return `
-                            <div onclick="${item.handler}"
-                                 style="padding: 13px 20px 14px; ${idx === 0 ? '' : 'border-top: 1px solid #F1F5F9;'} cursor: pointer; background: ${zebra}; transition: background 0.12s ease;"
-                                 onmouseover="this.style.background='#F1F5F9'"
-                                 onmouseout="this.style.background='${zebra}'">
-                                <!-- Filled category chip carries the severity weight -->
-                                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; background: ${t.bg}; color: ${t.color}; border: 1px solid ${t.color}26; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;">
-                                    <i data-lucide="${t.icon}" style="width: 11px; height: 11px;"></i>${t.label}
-                                </div>
-                                <div style="font-size: 13.5px; font-weight: 700; color: #0F172A; line-height: 1.4; margin-top: 7px;">${item.title}</div>
-                                <div style="font-size: 11.5px; color: #64748B; line-height: 1.55; margin-top: 3px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums;">${item.meta}</div>
-                                <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
-                                    <a href="#" onclick="event.preventDefault(); event.stopPropagation(); ${item.handler}"
-                                       style="display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--clr-accent); text-decoration: none; white-space: nowrap; padding: 2px 0; transition: gap 0.12s ease;"
-                                       onmouseover="this.style.textDecoration='underline';this.style.gap='6px'"
-                                       onmouseout="this.style.textDecoration='none';this.style.gap='3px'">
-                                        ${item.actionLabel}
-                                        <span aria-hidden="true" style="font-size: 12px; line-height: 1;">→</span>
-                                    </a>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
+                    ${actionItems.length ? `
+                        ${groupHead('Action Required', actionItems.length, '#B45309', 'zap', 'Resolve to unblock')}
+                        <div>
+                            ${actionItems.map((item, idx) => renderRow(item, idx, idx === actionItems.length - 1)).join('')}
+                        </div>
+                    ` : ''}
+                    ${acknowledgeItems.length ? `
+                        ${groupHead('For Awareness', acknowledgeItems.length, '#475569', 'eye', 'Review when you can')}
+                        <div>
+                            ${acknowledgeItems.map((item, idx) => renderRow(item, idx, idx === acknowledgeItems.length - 1)).join('')}
+                        </div>
+                    ` : ''}
                     `}
                 </div>`;
                 })()}
 
-                <div class="card activities-card" style="margin-top: 24px;">
-                    <div class="card-header-flex">
-                        <h2 class="card-title" style="margin-bottom: 0;">Activities</h2>
-                        <a href="#" class="view-all-link" onclick="window.openActivitiesDrawer(); return false;">View All</a>
+                <!-- Obita News — latest item from obita.xyz/news -->
+                <div class="card fade-in" style="margin-top: 24px; padding: 0; overflow: hidden;">
+                    <div style="padding: 14px 20px 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #F1F5F9;">
+                        <div style="display: inline-flex; align-items: center; gap: 8px;">
+                            <div style="width: 22px; height: 22px; border-radius: 6px; background: #0F172A; color: white; display: inline-flex; align-items: center; justify-content: center;">
+                                <i data-lucide="newspaper" style="width: 12px; height: 12px;"></i>
+                            </div>
+                            <span style="font-size: 11px; font-weight: 800; color: #0F172A; letter-spacing: 0.1em; text-transform: uppercase;">Obita News</span>
+                        </div>
+                        <a href="https://obita.xyz/news/" target="_blank" rel="noopener" style="font-size: 11.5px; font-weight: 700; color: #2563EB; text-decoration: none; display: inline-flex; align-items: center; gap: 3px;">View all <i data-lucide="arrow-up-right" style="width: 11px; height: 11px;"></i></a>
                     </div>
-                    <div class="activity-feed">
-                        <!-- Activity Item 1 -->
-                        <div class="activity-item">
-                            <div class="activity-icon bg-warning">
-                                <i data-lucide="clock"></i>
+                    <a href="https://obita.xyz/news/26042326093007580565504/" target="_blank" rel="noopener" style="display: block; padding: 16px 20px 18px; text-decoration: none; color: inherit; transition: background 0.12s ease;" onmouseover="this.style.background='#FCFDFE'" onmouseout="this.style.background='transparent'">
+                        <div style="display: flex; gap: 14px; align-items: flex-start;">
+                            <div style="flex-shrink: 0; width: 92px; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #F1F5F9; border: 1px solid #E2E8F0;">
+                                <img src="https://public.obita.xyz/assets/2026/04/9e51a8a7-29b4-45a4-afb8-26e9ee8b252e.png" alt="Obita at HK Web3 Festival PayFi Forum" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;" onerror="this.parentElement.style.display='none'">
                             </div>
-                            <div class="activity-content">
-                                <p class="activity-text">${window.currentLicenseMode === 'MSO' ? 'Fiat payout pending approval' : 'Stablecoin withdrawal pending'}</p>
-                                <span class="activity-time">Just now</span>
-                            </div>
-                            <div class="activity-amount" style="color: #B45309;">Awaiting Approval</div>
-                            <div class="activity-actions">
-                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Checking Approval Tasks...');">Review</button>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px;">
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE; border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;">Latest</span>
+                                    <span style="font-size: 11.5px; color: #64748B; font-variant-numeric: tabular-nums;">23 Apr 2026</span>
+                                </div>
+                                <h3 style="font-size: 14px; font-weight: 800; color: #0F172A; margin: 0 0 6px; line-height: 1.35; letter-spacing: -0.01em;">
+                                    Obita at HK Web3 Festival PayFi Forum: Driving Real-World Adoption Through End-to-End Infrastructure
+                                </h3>
+                                <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #2563EB;">
+                                    Read article <i data-lucide="arrow-right" style="width: 13px; height: 13px;"></i>
+                                </span>
                             </div>
                         </div>
-
-                        <!-- Activity Item 2 -->
-                        <div class="activity-item">
-                            <div class="activity-icon bg-success">
-                                <i data-lucide="arrow-down"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">Received ${window.currentLicenseMode === 'MSO' ? 'Invoice' : 'Checkout'} payment</p>
-                                <span class="activity-time">2 hours ago</span>
-                            </div>
-                            <div class="activity-amount text-success">${window.currentLicenseMode === 'MSO' ? '+7,800 HKD' : '+1,000 USDT'}</div>
-                            <div class="activity-actions">
-                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Navigating to Order Details...');">View Tx</button>
-                            </div>
-                        </div>
-
-                        <!-- Activity Item 3 -->
-                        <div class="activity-item">
-                            <div class="activity-icon bg-info">
-                                <i data-lucide="user-plus"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">New member <strong>Alex</strong> joined</p>
-                                <span class="activity-time">Yesterday</span>
-                            </div>
-                            <div class="activity-amount" style="color: #1D4ED8;">Member Update</div>
-                            <div class="activity-actions">
-                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Manage User Roles...');">Manage</button>
-                            </div>
-                        </div>
-
-                        <!-- Activity Item 4 -->
-                        <div class="activity-item">
-                            <div class="activity-icon bg-slate">
-                                <i data-lucide="arrow-up-right"></i>
-                            </div>
-                            <div class="activity-content">
-                                <p class="activity-text">Payment to supplier successful</p>
-                                <span class="activity-time">Feb 14, 2026</span>
-                            </div>
-                            <div class="activity-amount">-20,000 HKD</div>
-                            <div class="activity-actions">
-                                <button class="btn btn-outline" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="alert('Downloading Receipt...');">Receipt</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Editorial Kicker · Q2 · 2026 -->
-                <div class="fade-in" style="margin-top: 24px; position: relative; overflow: hidden; border-radius: 14px; background: #F1F5F9; border: 1px solid #E2E8F0; padding: 24px 24px 18px;">
-                    <!-- Top masthead -->
-                    <div style="display: flex; align-items: baseline; gap: 10px; font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; color: #334155; text-transform: uppercase;">
-                        <span>Q2 &middot; 2026</span>
-                        <span style="flex: 1; height: 1px; background: #CBD5E1;"></span>
-                    </div>
-
-                    <!-- Pull quote — the hero moment -->
-                    <blockquote style="position: relative; margin: 22px 0 20px; padding-left: 14px; border-left: 0; font-family: 'Clash Display', 'Inter', sans-serif; font-weight: 500; font-size: 28px; line-height: 1.1; letter-spacing: -0.022em; color: #0F172A;">
-                        <span aria-hidden="true" style="position: absolute; top: -8px; left: -6px; font-family: Georgia, 'Times New Roman', serif; font-size: 38px; line-height: 1; color: #CBD5E1; font-weight: 700;">&ldquo;</span>
-                        A ledger that<br>
-                        speaks your<br>
-                        <em style="font-style: normal; font-weight: 600; color: #2563EB;">language.</em>
-                    </blockquote>
-
-                    <!-- Attribution rule + brand lockup (quiet signature) -->
-                    <div style="height: 1px; background: #CBD5E1; margin-bottom: 12px;"></div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; flex-shrink: 0;">
-                            <i data-lucide="layers" style="width: 10px; height: 10px;"></i>
-                        </span>
-                        <span style="font-family: 'Clash Display', 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: #0F172A; letter-spacing: -0.01em; line-height: 1;">Obita</span>
-                        <span style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 11px; color: #CBD5E1; font-weight: 700; line-height: 1;">//</span>
-                        <span style="font-family: 'SFMono-Regular', Menlo, ui-monospace, monospace; font-size: 9.5px; font-weight: 700; color: #64748B; letter-spacing: 0.14em; text-transform: uppercase; line-height: 1;">Make Payments Borderless</span>
-                    </div>
+                    </a>
                 </div>
 
             </div>
