@@ -15,6 +15,11 @@ import { renderOverview } from './js/pages/overview.js';
 import { renderVault } from './js/pages/vault.js';
 import { renderOrders, bindCreateOrderForm } from './js/pages/orders.js';
 import { renderLedger } from './js/pages/ledger.js';
+import { renderMembers } from './js/pages/members.js';
+import { renderApprovals } from './js/pages/approvals.js';
+import { renderConversion } from './js/pages/conversion.js';
+import { renderReports } from './js/pages/reports.js';
+import { renderPayouts } from './js/pages/payouts.js';
 import { renderComingSoon } from './js/pages/coming-soon.js';
 import { bindDrawerControls, closeAllDrawers } from './js/drawer.js';
 import { bindHeader, refreshProfileMenu } from './js/header.js';
@@ -23,12 +28,17 @@ import { refreshNotifDot } from './js/inbox.js';
 // ---------------------------------------------------------------------------
 // Routes
 // ---------------------------------------------------------------------------
-registerRoute('overview', renderOverview);
-registerRoute('vault',    renderVault);
-registerRoute('orders',   renderOrders);
-registerRoute('ledger',   renderLedger);
-['fiat-vault', 'payouts', 'conversion', 'approvals', 'reports', 'members']
-    .forEach(r => registerRoute(r, () => renderComingSoon(r)));
+registerRoute('overview',   renderOverview);
+registerRoute('vault',      renderVault);
+registerRoute('orders',     renderOrders);
+registerRoute('ledger',     renderLedger);
+registerRoute('members',    renderMembers);
+registerRoute('approvals',  renderApprovals);
+registerRoute('conversion', renderConversion);
+registerRoute('reports',    renderReports);
+registerRoute('payouts',    renderPayouts);
+// Only Fiat Vault left as a pure Coming Soon stub.
+registerRoute('fiat-vault', () => renderComingSoon('fiat-vault'));
 
 onLangChanged(() => {
     const cur = getCurrentRoute();
