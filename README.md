@@ -28,8 +28,10 @@ obita-web/
   fully wired; Cashier scaffolded. 8 balanced ledger entries observed
   across deposit → settle → refund. See
   [`backend/docs/PROGRESS.md`](backend/docs/PROGRESS.md).
-- **Frontend**: minimal demo SPA, browser-verified login + balances +
-  vault deposit injection.
+- **Frontend**: editorial SPA with sidebar+main shell, EN/CN i18n,
+  light/dark theme, and full backend wiring on the four implemented
+  modules. Mock placeholders for Cashier / Payouts / Conversion /
+  Approvals / Reports / Members. Browser-verified.
 - **Documentation**: 8 + 8 + 1 ADR docs, en/zh mirror — see
   [`backend/docs/00-README.md`](backend/docs/00-README.md) for the
   index. Latest progress in
@@ -76,31 +78,35 @@ Open **http://localhost:5173** and log in:
 
 ## What to do once you're logged in
 
-The four-tab UI maps 1:1 to the backend modules:
+The sidebar is split into four sections; only the four routes wired to
+the backend are clickable, the rest are intentional **Coming Soon**
+placeholders for unfinished modules.
 
-1. **资金 · 余额 (Balances)** — `GET /v1/accounts`. Shows AVAILABLE /
-   PENDING / RESERVED / SETTLEMENT for each stablecoin. All zero on a
-   fresh schema until you inject a deposit.
+1. **Overview** (`#overview`) — KPI strip across the implemented modules:
+   total available stablecoin balance, pending in-flight deposits, open
+   orders, recently settled. Below: per-asset balance cards plus a recent
+   orders table. Powered by `GET /v1/accounts` + `GET /v1/orders`.
 
-2. **订单 (Orders)** — `GET / POST /v1/orders` and the lifecycle action
-   buttons. Try this:
-   - Click **新建订单** → fill in → submit. Order goes
-     `CREATED → PENDING_PAYMENT`.
-   - Click **标记已支付** → `PAID`.
-   - Click **结算** → `SETTLED` + posts an `AVAILABLE → SETTLEMENT`
-     ledger entry pair.
-   - Click **退款** → enter an amount → posts the reverse entries.
-
-3. **保险柜 · 入金 (Vault)** — the headline demo:
+2. **Stablecoin Vault** (`#vault`) — the headline demo:
    - Provision a POLYGON address (one click).
    - Inject a synthetic on-chain credit via `/mock-bank/credit`.
    - Wait ~10s — `DepositScanner` detects it and posts
      `LIABILITY → PENDING` (entries 1 & 2).
    - Wait ~30s more — confirmations reach 12, the deposit moves to
      `CREDITED` and posts `PENDING → AVAILABLE` (entries 3 & 4). The UI
-     polls automatically; balances update.
+     auto-polls for ~60s after injection; balances and ledger refresh.
 
-4. **分录流水 (Ledger)** — snapshot of each account's current
+3. **Invoice Orders** (`#orders`) — `GET / POST /v1/orders` plus the
+   lifecycle endpoints:
+   - Click **+ New order** → fill in → submit.
+     `CREATED → PENDING_PAYMENT`.
+   - Click **Mark paid** → `PAID`.
+   - Click **Settle** → `SETTLED` + posts an `AVAILABLE → SETTLEMENT`
+     ledger entry pair.
+   - Click **Refund** → enter an amount → posts the reverse entries.
+   - Click any row → modal with `GET /v1/orders/{id}/events` timeline.
+
+4. **Ledger** (`#ledger`) — snapshot of each account's current
    `balance_after`. For the full per-tx feed in the meantime, query
    Postgres directly:
 

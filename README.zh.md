@@ -25,7 +25,9 @@ obita-web/
 - **后端**：本地端到端验证通过 —— 订单模块 + 保险柜模块完整接通；
   收银仅留骨架。一笔入金 → 结算 → 退款产生 8 条借贷平衡的分录。详见
   [`backend/docs/zh/PROGRESS.md`](backend/docs/zh/PROGRESS.md)。
-- **前端**：极简 demo SPA，浏览器实跑验证了登录 + 余额 + 保险柜入金注入。
+- **前端**：编辑风格 SPA，sidebar+main 布局，中英双语 + 浅/深主题，
+  四个已实现模块全量接通；其余（Cashier / 出款 / 兑换 / 审批 / 报表 /
+  成员）保留 Coming Soon 占位。浏览器端到端验证通过。
 - **文档**：8 + 8 + 1 ADR，中英 1:1 对照。索引看
   [`backend/docs/zh/00-README.md`](backend/docs/zh/00-README.md)，
   最新进度看
@@ -72,28 +74,32 @@ python3 -m http.server 5173
 
 ## 登录后能做什么
 
-四个标签页与后端模块一一对应：
+侧边栏分四组；只有已经接通后端的四条路由是可点击的，其余为有意保留的
+**Coming Soon** 占位（对应未完成的模块）。
 
-1. **资金 · 余额** — `GET /v1/accounts`。展示每种稳定币的
-   AVAILABLE / PENDING / RESERVED / SETTLEMENT 余额。新建 schema
-   全为 0，注入入金后会变化。
+1. **Overview** (`#overview`) — 跨已实现模块的 KPI strip：稳定币
+   AVAILABLE 合计、链上等待确认的入金、进行中订单、近期已结算笔数。
+   下方为各资产余额卡片 + 最近订单。来源 `GET /v1/accounts` +
+   `GET /v1/orders`。
 
-2. **订单** — `GET / POST /v1/orders` + 生命周期按钮。试这个：
-   - 点 **新建订单** → 填表 → 提交。订单 `CREATED → PENDING_PAYMENT`。
-   - 点 **标记已支付** → `PAID`。
-   - 点 **结算** → `SETTLED` + 入一对 `AVAILABLE → SETTLEMENT` 分录。
-   - 点 **退款** → 输入金额 → 入反向分录。
-
-3. **保险柜 · 入金** —— 主打 demo：
+2. **Stablecoin Vault** (`#vault`) — 主打 demo：
    - 一键申请 POLYGON 入金地址。
    - 通过 `/mock-bank/credit` 注入合成链上入金。
    - 等 ~10s — `DepositScanner` 检测到，入分录
      `LIABILITY → PENDING`（第 1、2 条）。
    - 再等 ~30s — 确认数到 12，deposit 转 `CREDITED`，入分录
-     `PENDING → AVAILABLE`（第 3、4 条）。前端自动轮询，余额刷新。
+     `PENDING → AVAILABLE`（第 3、4 条）。前端在注入后自动轮询 ~60s，
+     余额与分录会自动刷新。
 
-4. **分录流水** — 各账户当前 `balance_after` 快照。完整 per-tx 流水
-   可直查 PG：
+3. **Invoice Orders** (`#orders`) — `GET / POST /v1/orders` + 生命周期：
+   - **+ 新建订单** → 填表 → 提交。`CREATED → PENDING_PAYMENT`。
+   - **标记已付** → `PAID`。
+   - **结算** → `SETTLED` + 入 `AVAILABLE → SETTLEMENT` 分录对。
+   - **退款** → 输入金额 → 反向入分录。
+   - 点击订单行 → 弹窗显示 `GET /v1/orders/{id}/events` 时间线。
+
+4. **Ledger** (`#ledger`) — 各账户当前 `balance_after` 快照。完整 per-tx
+   流水可直查 PG：
 
    ```bash
    docker exec obita-postgres psql -U obita -d obita -c \
