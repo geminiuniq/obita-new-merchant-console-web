@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "portal",
-      "runtimeExecutable": "ruby",
-      "runtimeArgs": ["-run", "-e", "httpd", "--", "--port=3847", "--document-root=."],
-      "port": 3847
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "5173", "--directory", "frontend"],
+      "port": 5173
     }
   ]
 }
