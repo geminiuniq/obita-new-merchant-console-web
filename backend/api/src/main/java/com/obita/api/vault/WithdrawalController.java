@@ -62,14 +62,17 @@ public class WithdrawalController {
         return WithdrawalDto.from(service.getWithdrawal(actor, id));
     }
 
-    @PostMapping("/{id}:approve")
+    // Sub-resource style — see OrderController note about Spring 6
+    // PathPatternParser handling of `:`.
+
+    @PostMapping("/{id}/approve")
     @Idempotent
     @PreAuthorize("hasAnyRole('MERCHANT_ADMIN','RISK_REVIEWER')")
     public WithdrawalDto approve(@AuthenticationPrincipal Principal actor, @PathVariable UUID id) {
         return WithdrawalDto.from(service.approveWithdrawal(actor, id));
     }
 
-    @PostMapping("/{id}:reject")
+    @PostMapping("/{id}/reject")
     @Idempotent
     @PreAuthorize("hasAnyRole('MERCHANT_ADMIN','RISK_REVIEWER')")
     public WithdrawalDto reject(@AuthenticationPrincipal Principal actor,

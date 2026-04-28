@@ -9,6 +9,7 @@ import com.obita.domain.account.AccountType;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +51,17 @@ public class AccountRepositoryImpl implements AccountRepository {
     @Override public BigDecimal currentBalance(UUID accountId) {
         var b = mapper.currentBalance(accountId);
         return b == null ? BigDecimal.ZERO : b;
+    }
+
+    @Override public List<Account.WithBalance> listForMerchant(MerchantId merchant) {
+        return mapper.listForMerchant(merchant.value()).stream()
+            .map(r -> new Account.WithBalance(
+                new Account(r.id, MerchantId.of(r.merchantId),
+                    AccountType.valueOf(r.accountType), AssetCode.of(r.assetCode),
+                    r.status, r.createdAt),
+                r.balance == null ? BigDecimal.ZERO : r.balance
+            ))
+            .toList();
     }
 
     private Account toDomain(AccountRow r) {

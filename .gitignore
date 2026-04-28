@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+
+# Local env
+.env
+*.local
+
+# IDE
+.idea/
+.vscode/
+
+# Per-machine Claude state
+.claude/settings.local.json

@@ -6,6 +6,8 @@ import com.obita.common.error.ErrorCode;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,8 +16,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -26,10 +33,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthFilter jwtAuthFilter,
+                                           @Qualifier("corsConfigurationSource") CorsConfigurationSource corsSource,
                                            ObjectMapper objectMapper) throws Exception {
         return http
             .csrf(csrf -> csrf.disable())
-            .cors(cors -> {})
+            .cors(cors -> cors.configurationSource(corsSource))
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(reg -> reg
                 .requestMatchers(
@@ -50,6 +58,33 @@ public class SecurityConfig {
             .build();
     }
 
+    /**
+     * CORS for local dev. Origins are configurable via
+     * {@code obita.cors.allowed-origins} (comma-separated). Defaults cover the
+     * usual static-server ports developers reach for. Production should
+     * tighten this to the known frontend hostnames only.
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+        @Value("${obita.cors.allowed-origins:http://localhost:5173,http://localhost:5500,http://localhost:8000,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:5500,http://127.0.0.1:8000,http://127.0.0.1:3000}")
+        String allowedOriginsCsv
+    ) {
+        var cfg = new CorsConfiguration();
+        cfg.setAllowedOrigins(Arrays.asList(allowedOriginsCsv.split("\\s*,\\s*")));
+        cfg.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedHeaders(List.of(
+            "Authorization", "Content-Type", "Idempotency-Key",
+            "X-Request-Id", "Accept"
+        ));
+        cfg.setExposedHeaders(List.of("X-Request-Id", "Location"));
+        cfg.setAllowCredentials(true);
+        cfg.setMaxAge(3600L);
+
+        var source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cfg);
+        return source;
+    }
+
     private static void writeJson(HttpServletResponse res, ObjectMapper om, int status,
                                   ErrorCode code, String message) throws java.io.IOException {
         res.setStatus(status);
@@ -60,8 +95,6 @@ public class SecurityConfig {
         om.writeValue(res.getOutputStream(), body);
     }
 
-    /** No-op placeholder for {@code BusinessException} so Spring DI can detect it
-     *  (the actual handler is in {@link com.obita.api.advice.GlobalExceptionHandler}). */
     @SuppressWarnings("unused")
     private void touch(BusinessException ex) {}
 }

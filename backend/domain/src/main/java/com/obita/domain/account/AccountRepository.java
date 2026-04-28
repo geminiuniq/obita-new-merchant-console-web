@@ -4,6 +4,7 @@ import com.obita.common.money.AssetCode;
 import com.obita.common.tenancy.MerchantId;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,4 +25,7 @@ public interface AccountRepository {
 
     /** Reads current balance without locking; for read APIs only. */
     BigDecimal currentBalance(UUID accountId);
+
+    /** All accounts owned by the merchant, with current balance attached. */
+    List<Account.WithBalance> listForMerchant(MerchantId merchant);
 }

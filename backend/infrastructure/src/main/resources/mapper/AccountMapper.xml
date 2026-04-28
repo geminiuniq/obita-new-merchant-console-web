@@ -40,4 +40,23 @@
            )
   </select>
 
+  <select id="listForMerchant"
+          resultType="com.obita.infrastructure.persistence.account.AccountWithBalanceRow">
+    SELECT a.id,
+           a.merchant_id  AS "merchantId",
+           a.account_type AS "accountType",
+           a.asset_code   AS "assetCode",
+           a.status,
+           COALESCE((
+              SELECT le.balance_after
+                FROM ledger_entry le
+               WHERE le.account_id = a.id
+               ORDER BY le.id DESC LIMIT 1
+           ), 0) AS balance,
+           a.created_at   AS "createdAt"
+      FROM account a
+     WHERE a.merchant_id = #{merchantId}
+     ORDER BY a.asset_code ASC, a.account_type ASC
+  </select>
+
 </mapper>

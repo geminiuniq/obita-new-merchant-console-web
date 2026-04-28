@@ -84,7 +84,12 @@ public class OrderController {
         return CursorPage.of(dtos, nextCursor);
     }
 
-    @PostMapping("/{id}:cancel")
+    // Sub-resource style action verbs. We deliberately avoid the
+    // {id}:action pattern because Spring 6's PathPatternParser treats `:`
+    // as a matrix-variable separator and rejects POSTs against those URLs
+    // unless clients percent-encode — see PROGRESS.md §5 #7.
+
+    @PostMapping("/{id}/cancel")
     @Idempotent
     @Operation(summary = "Cancel order (only before settlement)")
     public OrderDto cancel(@AuthenticationPrincipal Principal actor,
@@ -94,7 +99,7 @@ public class OrderController {
         return OrderDto.from(service.cancel(actor, id, reason));
     }
 
-    @PostMapping("/{id}:settle")
+    @PostMapping("/{id}/settle")
     @Idempotent
     @Operation(summary = "Settle a paid order — posts AVAILABLE → SETTLEMENT")
     @PreAuthorize("hasRole('MERCHANT_ADMIN')")
@@ -102,7 +107,7 @@ public class OrderController {
         return OrderDto.from(service.settle(actor, id));
     }
 
-    @PostMapping("/{id}:mark-paid")
+    @PostMapping("/{id}/mark-paid")
     @Idempotent
     @Operation(summary = "Mark order as paid (test / admin path; production uses webhooks)")
     @PreAuthorize("hasRole('MERCHANT_ADMIN')")

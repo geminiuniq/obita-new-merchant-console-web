@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obita · Backend Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- =========================================================================
+     LOGIN
+     ========================================================================= -->
+<section id="view-login" class="view view--login">
+    <div class="login-card">
+        <div class="login-header">
+            <div class="login-eyebrow">OBITA · BACKEND DEMO</div>
+            <h1 class="login-title">商户操作台</h1>
+            <p class="login-sub">登录以连接后端 API。本页验证 4 个核心流程：账户余额 · 订单 · 入金扫块 · 资金分录。</p>
+        </div>
+
+        <form id="login-form" class="login-form" autocomplete="on">
+            <label class="field">
+                <span class="field-label">商户代码</span>
+                <input name="merchantCode" type="text" required value="DEMO" autocomplete="organization">
+            </label>
+            <label class="field">
+                <span class="field-label">用户名</span>
+                <input name="username" type="text" required value="demo" autocomplete="username">
+            </label>
+            <label class="field">
+                <span class="field-label">密码</span>
+                <input name="password" type="password" required value="ObitaDemo!2026" autocomplete="current-password">
+            </label>
+            <button type="submit" class="btn btn--primary">登录</button>
+        </form>
+
+        <div id="login-error" class="alert alert--error hidden"></div>
+
+        <div class="login-footer">
+            <span>API: <code id="login-api-base">http://localhost:8080</code></span>
+        </div>
+    </div>
+</section>
+
+<!-- =========================================================================
+     APP (after login)
+     ========================================================================= -->
+<section id="view-app" class="view view--app hidden">
+
+    <!-- HEADER ---------------------------------------------------------- -->
+    <header class="topbar">
+        <div class="topbar-brand">
+            <span class="brand-mark">OBITA</span>
+            <span class="brand-tag">Merchant Console · Demo</span>
+        </div>
+        <div class="topbar-actions">
+            <span class="topbar-meta">
+                <span class="meta-key">商户</span> <span id="meta-merchant-code">—</span>
+                <span class="meta-sep">·</span>
+                <span class="meta-key">用户</span> <span id="meta-user">—</span>
+            </span>
+            <button id="btn-refresh" class="btn btn--ghost" title="刷新所有数据">↻ 刷新</button>
+            <button id="btn-logout" class="btn btn--ghost">退出</button>
+        </div>
+    </header>
+
+    <!-- TABS ------------------------------------------------------------ -->
+    <nav class="tabs">
+        <button class="tab tab--active" data-tab="balances">资金 · 余额</button>
+        <button class="tab" data-tab="orders">订单</button>
+        <button class="tab" data-tab="vault">保险柜 · 入金</button>
+        <button class="tab" data-tab="ledger">分录流水</button>
+    </nav>
+
+    <main class="app-main">
+
+        <!-- ===== TAB: BALANCES ========================================= -->
+        <section class="tab-panel tab-panel--active" data-panel="balances">
+            <div class="panel-header">
+                <h2>账户余额</h2>
+                <p class="panel-sub">来自 <code>GET /v1/accounts</code>。每个商户每种资产持有 4 类账户。</p>
+            </div>
+            <div id="balances-grid" class="balances-grid">
+                <div class="empty">加载中…</div>
+            </div>
+        </section>
+
+        <!-- ===== TAB: ORDERS =========================================== -->
+        <section class="tab-panel" data-panel="orders">
+            <div class="panel-header panel-header--with-action">
+                <div>
+                    <h2>商户订单</h2>
+                    <p class="panel-sub">来自 <code>GET /v1/orders</code>。</p>
+                </div>
+                <button id="btn-create-order" class="btn btn--primary">+ 新建订单</button>
+            </div>
+
+            <div id="orders-list" class="orders-list">
+                <div class="empty">加载中…</div>
+            </div>
+        </section>
+
+        <!-- ===== TAB: VAULT ============================================ -->
+        <section class="tab-panel" data-panel="vault">
+            <div class="panel-header">
+                <h2>保险柜 · 入金</h2>
+                <p class="panel-sub">申请链上地址，再通过 <code>/mock-bank/credit</code> 模拟一笔链上入金 —— scanner 会在 ~10 秒内识别并启动确认流程，~30 秒后将余额从 PENDING 移到 AVAILABLE。</p>
+            </div>
+
+            <div class="vault-grid">
+                <div class="vault-card">
+                    <h3>1. 申请入金地址</h3>
+                    <form id="provision-form" class="form">
+                        <label class="field">
+                            <span class="field-label">链</span>
+                            <select name="chainId">
+                                <option value="POLYGON">POLYGON</option>
+                                <option value="ETH">ETH</option>
+                                <option value="BSC">BSC</option>
+                                <option value="TRON">TRON</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span class="field-label">用途</span>
+                            <select name="purpose">
+                                <option value="DEPOSIT">DEPOSIT</option>
+                                <option value="SETTLEMENT">SETTLEMENT</option>
+                                <option value="HOT">HOT</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span class="field-label">标签</span>
+                            <input type="text" name="label" value="Main" maxlength="64">
+                        </label>
+                        <button type="submit" class="btn btn--primary">申请地址</button>
+                    </form>
+
+                    <div id="provisioned-addresses" class="addr-list"></div>
+                </div>
+
+                <div class="vault-card">
+                    <h3>2. 模拟链上入金</h3>
+                    <p class="vault-help">
+                        <code>POST /mock-bank/credit</code> 将一笔合成 credit 推送给链适配器；
+                        scanner 异步检测后写 <code>deposit</code> 表 + 入分录。
+                    </p>
+                    <form id="credit-form" class="form">
+                        <label class="field">
+                            <span class="field-label">目标地址</span>
+                            <select name="toAddress" required>
+                                <option value="">— 先在左侧申请地址 —</option>
+                            </select>
+                        </label>
+                        <label class="field field--row">
+                            <span class="field-label">资产</span>
+                            <select name="asset" required>
+                                <option value="USDC-POLYGON">USDC-POLYGON</option>
+                                <option value="USDC-ETH">USDC-ETH</option>
+                                <option value="USDT-BSC">USDT-BSC</option>
+                                <option value="USDT-TRC20">USDT-TRC20</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span class="field-label">金额</span>
+                            <input type="number" name="amount" min="0" step="0.000001" value="500" required>
+                        </label>
+                        <button type="submit" class="btn btn--primary">注入 mock-bank credit</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="vault-result" class="alert alert--info hidden"></div>
+        </section>
+
+        <!-- ===== TAB: LEDGER =========================================== -->
+        <section class="tab-panel" data-panel="ledger">
+            <div class="panel-header">
+                <h2>分录流水</h2>
+                <p class="panel-sub">本商户的所有 <code>ledger_entry</code>。借贷成对、tx_id 关联同一笔交易。</p>
+            </div>
+            <div class="ledger-table-wrapper">
+                <table class="ledger-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>账户</th>
+                            <th class="dir">借/贷</th>
+                            <th class="num">金额</th>
+                            <th class="num">期末余额</th>
+                            <th>tx_type</th>
+                            <th>memo</th>
+                            <th>时间</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledger-tbody">
+                        <tr><td colspan="8" class="empty">加载中…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</section>
+
+<!-- =========================================================================
+     CREATE ORDER MODAL
+     ========================================================================= -->
+<div id="modal-create-order" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+        <header class="modal-header">
+            <h3>新建订单</h3>
+            <button class="modal-close" data-close>×</button>
+        </header>
+        <form id="create-order-form" class="form modal-body">
+            <label class="field">
+                <span class="field-label">商户订单号</span>
+                <input name="merchantOrderNo" type="text" required maxlength="64">
+            </label>
+            <div class="form-row">
+                <label class="field">
+                    <span class="field-label">报价币种</span>
+                    <select name="quoteAsset">
+                        <option value="CNY">CNY</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span class="field-label">报价金额</span>
+                    <input name="quoteAmount" type="number" min="0" step="0.01" required value="700">
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="field">
+                    <span class="field-label">结算币种</span>
+                    <select name="settleAsset">
+                        <option value="USDC-POLYGON">USDC-POLYGON</option>
+                        <option value="USDC-ETH">USDC-ETH</option>
+                        <option value="USDT-TRC20">USDT-TRC20</option>
+                        <option value="USDT-BSC">USDT-BSC</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span class="field-label">结算金额</span>
+                    <input name="settleAmount" type="number" min="0" step="0.000001" required value="100">
+                </label>
+            </div>
+            <label class="field">
+                <span class="field-label">支付通道</span>
+                <select name="paymentChannel">
+                    <option value="CRYPTO">CRYPTO</option>
+                    <option value="FIAT_BANK">FIAT_BANK</option>
+                </select>
+            </label>
+            <label class="field">
+                <span class="field-label">描述（可选）</span>
+                <input name="description" type="text" maxlength="255">
+            </label>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn--ghost" data-close>取消</button>
+                <button type="submit" class="btn btn--primary">创建订单</button>
+            </footer>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================================
+     TOAST
+     ========================================================================= -->
+<div id="toast" class="toast hidden"></div>
+
+<script type="module" src="api.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
