@@ -10,6 +10,41 @@ commit (`yyyy-mm-dd-vN`) rather than SemVer.
 
 ---
 
+## [2026-04-29-v6] — Sprint 6 · Payouts wired (4-eyes end-to-end)
+
+The first real-wiring sprint after Round 3. Payouts goes from full mock
+to live, exercising the 4-eyes withdrawal lifecycle.
+
+- **DB**: `V6__seed_demo_approver.sql` — second user (`demo_approver`,
+  `MERCHANT_ADMIN` + `RISK_REVIEWER`) so the 4-eyes flow can be
+  demonstrated without an admin tool. Same demo password as `demo`.
+- **Frontend API** (`api.js`): `listWithdrawals`, `getWithdrawal`,
+  `createWithdrawal`, `approveWithdrawal`, `rejectWithdrawal`.
+- **Frontend page** (`pages/payouts.js`): mock data removed; KPI strip
+  + table populate from `GET /v1/withdrawals`. `Approve` / `Reject` row
+  actions render only on `REQUESTED` / `RISK_REVIEW`. `failureMessage`
+  surfaces inline on `REJECTED` / `FAILED`.
+- **Modal**: `#modal-create-withdrawal` (chain · asset · amount · to
+  address); i18n labels driven by `i18n.js`.
+- **Status pills** (`ui.js`): `WithdrawalStatus` values mapped to
+  pill variants — `REQUESTED`/`RISK_REVIEW` = warn, `APPROVED`/
+  `SUBMITTED`/`CONFIRMING` = info, `COMPLETED` = success,
+  `REJECTED`/`FAILED` = danger.
+- **i18n** (`strings.js`): new keys for empty state, action labels,
+  approve/reject confirms, modal labels, toast copy — both en + zh.
+- **Browser-verified**: create → REQUESTED → toast; logout → login as
+  `demo_approver` → approve → SUBMITTED → toast. 8 balanced ledger
+  entries (`AVAILABLE → RESERVED` reserve + `RESERVED → AVAILABLE`
+  rejected reverse) across the 3 test withdrawals.
+- **Self-approval** (same userId on both sides) returns
+  `WITHDRAWAL_FOUR_EYES_VIOLATION` — verified end-to-end.
+- **Not done in this sprint**: SUBMITTED → CONFIRMING → COMPLETED
+  scheduler. Aggregate transitions and `findInFlight()` repository
+  method are already in place; gap is the `WithdrawalScanner` +
+  hydration fix in `VaultRepositoryImpl.toDomainWithdrawal` to
+  populate optional fields. Slated for Sprint 6.5 or as part of
+  Sprint 7.
+
 ## [2026-04-29-v3.6] — `43c83f1` · docs · Round 3 progress + frontend architecture
 
 - Backend `docs/PROGRESS.md` (+ zh mirror): added **Round 3 — Editorial

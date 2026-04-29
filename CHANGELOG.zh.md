@@ -9,6 +9,38 @@ sprint / commit 一条记录；最新的在最上面。
 
 ---
 
+## [2026-04-29-v6] — Sprint 6 · Payouts 真实接通（端到端 4-eyes）
+
+第 3 轮收尾后第一个真实接通的 sprint。Payouts 从纯 mock 升级为完整跑通
+4-eyes 提现生命周期。
+
+- **DB**：`V6__seed_demo_approver.sql` —— 新增 `demo_approver` 用户
+  （`MERCHANT_ADMIN` + `RISK_REVIEWER`），无需 admin 工具就能演示 4-eyes，
+  与 `demo` 共享同一个 demo 密码。
+- **Frontend API** (`api.js`)：`listWithdrawals`、`getWithdrawal`、
+  `createWithdrawal`、`approveWithdrawal`、`rejectWithdrawal`。
+- **Frontend page** (`pages/payouts.js`)：移除 mock 数据；KPI 与表格
+  来自 `GET /v1/withdrawals`。`Approve` / `Reject` 按钮仅在
+  `REQUESTED` / `RISK_REVIEW` 状态渲染。`REJECTED` / `FAILED` 行内
+  显示 `failureMessage`。
+- **Modal**：`#modal-create-withdrawal`（链 · 资产 · 金额 · 收款地址），
+  标签由 `i18n.js` 接管。
+- **Status pill** (`ui.js`)：把 `WithdrawalStatus` 的所有取值映射到
+  pill 变体 —— `REQUESTED` / `RISK_REVIEW` = warn，`APPROVED` /
+  `SUBMITTED` / `CONFIRMING` = info，`COMPLETED` = success，
+  `REJECTED` / `FAILED` = danger。
+- **i18n** (`strings.js`)：空状态、操作按钮、确认、modal 标签、toast
+  全部就位 —— en + zh 各一份。
+- **浏览器验证**：创建 → REQUESTED → toast；登出 → 以 `demo_approver`
+  登录 → 审批 → SUBMITTED → toast。三笔提现共产生 8 条平衡分录
+  （`AVAILABLE → RESERVED` 预留 + `RESERVED → AVAILABLE` 驳回反向）。
+- **自审批**（同一用户两端）服务端返回
+  `WITHDRAWAL_FOUR_EYES_VIOLATION` —— 端到端验证。
+- **本 sprint 未做**：SUBMITTED → CONFIRMING → COMPLETED 的调度器。
+  聚合的迁移方法和 `findInFlight()` 仓储方法都已就位；缺口仅在
+  `WithdrawalScanner` + `VaultRepositoryImpl.toDomainWithdrawal` 的
+  水合补全。下一个 sprint 处理。
+
 ## [2026-04-29-v3.6] — `43c83f1` · 文档 · 第 3 轮进度 + 前端架构
 
 - 后端 `docs/PROGRESS.md`（含 zh 镜像）：新增 **第 3 轮 — 编辑风格商户

@@ -100,6 +100,17 @@ export function applyStaticI18n() {
     setText('#m-order-cancel', 'orders.modal.cancel');
     setText('#m-order-create', 'orders.modal.create');
 
+    // Withdrawal create modal (Sprint 6)
+    setText('#m-wdr-title',    'payouts.modal.title');
+    setText('#m-wdr-chain-label',  'payouts.modal.chain');
+    setText('#m-wdr-asset-label',  'payouts.modal.asset');
+    setText('#m-wdr-amount-label', 'payouts.modal.amount');
+    setText('#m-wdr-to-label',     'payouts.modal.to');
+    setText('#m-wdr-cancel', 'payouts.modal.cancel');
+    setText('#m-wdr-create', 'payouts.modal.submit');
+    const fe = $('#m-wdr-foureyes');
+    if (fe) fe.textContent = t('payouts.modal.foureyes');
+
     // Inbox drawer
     setText('#inbox-title', 'inbox.title');
 

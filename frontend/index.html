@@ -263,6 +263,56 @@
 </div>
 
 <!-- =========================================================================
+     CREATE WITHDRAWAL MODAL (Sprint 6 — Payouts)
+     ========================================================================= -->
+<div id="modal-create-withdrawal" class="modal hidden">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card">
+        <header class="modal-header">
+            <h3 id="m-wdr-title">New Withdrawal</h3>
+            <button class="modal-close" data-close>×</button>
+        </header>
+        <form id="create-withdrawal-form" class="form modal-body">
+            <div class="form-row">
+                <label class="field">
+                    <span class="field-label" id="m-wdr-chain-label">Chain</span>
+                    <select name="chainId">
+                        <option value="POLYGON">POLYGON</option>
+                        <option value="ETH">ETH</option>
+                        <option value="BSC">BSC</option>
+                        <option value="TRON">TRON</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span class="field-label" id="m-wdr-asset-label">Asset</span>
+                    <select name="asset">
+                        <option value="USDC-POLYGON">USDC-POLYGON</option>
+                        <option value="USDC-ETH">USDC-ETH</option>
+                        <option value="USDT-BSC">USDT-BSC</option>
+                        <option value="USDT-TRC20">USDT-TRC20</option>
+                    </select>
+                </label>
+            </div>
+            <label class="field">
+                <span class="field-label" id="m-wdr-amount-label">Amount</span>
+                <input name="amount" type="number" min="0" step="0.000001" required value="50">
+            </label>
+            <label class="field">
+                <span class="field-label" id="m-wdr-to-label">Destination address</span>
+                <input name="toAddress" type="text" required maxlength="128" value="0xC0FFEE0000000000000000000000000000000000">
+            </label>
+            <p class="muted" id="m-wdr-foureyes" style="font-size: 12px; margin-top: 4px;">
+                A second user (e.g. <code>demo_approver</code>) must approve before broadcast.
+            </p>
+            <footer class="modal-footer">
+                <button type="button" class="btn btn--ghost" id="m-wdr-cancel" data-close>Cancel</button>
+                <button type="submit" class="btn btn--primary" id="m-wdr-create">Submit request</button>
+            </footer>
+        </form>
+    </div>
+</div>
+
+<!-- =========================================================================
      ORDER DETAIL MODAL
      ========================================================================= -->
 <div id="modal-order-detail" class="modal hidden">

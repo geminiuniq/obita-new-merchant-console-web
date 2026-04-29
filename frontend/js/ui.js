@@ -17,6 +17,15 @@ const STATUS_PILL = {
     REFUNDED:        'neutral',
     CANCELLED:       'neutral',
     EXPIRED:         'neutral',
+    // Withdrawal lifecycle (Sprint 6) — see WithdrawalStatus.java
+    REQUESTED:       'warn',
+    RISK_REVIEW:     'warn',
+    APPROVED:        'info',
+    REJECTED:        'danger',
+    SUBMITTED:       'info',
+    CONFIRMING:      'info',
+    COMPLETED:       'success',
+    FAILED:          'danger',
 };
 
 export function statusPill(status) {

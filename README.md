@@ -57,9 +57,12 @@ mvn -DskipTests clean package
 java -jar api/target/obita-api-0.1.0-SNAPSHOT.jar &
 # Health: http://localhost:8080/actuator/health → {"status":"UP"}
 
-# 3. Set the demo password hash one-time (until V5 seed regenerates)
+# 3. Set the demo password hashes one-time (until V5 seed regenerates).
+#    Both `demo` (operator + admin + risk-reviewer) and `demo_approver`
+#    (admin + risk-reviewer, no operator) share the password — used for
+#    the 4-eyes Payouts flow.
 docker exec obita-postgres psql -U obita -d obita -c \
-  "UPDATE app_user SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI' WHERE username='demo';"
+  "UPDATE app_user SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI' WHERE username IN ('demo','demo_approver');"
 
 # 4. Frontend static server
 cd ../frontend
@@ -106,7 +109,25 @@ placeholders for unfinished modules.
    - Click **Refund** → enter an amount → posts the reverse entries.
    - Click any row → modal with `GET /v1/orders/{id}/events` timeline.
 
-4. **Ledger** (`#ledger`) — snapshot of each account's current
+4. **Payouts** (`#payouts`) — `GET / POST /v1/withdrawals` plus the
+   4-eyes lifecycle. Demonstrates separation of duties:
+   - As `demo` → click **+ New withdrawal** → fill in chain · asset ·
+     amount · destination address → submit. Status: `REQUESTED`.
+     A reserve `AVAILABLE → RESERVED` ledger transfer is posted in
+     the same DB tx.
+   - Click **Approve** while still signed in as `demo` → server returns
+     `WITHDRAWAL_FOUR_EYES_VIOLATION` (approver must differ from
+     requester).
+   - Sign out, sign in as `demo_approver` (same password) → click
+     **Approve** → status flips `REQUESTED → APPROVED → SUBMITTED`
+     in one server transaction (custody.submit() runs atomically).
+   - Or click **Reject** → reserve is reversed (`RESERVED → AVAILABLE`)
+     and the row goes terminal `REJECTED` with the reason.
+   - The lifecycle currently terminates at `SUBMITTED`. Driving
+     `CONFIRMING → COMPLETED` requires a `WithdrawalScanner` that polls
+     the custody provider; slated for the next sprint.
+
+5. **Ledger** (`#ledger`) — snapshot of each account's current
    `balance_after`. For the full per-tx feed in the meantime, query
    Postgres directly:
 

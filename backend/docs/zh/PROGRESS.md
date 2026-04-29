@@ -2,7 +2,73 @@
 
 > English: [docs/PROGRESS.md](../PROGRESS.md)
 >
-> 更新时间：2026-04-29 (第 3 轮 — 编辑风格商户操作台)  ·  状态：**编辑风格 SPA，中英双语 + 浅/深主题 + 5 个 mock 页面，模块化 ES Module 架构，已实现的后端端点全部接通**
+> 更新时间：2026-04-29 (第 3 轮 + Sprint 6 — Payouts 接通 /v1/withdrawals)  ·  状态：**Payouts 页已真实接通后端，端到端走通 4-eyes 提现生命周期（请求 → 第二用户审批 → SUBMITTED 至托管商）；4 个 mock 页面（Conversion / Approvals / Reports / Members）+ 1 个占位（Fiat Vault）。**
+
+## 第 3 轮 — Sprint 6 — Payouts 真实接通（端到端 4-eyes）
+
+第 3 轮收尾后的第一个模块深化 sprint。Payouts 从纯 mock 升级为真实接通，
+完整跑通后端在 schema + 聚合层已经强制的 4-eyes 提现流程。
+
+### 落地内容
+
+| 层 | 文件 | 改动 |
+|---|---|---|
+| **DB** | `db/migration/V6__seed_demo_approver.sql` | 新增 `demo_approver` 用户（`MERCHANT_ADMIN` + `RISK_REVIEWER`，无 `MERCHANT_OPERATOR`），无需 admin 工具就能演示 4-eyes |
+| **Frontend API** | `frontend/api.js` | `listWithdrawals` / `getWithdrawal` / `createWithdrawal` / `approveWithdrawal` / `rejectWithdrawal` |
+| **Frontend page** | `frontend/js/pages/payouts.js` | 移除 mock 数据；KPI 与表格来自 `GET /v1/withdrawals`；`Approve` / `Reject` 按钮仅在 `REQUESTED` / `RISK_REVIEW` 时渲染；`REJECTED` / `FAILED` 行内显示 `failureMessage` |
+| **Frontend modal** | `frontend/index.html` + `frontend/js/i18n.js` | `#modal-create-withdrawal`（链 · 资产 · 金额 · 收款地址）+ 标签 i18n |
+| **Frontend strings** | `frontend/js/strings.js` | 空状态、操作按钮、确认、modal 标签、toast — en + zh 全部就位 |
+| **状态 pill** | `frontend/js/ui.js` | `STATUS_PILL` 增加 `REQUESTED` / `RISK_REVIEW` / `APPROVED` / `REJECTED` / `SUBMITTED` / `CONFIRMING` / `COMPLETED` / `FAILED` |
+
+后端无代码改动 —— Round 1 已经把 controller / service / 聚合都写完了；
+Sprint 6 的工作纯粹是 (a) 新增第二个 demo 用户 + (b) 前端接通。
+
+### 浏览器验证流程
+
+```
+✓  以 `demo` 登录，跳到 #payouts → 列表来自 /v1/withdrawals 真实数据
+✓  点击"+ 新建提现" → modal 弹出，i18n 标签正常
+✓  提交（75 USDC-POLYGON 到 0xC0FFEE…）→ 出现 REQUESTED 行，
+   toast "已提交提现请求，等待第二审批人复核。"
+✓  curl 用 `demo` 自审批 → 4xx `WITHDRAWAL_FOUR_EYES_VIOLATION`
+✓  退出登录、以 `demo_approver` 登录、点击 Approve →
+   行从 REQUESTED 翻转到 SUBMITTED，KPI 待审批 = 0 / 已审批/已广播 +1，
+   toast "已审批并提交至托管商。"
+✓  PG ledger_entry：8 条平衡 WITHDRAW 分录
+   （AVAILABLE → RESERVED 预留、RESERVED → AVAILABLE 驳回反向）
+```
+
+### 一次性 bootstrap 更新
+
+README 的密码重置步骤现在需要覆盖两个用户。把原本的
+`WHERE username='demo'` 改成：
+
+```bash
+docker exec obita-postgres psql -U obita -d obita -c \
+  "UPDATE app_user
+      SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI'
+    WHERE username IN ('demo','demo_approver');"
+```
+
+（两个用户共享 `ObitaDemo!2026` 密码，仅供 demo 使用；生产环境通过应用 bootstrap 注入。）
+
+### Sprint 6 — 明确未做（拆给后续）
+
+提现生命周期目前在 `SUBMITTED` 终止。要继续推进到 `CONFIRMING` →
+`COMPLETED` 需要：
+
+1. 仿照 `DepositScanner` 的 `WithdrawalScanner`：轮询
+   `custody.status(custodyRef)` 的 in-flight 行，确认后 post 一笔
+   `RESERVED → PLATFORM SETTLEMENT` 的结算分录；**或**
+2. 真实托管商发出 webhook，触发同样的状态迁移。
+
+这是 Sprint 6.5 / 7 的活 —— `findInFlight()` 与聚合的迁移方法
+（`enterConfirming`、`complete`、`attachSettleLedgerTx`）都已就位；缺
+口仅在调度器和 `VaultRepositoryImpl.toDomainWithdrawal` 的水合补全
+（读取时把 `custodyRef` / `txHash` / `confirmations` 等 optional 字段
+还原回聚合）。
+
+---
 
 ## 第 3 轮 — 编辑风格商户操作台 (Sprint 1-5)
 
@@ -69,7 +135,7 @@ HTTP 服务器都能跑。
 | `#vault`      | 真实 | `GET /v1/accounts`、`GET/POST /v1/wallet-addresses`、`POST /mock-bank/credit` (注入后自动轮询 ~60s) |
 | `#orders`     | 真实 | `GET / POST /v1/orders` + lifecycle (`/mark-paid`, `/settle`, `/cancel`, `/refunds`)；点击行 → `GET /v1/orders/{id}` + `GET /v1/orders/{id}/events` |
 | `#ledger`     | 真实 | `GET /v1/accounts`（快照） |
-| `#payouts`    | mock | — （后端 schema 已就位：`withdrawal` 表带 4-eyes / 允许名单 / 冷却） |
+| `#payouts`    | **真实** (Sprint 6) | `GET / POST /v1/withdrawals` + 生命周期（`/approve`、`/reject`）；4-eyes 由后端强制 |
 | `#conversion` | mock | — (`BridgeProvider` 端口已定义；真实适配器 P0→P1) |
 | `#approvals`  | mock | — （`audit_log` + `outbox_event` 表已就位） |
 | `#reports`    | mock | hero 直达 `GET /v3/api-docs` 与 `/swagger-ui.html`（在线） |

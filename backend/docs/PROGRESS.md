@@ -2,7 +2,79 @@
 
 > 中文版：[docs/zh/PROGRESS.md](zh/PROGRESS.md)
 >
-> Updated: 2026-04-29 (round 3 — frontend portal in editorial style)  ·  Status: **Editorial SPA with EN/CN + light/dark + 5 mock pages, modular ES module architecture, all backend endpoints wired**
+> Updated: 2026-04-29 (round 3 + Sprint 6 — Payouts wired to /v1/withdrawals)  ·  Status: **Payouts page is real-wired with end-to-end 4-eyes lifecycle (request → approve as 2nd user → SUBMITTED to custody); 4 mock pages remain (Conversion / Approvals / Reports / Members), 1 stub (Fiat Vault).**
+
+## Round 3 — Sprint 6 — Payouts wired (4-eyes end-to-end)
+
+The first of the post-Round-3 module-deepening sprints. Payouts moves from
+mock to real, exercising the full 4-eyes withdrawal flow that the backend
+already enforces at the schema + aggregate level.
+
+### What landed
+
+| Layer | Files | Change |
+|---|---|---|
+| **DB** | `db/migration/V6__seed_demo_approver.sql` | seed `demo_approver` user (`MERCHANT_ADMIN` + `RISK_REVIEWER`, no `MERCHANT_OPERATOR`) so the 4-eyes flow is demonstrable without an admin tool |
+| **Frontend API** | `frontend/api.js` | `listWithdrawals` / `getWithdrawal` / `createWithdrawal` / `approveWithdrawal` / `rejectWithdrawal` |
+| **Frontend page** | `frontend/js/pages/payouts.js` | mock data removed; KPI strip + table populate from `GET /v1/withdrawals`; row actions `Approve` / `Reject` only render on `REQUESTED` / `RISK_REVIEW`; failure messages surface inline on `REJECTED` / `FAILED` |
+| **Frontend modal** | `frontend/index.html` + `frontend/js/i18n.js` | `#modal-create-withdrawal` (chain · asset · amount · destination address) + label-driven i18n |
+| **Frontend strings** | `frontend/js/strings.js` | new keys for empty state, action buttons, confirms, modal labels, toast messages — both `en` + `zh` |
+| **Status pills** | `frontend/js/ui.js` | `STATUS_PILL` extended with `REQUESTED` / `RISK_REVIEW` / `APPROVED` / `REJECTED` / `SUBMITTED` / `CONFIRMING` / `COMPLETED` / `FAILED` |
+
+No backend code changes — the controller, service, and aggregate were
+already complete in Round 1; Sprint 6 is purely (a) the second-user seed
+and (b) the frontend wiring.
+
+### Browser-verified flow
+
+```
+✓  Login as `demo`, navigate to #payouts → live data from /v1/withdrawals
+✓  Click "+ New withdrawal" → modal opens with i18n labels
+✓  Submit (75 USDC-POLYGON to 0xC0FFEE…) → REQUESTED row appears,
+   toast "Withdrawal request submitted. Pending 4-eyes approval."
+✓  POST /v1/withdrawals/{id}/approve as `demo` (self-approve) → 4xx
+   `WITHDRAWAL_FOUR_EYES_VIOLATION` (verified via curl)
+✓  Logout, login as `demo_approver`, click Approve →
+   row flips REQUESTED → SUBMITTED, KPI Pending=0 / Approved/Broadcast++,
+   toast "Approved + submitted to custody."
+✓  PG ledger_entry: 8 balanced WITHDRAW entries
+   (AVAILABLE → RESERVED reserve, RESERVED → AVAILABLE rejected reverse)
+```
+
+### One-time bootstrap update
+
+The README's password-reset step now needs to cover both users. Replace
+the prior `WHERE username='demo'` with:
+
+```bash
+docker exec obita-postgres psql -U obita -d obita -c \
+  "UPDATE app_user
+      SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI'
+    WHERE username IN ('demo','demo_approver');"
+```
+
+(Both users share the same `ObitaDemo!2026` password for the demo;
+production seeds via the application bootstrap, not Flyway.)
+
+### Sprint 6 — explicitly NOT done (scoped to a follow-up)
+
+The withdrawal lifecycle currently terminates at `SUBMITTED` in the
+demo. Driving it forward to `CONFIRMING` → `COMPLETED` requires either:
+
+1. A `WithdrawalScanner` mirroring `DepositScanner` that polls
+   `custody.status(custodyRef)` for in-flight rows and posts the
+   `RESERVED → PLATFORM SETTLEMENT` settle ledger transfer on
+   confirmation; **or**
+2. Webhooks from the (real) custody provider triggering the same
+   transition.
+
+This is a Sprint 6.5 / 7 task — `findInFlight()` and the aggregate
+transitions (`enterConfirming`, `complete`, `attachSettleLedgerTx`) are
+already in place; the only gap is the scheduled tick + the hydration
+fix in `VaultRepositoryImpl.toDomainWithdrawal` to populate
+`custodyRef` / `txHash` / `confirmations` etc. on read.
+
+---
 
 ## Round 3 — Editorial portal (Sprints 1-5)
 
@@ -71,7 +143,7 @@ tooling, runs from any static HTTP server.
 | `#vault`      | real | `GET /v1/accounts`, `GET/POST /v1/wallet-addresses`, `POST /mock-bank/credit` (auto-poll for ~60s while scanner advances) |
 | `#orders`     | real | `GET / POST /v1/orders` + lifecycle (`/mark-paid`, `/settle`, `/cancel`, `/refunds`); row click → `GET /v1/orders/{id}` + `GET /v1/orders/{id}/events` |
 | `#ledger`     | real | `GET /v1/accounts` (snapshot) |
-| `#payouts`    | mock | — (backend schema ready: `withdrawal` table with 4-eyes / allowlist / cool-down) |
+| `#payouts`    | **real** (Sprint 6) | `GET / POST /v1/withdrawals` + lifecycle (`/approve`, `/reject`); 4-eyes enforced server-side |
 | `#conversion` | mock | — (`BridgeProvider` port defined; real adapters P0→P1) |
 | `#approvals`  | mock | — (`audit_log` + `outbox_event` tables ready) |
 | `#reports`    | mock | hero links to `GET /v3/api-docs` and `/swagger-ui.html` (live) |

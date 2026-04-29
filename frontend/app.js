@@ -19,7 +19,7 @@ import { renderMembers } from './js/pages/members.js';
 import { renderApprovals } from './js/pages/approvals.js';
 import { renderConversion } from './js/pages/conversion.js';
 import { renderReports } from './js/pages/reports.js';
-import { renderPayouts } from './js/pages/payouts.js';
+import { renderPayouts, bindCreateWithdrawalForm } from './js/pages/payouts.js';
 import { renderComingSoon } from './js/pages/coming-soon.js';
 import { bindDrawerControls, closeAllDrawers } from './js/drawer.js';
 import { bindHeader, refreshProfileMenu } from './js/header.js';
@@ -93,6 +93,7 @@ $$('[data-close]').forEach(elt => elt.addEventListener('click', () => {
 }));
 
 bindCreateOrderForm();
+bindCreateWithdrawalForm();
 bindDrawerControls();
 bindHeader({ onLogout: logout });
 

@@ -115,6 +115,17 @@ export const Api = {
     listAddresses()           { return this._fetch('GET', '/v1/wallet-addresses'); },
     provisionAddress(payload) { return this._fetch('POST', '/v1/wallet-addresses', { body: payload }); },
 
+    // ----- withdrawals (payouts) ---------------------------------------
+    listWithdrawals(filters = {}) {
+        return this._fetch('GET', '/v1/withdrawals', { query: filters });
+    },
+    getWithdrawal(id)        { return this._fetch('GET', `/v1/withdrawals/${id}`); },
+    createWithdrawal(payload) { return this._fetch('POST', '/v1/withdrawals', { body: payload }); },
+    approveWithdrawal(id)    { return this._fetch('POST', `/v1/withdrawals/${id}/approve`); },
+    rejectWithdrawal(id, reason) {
+        return this._fetch('POST', `/v1/withdrawals/${id}/reject`, { body: { reason: reason || '' } });
+    },
+
     // mock-bank is unauthenticated — clear Authorization header explicitly
     async mockBankCredit({ chainId, asset, toAddress, amount }) {
         const res = await fetch(this.baseUrl() + '/mock-bank/credit', {

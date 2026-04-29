@@ -53,9 +53,12 @@ mvn -DskipTests clean package
 java -jar api/target/obita-api-0.1.0-SNAPSHOT.jar &
 # 健康：http://localhost:8080/actuator/health → {"status":"UP"}
 
-# 3. 一次性把 demo 用户密码哈希设对（直到 V5 种子重新生成）
+# 3. 一次性把 demo 用户密码哈希设对（直到 V5 种子重新生成）。
+#    `demo`（operator + admin + risk-reviewer）和 `demo_approver`
+#    （admin + risk-reviewer，无 operator）共享同一个密码 —— 用于
+#    Payouts 4-eyes 审批演示。
 docker exec obita-postgres psql -U obita -d obita -c \
-  "UPDATE app_user SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI' WHERE username='demo';"
+  "UPDATE app_user SET password_hash='\$argon2id\$v=19\$m=65536,t=3,p=2\$0j4zU4yYQ5YBeOm7b9XrtA\$HvLXls2EjmhJROzOthfEcMv0R1By26vtUEb2/KGjExI' WHERE username IN ('demo','demo_approver');"
 
 # 4. 前端静态服务
 cd ../frontend
@@ -98,7 +101,22 @@ python3 -m http.server 5173
    - **退款** → 输入金额 → 反向入分录。
    - 点击订单行 → 弹窗显示 `GET /v1/orders/{id}/events` 时间线。
 
-4. **Ledger** (`#ledger`) — 各账户当前 `balance_after` 快照。完整 per-tx
+4. **Payouts** (`#payouts`) — `GET / POST /v1/withdrawals` + 4-eyes 生命周期。
+   演示职责分离：
+   - 以 `demo` 登录 → 点击 **+ 新建提现** → 填写链 · 资产 · 金额 · 收款地址
+     → 提交。状态：`REQUESTED`。同一笔 DB 事务内 post 一笔
+     `AVAILABLE → RESERVED` 预留分录。
+   - 仍以 `demo` 身份点 **审批通过** → 服务端返回
+     `WITHDRAWAL_FOUR_EYES_VIOLATION`（审批人必须不同于申请人）。
+   - 退出登录、以 `demo_approver` 登录（同一密码）→ 点 **审批通过** →
+     状态在一笔事务里 `REQUESTED → APPROVED → SUBMITTED`
+     （`custody.submit()` 原子化执行）。
+   - 或点 **驳回** → 预留反向 (`RESERVED → AVAILABLE`)，行进入终态
+     `REJECTED` 并附原因。
+   - 当前生命周期止于 `SUBMITTED`。继续推进 `CONFIRMING → COMPLETED`
+     需要一个 `WithdrawalScanner`，列入下一个 sprint。
+
+5. **Ledger** (`#ledger`) — 各账户当前 `balance_after` 快照。完整 per-tx
    流水可直查 PG：
 
    ```bash
