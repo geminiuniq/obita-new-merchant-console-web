@@ -2,7 +2,117 @@
 
 > English: [docs/PROGRESS.md](../PROGRESS.md)
 >
-> 更新时间：2026-04-29 (第 2 轮 — Plan B)  ·  状态：**Demo SPA 已与后端联通，浏览器实跑验证**
+> 更新时间：2026-04-29 (第 3 轮 — 编辑风格商户操作台)  ·  状态：**编辑风格 SPA，中英双语 + 浅/深主题 + 5 个 mock 页面，模块化 ES Module 架构，已实现的后端端点全部接通**
+
+## 第 3 轮 — 编辑风格商户操作台 (Sprint 1-5)
+
+第 2 轮把极简 demo SPA 与后端联通后，第 3 轮把它升级成一个真正的
+商户操作台 —— 整个产品读起来是一个编辑风格的整体，而不是手撸 demo。
+工作分为 5 个 sprint，每个 sprint 结束都提交代码，进度链可追溯。
+
+### Sprint 概览
+
+| Sprint | 提交 | 交付内容 |
+|---|---|---|
+| **1** | `3141dc0` | 编辑风格 UI 重建 · sidebar+main 布局 · 中英双语 (EN/CN) · 浅/深主题 · 订单详情弹窗（事件时间线） |
+| **2** | `8edd80f` | 重构 1.2k 行的 `app.js` → 拆分为 `js/` 下的模块 (dom, format, i18n, theme, ui, router, pages/*) |
+| **3** | `3aff3a7` | 收件箱抽屉（4 条 mock 消息，黄铜未读标记）+ 个人资料下拉菜单（My profile / Security / API docs / Sign out） |
+| **4** | `cdac3ac` | 5 个完整编辑风格的 mock 页面 — Members、Approvals、Conversion、Report Center、Payouts |
+| **5** | `5b75db5` | 钱包流水抽屉 — 来自 `/v1/accounts` 的 LIVE 行 + 按地址确定性 mock 活动 |
+
+### 前端模块架构（重构后）
+
+`app.js` 原本 1.2k 行，把 strings + DOM helpers + i18n + theme + router
++ 每个页面渲染都塞在一个文件里。重构按职责拆分，每个特性可以独立交付：
+
+```
+frontend/
+├── index.html            sidebar+main 外壳、登录、modal、drawer
+├── styles.css            编辑风格 token 系统 + 深色主题 override
+├── api.js                JWT + 幂等键 fetch 封装
+├── app.js                ~120 行：bootstrap + 登录 + 切换按钮接线
+└── js/
+    ├── dom.js            el(), clear(), $/$$ 工具
+    ├── format.js         fmt 工具集
+    ├── strings.js        en + zh 字典（1:1 对照）
+    ├── i18n.js           t(), setLang(), applyStaticI18n()
+    ├── theme.js          浅/深主题切换 + 持久化
+    ├── ui.js             pageHero / sectionCard / statusPill / toast
+    ├── router.js         hash 路由 + 页面注册 + pollCurrentRoute
+    ├── drawer.js         通用右侧抽屉 + overlay
+    ├── header.js         个人资料下拉菜单
+    ├── inbox.js          mock 收件箱消息
+    └── pages/
+        ├── overview.js         真实接通 (KPI + 余额 + 最近订单)
+        ├── vault.js            真实接通 (余额 + 地址簿 + mock-bank)
+        ├── orders.js           真实接通 (完整生命周期 CRUD)
+        ├── order-detail.js     真实接通 (事件时间线)
+        ├── ledger.js           真实接通 (快照)
+        ├── wallet-history.js   mock + 真实混合
+        ├── members.js          mock (5 个成员，角色 + MFA)
+        ├── approvals.js        mock (按 legacy §3.5 的严重度条)
+        ├── conversion.js       mock (实时 mock 报价框)
+        ├── reports.js          mock + Swagger UI 直达
+        ├── payouts.js          mock (4-eyes 状态)
+        └── coming-soon.js      Fiat Vault 占位
+```
+
+每个页面模块导出 `render*(root)` 函数，在 `app.js` 用
+`registerRoute(name, fn)` 注册。原生 ES Module —— 无构建步骤，任何静态
+HTTP 服务器都能跑。
+
+### 路由 × 后端接通矩阵
+
+| 路由 | 状态 | 已用后端端点 |
+|---|---|---|
+| `#overview`   | 真实 | `GET /v1/accounts`、`GET /v1/orders` |
+| `#vault`      | 真实 | `GET /v1/accounts`、`GET/POST /v1/wallet-addresses`、`POST /mock-bank/credit` (注入后自动轮询 ~60s) |
+| `#orders`     | 真实 | `GET / POST /v1/orders` + lifecycle (`/mark-paid`, `/settle`, `/cancel`, `/refunds`)；点击行 → `GET /v1/orders/{id}` + `GET /v1/orders/{id}/events` |
+| `#ledger`     | 真实 | `GET /v1/accounts`（快照） |
+| `#payouts`    | mock | — （后端 schema 已就位：`withdrawal` 表带 4-eyes / 允许名单 / 冷却） |
+| `#conversion` | mock | — (`BridgeProvider` 端口已定义；真实适配器 P0→P1) |
+| `#approvals`  | mock | — （`audit_log` + `outbox_event` 表已就位） |
+| `#reports`    | mock | hero 直达 `GET /v3/api-docs` 与 `/swagger-ui.html`（在线） |
+| `#members`    | mock | — （角色表 `app_user` / `member_role` / `role_permission` 已存在；控制器 P1） |
+| `#fiat-vault` | 占位 | — (Cashier P1) |
+
+### 横切特性
+
+- **中英双语** — 由 `localStorage` 持久化，默认英语。所有用户可见字符串
+  通过 `t(key)` 查表；字典在 `js/strings.js`，en + zh 1:1 对照。
+- **浅/深主题** — `<body>` 上的 `data-theme="…"` token override，首次
+  加载尊重 `prefers-color-scheme`。深色保留编辑风格的黄铜 + brand-ink
+  调色板。
+- **抽屉** — 通用右侧抽屉 + 共享 overlay (`js/drawer.js`)，目前由 Inbox
+  与 Wallet History 共用。
+- **幂等性** — 每个会改变状态的请求都自动生成 `Idempotency-Key`。
+- **XSS 安全** — 全部经由 `createElement` + `textContent`，从不在用户
+  可控数据上用 `innerHTML`。
+
+### 浏览器实跑验证流程
+
+每个 sprint 在提交前都已浏览器实跑：
+
+```
+✓  登录 → sidebar 外壳 + topbar 商户卡片 + 头像
+✓  Overview KPI 由 /v1/accounts + /v1/orders 实时算出
+✓  Vault → 申请地址 → mock-bank credit → 60s 自动轮询 →
+   PENDING 余额出现 → 之后跳到 AVAILABLE
+✓  Orders → 新建 → 标记已付 → 结算 → 退款（完整生命周期，
+   后端入分录）
+✓  点击订单行 → 详情弹窗渲染 3 段状态机时间线（来自 /events）
+✓  点击地址卡片 → 钱包流水抽屉渲染 LIVE 行（来自 /v1/accounts）+
+   3 条确定性 mock 行
+✓  收件箱铃 → 抽屉滑入，4 条 mock 消息，黄铜未读标记，点击已读
+✓  个人资料下拉 → API docs 在新标签页打开 Swagger UI
+✓  主题切换（浅 ↔ 深）保留全部编辑风格强调色
+✓  语言切换（EN ↔ 中）通过 router 的 onLangChanged 钩子
+   重新渲染当前页
+```
+
+---
+
+## 第 2 轮 — Plan B（前后端联通）
 
 ## 第 2 轮 — Plan B（前后端联通）
 

@@ -2,7 +2,123 @@
 
 > 中文版：[docs/zh/PROGRESS.md](zh/PROGRESS.md)
 >
-> Updated: 2026-04-29 (round 2 — Plan B)  ·  Status: **Demo SPA wired to backend, browser-verified**
+> Updated: 2026-04-29 (round 3 — frontend portal in editorial style)  ·  Status: **Editorial SPA with EN/CN + light/dark + 5 mock pages, modular ES module architecture, all backend endpoints wired**
+
+## Round 3 — Editorial portal (Sprints 1-5)
+
+After Round 2 wired the minimal demo SPA, Round 3 turned it into a real
+merchant portal that reads as one editorial product. The work was split
+into five sprints with a commit at each boundary so the progress chain
+stays auditable.
+
+### Sprint roll-up
+
+| Sprint | Commit | What landed |
+|---|---|---|
+| **1** | `3141dc0` | Editorial UI rebuild · sidebar+main layout · i18n (EN/CN) · light/dark theme · order detail modal with events timeline |
+| **2** | `8edd80f` | Refactor 1.2k-line `app.js` → focused modules under `js/` (dom, format, i18n, theme, ui, router, pages/*) |
+| **3** | `3aff3a7` | Inbox drawer (4 mock messages with brass unread indicators) + profile dropdown (My profile / Security / API docs / Sign out) |
+| **4** | `cdac3ac` | Five mock pages with full editorial layouts — Members, Approvals, Conversion, Report Center, Payouts |
+| **5** | `5b75db5` | Wallet history drawer — real LIVE row from `/v1/accounts` + deterministic mock activity per-address |
+
+### Frontend module architecture (post-refactor)
+
+`app.js` was 1.2k lines packing strings + DOM helpers + i18n + theme +
+router + every page renderer into one file. Split into focused modules
+so each feature ships in isolation:
+
+```
+frontend/
+├── index.html            sidebar+main shell, login, modals, drawers
+├── styles.css            editorial token system + dark theme override
+├── api.js                JWT + idempotency fetch wrapper
+├── app.js                ~120 lines: bootstrap + login + toggle wiring
+└── js/
+    ├── dom.js            el(), clear(), $/$$ helpers
+    ├── format.js         fmt utilities
+    ├── strings.js        en + zh dictionary (mirrored 1:1)
+    ├── i18n.js           t(), setLang(), applyStaticI18n()
+    ├── theme.js          light/dark toggle + persistence
+    ├── ui.js             pageHero / sectionCard / statusPill / toast
+    ├── router.js         hash router + page registry + pollCurrentRoute
+    ├── drawer.js         generic right-side drawer + overlay
+    ├── header.js         profile dropdown wiring
+    ├── inbox.js          mock inbox messages
+    └── pages/
+        ├── overview.js         real wired (KPI + balances + recent orders)
+        ├── vault.js            real wired (balances + addr book + mock-bank)
+        ├── orders.js           real wired (full lifecycle CRUD)
+        ├── order-detail.js     real wired (events timeline)
+        ├── ledger.js           real wired (snapshot)
+        ├── wallet-history.js   mock + real hybrid
+        ├── members.js          mock (5 members, role + MFA pills)
+        ├── approvals.js        mock (severity bars per legacy §3.5)
+        ├── conversion.js       mock (live mock-quote box)
+        ├── reports.js          mock + Swagger UI link
+        ├── payouts.js          mock (4-eyes status pills)
+        └── coming-soon.js      Fiat Vault stub
+```
+
+Each page module exports `render*(root)` and is registered via
+`registerRoute(name, fn)` in `app.js`. Native ES modules — no build
+tooling, runs from any static HTTP server.
+
+### Routes × backend wiring matrix
+
+| Route | Status | Backend endpoints used |
+|---|---|---|
+| `#overview`   | real | `GET /v1/accounts`, `GET /v1/orders` |
+| `#vault`      | real | `GET /v1/accounts`, `GET/POST /v1/wallet-addresses`, `POST /mock-bank/credit` (auto-poll for ~60s while scanner advances) |
+| `#orders`     | real | `GET / POST /v1/orders` + lifecycle (`/mark-paid`, `/settle`, `/cancel`, `/refunds`); row click → `GET /v1/orders/{id}` + `GET /v1/orders/{id}/events` |
+| `#ledger`     | real | `GET /v1/accounts` (snapshot) |
+| `#payouts`    | mock | — (backend schema ready: `withdrawal` table with 4-eyes / allowlist / cool-down) |
+| `#conversion` | mock | — (`BridgeProvider` port defined; real adapters P0→P1) |
+| `#approvals`  | mock | — (`audit_log` + `outbox_event` tables ready) |
+| `#reports`    | mock | hero links to `GET /v3/api-docs` and `/swagger-ui.html` (live) |
+| `#members`    | mock | — (role tables `app_user` / `member_role` / `role_permission` exist; controller P1) |
+| `#fiat-vault` | stub | — (Cashier P1) |
+
+### Cross-cutting features
+
+- **i18n** (en / zh) — `localStorage`-persisted, default English. All
+  user-facing strings flow through `t(key)`; dictionary in
+  `js/strings.js` mirrored 1:1 between languages.
+- **Theme** (light / dark) — `data-theme="…"` token override on
+  `<body>`. Respects `prefers-color-scheme` on first load. Editorial
+  palette (brass + brand-ink) preserved in dark mode.
+- **Drawers** — generic right-side drawer + overlay (`js/drawer.js`).
+  Used by Inbox + Wallet History.
+- **Idempotency** — `Idempotency-Key` auto-generated for every
+  state-changing request.
+- **XSS-safe** — all rendering via `createElement` + `textContent`. No
+  `innerHTML` on user-controlled data anywhere.
+
+### Verified browser flows
+
+Each sprint was browser-verified before its commit landed:
+
+```
+✓  Login → sidebar shell + topbar with merchant chip + avatar
+✓  Overview KPI strip computes from /v1/accounts + /v1/orders
+✓  Vault → provision address → mock-bank credit → 60s auto-poll →
+   PENDING balance appears, then AVAILABLE balance jumps
+✓  Orders → create → mark-paid → settle → refund (full lifecycle,
+   ledger entries posted by backend)
+✓  Click order row → detail modal renders 3-step state-machine
+   timeline from /events
+✓  Click address card → wallet history drawer renders with LIVE row
+   pulled from /v1/accounts + 3 deterministic mock rows
+✓  Inbox bell → drawer slides in with 4 mock messages, unread brass
+   indicators, click-to-read
+✓  Profile dropdown → API docs opens Swagger UI in new tab
+✓  Theme toggle (light ↔ dark) preserves all editorial accents
+✓  Language toggle (EN ↔ 中) re-renders current page via onLangChanged
+   hook in router
+```
+
+---
+
+## Round 2 — Plan B (frontend wired to backend)
 
 ## Round 2 — Plan B (frontend wired to backend)
 
